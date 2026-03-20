@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNI髮型設計｜職人選品 髮品坊</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+TC:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bark:#3d2b1f;--bark2:#5c3d2e;--linen:#faf6f1;--sand:#ede5d8;--rose:#c9897a;--rose-lt:#f5e8e4;--gold:#b8895a;--gold-lt:#e8d0b0;--moss:#7a8c6e;--ink:#2a1f1a;--mid:#7a6a60;--border:#ddd0c4;--shadow:rgba(61,43,31,.10);}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Noto Serif TC',serif;background:var(--linen);color:var(--ink);}
+
+header{background:var(--bark);position:sticky;top:0;z-index:200;box-shadow:0 2px 24px rgba(0,0,0,.25);}
+.header-inner{max-width:1280px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.brand-main{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:500;color:#fff;letter-spacing:.04em;}
+.brand-sub{font-family:'Noto Sans TC',sans-serif;font-size:.58rem;letter-spacing:.2em;color:var(--gold-lt);opacity:.7;text-transform:uppercase;margin-top:1px;}
+.header-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.h-btn{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:2px;font-family:'Noto Serif TC',serif;font-size:.73rem;letter-spacing:.05em;cursor:pointer;transition:all .22s;border:1.5px solid rgba(255,255,255,.22);background:none;color:rgba(255,255,255,.82);}
+.h-btn:hover{border-color:var(--gold);color:var(--gold-lt);}
+.h-btn.cart-btn{background:rgba(255,255,255,.07);}
+.cart-badge{background:var(--rose);color:#fff;border-radius:50%;width:18px;height:18px;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+.edit-bar{background:rgba(201,137,122,.1);border-bottom:1px solid rgba(201,137,122,.28);padding:7px 24px;text-align:center;font-size:.7rem;color:var(--rose);font-family:'Noto Sans TC',sans-serif;letter-spacing:.03em;}
+
+.hero{background:linear-gradient(160deg,#2a1a12 0%,#4a3020 45%,#5c3d2a 100%);padding:76px 24px 66px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 55% at 20% 60%,rgba(201,137,122,.13) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 80% 30%,rgba(184,137,90,.10) 0%,transparent 60%);}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--gold-lt);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:22px;position:relative;animation:fadeUp .7s ease both;}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:26px;height:1px;background:var(--gold);opacity:.5;}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.75rem,4vw,2.75rem);font-weight:400;color:#fff;line-height:1.35;position:relative;animation:fadeUp .7s .1s ease both;}
+.hero h1 em{font-style:italic;color:var(--gold-lt);}
+.hero-desc{max-width:480px;margin:14px auto 0;color:rgba(255,255,255,.52);font-size:.85rem;line-height:1.85;font-family:'Noto Sans TC',sans-serif;font-weight:300;position:relative;animation:fadeUp .7s .2s ease both;}
+.hero-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:26px;position:relative;animation:fadeUp .7s .3s ease both;}
+.hero-tag{padding:5px 14px;border:1px solid rgba(184,137,90,.4);color:var(--gold-lt);font-size:.7rem;letter-spacing:.1em;border-radius:2px;font-family:'Noto Sans TC',sans-serif;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.quick-actions{background:var(--sand);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.qa-inner{max-width:1280px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;}
+.qa-card{background:#fff;border:1px solid var(--border);border-radius:4px;padding:16px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .25s;box-shadow:0 1px 8px var(--shadow);}
+.qa-card:hover{border-color:var(--rose);transform:translateY(-2px);box-shadow:0 6px 22px var(--shadow);}
+.qa-icon{font-size:1.5rem;flex-shrink:0;}
+.qa-title{font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.qa-sub{font-size:.65rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+.qa-arrow{margin-left:auto;color:var(--rose);font-size:.95rem;flex-shrink:0;}
+
+.page-tabs-wrap{background:#fff;border-bottom:2px solid var(--border);position:sticky;top:54px;z-index:100;}
+.page-tabs{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;}
+.page-tab{padding:13px 20px;font-size:.77rem;letter-spacing:.06em;color:var(--mid);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .22s;font-family:'Noto Sans TC',sans-serif;background:none;border-top:none;border-left:none;border-right:none;}
+.page-tab:hover{color:var(--bark);}
+.page-tab.active{color:var(--bark);border-bottom-color:var(--rose);font-weight:600;}
+
+.shop-page{display:none;}
+.shop-page.active{display:block;}
+.section{max-width:1280px;margin:0 auto;padding:44px 24px;}
+.sec-head{text-align:center;margin-bottom:36px;}
+.sec-label{display:inline-block;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--moss);margin-bottom:7px;font-family:'Noto Sans TC',sans-serif;}
+.sec-head h2{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:400;color:var(--bark);}
+.sec-line{width:42px;height:2px;background:linear-gradient(90deg,var(--gold),var(--rose));margin:10px auto 0;border-radius:2px;}
+.sec-desc{color:var(--mid);font-size:.78rem;margin-top:7px;line-height:1.65;font-family:'Noto Sans TC',sans-serif;}
+
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:18px;}
+
+.product-card{background:#fff;border:1px solid var(--border);border-radius:4px;overflow:hidden;transition:transform .3s,box-shadow .3s;position:relative;}
+.product-card:hover{transform:translateY(-4px);box-shadow:0 12px 38px var(--shadow);}
+
+.prod-img{width:100%;height:170px;overflow:hidden;position:relative;cursor:pointer;}
+.prod-img.drag-over{outline:3px dashed var(--rose);outline-offset:-3px;}
+.img-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:rgba(255,255,255,.6);font-family:'Noto Sans TC',sans-serif;}
+.img-ph-icon{font-size:1.7rem;opacity:.5;}
+.img-ph-txt{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;}
+.img-ph-hint{font-size:.55rem;opacity:.5;}
+.prod-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.img-edit-btn{position:absolute;bottom:5px;right:5px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:2px;padding:3px 7px;font-size:.58rem;cursor:pointer;opacity:0;transition:opacity .2s;font-family:'Noto Sans TC',sans-serif;}
+.product-card:hover .img-edit-btn{opacity:1;}
+.prod-tag{position:absolute;top:8px;left:8px;background:var(--rose);color:#fff;font-size:.55rem;letter-spacing:.08em;padding:2px 7px;border-radius:2px;font-family:'Noto Sans TC',sans-serif;font-weight:700;text-transform:uppercase;}
+.hidden-input{display:none;}
+
+[contenteditable]{outline:none;cursor:text;border-radius:2px;transition:background .18s;}
+[contenteditable]:hover{background:rgba(201,137,122,.07);}
+[contenteditable]:focus{background:rgba(201,137,122,.12);box-shadow:0 0 0 1.5px var(--rose);padding:1px 3px;}
+
+.prod-body{padding:12px;}
+.prod-series{font-size:.58rem;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;margin-bottom:3px;min-height:13px;}
+.prod-name{font-size:.88rem;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:5px;min-height:18px;}
+.prod-desc{font-size:.7rem;color:var(--mid);line-height:1.7;margin-bottom:10px;min-height:34px;font-family:'Noto Sans TC',sans-serif;}
+.prod-price-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:4px;}
+.price-orig-input{border:none;outline:none;font-size:.65rem;color:#bbb;text-decoration:line-through;background:transparent;width:60px;cursor:text;font-family:'Noto Sans TC',sans-serif;display:block;}
+.price-orig-input:focus{background:rgba(201,137,122,.1);border-radius:2px;padding:1px 3px;text-decoration:none;}
+.price-row{display:flex;align-items:baseline;gap:2px;}
+.price-prefix{font-size:.68rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+.price-input{border:none;outline:none;font-family:'Playfair Display',serif;font-size:1.28rem;font-weight:500;color:var(--bark);background:transparent;width:72px;cursor:text;}
+.price-input:focus{background:rgba(201,137,122,.1);border-radius:2px;padding:1px 3px;}
+.qty-wrap{display:flex;align-items:center;border:1px solid var(--border);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.qty-btn{width:24px;height:24px;background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--ink);transition:background .2s;display:flex;align-items:center;justify-content:center;}
+.qty-btn:hover{background:var(--rose-lt);}
+.qty-num{width:26px;text-align:center;font-size:.78rem;border:none;outline:none;background:none;font-family:'Noto Serif TC',serif;}
+.add-btn{width:100%;padding:8px;background:var(--bark);color:#fff;border:none;font-family:'Noto Serif TC',serif;font-size:.75rem;letter-spacing:.07em;cursor:pointer;border-radius:2px;transition:all .22s;}
+.add-btn:hover{background:var(--bark2);}
+.add-btn.done{background:var(--moss);}
+
+.features-bg{background:var(--sand);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:22px;}
+.feat-item{text-align:center;padding:6px;}
+.feat-icon{font-size:1.7rem;margin-bottom:9px;}
+.feat-title{font-size:.8rem;font-weight:600;color:var(--bark);margin-bottom:4px;}
+.feat-text{font-size:.7rem;color:var(--mid);line-height:1.65;font-family:'Noto Sans TC',sans-serif;}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.on{opacity:1;pointer-events:all;}
+.sidebar{position:fixed;top:0;right:0;width:min(390px,100vw);height:100vh;background:#fff;z-index:301;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 40px rgba(0,0,0,.15);}
+.sidebar.on{transform:translateX(0);}
+.sb-head{padding:19px 20px;background:var(--bark);color:#fff;display:flex;align-items:center;justify-content:space-between;}
+.sb-head h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:400;}
+.sb-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:1.15rem;cursor:pointer;padding:4px 7px;transition:color .2s;}
+.sb-close:hover{color:#fff;}
+.sb-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.sb-empty{text-align:center;padding:48px 16px;color:#bbb;font-size:.8rem;}
+.sb-empty span{font-size:2rem;display:block;margin-bottom:9px;opacity:.3;}
+.cart-item{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);animation:slideIn .26s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+.ci-thumb{width:50px;height:50px;border-radius:3px;overflow:hidden;flex-shrink:0;}
+.ci-info{flex:1;}
+.ci-series{font-size:.56rem;letter-spacing:.14em;color:var(--gold);}
+.ci-name{font-size:.78rem;font-weight:600;margin:2px 0;}
+.ci-price{font-family:'Playfair Display',serif;font-size:.92rem;color:var(--bark);}
+.ci-rm{background:none;border:none;color:#ccc;cursor:pointer;font-size:.88rem;transition:color .2s;align-self:flex-start;padding:2px 4px;}
+.ci-rm:hover{color:#e05050;}
+.sb-foot{padding:14px 16px;border-top:1px solid var(--border);background:var(--linen);}
+.sb-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.sb-total-lbl{font-size:.72rem;color:var(--mid);}
+.sb-total-val{font-family:'Playfair Display',serif;font-size:1.55rem;color:var(--bark);}
+.gift-selector-wrap{display:none;margin-bottom:11px;}
+.gift-label{font-size:.7rem;color:var(--moss);padding:5px 9px;background:rgba(122,140,110,.08);border-left:2px solid var(--moss);margin-bottom:7px;line-height:1.5;font-family:'Noto Sans TC',sans-serif;}
+.gift-select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.78rem;color:var(--ink);background:var(--linen);outline:none;}
+.gift-select:focus{border-color:var(--rose);}
+.checkout-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--gold) 0%,var(--bark2) 100%);color:#fff;border:none;font-family:'Noto Serif TC',serif;font-size:.85rem;letter-spacing:.1em;cursor:pointer;border-radius:2px;transition:all .22s;font-weight:600;}
+.checkout-btn:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,137,90,.35);}
+.checkout-btn:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none;}
+
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .28s;}
+.modal-wrap.on{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:6px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;transform:scale(.94) translateY(14px);transition:transform .28s;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-wrap.on .modal{transform:scale(1) translateY(0);}
+.modal-head{background:var(--bark);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-head h3{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:400;color:#fff;}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:1.15rem;cursor:pointer;padding:4px 7px;}
+.modal-close:hover{color:#fff;}
+.modal-body{padding:22px 20px;}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:.73rem;letter-spacing:.06em;color:var(--bark);font-weight:600;margin-bottom:5px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.8rem;color:var(--ink);background:var(--linen);transition:border-color .2s;outline:none;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--rose);background:#fff;}
+.form-textarea{resize:vertical;min-height:68px;}
+.form-note{font-size:.65rem;color:var(--mid);margin-top:4px;line-height:1.5;font-family:'Noto Sans TC',sans-serif;}
+.form-submit{width:100%;padding:11px;background:var(--bark);color:#fff;border:none;font-family:'Noto Serif TC',serif;font-size:.83rem;letter-spacing:.1em;cursor:pointer;border-radius:2px;transition:background .22s;}
+.form-submit:hover{background:var(--bark2);}
+.success-msg{text-align:center;padding:26px 16px;display:none;}
+.success-msg .s-icon{font-size:2.4rem;margin-bottom:9px;}
+.success-msg h4{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--bark);margin-bottom:6px;}
+.success-msg p{font-size:.78rem;color:var(--mid);line-height:1.7;font-family:'Noto Sans TC',sans-serif;}
+
+.gift-edit-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.gift-edit-item{display:flex;align-items:center;gap:7px;}
+.gift-edit-input{flex:1;padding:7px 11px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.8rem;color:var(--ink);background:var(--linen);outline:none;}
+.gift-edit-input:focus{border-color:var(--rose);}
+.gift-edit-rm{background:none;border:none;color:#ccc;cursor:pointer;font-size:.95rem;padding:3px;}
+.gift-edit-rm:hover{color:#e05050;}
+.add-gift-btn{width:100%;padding:8px;border:1.5px dashed var(--border);background:none;color:var(--mid);font-family:'Noto Serif TC',serif;font-size:.77rem;border-radius:3px;cursor:pointer;transition:all .2s;margin-bottom:12px;}
+.add-gift-btn:hover{border-color:var(--rose);color:var(--rose);}
+
+footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padding:20px 16px;font-size:.68rem;letter-spacing:.05em;font-family:'Noto Sans TC',sans-serif;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:#fff;padding:9px 18px;border-radius:2px;font-size:.78rem;z-index:500;transition:transform .32s;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+@media(max-width:600px){
+  .header-inner{padding:10px 12px;}
+  .hero{padding:54px 14px 48px;}
+  .section{padding:32px 12px;}
+  .product-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;}
+  .h-btn span{display:none;}
+  .page-tab{padding:10px 12px;font-size:.7rem;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-main">UNI髮型設計｜職人選品 髮品坊</div>
+      <div class="brand-sub">Artisan Selection · Hair Studio</div>
+    </div>
+    <div class="header-actions">
+      <button class="h-btn" onclick="openModal('sample')">🫧 <span>索取體驗包</span></button>
+      <button class="h-btn" onclick="openModal('gift-edit')">⚙️ <span>編輯贈品</span></button>
+      <button class="h-btn cart-btn" onclick="toggleCart()">
+        🛒 <span>購物車</span>
+        <span class="cart-badge" id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="edit-bar">✏️ 點擊商品文字直接編輯 · 圖片區域拖拉或點擊上傳 · 右上角「編輯贈品」可管理贈品選項</div>
+
+<div class="hero">
+  <div class="hero-eyebrow">職人精選 · 生活日常</div>
+  <h1>讓專業護理，<br>成為您最自在的<em>居家日常</em>。</h1>
+  <p class="hero-desc">從沙龍出發，為您的頭皮與受損修復，<br>精挑細選最溫暖的對策。</p>
+  <div class="hero-tags">
+    <div class="hero-tag">職人精選髮品</div>
+    <div class="hero-tag">會員專屬體驗</div>
+    <div class="hero-tag">購買即回饋購物券</div>
+  </div>
+</div>
+
+<div class="quick-actions">
+  <div class="qa-inner">
+    <div class="qa-card" onclick="scrollToProducts()">
+      <div class="qa-icon">🛍️</div>
+      <div class="qa-text"><div class="qa-title">精選商品選購</div><div class="qa-sub">加入購物車，直接結帳</div></div>
+      <div class="qa-arrow">→</div>
+    </div>
+    <div class="qa-card" onclick="toggleCart()">
+      <div class="qa-icon">🎁</div>
+      <div class="qa-text"><div class="qa-title">滿額自動兌換贈品</div><div class="qa-sub">結帳時選擇您的專屬贈品</div></div>
+      <div class="qa-arrow">→</div>
+    </div>
+    <div class="qa-card" onclick="openModal('sample')">
+      <div class="qa-icon">🫧</div>
+      <div class="qa-text"><div class="qa-title">索取髮品體驗包</div><div class="qa-sub">試用後再決定，安心選購</div></div>
+      <div class="qa-arrow">→</div>
+    </div>
+    <div class="qa-card" onclick="openModal('visit')">
+      <div class="qa-icon">💆</div>
+      <div class="qa-text"><div class="qa-title">預約來店體驗</div><div class="qa-sub">歡迎來店試用後再下單</div></div>
+      <div class="qa-arrow">→</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-tabs-wrap" id="products">
+  <div class="page-tabs" id="page-tabs">
+    <button class="page-tab active" onclick="switchPage(0)">第一頁</button>
+    <button class="page-tab" onclick="switchPage(1)">第二頁</button>
+    <button class="page-tab" onclick="switchPage(2)">第三頁</button>
+    <button class="page-tab" onclick="switchPage(3)">第四頁</button>
+    <button class="page-tab" onclick="switchPage(4)">美髮周邊</button>
+  </div>
+</div>
+
+<div id="pages-wrap"></div>
+
+<div class="features-bg">
+  <div class="section" style="padding-top:40px;padding-bottom:40px;">
+    <div class="features-grid">
+      <div class="feat-item"><div class="feat-icon">🎁</div><div class="feat-title">購買即回饋購物券</div><div class="feat-text">每筆消費皆可獲得購物券，下次繼續使用</div></div>
+      <div class="feat-item"><div class="feat-icon">💆</div><div class="feat-title">歡迎來店體驗再下單</div><div class="feat-text">親身感受產品效果，試用滿意再購買</div></div>
+      <div class="feat-item"><div class="feat-icon">🌿</div><div class="feat-title">職人一對一推薦</div><div class="feat-text">依您的頭皮與髮質，量身推薦最合適的產品</div></div>
+      <div class="feat-item"><div class="feat-icon">📦</div><div class="feat-title">居家沙龍兩相宜</div><div class="feat-text">自備帶回家，或留店施作享優惠價</div></div>
+    </div>
+  </div>
+</div>
+
+<footer>© UNI髮型設計｜職人選品 髮品坊 · 專業護髮 · 親子美髮</footer>
+
+<!-- CART -->
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sb-head"><h3>🛒 購物車</h3><button class="sb-close" onclick="toggleCart()">✕</button></div>
+  <div class="sb-body" id="cart-body"><div class="sb-empty"><span>🛒</span>購物車是空的<br>快去挑選喜歡的商品吧</div></div>
+  <div class="sb-foot">
+    <div class="sb-total-row"><span class="sb-total-lbl">合計</span><span class="sb-total-val" id="cart-total">NT$ 0</span></div>
+    <div class="gift-selector-wrap" id="gift-selector-wrap">
+      <div class="gift-label">🎁 恭喜！您已符合贈品兌換資格，請選擇：</div>
+      <select class="gift-select" id="gift-choice"></select>
+    </div>
+    <!-- ⚙️ 換金流連結：修改下方 onclick 的網址 -->
+    <button class="checkout-btn" id="checkout-btn" disabled onclick="window.location.href=CHECKOUT_URL">前往結帳 →</button>
+  </div>
+</div>
+
+<!-- MODAL: 索取體驗包 -->
+<div class="modal-wrap" id="modal-sample">
+  <div class="modal">
+    <div class="modal-head"><h3>🫧 索取髮品體驗包</h3><button class="modal-close" onclick="closeModal('sample')">✕</button></div>
+    <div class="modal-body" id="modal-sample-body">
+      <div class="form-group"><label class="form-label">您的姓名</label><input class="form-input" type="text" placeholder="請輸入姓名"></div>
+      <div class="form-group"><label class="form-label">聯絡電話</label><input class="form-input" type="tel" placeholder="請輸入手機號碼"></div>
+      <div class="form-group"><label class="form-label">想試用的系列</label><select class="form-select"><option value="">— 請選擇 —</option><option>CACLEE 精油系列（洗髮）</option><option>香氛香水髮膜系列（修護）</option><option>兩種都想試試</option></select></div>
+      <div class="form-group"><label class="form-label">您目前的髮質狀況</label><select class="form-select"><option value="">— 請選擇 —</option><option>頭皮出油 / 頭皮問題</option><option>髮絲乾燥受損</option><option>染燙後需修護</option><option>一般正常髮質</option></select></div>
+      <div class="form-group"><label class="form-label">領取方式</label><select class="form-select"><option>來店領取</option><option>寄送到府（請備註地址）</option></select></div>
+      <div class="form-group"><label class="form-label">備註</label><textarea class="form-textarea" placeholder="地址或其他說明（選填）"></textarea></div>
+      <button class="form-submit" onclick="submitForm('sample')">送出索取申請</button>
+    </div>
+    <div class="success-msg" id="sample-success"><div class="s-icon">🫧</div><h4>已收到您的申請！</h4><p>我們會為您準備體驗包，<br>並盡快與您確認領取方式 🌿</p></div>
+  </div>
+</div>
+
+<!-- MODAL: 預約來店 -->
+<div class="modal-wrap" id="modal-visit">
+  <div class="modal">
+    <div class="modal-head"><h3>💆 預約來店體驗</h3><button class="modal-close" onclick="closeModal('visit')">✕</button></div>
+    <div class="modal-body" id="modal-visit-body">
+      <div class="form-group"><label class="form-label">您的姓名</label><input class="form-input" type="text" placeholder="請輸入姓名"></div>
+      <div class="form-group"><label class="form-label">聯絡電話</label><input class="form-input" type="tel" placeholder="請輸入手機號碼"></div>
+      <div class="form-group"><label class="form-label">希望到訪時間</label><input class="form-input" type="text" placeholder="例：3/28 下午 2點後"></div>
+      <div class="form-group"><label class="form-label">想了解的服務</label><textarea class="form-textarea" placeholder="例：頭皮護理、受損修復、親子美髮…"></textarea></div>
+      <button class="form-submit" onclick="submitForm('visit')">送出預約申請</button>
+    </div>
+    <div class="success-msg" id="visit-success"><div class="s-icon">💆</div><h4>預約申請已送出！</h4><p>我們將盡快與您聯繫確認時間。<br>期待您的到來 🌿</p></div>
+  </div>
+</div>
+
+<!-- MODAL: 編輯贈品 -->
+<div class="modal-wrap" id="modal-gift-edit">
+  <div class="modal">
+    <div class="modal-head"><h3>⚙️ 編輯贈品選項</h3><button class="modal-close" onclick="closeModal('gift-edit')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:.72rem;color:var(--mid);margin-bottom:14px;font-family:'Noto Sans TC',sans-serif;line-height:1.6;">顧客結帳時可選擇一項贈品，請依需求新增或修改：</p>
+      <div class="gift-edit-list" id="gift-edit-list"></div>
+      <button class="add-gift-btn" onclick="addGiftOption()">＋ 新增贈品選項</button>
+      <button class="form-submit" onclick="saveGifts()">儲存贈品設定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════
+// ⚙️ 換金流連結
+const CHECKOUT_URL = 'https://your-payment-link.com';
+// ══════════════════════════════
+
+const PAGE_CONFIGS = [
+  { name:'第一頁',   label:'Collection 01', desc:'精選護髮商品' },
+  { name:'第二頁',   label:'Collection 02', desc:'精選護髮商品' },
+  { name:'第三頁',   label:'Collection 03', desc:'精選護髮商品' },
+  { name:'第四頁',   label:'Collection 04', desc:'精選護髮商品' },
+  { name:'美髮周邊', label:'Hair Accessories', desc:'髮飾 · 造型品 · 洗髮周邊' },
+];
+
+const PH_COLORS = [
+  'linear-gradient(145deg,#3d2b1f,#6b4226)',
+  'linear-gradient(145deg,#4a3228,#9a6a5a)',
+  'linear-gradient(145deg,#2e2018,#7a5a3a)',
+  'linear-gradient(145deg,#3a2a1e,#8a6040)',
+  'linear-gradient(145deg,#5a3a2a,#a07860)',
+  'linear-gradient(145deg,#4a2e1e,#8c6244)',
+  'linear-gradient(145deg,#352010,#7a4a28)',
+  'linear-gradient(145deg,#3e2c20,#7c5a3e)',
+  'linear-gradient(145deg,#2c1c12,#6a4030)',
+  'linear-gradient(145deg,#483020,#906050)',
+];
+const PH_ICONS  = ['🌿','✨','🫙','🌸','🌾','🍃','💧','🧴','🪴','🌻','🫚','🌱','🍂','🌼','💫','🌙','🪷','🌺','🫐','🌊'];
+const HAIR_ICONS = ['💇','✂️','🪮','🎀','💈','🧣','🫧','🪥','🎭','💫','🌀','🪞','🎗️','🎀','💅','🌈','⭐','🎠','🪄','💎'];
+
+let products = {};
+let giftOptions = ['贈品 A（請自行修改）','贈品 B（請自行修改）','贈品 C（請自行修改）'];
+
+function initProducts() {
+  for (let p = 0; p < 5; p++) {
+    products[p] = [];
+    const isHair = (p === 4);
+    const icons = isHair ? HAIR_ICONS : PH_ICONS;
+    for (let i = 0; i < 20; i++) {
+      products[p].push({
+        id: `p${p}i${i}`,
+        series: isHair ? '美髮周邊' : '系列名稱',
+        name: isHair
+          ? ['髮夾組合','造型髮圈','洗髮刷','護髮噴霧','定型液','捲髮棒','梳子套組','髮帶組','頭皮按摩梳','造型慕斯','抗靜電梳','固定噴霧','蓬鬆粉','造型蠟','護色噴霧','捲髮棒組','直髮梳','頭皮精華','護髮噴霧','髮型固定液'][i]
+          : '商品名稱',
+        desc: isHair ? '美髮造型周邊，提升日常護髮體驗。點擊可編輯。' : '商品描述，點擊可直接編輯內容。',
+        priceOrig: '',
+        priceNow: '0',
+        tag: i < 2 ? (isHair ? 'NEW' : '體驗價') : '',
+        imgSrc: null,
+        imgColor: PH_COLORS[i % PH_COLORS.length],
+        imgIcon: icons[i % icons.length],
+      });
+    }
+  }
+}
+
+function renderPages() {
+  const wrap = document.getElementById('pages-wrap');
+  wrap.innerHTML = '';
+  for (let p = 0; p < 5; p++) {
+    const cfg = PAGE_CONFIGS[p];
+    const div = document.createElement('div');
+    div.className = 'shop-page' + (p === 0 ? ' active' : '');
+    div.id = `shop-page-${p}`;
+    div.innerHTML = `<div class="section"><div class="sec-head"><div class="sec-label">${cfg.label}</div><h2>${cfg.name}</h2><div class="sec-line"></div><p class="sec-desc">${cfg.desc}</p></div><div class="product-grid" id="grid-${p}"></div></div>`;
+    wrap.appendChild(div);
+    renderGrid(p);
+  }
+}
+
+function renderGrid(p) {
+  const grid = document.getElementById(`grid-${p}`);
+  grid.innerHTML = '';
+  products[p].forEach((prod) => grid.appendChild(makeCard(prod)));
+}
+
+function makeCard(prod) {
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  const imgHtml = prod.imgSrc
+    ? `<img src="${prod.imgSrc}" alt="${prod.name}">`
+    : `<div class="img-ph" style="background:${prod.imgColor}"><span class="img-ph-icon">${prod.imgIcon}</span><span class="img-ph-txt">商品圖片</span><span class="img-ph-hint">拖拉或點擊上傳</span></div>`;
+  const tagHtml = prod.tag ? `<div class="prod-tag">${prod.tag}</div>` : '';
+
+  card.innerHTML = `
+    <div class="prod-img" id="img-${prod.id}"
+      ondragover="onDragOver(event,'${prod.id}')"
+      ondragleave="onDragLeave('${prod.id}')"
+      ondrop="onDrop(event,'${prod.id}')"
+      onclick="triggerFile('${prod.id}')">
+      ${imgHtml}${tagHtml}
+      <button class="img-edit-btn" onclick="event.stopPropagation();triggerFile('${prod.id}')">換圖 ✎</button>
+    </div>
+    <input type="file" accept="image/*" class="hidden-input" id="file-${prod.id}" onchange="onFileChange(event,'${prod.id}')">
+    <div class="prod-body">
+      <div class="prod-series" contenteditable="true" onblur="save('${prod.id}','series',this.innerText)">${prod.series}</div>
+      <div class="prod-name" contenteditable="true" onblur="save('${prod.id}','name',this.innerText)">${prod.name}</div>
+      <div class="prod-desc" contenteditable="true" onblur="save('${prod.id}','desc',this.innerText)">${prod.desc}</div>
+      <div class="prod-price-row">
+        <div>
+          <input class="price-orig-input" type="text" value="${prod.priceOrig}" placeholder="原價（選填）" onchange="save('${prod.id}','priceOrig',this.value)">
+          <div class="price-row">
+            <span class="price-prefix">NT$</span>
+            <input class="price-input" type="text" value="${prod.priceNow}" placeholder="0" onchange="save('${prod.id}','priceNow',this.value)">
+          </div>
+        </div>
+        <div class="qty-wrap">
+          <button class="qty-btn" onclick="chgQty(this,-1)">−</button>
+          <input class="qty-num" type="number" value="1" min="1" max="99" readonly>
+          <button class="qty-btn" onclick="chgQty(this,1)">+</button>
+        </div>
+      </div>
+      <button class="add-btn" data-pid="${prod.id}" onclick="addCart(this)">加入購物車</button>
+    </div>`;
+  return card;
+}
+
+// ── 圖片 ──
+function triggerFile(pid) { document.getElementById(`file-${pid}`).click(); }
+function onFileChange(e, pid) { const f = e.target.files[0]; if (f) loadImg(f, pid); }
+function onDragOver(e, pid) { e.preventDefault(); document.getElementById(`img-${pid}`).classList.add('drag-over'); }
+function onDragLeave(pid) { document.getElementById(`img-${pid}`).classList.remove('drag-over'); }
+function onDrop(e, pid) {
+  e.preventDefault();
+  document.getElementById(`img-${pid}`).classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadImg(f, pid);
+}
+function loadImg(file, pid) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const src = ev.target.result;
+    const [p, i] = findProd(pid);
+    products[p][i].imgSrc = src;
+    const area = document.getElementById(`img-${pid}`);
+    const tag = area.querySelector('.prod-tag') ? area.querySelector('.prod-tag').outerHTML : '';
+    area.innerHTML = `<img src="${src}" alt=""><button class="img-edit-btn" onclick="event.stopPropagation();triggerFile('${pid}')">換圖 ✎</button>${tag}`;
+    showToast('✓ 圖片已更新');
+  };
+  r.readAsDataURL(file);
+}
+function findProd(pid) {
+  for (let p = 0; p < 5; p++) {
+    const i = products[p].findIndex(x => x.id === pid);
+    if (i !== -1) return [p, i];
+  }
+  return [0, 0];
+}
+function save(pid, key, val) {
+  const [p, i] = findProd(pid);
+  products[p][i][key] = val.trim();
+}
+
+// ── 購物車 ──
+let cart = [];
+function chgQty(btn, d) {
+  const inp = btn.parentElement.querySelector('.qty-num');
+  inp.value = Math.min(99, Math.max(1, parseInt(inp.value) + d));
+}
+function addCart(btn) {
+  const card = btn.closest('.product-card');
+  const pid = btn.dataset.pid;
+  const qty = parseInt(card.querySelector('.qty-num').value);
+  const [p, i] = findProd(pid);
+  const prod = products[p][i];
+  const price = parseInt(prod.priceNow) || 0;
+  const ex = cart.find(x => x.id === pid);
+  if (ex) ex.qty += qty;
+  else cart.push({ id:pid, name:prod.name, series:prod.series, price, qty, imgSrc:prod.imgSrc, imgColor:prod.imgColor, imgIcon:prod.imgIcon });
+  updateCart();
+  showToast('✓ 已加入購物車');
+  btn.textContent = '✓ 已加入'; btn.classList.add('done');
+  setTimeout(() => { btn.textContent = '加入購物車'; btn.classList.remove('done'); }, 1500);
+}
+function removeItem(id) { cart = cart.filter(x => x.id !== id); updateCart(); }
+function updateCart() {
+  const count = cart.reduce((s,x) => s+x.qty, 0);
+  const total = cart.reduce((s,x) => s+x.price*x.qty, 0);
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-total').textContent = 'NT$ ' + total.toLocaleString();
+  document.getElementById('gift-selector-wrap').style.display = total > 0 ? 'block' : 'none';
+  document.getElementById('checkout-btn').disabled = !cart.length;
+  const body = document.getElementById('cart-body');
+  if (!cart.length) { body.innerHTML = '<div class="sb-empty"><span>🛒</span>購物車是空的<br>快去挑選喜歡的商品吧</div>'; return; }
+  body.innerHTML = cart.map(x => `
+    <div class="cart-item">
+      <div class="ci-thumb">${x.imgSrc ? `<img src="${x.imgSrc}" style="width:100%;height:100%;object-fit:cover">` : `<div style="width:100%;height:100%;background:${x.imgColor};display:flex;align-items:center;justify-content:center;font-size:1.1rem">${x.imgIcon}</div>`}</div>
+      <div class="ci-info"><div class="ci-series">${x.series}</div><div class="ci-name">${x.name}</div><div class="ci-price">NT$ ${(x.price*x.qty).toLocaleString()} <span style="font-size:.62rem;color:#aaa">×${x.qty}</span></div></div>
+      <button class="ci-rm" onclick="removeItem('${x.id}')">✕</button>
+    </div>`).join('');
+}
+
+// ── 贈品 ──
+function renderGiftSelect() {
+  const sel = document.getElementById('gift-choice');
+  sel.innerHTML = '<option value="">— 選擇贈品 —</option>' + giftOptions.map(g => `<option>${g}</option>`).join('');
+}
+function renderGiftEditList() {
+  document.getElementById('gift-edit-list').innerHTML = giftOptions.map((g,i) => `
+    <div class="gift-edit-item">
+      <input class="gift-edit-input" type="text" value="${g}" id="go-${i}">
+      <button class="gift-edit-rm" onclick="removeGift(${i})">✕</button>
+    </div>`).join('');
+}
+function addGiftOption() { giftOptions.push('新贈品（點此修改）'); renderGiftEditList(); }
+function removeGift(i) { giftOptions.splice(i,1); renderGiftEditList(); }
+function saveGifts() {
+  giftOptions = Array.from(document.querySelectorAll('[id^="go-"]')).map(x => x.value.trim()).filter(Boolean);
+  renderGiftSelect(); closeModal('gift-edit'); showToast('✓ 贈品設定已儲存');
+}
+
+// ── 頁籤 ──
+function switchPage(idx) {
+  document.querySelectorAll('.shop-page').forEach((p,i) => p.classList.toggle('active', i===idx));
+  document.querySelectorAll('.page-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+}
+function scrollToProducts() { document.getElementById('products').scrollIntoView({behavior:'smooth'}); }
+
+// ── Modal / Cart ──
+function openModal(t) { if(t==='gift-edit') renderGiftEditList(); document.getElementById(`modal-${t}`).classList.add('on'); }
+function closeModal(t) { document.getElementById(`modal-${t}`).classList.remove('on'); }
+function toggleCart() { document.getElementById('overlay').classList.toggle('on'); document.getElementById('sidebar').classList.toggle('on'); }
+function submitForm(t) {
+  document.getElementById(`modal-${t}-body`).style.display='none';
+  document.getElementById(`${t}-success`).style.display='block';
+  setTimeout(()=>closeModal(t),2600);
+  setTimeout(()=>{document.getElementById(`modal-${t}-body`).style.display='block';document.getElementById(`${t}-success`).style.display='none';},3200);
+}
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+document.querySelectorAll('.modal-wrap').forEach(w => w.addEventListener('click', e => { if(e.target===w) w.classList.remove('on'); }));
+
+// ── INIT ──
+initProducts();
+renderPages();
+renderGiftSelect();
+</script>
+</body>
+</html>
