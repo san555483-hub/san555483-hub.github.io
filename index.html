@@ -143,6 +143,23 @@ header{background:var(--bark);position:sticky;top:0;z-index:200;box-shadow:0 2px
 .sb-total-lbl{font-size:.72rem;color:var(--mid);}
 .sb-total-val{font-family:'Playfair Display',serif;font-size:1.55rem;color:var(--bark);}
 .gift-selector-wrap{display:none;margin-bottom:11px;}
+.discount-bar{background:rgba(122,140,110,.10);border-left:3px solid var(--moss);padding:7px 10px;font-size:.72rem;color:var(--moss);margin-bottom:8px;border-radius:0 3px 3px 0;font-family:'Noto Sans TC',sans-serif;display:none;}
+.discount-next{background:rgba(184,137,90,.08);border-left:3px solid var(--gold);padding:7px 10px;font-size:.7rem;color:var(--gold);margin-bottom:8px;border-radius:0 3px 3px 0;font-family:'Noto Sans TC',sans-serif;display:none;}
+.sb-discount-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.sb-discount-lbl{font-size:.72rem;color:var(--moss);}
+.sb-discount-val{font-family:'Playfair Display',serif;font-size:1rem;color:var(--moss);}
+.sb-final-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding-top:6px;border-top:1px solid var(--border);}
+.sb-final-lbl{font-size:.78rem;font-weight:600;color:var(--ink);}
+.sb-final-val{font-family:'Playfair Display',serif;font-size:1.55rem;color:var(--bark);}
+.discount-edit-wrap{margin-bottom:14px;}
+.discount-edit-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+.discount-edit-row input{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.78rem;color:var(--ink);background:var(--linen);outline:none;}
+.discount-edit-row input:focus{border-color:var(--rose);}
+.discount-edit-row span{font-size:.72rem;color:var(--mid);white-space:nowrap;}
+.discount-rm{background:none;border:none;color:#ccc;cursor:pointer;font-size:.95rem;padding:3px;}
+.discount-rm:hover{color:#e05050;}
+.add-discount-btn{width:100%;padding:8px;border:1.5px dashed var(--border);background:none;color:var(--mid);font-family:'Noto Serif TC',serif;font-size:.77rem;border-radius:3px;cursor:pointer;transition:all .2s;margin-bottom:12px;}
+.add-discount-btn:hover{border-color:var(--gold);color:var(--gold);}
 .gift-label{font-size:.7rem;color:var(--moss);padding:5px 9px;background:rgba(122,140,110,.08);border-left:2px solid var(--moss);margin-bottom:7px;line-height:1.5;font-family:'Noto Sans TC',sans-serif;}
 .gift-select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.78rem;color:var(--ink);background:var(--linen);outline:none;}
 .gift-select:focus{border-color:var(--rose);}
@@ -197,6 +214,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     <div class="header-actions">
       <button class="h-btn" onclick="openModal('sample')">🫧 <span>索取體驗包</span></button>
       <button class="h-btn" onclick="openModal('gift-edit')">⚙️ <span>編輯贈品</span></button>
+      <button class="h-btn" onclick="openModal('discount-edit')">💰 <span>折扣設定</span></button>
       <button class="h-btn cart-btn" onclick="toggleCart()">🛒 <span>購物車</span><span class="cart-badge" id="cart-count">0</span></button>
     </div>
   </div>
@@ -246,7 +264,11 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   <div class="sb-head"><h3>🛒 購物車</h3><button class="sb-close" onclick="toggleCart()">✕</button></div>
   <div class="sb-body" id="cart-body"><div class="sb-empty"><span>🛒</span>購物車是空的<br>快去挑選喜歡的商品吧</div></div>
   <div class="sb-foot">
-    <div class="sb-total-row"><span class="sb-total-lbl">合計</span><span class="sb-total-val" id="cart-total">NT$ 0</span></div>
+    <div class="sb-total-row"><span class="sb-total-lbl">小計</span><span class="sb-total-val" id="cart-total">NT$ 0</span></div>
+    <div class="discount-next" id="discount-next"></div>
+    <div class="discount-bar" id="discount-bar"></div>
+    <div class="sb-discount-row" id="discount-row" style="display:none"><span class="sb-discount-lbl">🎉 折扣</span><span class="sb-discount-val" id="discount-val">-NT$ 0</span></div>
+    <div class="sb-final-row" id="final-row" style="display:none"><span class="sb-final-lbl">結帳金額</span><span class="sb-final-val" id="cart-final">NT$ 0</span></div>
     <div class="gift-selector-wrap" id="gift-selector-wrap"><div class="gift-label">🎁 恭喜！您已符合贈品兌換資格，請選擇：</div><select class="gift-select" id="gift-choice"></select></div>
     <button class="checkout-btn" id="checkout-btn" disabled onclick="openOrderModal()">填寫訂單 → 前往付款</button>
   </div>
@@ -290,6 +312,18 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     </div>
   </div>
 </div>
+<div class="modal-wrap" id="modal-discount-edit">
+  <div class="modal">
+    <div class="modal-head"><h3>💰 編輯滿額折扣</h3><button class="modal-close" onclick="closeModal('discount-edit')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:.72rem;color:var(--mid);margin-bottom:14px;font-family:'Noto Sans TC',sans-serif;line-height:1.6;">設定滿額折扣規則，系統將自動套用最高可享折扣：</p>
+      <div class="discount-edit-wrap" id="discount-edit-list"></div>
+      <button class="add-discount-btn" onclick="addDiscountRule()">＋ 新增折扣規則</button>
+      <button class="form-submit" onclick="saveDiscounts()">儲存折扣設定</button>
+    </div>
+  </div>
+</div>
+
 <div class="order-modal-wrap" id="order-modal-wrap">
   <div class="order-modal">
     <div class="order-modal-top">
@@ -341,7 +375,55 @@ let cart=[];
 function chgQty(btn,d){const inp=btn.parentElement.querySelector('.qty-num');inp.value=Math.min(99,Math.max(1,parseInt(inp.value)+d));}
 function addCart(btn){const card=btn.closest('.product-card'),pid=btn.dataset.pid,qty=parseInt(card.querySelector('.qty-num').value);const[p,i]=findProd(pid),prod=products[p][i],price=parseInt(prod.priceNow)||0;const ex=cart.find(x=>x.id===pid);if(ex)ex.qty+=qty;else cart.push({id:pid,name:prod.name,series:prod.series,price,qty,imgSrc:prod.imgSrc,imgColor:prod.imgColor,imgIcon:prod.imgIcon});updateCart();showToast('✓ 已加入購物車');btn.textContent='✓ 已加入';btn.classList.add('done');setTimeout(()=>{btn.textContent='加入購物車';btn.classList.remove('done');},1500);}
 function removeItem(id){cart=cart.filter(x=>x.id!==id);updateCart();}
-function updateCart(){const count=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+x.price*x.qty,0);document.getElementById('cart-count').textContent=count;document.getElementById('cart-total').textContent='NT$ '+total.toLocaleString();document.getElementById('gift-selector-wrap').style.display=total>0?'block':'none';document.getElementById('checkout-btn').disabled=!cart.length;const body=document.getElementById('cart-body');if(!cart.length){body.innerHTML='<div class="sb-empty"><span>🛒</span>購物車是空的<br>快去挑選喜歡的商品吧</div>';return;}body.innerHTML=cart.map(x=>`<div class="cart-item"><div class="ci-thumb">${x.imgSrc?`<img src="${x.imgSrc}" style="width:100%;height:100%;object-fit:cover">`:`<div style="width:100%;height:100%;background:${x.imgColor};display:flex;align-items:center;justify-content:center;font-size:1.1rem">${x.imgIcon}</div>`}</div><div class="ci-info"><div class="ci-series">${x.series}</div><div class="ci-name">${x.name}</div><div class="ci-price">NT$ ${(x.price*x.qty).toLocaleString()} <span style="font-size:.62rem;color:#aaa">×${x.qty}</span></div></div><button class="ci-rm" onclick="removeItem('${x.id}')">✕</button></div>`).join('');}
+let discountRules=[];
+function calcDiscount(total){
+  const sorted=discountRules.filter(r=>r.threshold>0&&r.discount>0).sort((a,b)=>b.threshold-a.threshold);
+  const matched=sorted.find(r=>total>=r.threshold);
+  const next=sorted.slice().reverse().find(r=>total<r.threshold);
+  return{matched,next};
+}
+function updateCart(){
+  const count=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+x.price*x.qty,0);
+  document.getElementById('cart-count').textContent=count;
+  document.getElementById('cart-total').textContent='NT$ '+total.toLocaleString();
+  document.getElementById('gift-selector-wrap').style.display=total>0?'block':'none';
+  document.getElementById('checkout-btn').disabled=!cart.length;
+  const{matched,next}=calcDiscount(total);
+  const discountBar=document.getElementById('discount-bar');
+  const discountNext=document.getElementById('discount-next');
+  const discountRow=document.getElementById('discount-row');
+  const finalRow=document.getElementById('final-row');
+  if(matched&&total>0){
+    discountBar.style.display='block';
+    discountBar.textContent=`🎉 滿 NT$${matched.threshold.toLocaleString()} 折 NT$${matched.discount.toLocaleString()}，已自動套用！`;
+    discountRow.style.display='flex';
+    document.getElementById('discount-val').textContent=`-NT$ ${matched.discount.toLocaleString()}`;
+    finalRow.style.display='flex';
+    document.getElementById('cart-final').textContent=`NT$ ${(total-matched.discount).toLocaleString()}`;
+  } else {
+    discountBar.style.display='none';
+    discountRow.style.display='none';
+    finalRow.style.display='none';
+  }
+  if(next&&total>0){
+    discountNext.style.display='block';
+    discountNext.textContent=`再消費 NT$${(next.threshold-total).toLocaleString()} 即可享折扣 NT$${next.discount.toLocaleString()}`;
+  } else {
+    discountNext.style.display='none';
+  }
+  const body=document.getElementById('cart-body');
+  if(!cart.length){body.innerHTML='<div class="sb-empty"><span>🛒</span>購物車是空的<br>快去挑選喜歡的商品吧</div>';return;}
+  body.innerHTML=cart.map(x=>`<div class="cart-item"><div class="ci-thumb">${x.imgSrc?`<img src="${x.imgSrc}" style="width:100%;height:100%;object-fit:cover">`:`<div style="width:100%;height:100%;background:${x.imgColor};display:flex;align-items:center;justify-content:center;font-size:1.1rem">${x.imgIcon}</div>`}</div><div class="ci-info"><div class="ci-series">${x.series}</div><div class="ci-name">${x.name}</div><div class="ci-price">NT$ ${(x.price*x.qty).toLocaleString()} <span style="font-size:.62rem;color:#aaa">×${x.qty}</span></div></div><button class="ci-rm" onclick="removeItem('${x.id}')">✕</button></div>`).join('');
+}
+function renderDiscountEditList(){
+  document.getElementById('discount-edit-list').innerHTML=discountRules.map((r,i)=>`<div class="discount-edit-row"><span>滿</span><input type="number" value="${r.threshold}" id="dt-${i}" placeholder="金額" min="0"><span>折</span><input type="number" value="${r.discount}" id="dd-${i}" placeholder="折扣金額" min="0"><button class="discount-rm" onclick="removeDiscountRule(${i})">✕</button></div>`).join('');
+}
+function addDiscountRule(){discountRules.push({threshold:0,discount:0});renderDiscountEditList();}
+function removeDiscountRule(i){discountRules.splice(i,1);renderDiscountEditList();}
+function saveDiscounts(){
+  discountRules=discountRules.map((_,i)=>({threshold:parseInt(document.getElementById(`dt-${i}`).value)||0,discount:parseInt(document.getElementById(`dd-${i}`).value)||0})).filter(r=>r.threshold>0&&r.discount>0);
+  updateCart();closeModal('discount-edit');showToast('✓ 折扣設定已儲存');
+}
 function renderGiftSelect(){const sel=document.getElementById('gift-choice');sel.innerHTML='<option value="">— 選擇贈品 —</option>'+giftOptions.map(g=>`<option>${g}</option>`).join('');}
 function renderGiftEditList(){document.getElementById('gift-edit-list').innerHTML=giftOptions.map((g,i)=>`<div class="gift-edit-item"><input class="gift-edit-input" type="text" value="${g}" id="go-${i}"><button class="gift-edit-rm" onclick="removeGift(${i})">✕</button></div>`).join('');}
 function addGiftOption(){giftOptions.push('新贈品（點此修改）');renderGiftEditList();}
@@ -356,7 +438,7 @@ function submitForm(t){document.getElementById(`modal-${t}-body`).style.display=
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
 document.querySelectorAll('.modal-wrap').forEach(w=>w.addEventListener('click',e=>{if(e.target===w)w.classList.remove('on');}));
 function generateOrderNum(){const d=new Date(),ymd=d.getFullYear().toString().slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');return'UNI-'+ymd+'-'+(Math.floor(Math.random()*9000)+1000);}
-function openOrderModal(){if(!cart.length)return;currentOrderNum=generateOrderNum();document.getElementById('order-number').textContent=currentOrderNum;const total=cart.reduce((s,x)=>s+x.price*x.qty,0);let itemsHtml=cart.map(x=>`<div class="order-item-row"><div><span class="order-item-name">${x.name}</span><span class="order-item-qty">×${x.qty}</span></div><div class="order-item-price">NT$ ${(x.price*x.qty).toLocaleString()}</div></div>`).join('');itemsHtml+=`<div class="order-total-row"><span class="order-total-lbl">合計金額</span><span class="order-total-val">NT$ ${total.toLocaleString()}</span></div>`;document.getElementById('order-items').innerHTML=itemsHtml;const giftVal=document.getElementById('gift-choice').value;const giftRow=document.getElementById('order-gift-row');if(giftVal){giftRow.style.display='block';giftRow.innerHTML='🎁 兌換贈品：'+giftVal+'<br><span style="font-size:.68rem;opacity:.8">來店出示訂單編號即可兌換</span>';}else{giftRow.style.display='none';}submitOrderToSheet(currentOrderNum,total,giftVal);document.getElementById('order-modal-wrap').classList.add('on');}
+function openOrderModal(){if(!cart.length)return;currentOrderNum=generateOrderNum();document.getElementById('order-number').textContent=currentOrderNum;const subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);const{matched}=calcDiscount(subtotal);const discount=matched?matched.discount:0;const total=subtotal-discount;let itemsHtml=cart.map(x=>`<div class="order-item-row"><div><span class="order-item-name">${x.name}</span><span class="order-item-qty">×${x.qty}</span></div><div class="order-item-price">NT$ ${(x.price*x.qty).toLocaleString()}</div></div>`).join('');if(discount>0){itemsHtml+=`<div class="order-item-row"><div><span class="order-item-name" style="color:var(--moss)">🎉 折扣優惠</span></div><div class="order-item-price" style="color:var(--moss)">-NT$ ${discount.toLocaleString()}</div></div>`;}itemsHtml+=`<div class="order-total-row"><span class="order-total-lbl">結帳金額</span><span class="order-total-val">NT$ ${total.toLocaleString()}</span></div>`;document.getElementById('order-items').innerHTML=itemsHtml;const giftVal=document.getElementById('gift-choice').value;const giftRow=document.getElementById('order-gift-row');if(giftVal){giftRow.style.display='block';giftRow.innerHTML='🎁 兌換贈品：'+giftVal+'<br><span style="font-size:.68rem;opacity:.8">來店出示訂單編號即可兌換</span>';}else{giftRow.style.display='none';}submitOrderToSheet(currentOrderNum,total,giftVal);document.getElementById('order-modal-wrap').classList.add('on');}
 function submitOrderToSheet(orderNum,total,gift){const items=cart.map(x=>`${x.name}×${x.qty}`).join('、');fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderNum,time:new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}),items,total,gift:gift||'無'})}).catch(()=>{});}
 function closeOrderModal(){document.getElementById('order-modal-wrap').classList.remove('on');}
 function goToPayment(){window.open(JKO_PAY_URL,'_blank');}
