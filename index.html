@@ -608,7 +608,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     <div class="discount-bar" id="discount-bar"></div>
     <div class="sb-discount-row" id="discount-row" style="display:none"><span class="sb-discount-lbl">🎉 折扣</span><span class="sb-discount-val" id="discount-val">-NT$ 0</span></div>
     <div class="sb-final-row" id="final-row" style="display:none"><span class="sb-final-lbl">結帳金額</span><span class="sb-final-val" id="cart-final">NT$ 0</span></div>
-    <div class="gift-selector-wrap" id="gift-selector-wrap"><div class="gift-label">🎁 恭喜！您已符合贈品兌換資格，請選擇：</div><select class="gift-select" id="gift-choice"></select></div>
+    <div class="gift-selector-wrap" id="gift-selector-wrap"><div class="gift-label" id="gift-auto-label"></div></div>
     <button class="checkout-btn" id="checkout-btn" disabled onclick="openOrderModal()">填寫訂單 → 前往付款</button>
   </div>
 </div>
@@ -718,7 +718,8 @@ const PH_COLORS=['linear-gradient(145deg,#3d2b1f,#6b4226)','linear-gradient(145d
 const PH_ICONS=['🌿','✨','🫙','🌸','🌾','🍃','💧','🧴','🪴','🌻','🫚','🌱','🍂','🌼','💫','🌙','🪷','🌺','🫐','🌊'];
 const HAIR_ICONS=['💇','✂️','🪮','🎀','💈','🧣','🫧','🪥','🎭','💫','🌀','🪞','🎗️','🎀','💅','🌈','⭐','🎠','🪄','💎'];
 let products={};
-let giftOptions=['贈品 A（請自行修改）','贈品 B（請自行修改）','贈品 C（請自行修改）'];
+// 贈品設定：{threshold: 滿額金額, name: 贈品名稱}
+let giftRules=[{threshold:500, name:'贈品名稱（請店家修改）'}];
 let currentOrderNum='';
 
 function initProducts(){for(let p=0;p<5;p++){products[p]=[];const isHair=(p===4);const icons=isHair?HAIR_ICONS:PH_ICONS;for(let i=0;i<20;i++){products[p].push({id:`p${p}i${i}`,series:isHair?'美髮周邊':'系列名稱',name:isHair?['髮夾組合','造型髮圈','洗髮刷','護髮噴霧','定型液','捲髮棒','梳子套組','髮帶組','頭皮按摩梳','造型慕斯','抗靜電梳','固定噴霧','蓬鬆粉','造型蠟','護色噴霧','捲髮棒組','直髮梳','頭皮精華','護髮噴霧','髮型固定液'][i]:'商品名稱',desc:isHair?'美髮造型周邊，提升日常護髮體驗。':'商品描述，點擊可直接編輯內容。',priceOrig:'',priceNow:'0',tag:i<2?(isHair?'NEW':'體驗價'):'',imgSrc:null,imgColor:PH_COLORS[i%PH_COLORS.length],imgIcon:icons[i%icons.length],discType:'qty',discThreshold:0,discAmount:0});}}}
@@ -743,6 +744,10 @@ function calcProdDiscount(cartItem){const[p,i]=findProd(cartItem.id);const prod=
 function addCart(btn){const card=btn.closest('.product-card'),pid=btn.dataset.pid,qty=parseInt(card.querySelector('.qty-num').value);const[p,i]=findProd(pid),prod=products[p][i],price=parseInt(prod.priceNow)||0;const ex=cart.find(x=>x.id===pid);if(ex)ex.qty+=qty;else cart.push({id:pid,name:prod.name,series:prod.series,price,qty,imgSrc:prod.imgSrc,imgColor:prod.imgColor,imgIcon:prod.imgIcon});updateCart();showToast('✓ 已加入購物車');btn.textContent='✓ 已加入';btn.classList.add('done');setTimeout(()=>{btn.textContent='加入購物車';btn.classList.remove('done');},1500);}
 function removeItem(id){cart=cart.filter(x=>x.id!==id);updateCart();}
 let discountRules=[];
+function calcAutoGift(total){
+  const matched = giftRules.filter(r=>r.threshold>0&&r.name&&total>=r.threshold).sort((a,b)=>b.threshold-a.threshold);
+  return matched.length>0 ? matched[0].name : null;
+}
 function calcDiscount(total){const sorted=discountRules.filter(r=>r.threshold>0&&r.discount>0).sort((a,b)=>b.threshold-a.threshold);const matched=sorted.find(r=>total>=r.threshold);const next=sorted.slice().reverse().find(r=>total<r.threshold);return{matched,next};}
 function updateCart(){
   const count=cart.reduce((s,x)=>s+x.qty,0),subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);
@@ -753,7 +758,24 @@ function updateCart(){
   const finalTotal=subtotal-totalDiscount;
   document.getElementById('cart-count').textContent=count;
   document.getElementById('cart-total').textContent='NT$ '+subtotal.toLocaleString();
-  document.getElementById('gift-selector-wrap').style.display=subtotal>0?'block':'none';
+  // 自動贈品顯示
+  const autoGift = calcAutoGift(subtotal);
+  const giftWrap = document.getElementById('gift-selector-wrap');
+  const giftLabel = document.getElementById('gift-auto-label');
+  if(subtotal>0 && giftRules.length>0){
+    const nextRule = giftRules.filter(r=>r.threshold>subtotal).sort((a,b)=>a.threshold-b.threshold)[0];
+    if(autoGift){
+      giftWrap.style.display='block';
+      giftLabel.innerHTML='🎁 恭喜！滿額贈品：<strong>'+autoGift+'</strong>（隨貨附贈）';
+    } else if(nextRule){
+      giftWrap.style.display='block';
+      giftLabel.innerHTML='🎁 再消費 NT$'+(nextRule.threshold-subtotal).toLocaleString()+' 即贈送：'+nextRule.name;
+    } else {
+      giftWrap.style.display='none';
+    }
+  } else {
+    giftWrap.style.display='none';
+  }
   document.getElementById('checkout-btn').disabled=!cart.length;
   const discountBar=document.getElementById('discount-bar');
   const discountNext=document.getElementById('discount-next');
@@ -769,11 +791,11 @@ function renderDiscountEditList(){document.getElementById('discount-edit-list').
 function addDiscountRule(){discountRules.push({threshold:0,discount:0});renderDiscountEditList();}
 function removeDiscountRule(i){discountRules.splice(i,1);renderDiscountEditList();}
 function saveDiscounts(){discountRules=discountRules.map((_,i)=>({threshold:parseInt(document.getElementById(`dt-${i}`).value)||0,discount:parseInt(document.getElementById(`dd-${i}`).value)||0})).filter(r=>r.threshold>0&&r.discount>0);updateCart();closeModal('discount-edit');showToast('✓ 折扣設定已儲存');}
-function renderGiftSelect(){const sel=document.getElementById('gift-choice');sel.innerHTML='<option value="">— 選擇贈品 —</option>'+giftOptions.map(g=>`<option>${g}</option>`).join('');}
-function renderGiftEditList(){document.getElementById('gift-edit-list').innerHTML=giftOptions.map((g,i)=>`<div class="gift-edit-item"><input class="gift-edit-input" type="text" value="${g}" id="go-${i}"><button class="gift-edit-rm" onclick="removeGift(${i})">✕</button></div>`).join('');}
-function addGiftOption(){giftOptions.push('新贈品（點此修改）');renderGiftEditList();}
-function removeGift(i){giftOptions.splice(i,1);renderGiftEditList();}
-function saveGifts(){giftOptions=Array.from(document.querySelectorAll('[id^="go-"]')).map(x=>x.value.trim()).filter(Boolean);renderGiftSelect();closeModal('gift-edit');showToast('✓ 贈品設定已儲存');}
+function renderGiftSelect(){} // 已改為自動贈品
+function renderGiftEditList(){document.getElementById('gift-edit-list').innerHTML=giftRules.map((r,i)=>`<div class="gift-edit-item"><span style="font-size:.7rem;color:var(--mid);white-space:nowrap">滿NT$</span><input class="gift-edit-input" type="number" value="${r.threshold}" id="gt-${i}" placeholder="門檻金額" style="width:80px"><span style="font-size:.7rem;color:var(--mid);white-space:nowrap">贈</span><input class="gift-edit-input" type="text" value="${r.name}" id="gn-${i}" placeholder="贈品名稱"><button class="gift-edit-rm" onclick="removeGift(${i})">✕</button></div>`).join('');}
+function addGiftOption(){giftRules.push({threshold:0,name:'新贈品（請修改）'});renderGiftEditList();}
+function removeGift(i){giftRules.splice(i,1);renderGiftEditList();}
+function saveGifts(){giftRules=giftRules.map((_,i)=>({threshold:parseInt(document.getElementById('gt-'+i).value)||0,name:document.getElementById('gn-'+i).value.trim()})).filter(r=>r.threshold>0&&r.name);updateCart();closeModal('gift-edit');showToast('✓ 贈品設定已儲存');}
 function switchPage(idx){document.querySelectorAll('.shop-page').forEach((p,i)=>p.classList.toggle('active',i===idx));document.querySelectorAll('.page-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));}
 function scrollToProducts(){document.getElementById('products').scrollIntoView({behavior:'smooth'});}
 function openModal(t){if(t==='gift-edit')renderGiftEditList();document.getElementById(`modal-${t}`).classList.add('on');}
@@ -783,7 +805,7 @@ function submitForm(t){document.getElementById(`modal-${t}-body`).style.display=
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 document.querySelectorAll('.modal-wrap').forEach(w=>w.addEventListener('click',e=>{if(e.target===w)w.classList.remove('on');}));
 function generateOrderNum(){const d=new Date(),ymd=d.getFullYear().toString().slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');return'UNI-'+ymd+'-'+(Math.floor(Math.random()*9000)+1000);}
-function openOrderModal(){if(!cart.length)return;currentOrderNum=generateOrderNum();document.getElementById('order-number').textContent=currentOrderNum;const subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);const prodDiscounts=cart.reduce((s,x)=>s+calcProdDiscount(x),0);const{matched}=calcDiscount(subtotal);const orderDiscount=matched?matched.discount:0;const totalDiscount=prodDiscounts+orderDiscount;const total=subtotal-totalDiscount;let itemsHtml=cart.map(x=>{const d=calcProdDiscount(x);return`<div class="order-item-row"><div><span class="order-item-name">${x.name}</span><span class="order-item-qty">×${x.qty}</span></div><div class="order-item-price">${d>0?`<span style="font-size:.65rem;color:var(--moss);text-decoration:line-through;margin-right:4px">NT$${(x.price*x.qty).toLocaleString()}</span>NT$ ${(x.price*x.qty-d).toLocaleString()}`:`NT$ ${(x.price*x.qty).toLocaleString()}`}</div></div>`;}).join('');if(orderDiscount>0){itemsHtml+=`<div class="order-item-row"><div><span class="order-item-name" style="color:var(--moss)">🎉 滿額折扣</span></div><div class="order-item-price" style="color:var(--moss)">-NT$ ${orderDiscount.toLocaleString()}</div></div>`;}itemsHtml+=`<div class="order-total-row"><span class="order-total-lbl">結帳金額</span><span class="order-total-val">NT$ ${total.toLocaleString()}</span></div>`;document.getElementById('order-items').innerHTML=itemsHtml;const giftVal=document.getElementById('gift-choice').value;const giftRow=document.getElementById('order-gift-row');if(giftVal){giftRow.style.display='block';giftRow.innerHTML='🎁 兌換贈品：'+giftVal+'<br><span style="font-size:.68rem;opacity:.8">來店出示訂單編號即可兌換</span>';}else{giftRow.style.display='none';}
+function openOrderModal(){if(!cart.length)return;currentOrderNum=generateOrderNum();document.getElementById('order-number').textContent=currentOrderNum;const subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);const prodDiscounts=cart.reduce((s,x)=>s+calcProdDiscount(x),0);const{matched}=calcDiscount(subtotal);const orderDiscount=matched?matched.discount:0;const totalDiscount=prodDiscounts+orderDiscount;const total=subtotal-totalDiscount;let itemsHtml=cart.map(x=>{const d=calcProdDiscount(x);return`<div class="order-item-row"><div><span class="order-item-name">${x.name}</span><span class="order-item-qty">×${x.qty}</span></div><div class="order-item-price">${d>0?`<span style="font-size:.65rem;color:var(--moss);text-decoration:line-through;margin-right:4px">NT$${(x.price*x.qty).toLocaleString()}</span>NT$ ${(x.price*x.qty-d).toLocaleString()}`:`NT$ ${(x.price*x.qty).toLocaleString()}`}</div></div>`;}).join('');if(orderDiscount>0){itemsHtml+=`<div class="order-item-row"><div><span class="order-item-name" style="color:var(--moss)">🎉 滿額折扣</span></div><div class="order-item-price" style="color:var(--moss)">-NT$ ${orderDiscount.toLocaleString()}</div></div>`;}itemsHtml+=`<div class="order-total-row"><span class="order-total-lbl">結帳金額</span><span class="order-total-val">NT$ ${total.toLocaleString()}</span></div>`;document.getElementById('order-items').innerHTML=itemsHtml;const giftVal=calcAutoGift(total)||'';const giftRow=document.getElementById('order-gift-row');giftRow.style.display='none';
   // 同時寫入 GAS（Google Sheets）和 Firestore
   const itemsText=cart.map(x=>`${x.name}×${x.qty}`).join('、');
   submitOrderToSheet(currentOrderNum,total,itemsText,giftVal);
