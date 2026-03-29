@@ -778,7 +778,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 // ⚙️ 設定區
 // ══════════════════════════════
 const JKO_PAY_URL = 'https://service.jkopay.com/r/transfer?j=Transfer:900666675';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby-JwozP216Phz7i5KLumzxB28K0B7qvW4uabEBazRAIE9EBX6bffvX83tKlyYyAmuT/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbz0ZuOsrl3RabW_Ii2daE8pk93Tsyb_XuFCxIa4D2DVswAWrLiE9qDowcHrzSNOL4HI6g/exec';
 // ══════════════════════════════
 
 const PAGE_CONFIGS=[{name:'第一頁',label:'Collection 01',desc:'精選護髮商品'},{name:'第二頁',label:'Collection 02',desc:'精選護髮商品'},{name:'第三頁',label:'Collection 03',desc:'精選護髮商品'},{name:'第四頁',label:'Collection 04',desc:'精選護髮商品'},{name:'美髮周邊',label:'Hair Accessories',desc:'髮飾 · 造型品 · 洗髮周邊'}];
@@ -880,7 +880,11 @@ function openOrderModal(){if(!cart.length)return;currentOrderNum=generateOrderNu
   if(typeof saveOrderToFirestore==='function') saveOrderToFirestore(currentOrderNum,total,itemsText,giftVal);
   document.getElementById('order-modal-wrap').classList.add('on');
 }
-function submitOrderToSheet(orderNum,total,items,gift){fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderNum,time:new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}),items,total,gift:gift||'無'})}).catch(()=>{});}
+function submitOrderToSheet(orderNum,total,items,gift){
+  const time=new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
+  const params=new URLSearchParams({orderNum,time,items,total,gift:gift||'無'});
+  fetch(GAS_URL+'?'+params.toString(),{method:'GET',mode:'no-cors'}).catch(()=>{});
+}
 function closeOrderModal(){document.getElementById('order-modal-wrap').classList.remove('on');}
 function goToPayment(){window.open(JKO_PAY_URL,'_blank');}
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('order-modal-wrap').addEventListener('click',e=>{if(e.target===document.getElementById('order-modal-wrap'))closeOrderModal();});});
