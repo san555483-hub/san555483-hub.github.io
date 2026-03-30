@@ -742,7 +742,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 </div>
 
 <!-- 運費說明彈窗 -->
-<div class="modal-wrap" id="modal-shipping-info">
+<div class="modal-wrap" id="modal-shipping-info" style="z-index:600">
   <div class="modal" style="max-width:480px">
     <div class="modal-head"><h3>🚚 配送資訊 & 運費試算</h3><button class="modal-close" onclick="closeModal('shipping-info')">✕</button></div>
     <div class="modal-body" style="padding:0">
@@ -847,7 +847,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
           <select class="form-select" id="shipping-method" onchange="updateShippingFee()" style="width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.8rem;background:var(--linen)">
           </select>
           <div id="shipping-fee-hint" style="font-size:.7rem;color:var(--moss);margin-top:4px;font-family:'Noto Sans TC',sans-serif"></div>
-          <div style="margin-top:6px"><a href="javascript:void(0)" onclick="document.getElementById('order-modal-wrap').classList.remove('on');setTimeout(()=>openModal('shipping-info'),200)" style="font-size:.68rem;color:var(--rose);font-family:'Noto Sans TC',sans-serif;text-decoration:underline">📋 查看完整運費說明 & 試算 →</a></div>
+          <div style="margin-top:6px"><a href="javascript:void(0)" onclick="openModal('shipping-info')" style="font-size:.68rem;color:var(--rose);font-family:'Noto Sans TC',sans-serif;text-decoration:underline">📋 查看完整運費說明 & 試算 →</a></div>
         </div>
 
         <!-- 電話 -->
