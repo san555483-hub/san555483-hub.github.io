@@ -19,400 +19,84 @@
   --yellow: #ffc107;
   --blue: #42a5f5;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Noto Sans TC', sans-serif;
-  min-height: 100vh;
-}
-
-/* Header */
-.header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-title {
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  color: var(--gold);
-  letter-spacing: 2px;
-}
-
-.header-date {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: 'Space Mono', monospace;
-}
-
-/* Nav tabs */
-.nav {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; min-height: 100vh; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.header-title { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--gold); letter-spacing: 2px; }
+.header-date { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+.nav { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
 .nav::-webkit-scrollbar { display: none; }
-
-.nav-tab {
-  padding: 14px 20px;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-  white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-  letter-spacing: 1px;
-}
-
-.nav-tab.active {
-  color: var(--gold);
-  border-bottom-color: var(--gold);
-}
-
-/* Content */
+.nav-tab { padding: 14px 20px; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 1px; }
+.nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
 .content { padding: 20px 16px; max-width: 600px; margin: 0 auto; }
-
-/* Section */
 .section { display: none; }
 .section.active { display: block; }
-
-/* Card */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 11px;
-  font-family: 'Space Mono', monospace;
-  color: var(--gold);
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 11px; font-family: 'Space Mono', monospace; color: var(--gold); letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; }
 .card-body { padding: 16px; }
-
-/* Booking item */
-.booking-item {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 10px;
-  background: var(--bg);
-}
-
-.booking-time {
-  font-family: 'Space Mono', monospace;
-  font-size: 18px;
-  color: var(--gold);
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.booking-service {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.booking-info {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 8px;
-  line-height: 1.6;
-}
-
-.booking-note {
-  font-size: 11px;
-  color: var(--yellow);
-  background: rgba(255,193,7,0.1);
-  border-radius: 4px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-}
-
-.booking-priority {
-  font-size: 11px;
-  color: var(--gold);
-  background: rgba(196,168,130,0.1);
-  border-radius: 4px;
-  padding: 4px 8px;
-  display: inline-block;
-  margin-bottom: 8px;
-}
-
-.status-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.status-badge {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-family: 'Space Mono', monospace;
-}
-
+.booking-item { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: var(--bg); }
+.booking-time { font-family: 'Space Mono', monospace; font-size: 18px; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
+.booking-service { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.booking-info { font-size: 12px; color: var(--muted); margin-bottom: 8px; line-height: 1.6; }
+.booking-note { font-size: 11px; color: var(--yellow); background: rgba(255,193,7,0.1); border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; }
+.booking-priority { font-size: 11px; color: var(--gold); background: rgba(196,168,130,0.1); border-radius: 4px; padding: 4px 8px; display: inline-block; margin-bottom: 8px; }
+.status-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.status-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-family: 'Space Mono', monospace; }
 .status-badge.pending  { background: rgba(255,193,7,0.2); color: var(--yellow); }
 .status-badge.confirmed { background: rgba(76,175,80,0.2); color: var(--green); }
 .status-badge.cancelled { background: rgba(229,57,53,0.2); color: var(--red); }
-
-.btn-sm {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 11px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--text);
-  transition: all 0.2s;
-  font-family: 'Noto Sans TC', sans-serif;
-}
-
+.btn-sm { padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; cursor: pointer; background: transparent; color: var(--text); transition: all 0.2s; font-family: 'Noto Sans TC', sans-serif; }
 .btn-sm.confirm { border-color: var(--green); color: var(--green); }
 .btn-sm.cancel  { border-color: var(--red); color: var(--red); }
+.btn-sm.lock    { border-color: var(--yellow); color: var(--yellow); }
+.btn-sm.unlock  { border-color: var(--muted); color: var(--muted); }
 .btn-sm:hover { opacity: 0.8; }
-
-/* Date nav */
-.date-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 16px;
-}
-
-.date-nav-btn {
-  background: none;
-  border: none;
-  color: var(--gold);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px 8px;
-}
-
-.date-nav-label {
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  color: var(--text);
-}
-
-/* Form elements */
+.date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; }
+.date-nav-btn { background: none; border: none; color: var(--gold); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.date-nav-label { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--text); }
 .form-group { margin-bottom: 16px; }
 .form-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 1px; }
-
-.form-input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: var(--text);
-  font-family: 'Noto Sans TC', sans-serif;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
+.form-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: 13px; color: var(--text); font-family: 'Noto Sans TC', sans-serif; outline: none; transition: border-color 0.2s; }
 .form-input:focus { border-color: var(--gold); }
-
-.btn-primary {
-  width: 100%;
-  padding: 12px;
-  background: var(--gold);
-  color: #1a1510;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: 'Noto Sans TC', sans-serif;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: opacity 0.2s;
-}
-
+.btn-primary { width: 100%; padding: 12px; background: var(--gold); color: #1a1510; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: 'Noto Sans TC', sans-serif; cursor: pointer; letter-spacing: 1px; transition: opacity 0.2s; }
 .btn-primary:hover { opacity: 0.85; }
-
-.btn-danger {
-  width: 100%;
-  padding: 12px;
-  background: transparent;
-  color: var(--red);
-  border: 1px solid var(--red);
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: 'Noto Sans TC', sans-serif;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: opacity 0.2s;
-}
-
-/* Service item */
-.service-item {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 10px;
-  background: var(--bg);
-}
-
+.btn-danger { width: 100%; padding: 12px; background: transparent; color: var(--red); border: 1px solid var(--red); border-radius: 8px; font-size: 13px; font-family: 'Noto Sans TC', sans-serif; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+.service-item { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: var(--bg); }
 .service-item.inactive { opacity: 0.5; }
-
-.service-name-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
+.service-name-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .service-name-text { font-size: 14px; font-weight: 500; }
-.service-cat { font-size: 10px; color: var(--muted); }
-
-.price-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.price-input {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 13px;
-  color: var(--gold);
-  font-family: 'Space Mono', monospace;
-  outline: none;
-}
-
+.price-row { display: flex; gap: 8px; align-items: center; }
+.price-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; color: var(--gold); font-family: 'Space Mono', monospace; outline: none; }
 .price-input:focus { border-color: var(--gold); }
-
-.save-btn {
-  padding: 8px 14px;
-  background: var(--gold);
-  color: #1a1510;
-  border: none;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-/* Schedule */
-.schedule-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-
+.save-btn { padding: 8px 14px; background: var(--gold); color: #1a1510; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.schedule-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .schedule-item:last-child { border-bottom: none; }
-
 .schedule-date { font-family: 'Space Mono', monospace; color: var(--text); }
 .schedule-type { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
-.schedule-type.closed  { background: rgba(229,57,53,0.2); color: var(--red); }
+.schedule-type.closed { background: rgba(229,57,53,0.2); color: var(--red); }
 .schedule-type.rest { background: rgba(255,193,7,0.2); color: var(--yellow); }
-
-.delete-btn {
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 4px 8px;
-}
-
-/* Toggle */
-.toggle {
-  width: 36px;
-  height: 20px;
-  background: var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  position: relative;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-
+.delete-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 8px; }
+.toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
 .toggle.on { background: var(--gold); }
-
-.toggle::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  background: white;
-  border-radius: 50%;
-  top: 2px;
-  left: 2px;
-  transition: left 0.2s;
-}
-
+.toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: left 0.2s; }
 .toggle.on::after { left: 18px; }
-
-/* Loading */
 .loading-text { text-align: center; color: var(--muted); padding: 30px; font-size: 13px; }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: var(--surface);
-  border: 1px solid var(--gold);
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 13px;
-  color: var(--gold);
-  transition: transform 0.3s;
-  z-index: 999;
-  white-space: nowrap;
-}
-
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--gold); border-radius: 8px; padding: 10px 20px; font-size: 13px; color: var(--gold); transition: transform 0.3s; z-index: 999; white-space: nowrap; }
 .toast.show { transform: translateX(-50%) translateY(0); }
-
-/* Empty */
 .empty { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; }
-
-/* Today closed banner */
-.closed-banner {
-  background: rgba(229,57,53,0.15);
-  border: 1px solid var(--red);
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 13px;
-  color: var(--red);
-  margin-bottom: 16px;
-  text-align: center;
-}
+.closed-banner { background: rgba(229,57,53,0.15); border: 1px solid var(--red); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--red); margin-bottom: 16px; text-align: center; }
+/* 時段格線 */
+.slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+.slot-cell { border: 1px solid var(--border); border-radius: 6px; padding: 8px 4px; text-align: center; font-size: 12px; font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s; }
+.slot-cell.locked { background: rgba(229,57,53,0.15); border-color: var(--red); color: var(--red); }
+.slot-cell:not(.locked):hover { border-color: var(--yellow); color: var(--yellow); }
+/* 設定區 */
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 13px; flex: 1; }
+.setting-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.setting-input { width: 80px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; color: var(--gold); font-family: 'Space Mono', monospace; outline: none; text-align: center; margin-left: 8px; }
+.setting-save { padding: 6px 12px; background: var(--gold); color: #1a1510; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -423,9 +107,10 @@ body {
 </div>
 
 <div class="nav">
-  <div class="nav-tab active" onclick="switchTab('bookings')">📋 預約管理</div>
-  <div class="nav-tab" onclick="switchTab('schedule')">📅 排程設定</div>
-  <div class="nav-tab" onclick="switchTab('services')">💰 服務價格</div>
+  <div class="nav-tab active" onclick="switchTab('bookings', this)">📋 預約管理</div>
+  <div class="nav-tab" onclick="switchTab('schedule', this)">📅 排程設定</div>
+  <div class="nav-tab" onclick="switchTab('services', this)">💰 服務價格</div>
+  <div class="nav-tab" onclick="switchTab('settings', this)">⚙️ 系統設定</div>
 </div>
 
 <div class="content">
@@ -437,6 +122,16 @@ body {
       <div class="date-nav-label" id="bookingDateLabel"></div>
       <button class="date-nav-btn" onclick="changeDate(1)">▶</button>
     </div>
+
+    <!-- ★ 手動鎖時段 -->
+    <div class="card">
+      <div class="card-header">手動鎖定時段（加價客 / 特殊需求）</div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">點選時段切換鎖定／解鎖，鎖定的時段客人無法預約</div>
+        <div class="slot-grid" id="lockSlotGrid"><div style="color:var(--muted);font-size:12px">請先選擇日期</div></div>
+      </div>
+    </div>
+
     <div id="bookingList"><div class="loading-text">載入中...</div></div>
   </div>
 
@@ -451,9 +146,8 @@ body {
         </div>
       </div>
     </div>
-
     <div class="card">
-      <div class="card-header">新增特殊休息</div>
+      <div class="card-header">新增特殊排程</div>
       <div class="card-body">
         <div class="form-group">
           <label class="form-label">日期</label>
@@ -477,7 +171,6 @@ body {
         <button class="btn-primary" onclick="addSchedule()">新增</button>
       </div>
     </div>
-
     <div class="card">
       <div class="card-header">已設定的特殊排程</div>
       <div class="card-body" id="scheduleList"><div class="loading-text">載入中...</div></div>
@@ -495,6 +188,20 @@ body {
     <div id="serviceList"><div class="loading-text">載入中...</div></div>
   </div>
 
+  <!-- ★ 系統設定 -->
+  <div class="section" id="tab-settings">
+    <div class="card">
+      <div class="card-header">燙染護預設佔用時長</div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          當客人預約燙髮、漂染、護髮等「依髮況」服務時，系統會用以下時長自動鎖定後續時段。<br>
+          單位：分鐘
+        </div>
+        <div id="settingsList"><div class="loading-text">載入中...</div></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -504,21 +211,23 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzY09EGQHqCSREnhbloFSle
 
 const DAY_NAMES = ['日','一','二','三','四','五','六'];
 
-let currentDate = new Date();
-let services = [];
-let schedule = [];
+const ALL_SLOTS = [
+  '09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30',
+  '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30',
+  '17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'
+];
 
-// ============================================================
-// 初始化
-// ============================================================
+let currentDate = new Date();
+let lockedSlots = new Set();
+
 document.addEventListener('DOMContentLoaded', () => {
   updateHeaderDate();
   updateBookingDateLabel();
   loadBookings();
   loadSchedule();
   loadServices();
+  loadSettings();
 
-  // 排程類型切換
   document.getElementById('scheduleType').addEventListener('change', function() {
     document.getElementById('scheduleTimeGroup').style.display =
       this.value === 'rest' ? 'block' : 'none';
@@ -527,24 +236,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function updateHeaderDate() {
   const now = new Date();
-  const days = ['日','一','二','三','四','五','六'];
   document.getElementById('headerDate').textContent =
-    `${now.getMonth()+1}/${now.getDate()} 週${days[now.getDay()]}`;
+    `${now.getMonth()+1}/${now.getDate()} 週${DAY_NAMES[now.getDay()]}`;
 }
 
-// ============================================================
-// Tab 切換
-// ============================================================
-function switchTab(tab) {
+function switchTab(tab, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  event.target.classList.add('active');
+  el.classList.add('active');
 }
 
-// ============================================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 預約管理
-// ============================================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function updateBookingDateLabel() {
   const d = currentDate;
   document.getElementById('bookingDateLabel').textContent =
@@ -555,50 +260,38 @@ function changeDate(delta) {
   currentDate.setDate(currentDate.getDate() + delta);
   updateBookingDateLabel();
   loadBookings();
+  loadLockSlotGrid();
 }
 
 async function loadBookings() {
   const list = document.getElementById('bookingList');
   list.innerHTML = '<div class="loading-text">載入中...</div>';
-
   const dateStr = formatDate(currentDate);
-
   try {
-    const res = await fetch(`${GAS_URL}?action=getBookedSlots&date=${dateStr}`);
-
-    // 檢查是否公休
-    const scheduleRes = await fetch(`${GAS_URL}?action=getSchedule&date=${dateStr}`);
+    const [scheduleRes, bookingRes] = await Promise.all([
+      fetch(`${GAS_URL}?action=getSchedule&t=${Date.now()}`),
+      fetch(`${GAS_URL}?action=getBookings&date=${dateStr}&t=${Date.now()}`),
+    ]);
     const scheduleData = await scheduleRes.json();
-    const todayClosed = scheduleData.schedule?.some(s => s.date === dateStr && s.type === 'closed');
-
-    const bookingRes = await fetch(`${GAS_URL}?action=getBookings&date=${dateStr}`);
     const data = await bookingRes.json();
     const bookings = data.bookings || [];
-
+    const todayClosed = (scheduleData.schedule || []).some(s => s.date === dateStr && s.type === 'closed');
     let html = '';
-
-    if (todayClosed) {
-      html += `<div class="closed-banner">🔴 今日已設定公休</div>`;
-    }
-
+    if (todayClosed) html += `<div class="closed-banner">🔴 今日已設定公休</div>`;
     if (bookings.length === 0) {
       html += `<div class="empty">今日暫無預約</div>`;
     } else {
       bookings.forEach(b => {
         const statusClass = b.status === '已確認' ? 'confirmed' : b.status === '已取消' ? 'cancelled' : 'pending';
-        const statusText  = b.status;
-
         html += `
           <div class="booking-item" id="booking_${b.id}">
             <div class="booking-time">${b.time}</div>
             <div class="booking-service">${b.service}</div>
-            <div class="booking-info">
-              👤 ${b.name}　📱 ${b.phone}
-            </div>
+            <div class="booking-info">👤 ${b.name}　📱 ${b.phone}</div>
             ${b.priority ? `<div class="booking-priority">⭐ ${b.priority}</div>` : ''}
             ${b.note ? `<div class="booking-note">📝 ${b.note}</div>` : ''}
             <div class="status-row">
-              <span class="status-badge ${statusClass}">${statusText}</span>
+              <span class="status-badge ${statusClass}">${b.status}</span>
               ${b.status !== '已確認' ? `<button class="btn-sm confirm" onclick="updateStatus('${b.id}', '已確認')">確認</button>` : ''}
               ${b.status !== '已取消' ? `<button class="btn-sm cancel" onclick="updateStatus('${b.id}', '已取消')">取消</button>` : ''}
             </div>
@@ -606,8 +299,8 @@ async function loadBookings() {
         `;
       });
     }
-
     list.innerHTML = html;
+    loadLockSlotGrid();
   } catch (err) {
     list.innerHTML = '<div class="empty">載入失敗，請重試</div>';
   }
@@ -617,40 +310,61 @@ async function updateStatus(id, status) {
   try {
     const res = await fetch(`${GAS_URL}?action=updateBooking&id=${id}&status=${encodeURIComponent(status)}`);
     const data = await res.json();
-    if (data.status === 'ok') {
-      showToast(`已更新為「${status}」`);
-      loadBookings();
-    }
-  } catch (err) {
-    showToast('更新失敗');
+    if (data.status === 'ok') { showToast(`已更新為「${status}」`); loadBookings(); }
+  } catch (_) { showToast('更新失敗'); }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ★ 手動鎖時段
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function loadLockSlotGrid() {
+  const grid = document.getElementById('lockSlotGrid');
+  const dateStr = formatDate(currentDate);
+  try {
+    const res = await fetch(`${GAS_URL}?action=getLockedSlots&date=${dateStr}&t=${Date.now()}`);
+    const data = await res.json();
+    lockedSlots = new Set((data.slots || []).map(s => s.time));
+    renderLockSlotGrid(dateStr);
+  } catch (_) {
+    renderLockSlotGrid(dateStr);
   }
 }
 
+function renderLockSlotGrid(dateStr) {
+  const grid = document.getElementById('lockSlotGrid');
+  grid.innerHTML = ALL_SLOTS.map(t => `
+    <div class="slot-cell ${lockedSlots.has(t) ? 'locked' : ''}" onclick="toggleSlotLock('${dateStr}', '${t}', this)">
+      ${t}${lockedSlots.has(t) ? '<br><span style="font-size:9px">🔒</span>' : ''}
+    </div>
+  `).join('');
+}
 
-// ============================================================
+async function toggleSlotLock(date, time, el) {
+  const isLocked = lockedSlots.has(time);
+  const action = isLocked ? 'unlockSlot' : 'lockSlot';
+  try {
+    const res = await fetch(`${GAS_URL}?action=${action}&date=${date}&time=${time}&note=手動鎖定`);
+    const data = await res.json();
+    if (data.status === 'ok') {
+      if (isLocked) { lockedSlots.delete(time); showToast(`${time} 已解鎖`); }
+      else { lockedSlots.add(time); showToast(`${time} 已鎖定`); }
+      renderLockSlotGrid(date);
+    }
+  } catch (_) { showToast('操作失敗'); }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 排程設定
-// ============================================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function loadSchedule() {
   const list = document.getElementById('scheduleList');
   try {
     const res = await fetch(`${GAS_URL}?action=getSchedule`);
     const data = await res.json();
-    schedule = data.schedule || [];
-
-    if (schedule.length === 0) {
-      list.innerHTML = '<div class="empty">目前無特殊排程</div>';
-      return;
-    }
-
-    // 只顯示今天以後的
+    const schedule = data.schedule || [];
     const today = formatDate(new Date());
     const upcoming = schedule.filter(s => s.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-
-    if (upcoming.length === 0) {
-      list.innerHTML = '<div class="empty">目前無即將到來的特殊排程</div>';
-      return;
-    }
-
+    if (upcoming.length === 0) { list.innerHTML = '<div class="empty">目前無特殊排程</div>'; return; }
     list.innerHTML = upcoming.map(s => `
       <div class="schedule-item">
         <div>
@@ -664,24 +378,17 @@ async function loadSchedule() {
         </div>
       </div>
     `).join('');
-
-  } catch (err) {
-    list.innerHTML = '<div class="empty">載入失敗</div>';
-  }
+  } catch (_) { list.innerHTML = '<div class="empty">載入失敗</div>'; }
 }
 
 async function setTodayClosed() {
-  const today = formatDate(new Date());
-  await fetch(`${GAS_URL}?action=updateSchedule&date=${today}&type=closed&note=今日公休`);
-  showToast('已設定今日公休');
-  loadSchedule();
+  await fetch(`${GAS_URL}?action=updateSchedule&date=${formatDate(new Date())}&type=closed&note=今日公休`);
+  showToast('已設定今日公休'); loadSchedule();
 }
 
 async function removeTodayClosed() {
-  const today = formatDate(new Date());
-  await fetch(`${GAS_URL}?action=updateSchedule&date=${today}&remove=true`);
-  showToast('已取消公休設定');
-  loadSchedule();
+  await fetch(`${GAS_URL}?action=updateSchedule&date=${formatDate(new Date())}&remove=true`);
+  showToast('已取消公休設定'); loadSchedule();
 }
 
 async function addSchedule() {
@@ -689,13 +396,10 @@ async function addSchedule() {
   const type = document.getElementById('scheduleType').value;
   const time = document.getElementById('scheduleTime').value;
   const note = document.getElementById('scheduleNote').value;
-
   if (!date) { showToast('請選擇日期'); return; }
-
   const params = new URLSearchParams({ action: 'updateSchedule', date, type, time, note });
   await fetch(`${GAS_URL}?${params}`);
   showToast('已新增排程');
-
   document.getElementById('scheduleDate').value = '';
   document.getElementById('scheduleNote').value = '';
   document.getElementById('scheduleTime').value = '';
@@ -704,33 +408,24 @@ async function addSchedule() {
 
 async function removeSchedule(date) {
   await fetch(`${GAS_URL}?action=updateSchedule&date=${date}&remove=true`);
-  showToast('已刪除');
-  loadSchedule();
+  showToast('已刪除'); loadSchedule();
 }
 
-
-// ============================================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 服務價格
-// ============================================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function loadServices() {
   const list = document.getElementById('serviceList');
   try {
     const res = await fetch(`${GAS_URL}?action=getServices`);
     const data = await res.json();
-    services = data.services || [];
-
-    if (services.length === 0) {
-      list.innerHTML = '<div class="empty">無服務資料</div>';
-      return;
-    }
-
-    // 依分類分組
+    const services = data.services || [];
+    if (services.length === 0) { list.innerHTML = '<div class="empty">無服務資料</div>'; return; }
     const categories = {};
     services.forEach(s => {
       if (!categories[s.category]) categories[s.category] = [];
       categories[s.category].push(s);
     });
-
     let html = '';
     Object.entries(categories).forEach(([cat, items]) => {
       html += `<div style="font-size:11px;color:var(--muted);letter-spacing:2px;padding:8px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px">${cat}</div>`;
@@ -741,6 +436,7 @@ async function loadServices() {
               <div>
                 <div class="service-name-text">${s.name}</div>
                 ${s.note ? `<div style="font-size:10px;color:var(--muted);margin-top:2px">${s.note}</div>` : ''}
+                <div style="font-size:10px;color:var(--muted);margin-top:2px">⏱ ${s.duration === -1 ? '依髮況（後台設定）' : s.duration + '分鐘'}</div>
               </div>
               <div class="toggle ${s.active ? 'on' : ''}" onclick="toggleService('${s.id}', ${!s.active})"></div>
             </div>
@@ -754,11 +450,8 @@ async function loadServices() {
       });
       html += '<div style="margin-bottom:16px"></div>';
     });
-
     list.innerHTML = html;
-  } catch (err) {
-    list.innerHTML = '<div class="empty">載入失敗</div>';
-  }
+  } catch (_) { list.innerHTML = '<div class="empty">載入失敗</div>'; }
 }
 
 async function saveService(id) {
@@ -768,11 +461,8 @@ async function saveService(id) {
   try {
     const res = await fetch(`${GAS_URL}?${params}`);
     const data = await res.json();
-    if (data.status === 'ok') showToast('已儲存');
-    else showToast('儲存失敗');
-  } catch (_) {
-    showToast('儲存失敗');
-  }
+    if (data.status === 'ok') showToast('已儲存'); else showToast('儲存失敗');
+  } catch (_) { showToast('儲存失敗'); }
 }
 
 async function toggleService(id, active) {
@@ -780,19 +470,48 @@ async function toggleService(id, active) {
   try {
     const res = await fetch(`${GAS_URL}?${params}`);
     const data = await res.json();
-    if (data.status === 'ok') {
-      showToast(active ? '已啟用' : '已停用');
-      loadServices();
-    }
-  } catch (_) {
-    showToast('操作失敗');
-  }
+    if (data.status === 'ok') { showToast(active ? '已啟用' : '已停用'); loadServices(); }
+  } catch (_) { showToast('操作失敗'); }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ★ 系統設定
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function loadSettings() {
+  const list = document.getElementById('settingsList');
+  try {
+    const res = await fetch(`${GAS_URL}?action=getSettings&t=${Date.now()}`);
+    const data = await res.json();
+    const settings = data.settings || [];
+    if (settings.length === 0) { list.innerHTML = '<div class="empty">無設定資料，請先部署新版 GAS</div>'; return; }
+    list.innerHTML = settings.map(s => `
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">${s.label || s.key}</div>
+          <div class="setting-sub">${s.key}</div>
+        </div>
+        <div style="display:flex;align-items:center">
+          <input class="setting-input" id="setting_${s.key}" value="${s.value}" type="number" min="30" step="30">
+          <span style="font-size:11px;color:var(--muted);margin-left:4px">分鐘</span>
+          <button class="setting-save" onclick="saveSetting('${s.key}')">存</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (_) { list.innerHTML = '<div class="empty">載入失敗</div>'; }
+}
 
-// ============================================================
+async function saveSetting(key) {
+  const value = document.getElementById('setting_' + key).value;
+  try {
+    const res = await fetch(`${GAS_URL}?action=updateSettings&key=${key}&value=${value}`);
+    const data = await res.json();
+    if (data.status === 'ok') showToast('已儲存'); else showToast('儲存失敗');
+  } catch (_) { showToast('儲存失敗'); }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 工具
-// ============================================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function formatDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
