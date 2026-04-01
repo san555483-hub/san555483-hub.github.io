@@ -194,8 +194,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
       <div class="card-header">燙染護預設佔用時長</div>
       <div class="card-body">
         <div style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-          當客人預約燙髮、漂染、護髮等「依髮況」服務時，系統會用以下時長自動鎖定後續時段。<br>
-          單位：分鐘
+          燙髮、漂染、護髮預設佔用時長（分鐘）、加價服務費用、數位支付跳轉網址。
         </div>
         <div id="settingsList"><div class="loading-text">載入中...</div></div>
       </div>
@@ -484,24 +483,31 @@ async function loadSettings() {
     const data = await res.json();
     const settings = data.settings || [];
     if (settings.length === 0) { list.innerHTML = '<div class="empty">無設定資料，請先部署新版 GAS</div>'; return; }
-    list.innerHTML = settings.map(s => `
+    list.innerHTML = settings.map(s => {
+      const isUrl = s.key.includes('_url');
+      const isFee = s.key.includes('_fee');
+      return `
       <div class="setting-row">
-        <div>
+        <div style="flex:1;margin-right:8px">
           <div class="setting-label">${s.label || s.key}</div>
           <div class="setting-sub">${s.key}</div>
         </div>
-        <div style="display:flex;align-items:center">
-          <input class="setting-input" id="setting_${s.key}" value="${s.value}" type="number" min="30" step="30">
-          <span style="font-size:11px;color:var(--muted);margin-left:4px">分鐘</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          ${isUrl
+            ? `<input id="setting_${s.key}" value="${s.value}" placeholder="https://..." style="width:160px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--text);outline:none">`
+            : `<input class="setting-input" id="setting_${s.key}" value="${s.value}" type="number" min="${isFee?1:30}" step="${isFee?1:30}">`
+          }
+          ${!isUrl ? `<span style="font-size:11px;color:var(--muted)">${isFee ? '元' : '分'}</span>` : ''}
           <button class="setting-save" onclick="saveSetting('${s.key}')">存</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   } catch (_) { list.innerHTML = '<div class="empty">載入失敗</div>'; }
 }
 
 async function saveSetting(key) {
-  const value = document.getElementById('setting_' + key).value;
+  const el = document.getElementById('setting_' + key);
+  const value = el ? el.value : '';
   try {
     const res = await fetch(`${GAS_URL}?action=updateSettings&key=${key}&value=${value}`);
     const data = await res.json();
