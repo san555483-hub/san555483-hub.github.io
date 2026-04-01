@@ -421,10 +421,22 @@ function goStep(n) {
 function renderSummary() {
   const dateStr     = state.date ? `${state.date.getMonth()+1}月${state.date.getDate()}日（週${DAY_NAMES[state.date.getDay()]}）` : '';
   const serviceNames  = state.services.map(s => s.name).join('、');
-  const servicePrices = state.services.map(s => s.price).join(' + ');
+  // 明細 + 總價邏輯
+  const priceItems = state.services.map(s => {
+    const raw = String(s.price);
+    const num = parseInt(raw.replace(/[^0-9]/g, ''));
+    const hasRange = raw.includes('起') || raw.includes('+') || isNaN(num) || num === 0;
+    return { label: `${s.name}　${s.price}`, num: hasRange ? null : num };
+  });
+  const priceDetailStr = priceItems.map(p => p.label).join('<br>');
+  const canSum = priceItems.every(p => p.num !== null);
+  const total = canSum ? priceItems.reduce((a, p) => a + p.num, 0) : null;
+  const priceDisplay = canSum
+    ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${priceDetailStr}</div><div>總計 $${total}</div>`
+    : `<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${priceDetailStr}</div><div style="font-size:11px;color:var(--muted)">含「起」項目，Elsa 確認後告知</div>`;
   document.getElementById('summaryBody').innerHTML = `
     <div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">${serviceNames}</span></div>
-    <div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value">${servicePrices}</span></div>
+    <div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value">${priceDisplay}</span></div>
     <div class="summary-row"><span class="summary-label">預約日期</span><span class="summary-value">${dateStr}</span></div>
     <div class="summary-row"><span class="summary-label">預約時間</span><span class="summary-value">${state.time||''}</span></div>
     <div class="summary-row"><span class="summary-label">姓名</span><span class="summary-value">${state.name}</span></div>
@@ -454,7 +466,11 @@ async function submitBooking() {
     const data = await res.json();
     loading.style.display = 'none';
     if (data.status === 'ok') { showSuccess(); }
-    else { errMsg.style.display = 'block'; btn.disabled = false; }
+    else if (data.msg === 'slot_taken') {
+      errMsg.textContent = '此時段已被預約，請返回重新選擇時間';
+      errMsg.style.display = 'block';
+      btn.disabled = false;
+    } else { errMsg.style.display = 'block'; btn.disabled = false; }
   } catch (_) {
     loading.style.display = 'none';
     errMsg.style.display = 'block';
