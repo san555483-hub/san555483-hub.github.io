@@ -64,6 +64,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 .time-slot { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 4px; text-align: center; cursor: pointer; font-size: 13px; background: var(--surface); transition: all 0.2s; }
 .time-slot.selected { border-color: var(--gold); background: #fdf6ee; color: var(--gold-dark); font-weight: 500; }
 .time-slot.booked { background: var(--light); color: var(--disabled); cursor: not-allowed; text-decoration: line-through; font-size: 11px; }
+.time-slot.locked-notice { background: #fff8e8; border-color: #e8c870; color: #8a6a20; cursor: not-allowed; font-size: 10px; line-height: 1.3; padding: 6px 4px; }
 .form-group { margin-bottom: 16px; }
 .form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
 .form-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s; }
@@ -254,8 +255,9 @@ const BUSINESS_HOURS = {
 const DAY_NAMES   = ['日','一','二','三','四','五','六'];
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
-let allServices  = [];
-let schedule     = [];
+let allServices   = [];
+let schedule      = [];
+let lockedInfoMap = {};
 let state = {
   services: [], date: null, time: null,
   name: '', phone: '', note: '',
@@ -270,7 +272,7 @@ function normalizeTime(input) {
   const raw = String(input || '').trim();
   const m = raw.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
   if (!m) return raw;
-  return String(parseInt(m[1],10)).padStart(2,'0') + ':' + String(parseInt(m[2]||'0',10)).padStart(2,'0');
+  return String(parseInt(m[1],10)).padStart(2,'0') + ':' + String(parseInt(m[2]||'0',10)).padStart(2,'00');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -311,8 +313,8 @@ function renderServices() {
         <div class="service-card" id="svc_${s.id}" onclick="toggleService('${s.id}')">
           <div class="service-name">${s.name}</div>
           <div class="service-price">${s.price}</div>
-          <div class="service-time">${s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? `⏱ ${s.note}` : `⏱ 約${s.duration}分鐘`}</div>
-          ${s.note && s.duration > 0 && s.duration !== -1 ? `<div class="service-note">※ ${s.note}</div>` : ''}
+          <div class="service-time">${s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘'}</div>
+          ${s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : ''}
         </div>
       `).join('')}
     </div>
@@ -347,7 +349,7 @@ function renderSelectedTags() {
   const area = document.getElementById('selectedTagsArea');
   if (state.services.length === 0) { area.innerHTML = ''; return; }
   area.innerHTML = state.services.map(s =>
-    `<div class="selected-tag">${s.name}<span class="selected-tag-remove" onclick="removeService('${s.id}')">×</span></div>`
+    '<div class="selected-tag">' + s.name + '<span class="selected-tag-remove" onclick="removeService(\'' + s.id + '\')">×</span></div>'
   ).join('');
 }
 
@@ -362,13 +364,12 @@ function renderDates() {
     const isClosed = closedDates.has(dateStr);
     const el = document.createElement('div');
     el.className = 'date-item' + (isClosed ? ' closed' : '');
-    el.innerHTML = `
-      <div class="date-day">週${DAY_NAMES[d.getDay()]}</div>
-      <div class="date-num">${d.getDate()}</div>
-      <div class="date-month">${MONTH_NAMES[d.getMonth()]}</div>
-      ${isClosed ? '<div class="date-closed-label">公休</div>' : ''}
-    `;
-    if (!isClosed) el.onclick = () => selectDate(d, el);
+    el.innerHTML =
+      '<div class="date-day">週' + DAY_NAMES[d.getDay()] + '</div>' +
+      '<div class="date-num">' + d.getDate() + '</div>' +
+      '<div class="date-month">' + MONTH_NAMES[d.getMonth()] + '</div>' +
+      (isClosed ? '<div class="date-closed-label">公休</div>' : '');
+    if (!isClosed) el.onclick = (function(date, el){ return function(){ selectDate(date, el); }; })(d, el);
     scroll.appendChild(el);
   }
 }
@@ -385,9 +386,10 @@ async function selectDate(date, el) {
   loading.style.display = 'block';
   const dateStr = formatDate(date);
   try {
-    const res  = await fetch(`${GAS_URL}?action=getBookedSlots&date=${dateStr}&t=${Date.now()}`, { cache: 'no-store' });
+    const res  = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
     const data = await res.json();
     const booked = new Set((data.slots || []).map(normalizeTime));
+    lockedInfoMap = data.lockedInfo || {};
     loading.style.display = 'none';
     renderTimeSlots(date, booked);
   } catch (_) {
@@ -398,18 +400,22 @@ async function selectDate(date, el) {
 
 function renderTimeSlots(date, booked) {
   const slots = BUSINESS_HOURS[date.getDay()];
-  document.getElementById('timeSlotArea').innerHTML = `
-    <div class="time-section-label">可預約時段</div>
-    <div class="time-grid">
-      ${slots.map(t => {
-        const nt       = normalizeTime(t);
-        const isBooked = booked.has(nt);
-        return `<div class="time-slot${isBooked ? ' booked' : ''}" ${isBooked ? '' : `onclick="selectTime('${nt}', this)"`}>
-          ${nt}${isBooked ? '<br><span style="font-size:9px">已滿</span>' : ''}
-        </div>`;
-      }).join('')}
-    </div>
-  `;
+  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
+  slots.forEach(function(t) {
+    const nt       = normalizeTime(t);
+    const isBooked = booked.has(nt);
+    const lockNote = lockedInfoMap[nt] || '';
+    const isNotice = isBooked && lockNote.includes('訂製化溝通');
+    if (isNotice) {
+      html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>';
+    } else if (isBooked) {
+      html += '<div class="time-slot booked">' + nt + '<br><span style="font-size:9px">已滿</span></div>';
+    } else {
+      html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
+    }
+  });
+  html += '</div>';
+  document.getElementById('timeSlotArea').innerHTML = html;
 }
 
 function selectTime(time, el) {
@@ -462,28 +468,27 @@ function goStep(n) {
 }
 
 function renderSummary() {
-  const dateStr      = state.date ? `${state.date.getMonth()+1}月${state.date.getDate()}日（週${DAY_NAMES[state.date.getDay()]}）` : '';
+  const dateStr      = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
   const serviceNames = state.services.map(s => s.name).join('、');
   const priceLines   = state.services.map(s => {
     const num = parseInt(String(s.price).replace(/[^0-9]/g, ''));
     return { name: s.name, price: s.price, num: isNaN(num) ? 0 : num };
   });
-  const serviceTotal   = priceLines.reduce((sum, p) => sum + p.num, 0);
-  const priorityFee    = state.priority && state.memberType ? state.priorityFee : 0;
-  const grandTotal     = serviceTotal + priorityFee;
-  const priceDetailHtml = priceLines.map(p => `${p.name} ${p.price}`).join('<br>');
-  const memberLabel    = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
-  document.getElementById('summaryBody').innerHTML = `
-    <div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">${serviceNames}</span></div>
-    <div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value" style="font-size:12px;line-height:1.8">${priceDetailHtml}</span></div>
-    ${state.priority && state.memberType ? `<div class="summary-row"><span class="summary-label">加價服務(${memberLabel})</span><span class="summary-value">$${priorityFee}</span></div>` : ''}
-    <div class="summary-row" style="border-top:1.5px solid var(--gold);margin-top:4px"><span class="summary-label" style="font-weight:700">合計</span><span class="summary-value" style="color:var(--gold-dark);font-weight:700">$${grandTotal}${serviceTotal === 0 ? '+（依髮況）' : ''}</span></div>
-    <div class="summary-row"><span class="summary-label">預約日期</span><span class="summary-value">${dateStr}</span></div>
-    <div class="summary-row"><span class="summary-label">預約時間</span><span class="summary-value">${state.time||''}</span></div>
-    <div class="summary-row"><span class="summary-label">姓名</span><span class="summary-value">${state.name}</span></div>
-    <div class="summary-row"><span class="summary-label">手機</span><span class="summary-value">${state.phone}</span></div>
-    ${state.note ? `<div class="summary-row"><span class="summary-label">備註</span><span class="summary-value">${state.note}</span></div>` : ''}
-  `;
+  const serviceTotal    = priceLines.reduce((sum, p) => sum + p.num, 0);
+  const priorityFee     = state.priority && state.memberType ? state.priorityFee : 0;
+  const grandTotal      = serviceTotal + priorityFee;
+  const priceDetailHtml = priceLines.map(p => p.name + ' ' + p.price).join('<br>');
+  const memberLabel     = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
+  document.getElementById('summaryBody').innerHTML =
+    '<div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">' + serviceNames + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value" style="font-size:12px;line-height:1.8">' + priceDetailHtml + '</span></div>' +
+    (state.priority && state.memberType ? '<div class="summary-row"><span class="summary-label">加價服務(' + memberLabel + ')</span><span class="summary-value">$' + priorityFee + '</span></div>' : '') +
+    '<div class="summary-row" style="border-top:1.5px solid var(--gold);margin-top:4px"><span class="summary-label" style="font-weight:700">合計</span><span class="summary-value" style="color:var(--gold-dark);font-weight:700">$' + grandTotal + (serviceTotal === 0 ? '+（依髮況）' : '') + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">預約日期</span><span class="summary-value">' + dateStr + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">預約時間</span><span class="summary-value">' + (state.time||'') + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">姓名</span><span class="summary-value">' + state.name + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">手機</span><span class="summary-value">' + state.phone + '</span></div>' +
+    (state.note ? '<div class="summary-row"><span class="summary-label">備註</span><span class="summary-value">' + state.note + '</span></div>' : '');
 }
 
 async function submitBooking() {
@@ -494,14 +499,14 @@ async function submitBooking() {
   btn.disabled = true;
   errMsg.style.display = 'none';
 
-  const dateStr = state.date ? formatDate(state.date) : '';
+  const dateStr    = state.date ? formatDate(state.date) : '';
+  const serviceStr = state.services.map(s => s.name).join('、');
 
-  // 送出前再查一次
   try {
-    const checkRes  = await fetch(`${GAS_URL}?action=getBookedSlots&date=${dateStr}&t=${Date.now()}`, { cache: 'no-store' });
+    const checkRes  = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
     const checkData = await checkRes.json();
-    const latestBooked = new Set((checkData.slots || []).map(normalizeTime));
-    if (latestBooked.has(normalizeTime(state.time))) {
+    const latest    = new Set((checkData.slots || []).map(normalizeTime));
+    if (latest.has(normalizeTime(state.time))) {
       errMsg.textContent = '此時段剛剛已被預約，請返回重新選擇時間';
       errMsg.style.display = 'block';
       btn.disabled = false;
@@ -510,21 +515,25 @@ async function submitBooking() {
     }
   } catch (_) {}
 
-  const serviceStr = state.services.map(s => s.name).join('、');
   const params = new URLSearchParams({
-    action: 'booking',
-    name: state.name,
-    phone: state.phone,
-    service: serviceStr,
-    date: dateStr,
-    time: normalizeTime(state.time || ''),
-    note: state.note,
-    priority: state.priority ? 'yes' : 'no',
+    action:     'booking',
+    name:       state.name,
+    phone:      state.phone,
+    service:    serviceStr,
+    date:       dateStr,
+    time:       normalizeTime(state.time || ''),
+    note:       state.note,
+    priority:   state.priority ? 'yes' : 'no',
     memberType: state.memberType || '',
   });
 
   try {
-    const res  = await fetch(`${GAS_URL}?${params}`, { cache: 'no-store' });
+    const res  = await fetch(GAS_URL, {
+      method:  'POST',
+      cache:   'no-store',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    params.toString(),
+    });
     const data = await res.json();
     loading.style.display = 'none';
     if (data.status === 'ok') {
@@ -551,17 +560,16 @@ async function submitBooking() {
 function showSuccess(bookingId) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('sectionSuccess').classList.add('active');
-  const dateStr    = state.date ? `${state.date.getMonth()+1}月${state.date.getDate()}日（週${DAY_NAMES[state.date.getDay()]}）` : '';
+  const dateStr    = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
   const serviceStr = state.services.map(s => s.name).join('、');
-  document.getElementById('successDesc').innerHTML = `
-    <br><strong>${state.name}</strong> 您好！<br><br>
-    已收到您的預約申請 🙏<br><br>
-    📋 ${serviceStr}<br>
-    📅 ${dateStr} ${state.time}<br>
-    🔖 預約編號：${bookingId||''}<br><br>
-    Elsa 確認後會透過 LINE 通知您<br>
-    如有任何問題歡迎直接傳訊息給我們 😊
-  `;
+  document.getElementById('successDesc').innerHTML =
+    '<br><strong>' + state.name + '</strong> 您好！<br><br>' +
+    '已收到您的預約申請 🙏<br><br>' +
+    '📋 ' + serviceStr + '<br>' +
+    '📅 ' + dateStr + ' ' + state.time + '<br>' +
+    '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
+    'Elsa 確認後會透過 LINE 通知您<br>' +
+    '如有任何問題歡迎直接傳訊息給我們 😊';
   for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
 }
 
@@ -570,21 +578,21 @@ function renderPaymentButtons() {
   if (!list) return;
   let html = '';
   if (siteSettings.payment_jkopay_url) {
-    html += `<a href="${siteSettings.payment_jkopay_url}" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 街口支付 →</a>`;
+    html += '<a href="' + siteSettings.payment_jkopay_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 街口支付 →</a>';
   } else {
-    html += `<span class="payment-tag">💳 街口支付</span>`;
+    html += '<span class="payment-tag">💳 街口支付</span>';
   }
   if (siteSettings.payment_ipass_url) {
-    html += `<a href="${siteSettings.payment_ipass_url}" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 iPASS Money →</a>`;
+    html += '<a href="' + siteSettings.payment_ipass_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 iPASS Money →</a>';
   } else {
-    html += `<span class="payment-tag">💳 iPASS Money</span>`;
+    html += '<span class="payment-tag">💳 iPASS Money</span>';
   }
-  html += `<span class="payment-tag">🏦 轉帳</span>`;
+  html += '<span class="payment-tag">🏦 轉帳</span>';
   list.innerHTML = html;
 }
 
 function formatDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 </script>
 </body>
