@@ -7,16 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #faf8f5;
-  --surface: #ffffff;
-  --border: #e8e0d5;
-  --gold: #c4a882;
-  --gold-dark: #a08660;
-  --text: #2a2420;
-  --muted: #8a7d72;
-  --light: #f0ebe4;
-  --red: #c0392b;
-  --disabled: #d5cdc5;
+  --bg: #faf8f5; --surface: #ffffff; --border: #e8e0d5;
+  --gold: #c4a882; --gold-dark: #a08660; --text: #2a2420;
+  --muted: #8a7d72; --light: #f0ebe4; --red: #c0392b; --disabled: #d5cdc5;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; min-height: 100vh; padding-bottom: 60px; }
@@ -80,6 +73,8 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .notice-box { background: #fdf8f0; border: 1px solid #e8d5b0; border-radius: 10px; padding: 14px; margin-bottom: 20px; }
 .notice-title { font-size: 12px; font-weight: 500; color: var(--gold-dark); margin-bottom: 6px; }
 .notice-text { font-size: 11px; color: #7a6a55; line-height: 1.8; }
+.reminder-box { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 10px; padding: 14px; margin-bottom: 20px; text-align: center; }
+.reminder-text { font-size: 12px; color: #e65100; line-height: 1.8; font-weight: 500; }
 .payment-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 .payment-tag { background: var(--light); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: var(--muted); }
 .summary-card { border: 1.5px solid var(--gold); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
@@ -106,28 +101,20 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-logo">UNI HAIR SHOP</div>
   <div class="header-sub">一對一訂製髮型設計</div>
 </div>
-
 <div class="progress">
   <div class="step active" id="step1"><div class="step-dot">1</div><div class="step-label">服務</div></div>
   <div class="step" id="step2"><div class="step-dot">2</div><div class="step-label">時段</div></div>
   <div class="step" id="step3"><div class="step-dot">3</div><div class="step-label">資料</div></div>
   <div class="step" id="step4"><div class="step-dot">4</div><div class="step-label">確認</div></div>
 </div>
-
 <div class="container">
-
   <div class="section active" id="sectionLoading">
-    <div class="loading-screen">
-      <div class="spinner"></div>
-      <div>載入服務資料中...</div>
-    </div>
+    <div class="loading-screen"><div class="spinner"></div><div>載入服務資料中...</div></div>
   </div>
-
   <div class="section" id="section1">
     <div class="section-title">選擇服務項目</div>
     <div class="section-desc">可複選多項，選完後點下一步</div>
@@ -135,15 +122,10 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <div id="serviceList"></div>
     <div class="notice-box" style="margin-top:16px">
       <div class="notice-title">⏱ 關於服務時長</div>
-      <div class="notice-text">
-        每位顧客需求狀況不同，以上時間為預估時間。若有異動，Elsa 會主動通知您。<br><br>
-        若不想等候，可於下一步勾選「加價指定時段全程服務」。<br>
-        會員 $250 ／ 非會員 $350
-      </div>
+      <div class="notice-text">每位顧客需求狀況不同，以上時間為預估時間。若有異動，Elsa 會主動通知您。<br><br>若不想等候，可於下一步勾選「加價指定時段全程服務」。<br>會員 $250 ／ 非會員 $350</div>
     </div>
     <button class="btn btn-primary" id="btn1" onclick="goStep(2)" disabled>下一步</button>
   </div>
-
   <div class="section" id="section2">
     <div class="section-title">選擇預約時段</div>
     <div class="section-desc">請選擇方便的日期與時間</div>
@@ -155,7 +137,6 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
       <button class="btn btn-secondary" onclick="goStep(1)">上一步</button>
     </div>
   </div>
-
   <div class="section" id="section3">
     <div class="section-title">填寫預約資料</div>
     <div class="section-desc">請留下您的聯絡資訊</div>
@@ -205,13 +186,15 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <button class="btn btn-primary" onclick="goStep(4)">下一步</button>
     <button class="btn btn-secondary" onclick="goStep(2)">上一步</button>
   </div>
-
   <div class="section" id="section4">
     <div class="section-title">確認預約內容</div>
     <div class="section-desc">請確認以下資訊後送出</div>
     <div class="summary-card">
       <div class="summary-header">預約明細</div>
       <div class="summary-body" id="summaryBody"></div>
+    </div>
+    <div class="reminder-box">
+      <div class="reminder-text">📌 以上預約皆為登記<br>請稍後待 Elsa 與您確認預約<br>避免白跑一趟 🙏</div>
     </div>
     <div class="notice-box">
       <div class="notice-title">📌 預約須知</div>
@@ -228,20 +211,16 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <button class="btn btn-primary" id="btnSubmit" onclick="submitBooking()">確認送出預約</button>
     <button class="btn btn-secondary" onclick="goStep(3)">上一步</button>
   </div>
-
   <div class="section" id="sectionSuccess">
     <div class="success-screen">
       <div class="success-icon">✨</div>
-      <div class="success-title">預約成功！</div>
+      <div class="success-title">預約登記完成！</div>
       <div class="success-desc" id="successDesc"></div>
     </div>
   </div>
-
 </div>
-
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
-
 const BUSINESS_HOURS = {
   0: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
   1: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
@@ -251,22 +230,11 @@ const BUSINESS_HOURS = {
   5: ['09:00','09:30','10:00','10:30','11:00','11:30','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
   6: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
 };
-
 const DAY_NAMES   = ['日','一','二','三','四','五','六'];
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-
-let allServices   = [];
-let schedule      = [];
-let lockedInfoMap = {};
-let state = {
-  services: [], date: null, time: null,
-  name: '', phone: '', note: '',
-  priority: false, memberType: '', priorityFee: 0
-};
-let siteSettings = {
-  priority_member_fee: 250, priority_nonmember_fee: 350,
-  payment_jkopay_url: '', payment_ipass_url: ''
-};
+let allServices = [], schedule = [], lockedInfoMap = {};
+let state = { services: [], date: null, time: null, name: '', phone: '', note: '', priority: false, memberType: '', priorityFee: 0 };
+let siteSettings = { priority_member_fee: 250, priority_nonmember_fee: 350, payment_jkopay_url: '', payment_ipass_url: '' };
 
 function normalizeTime(input) {
   const raw = String(input || '').trim();
@@ -279,24 +247,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const t = Date.now();
     const [svcRes, schedRes, settingsRes] = await Promise.all([
-      fetch(`${GAS_URL}?action=getServices&t=${t}`, { cache: 'no-store' }),
-      fetch(`${GAS_URL}?action=getSchedule&t=${t}`, { cache: 'no-store' }),
-      fetch(`${GAS_URL}?action=getSettings&t=${t}`, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getServices&t=' + t, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getSettings&t=' + t, { cache: 'no-store' }),
     ]);
-    const svcData      = await svcRes.json();
-    const schedData    = await schedRes.json();
+    const svcData = await svcRes.json();
+    const schedData = await schedRes.json();
     const settingsData = await settingsRes.json();
     (settingsData.settings || []).forEach(s => { siteSettings[s.key] = s.value; });
     allServices = (svcData.services || []).filter(s => s.active);
-    schedule    = schedData.schedule || [];
+    schedule = schedData.schedule || [];
     renderServices();
     renderDates();
     renderPaymentButtons();
     document.getElementById('sectionLoading').classList.remove('active');
     document.getElementById('section1').classList.add('active');
   } catch (err) {
-    document.getElementById('sectionLoading').innerHTML =
-      '<div class="loading-screen" style="color:#c0392b">載入失敗，請重新整理頁面</div>';
+    document.getElementById('sectionLoading').innerHTML = '<div class="loading-screen" style="color:#c0392b">載入失敗，請重新整理頁面</div>';
   }
 });
 
@@ -306,19 +273,17 @@ function renderServices() {
     if (!categories[s.category]) categories[s.category] = [];
     categories[s.category].push(s);
   });
-  document.getElementById('serviceList').innerHTML = Object.entries(categories).map(([cat, items]) => `
-    <div class="category-label">${cat}</div>
-    <div class="service-grid">
-      ${items.map(s => `
-        <div class="service-card" id="svc_${s.id}" onclick="toggleService('${s.id}')">
-          <div class="service-name">${s.name}</div>
-          <div class="service-price">${s.price}</div>
-          <div class="service-time">${s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘'}</div>
-          ${s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : ''}
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+  document.getElementById('serviceList').innerHTML = Object.entries(categories).map(([cat, items]) =>
+    '<div class="category-label">' + cat + '</div><div class="service-grid">' +
+    items.map(s =>
+      '<div class="service-card" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' +
+      '<div class="service-name">' + s.name + '</div>' +
+      '<div class="service-price">' + s.price + '</div>' +
+      '<div class="service-time">' + (s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘') + '</div>' +
+      (s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : '') +
+      '</div>'
+    ).join('') + '</div>'
+  ).join('');
 }
 
 function toggleService(id) {
@@ -328,10 +293,7 @@ function toggleService(id) {
     document.getElementById('svc_' + id).classList.remove('selected');
   } else {
     const svc = allServices.find(s => s.id === id);
-    if (svc) {
-      state.services.push(svc);
-      document.getElementById('svc_' + id).classList.add('selected');
-    }
+    if (svc) { state.services.push(svc); document.getElementById('svc_' + id).classList.add('selected'); }
   }
   renderSelectedTags();
   document.getElementById('btn1').disabled = state.services.length === 0;
@@ -354,39 +316,33 @@ function renderSelectedTags() {
 }
 
 function renderDates() {
-  const scroll      = document.getElementById('dateScroll');
-  const today       = new Date();
+  const scroll = document.getElementById('dateScroll');
+  const today = new Date();
   const closedDates = new Set(schedule.filter(s => s.type === 'closed').map(s => s.date));
   for (let i = 0; i < 14; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    const dateStr  = formatDate(d);
+    const dateStr = formatDate(d);
     const isClosed = closedDates.has(dateStr);
     const el = document.createElement('div');
     el.className = 'date-item' + (isClosed ? ' closed' : '');
-    el.innerHTML =
-      '<div class="date-day">週' + DAY_NAMES[d.getDay()] + '</div>' +
-      '<div class="date-num">' + d.getDate() + '</div>' +
-      '<div class="date-month">' + MONTH_NAMES[d.getMonth()] + '</div>' +
-      (isClosed ? '<div class="date-closed-label">公休</div>' : '');
+    el.innerHTML = '<div class="date-day">週' + DAY_NAMES[d.getDay()] + '</div><div class="date-num">' + d.getDate() + '</div><div class="date-month">' + MONTH_NAMES[d.getMonth()] + '</div>' + (isClosed ? '<div class="date-closed-label">公休</div>' : '');
     if (!isClosed) el.onclick = (function(date, el){ return function(){ selectDate(date, el); }; })(d, el);
     scroll.appendChild(el);
   }
 }
 
 async function selectDate(date, el) {
-  state.date = date;
-  state.time = null;
+  state.date = date; state.time = null;
   document.querySelectorAll('.date-item').forEach(d => d.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('btn2').disabled = true;
-  const area    = document.getElementById('timeSlotArea');
+  const area = document.getElementById('timeSlotArea');
   const loading = document.getElementById('loadingSlots');
-  area.innerHTML = '';
-  loading.style.display = 'block';
+  area.innerHTML = ''; loading.style.display = 'block';
   const dateStr = formatDate(date);
   try {
-    const res  = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
     const data = await res.json();
     const booked = new Set((data.slots || []).map(normalizeTime));
     lockedInfoMap = data.lockedInfo || {};
@@ -402,7 +358,7 @@ function renderTimeSlots(date, booked) {
   const slots = BUSINESS_HOURS[date.getDay()];
   let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
   slots.forEach(function(t) {
-    const nt       = normalizeTime(t);
+    const nt = normalizeTime(t);
     const isBooked = booked.has(nt);
     const lockNote = lockedInfoMap[nt] || '';
     const isNotice = isBooked && lockNote.includes('訂製化溝通');
@@ -432,31 +388,28 @@ function togglePriority() {
   check.textContent = state.priority ? '✓' : '';
   document.getElementById('memberTypeArea').style.display = state.priority ? 'block' : 'none';
   if (!state.priority) { state.memberType = ''; state.priorityFee = 0; }
-  document.getElementById('memberFeeLabel').textContent    = '$' + (siteSettings.priority_member_fee    || 250);
+  document.getElementById('memberFeeLabel').textContent = '$' + (siteSettings.priority_member_fee || 250);
   document.getElementById('nonMemberFeeLabel').textContent = '$' + (siteSettings.priority_nonmember_fee || 350);
 }
 
 function selectMember(type) {
-  state.memberType  = type;
-  state.priorityFee = type === 'member'
-    ? Number(siteSettings.priority_member_fee    || 250)
-    : Number(siteSettings.priority_nonmember_fee || 350);
-  document.getElementById('btnMember').style.borderColor    = type === 'member'    ? 'var(--gold)' : 'var(--border)';
-  document.getElementById('btnMember').style.background     = type === 'member'    ? '#fdf6ee'     : 'var(--surface)';
+  state.memberType = type;
+  state.priorityFee = type === 'member' ? Number(siteSettings.priority_member_fee || 250) : Number(siteSettings.priority_nonmember_fee || 350);
+  document.getElementById('btnMember').style.borderColor = type === 'member' ? 'var(--gold)' : 'var(--border)';
+  document.getElementById('btnMember').style.background = type === 'member' ? '#fdf6ee' : 'var(--surface)';
   document.getElementById('btnNonMember').style.borderColor = type === 'nonmember' ? 'var(--gold)' : 'var(--border)';
-  document.getElementById('btnNonMember').style.background  = type === 'nonmember' ? '#fdf6ee'     : 'var(--surface)';
+  document.getElementById('btnNonMember').style.background = type === 'nonmember' ? '#fdf6ee' : 'var(--surface)';
 }
 
 function goStep(n) {
   if (n === 4) {
-    const name  = document.getElementById('inputName').value.trim();
+    const name = document.getElementById('inputName').value.trim();
     const phone = document.getElementById('inputPhone').value.trim();
-    const err   = document.getElementById('errorMsg3');
+    const err = document.getElementById('errorMsg3');
     if (!name || !phone) { err.style.display = 'block'; return; }
     err.style.display = 'none';
-    state.name  = name;
-    state.phone = phone;
-    state.note  = document.getElementById('inputNote').value.trim();
+    state.name = name; state.phone = phone;
+    state.note = document.getElementById('inputNote').value.trim();
     renderSummary();
   }
   for (let i = 1; i <= 4; i++) {
@@ -468,17 +421,17 @@ function goStep(n) {
 }
 
 function renderSummary() {
-  const dateStr      = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
+  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
   const serviceNames = state.services.map(s => s.name).join('、');
-  const priceLines   = state.services.map(s => {
+  const priceLines = state.services.map(s => {
     const num = parseInt(String(s.price).replace(/[^0-9]/g, ''));
     return { name: s.name, price: s.price, num: isNaN(num) ? 0 : num };
   });
-  const serviceTotal    = priceLines.reduce((sum, p) => sum + p.num, 0);
-  const priorityFee     = state.priority && state.memberType ? state.priorityFee : 0;
-  const grandTotal      = serviceTotal + priorityFee;
+  const serviceTotal = priceLines.reduce((sum, p) => sum + p.num, 0);
+  const priorityFee = state.priority && state.memberType ? state.priorityFee : 0;
+  const grandTotal = serviceTotal + priorityFee;
   const priceDetailHtml = priceLines.map(p => p.name + ' ' + p.price).join('<br>');
-  const memberLabel     = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
+  const memberLabel = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
   document.getElementById('summaryBody').innerHTML =
     '<div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">' + serviceNames + '</span></div>' +
     '<div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value" style="font-size:12px;line-height:1.8">' + priceDetailHtml + '</span></div>' +
@@ -493,46 +446,30 @@ function renderSummary() {
 
 async function submitBooking() {
   const loading = document.getElementById('loadingSubmit');
-  const errMsg  = document.getElementById('errorMsg4');
-  const btn     = document.getElementById('btnSubmit');
-  loading.style.display = 'block';
-  btn.disabled = true;
-  errMsg.style.display = 'none';
-
-  const dateStr    = state.date ? formatDate(state.date) : '';
+  const errMsg = document.getElementById('errorMsg4');
+  const btn = document.getElementById('btnSubmit');
+  loading.style.display = 'block'; btn.disabled = true; errMsg.style.display = 'none';
+  const dateStr = state.date ? formatDate(state.date) : '';
   const serviceStr = state.services.map(s => s.name).join('、');
-
   try {
-    const checkRes  = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+    const checkRes = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
     const checkData = await checkRes.json();
-    const latest    = new Set((checkData.slots || []).map(normalizeTime));
+    const latest = new Set((checkData.slots || []).map(normalizeTime));
     if (latest.has(normalizeTime(state.time))) {
       errMsg.textContent = '此時段剛剛已被預約，請返回重新選擇時間';
-      errMsg.style.display = 'block';
-      btn.disabled = false;
-      loading.style.display = 'none';
-      return;
+      errMsg.style.display = 'block'; btn.disabled = false; loading.style.display = 'none'; return;
     }
   } catch (_) {}
-
   const params = new URLSearchParams({
-    action:     'booking',
-    name:       state.name,
-    phone:      state.phone,
-    service:    serviceStr,
-    date:       dateStr,
-    time:       normalizeTime(state.time || ''),
-    note:       state.note,
-    priority:   state.priority ? 'yes' : 'no',
-    memberType: state.memberType || '',
+    action: 'booking', name: state.name, phone: state.phone, service: serviceStr,
+    date: dateStr, time: normalizeTime(state.time || ''), note: state.note,
+    priority: state.priority ? 'yes' : 'no', memberType: state.memberType || '',
   });
-
   try {
-    const res  = await fetch(GAS_URL, {
-      method:  'POST',
-      cache:   'no-store',
+    const res = await fetch(GAS_URL, {
+      method: 'POST', cache: 'no-store',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body:    params.toString(),
+      body: params.toString(),
     });
     const data = await res.json();
     loading.style.display = 'none';
@@ -540,36 +477,31 @@ async function submitBooking() {
       showSuccess(data.bookingId);
     } else if (data.msg === 'slot_taken') {
       errMsg.textContent = '此時段已被預約，請返回重新選擇時間';
-      errMsg.style.display = 'block';
-      btn.disabled = false;
+      errMsg.style.display = 'block'; btn.disabled = false;
     } else if (data.msg === 'missing_fields') {
       errMsg.textContent = '資料未填完整，請重新確認';
-      errMsg.style.display = 'block';
-      btn.disabled = false;
+      errMsg.style.display = 'block'; btn.disabled = false;
     } else {
-      errMsg.style.display = 'block';
-      btn.disabled = false;
+      errMsg.style.display = 'block'; btn.disabled = false;
     }
   } catch (_) {
-    loading.style.display = 'none';
-    errMsg.style.display = 'block';
-    btn.disabled = false;
+    loading.style.display = 'none'; errMsg.style.display = 'block'; btn.disabled = false;
   }
 }
 
 function showSuccess(bookingId) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('sectionSuccess').classList.add('active');
-  const dateStr    = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
+  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
   const serviceStr = state.services.map(s => s.name).join('、');
   document.getElementById('successDesc').innerHTML =
     '<br><strong>' + state.name + '</strong> 您好！<br><br>' +
-    '已收到您的預約申請 🙏<br><br>' +
+    '已收到您的預約登記 🙏<br><br>' +
     '📋 ' + serviceStr + '<br>' +
     '📅 ' + dateStr + ' ' + state.time + '<br>' +
     '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
-    'Elsa 確認後會透過 LINE 通知您<br>' +
-    '如有任何問題歡迎直接傳訊息給我們 😊';
+    '<strong style="color:#e65100">⚠️ 以上預約皆為登記<br>請稍後待 Elsa 與您確認預約<br>避免白跑一趟 🙏</strong><br><br>' +
+    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊';
   for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
 }
 
@@ -579,14 +511,10 @@ function renderPaymentButtons() {
   let html = '';
   if (siteSettings.payment_jkopay_url) {
     html += '<a href="' + siteSettings.payment_jkopay_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 街口支付 →</a>';
-  } else {
-    html += '<span class="payment-tag">💳 街口支付</span>';
-  }
+  } else { html += '<span class="payment-tag">💳 街口支付</span>'; }
   if (siteSettings.payment_ipass_url) {
     html += '<a href="' + siteSettings.payment_ipass_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 iPASS Money →</a>';
-  } else {
-    html += '<span class="payment-tag">💳 iPASS Money</span>';
-  }
+  } else { html += '<span class="payment-tag">💳 iPASS Money</span>'; }
   html += '<span class="payment-tag">🏦 轉帳</span>';
   list.innerHTML = html;
 }
