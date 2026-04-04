@@ -231,10 +231,33 @@ input:checked + .slider:before { transform: translateX(16px); }
 
   <!-- 💰 儲值管理 -->
   <div class="panel" id="panel-credit">
+
+    <!-- 產生簽名連結 -->
+    <div class="card">
+      <div class="card-title">📲 產生顧客簽名連結</div>
+      <p style="font-size:13px;color:#888;margin-bottom:14px;">輸入顧客資料，產生簽名頁連結傳給顧客，顧客在手機上簽名後自動寫入系統。</p>
+      <div class="form-row">
+        <div class="form-group"><label>顧客姓名 *</label><input id="link-name" type="text" placeholder="王小明"></div>
+        <div class="form-group"><label>顧客電話 *</label><input id="link-phone" type="tel" placeholder="0912345678"></div>
+      </div>
+      <button class="btn btn-gold" onclick="genSignLink()">產生連結</button>
+      <div id="linkResult" style="display:none;margin-top:14px;">
+        <div style="background:#fdf8ee;border:1px solid #e6c77a;border-radius:8px;padding:12px 14px;">
+          <div style="font-size:12px;color:#888;margin-bottom:6px;">簽名頁連結（傳給顧客）</div>
+          <div id="linkUrl" style="font-size:13px;color:#6b4c2a;word-break:break-all;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-gold btn-sm" onclick="copyLink()">📋 複製連結</button>
+            <button class="btn btn-primary btn-sm" onclick="openLink()">🔗 預覽開啟</button>
+          </div>
+          <div id="linkCopied" style="font-size:12px;color:#2d7a4f;margin-top:6px;display:none;">✅ 已複製！可以傳給顧客了</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
         <span>💰 養護金儲值管理</span>
-        <button class="btn btn-gold" onclick="openAddCreditModal()">＋ 新增儲值</button>
+        <button class="btn btn-gold" onclick="openAddCreditModal()">＋ 直接新增儲值</button>
       </div>
 
       <!-- 查詢列 -->
@@ -930,6 +953,29 @@ async function deleteCredit(row) {
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('show');
+}
+
+// ── 產生簽名連結 ──
+let _currentSignLink = '';
+function genSignLink() {
+  const name  = document.getElementById('link-name').value.trim();
+  const phone = document.getElementById('link-phone').value.trim();
+  if (!name || !phone) { alert('請填寫姓名和電話'); return; }
+  const base = 'https://san555483-hub.github.io/credit-sign.html';
+  _currentSignLink = base + '?name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(phone);
+  document.getElementById('linkUrl').textContent = _currentSignLink;
+  document.getElementById('linkResult').style.display = 'block';
+  document.getElementById('linkCopied').style.display = 'none';
+}
+function copyLink() {
+  if (!_currentSignLink) return;
+  navigator.clipboard.writeText(_currentSignLink).then(() => {
+    document.getElementById('linkCopied').style.display = 'block';
+    setTimeout(() => document.getElementById('linkCopied').style.display = 'none', 3000);
+  });
+}
+function openLink() {
+  if (_currentSignLink) window.open(_currentSignLink, '_blank');
 }
 </script>
 </body>
