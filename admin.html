@@ -9,6 +9,7 @@
   --bg: #f5f5f5; --surface: #fff; --border: #ddd;
   --gold: #c4a882; --gold-dark: #a08660; --text: #2a2420;
   --muted: #888; --red: #c0392b; --green: #27ae60; --blue: #2980b9;
+  --gold2: #c9973a; --gold2-light: #fdf8ee; --warm: #6b4c2a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: sans-serif; }
@@ -36,15 +37,19 @@ tr:hover td { background: #fafafa; }
 .btn-gold { background: var(--gold); color: white; }
 .btn-red { background: var(--red); color: white; }
 .btn-green { background: var(--green); color: white; }
+.btn-warn { background: #f39c12; color: white; }
+.btn-danger { background: #e74c3c; color: white; border: none; border-radius: 8px; padding: 9px 18px; cursor: pointer; }
+.btn-secondary { background: #eee; color: #555; border: none; border-radius: 8px; padding: 9px 18px; cursor: pointer; }
 .btn-sm { padding: 4px 10px; font-size: 12px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-group { margin-bottom: 10px; }
 .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 .form-group input, .form-group select, .form-group textarea {
   width: 100%; border: 1px solid var(--border); border-radius: 6px;
-  padding: 8px 10px; font-size: 13px; outline: none;
+  padding: 8px 10px; font-size: 13px; outline: none; font-family: sans-serif;
 }
 .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
 .msg { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; display: none; }
@@ -62,6 +67,23 @@ input:checked + .slider:before { transform: translateX(16px); }
 .time-range-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
 .time-range-row select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 13px; }
 #restTimeArea { display: none; margin-top: 10px; }
+
+/* ── 儲值模組 CSS ── */
+#creditTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+#creditTable th { background: var(--gold2-light); color: var(--warm); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e6c77a; }
+#creditTable td { padding: 10px 12px; border-bottom: 1px solid #f0ebe0; vertical-align: middle; }
+#creditTable tr:hover td { background: #fefcf7; }
+.credit-positive { color: var(--green); font-weight: 600; }
+.credit-negative { color: var(--red); font-weight: 600; }
+.credit-summary-bar { background: var(--gold2-light); border: 1px solid #e6c77a; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; display: none; align-items: center; gap: 12px; flex-wrap: wrap; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 14px; padding: 0; max-width: 440px; width: 90%; box-shadow: 0 8px 40px rgba(0,0,0,0.18); overflow: hidden; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { font-size: 15px; font-weight: 700; color: var(--warm); }
+.modal-header button { background: none; border: none; font-size: 18px; cursor: pointer; color: #aaa; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 </style>
 </head>
 <body>
@@ -75,6 +97,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="tab" onclick="switchTab('customers')">👥 顧客回訪</div>
   <div class="tab" onclick="switchTab('blacklist')">🚫 黑名單</div>
   <div class="tab" onclick="switchTab('schedule')">🗓 排程設定</div>
+  <div class="tab" onclick="switchTab('credit')">💰 儲值管理</div>
   <div class="tab" onclick="switchTab('settings')">⚙️ 系統設定</div>
 </div>
 <div class="content">
@@ -206,6 +229,48 @@ input:checked + .slider:before { transform: translateX(16px); }
     </div>
   </div>
 
+  <!-- 💰 儲值管理 -->
+  <div class="panel" id="panel-credit">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>💰 養護金儲值管理</span>
+        <button class="btn btn-gold" onclick="openAddCreditModal()">＋ 新增儲值</button>
+      </div>
+
+      <!-- 查詢列 -->
+      <div class="filter-row">
+        <input id="creditSearchPhone" type="text" placeholder="電話查詢" style="flex:1;min-width:140px;">
+        <button class="btn btn-primary" onclick="searchCredits()">🔍 查詢</button>
+        <button class="btn btn-gold" onclick="loadAllCredits()">全部</button>
+      </div>
+
+      <!-- 總覽列 -->
+      <div id="creditSummary" class="credit-summary-bar">
+        顧客：<strong id="cs-name"></strong>
+        &nbsp;|&nbsp; 電話：<strong id="cs-phone"></strong>
+        &nbsp;|&nbsp; <span style="color:var(--warm);font-weight:700;">餘額：$<span id="cs-balance"></span></span>
+        &nbsp;
+        <button onclick="openDeductModal()" class="btn btn-warn btn-sm">扣款</button>
+        <button onclick="openRefundModal()" class="btn btn-red btn-sm">退費</button>
+      </div>
+
+      <!-- 列表 -->
+      <div style="overflow-x:auto">
+        <table id="creditTable">
+          <thead>
+            <tr>
+              <th>姓名</th><th>電話</th><th>儲值</th><th>贈送</th>
+              <th>此筆餘額</th><th>支付</th><th>建立時間</th><th>備註</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="creditTbody">
+            <tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入資料</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- 系統設定 -->
   <div class="panel" id="panel-settings">
     <div class="card">
@@ -217,12 +282,98 @@ input:checked + .slider:before { transform: translateX(16px); }
 
 </div>
 
+<!-- ── 新增儲值 Modal ── -->
+<div id="addCreditModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header"><h3>新增儲值</h3><button onclick="closeModal('addCreditModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>姓名</label><input id="ac-name" type="text" placeholder="顧客姓名"></div>
+        <div class="form-group"><label>電話 *</label><input id="ac-phone" type="tel" placeholder="0912345678"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>LINE UID（選填）</label><input id="ac-uid" type="text" placeholder="選填"></div>
+        <div class="form-group"><label>儲值方案</label>
+          <select id="ac-plan" onchange="updatePlanFields()">
+            <option value="3000" selected>$3,000 送 $300</option>
+            <option value="custom">自訂金額</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>儲值金額 *</label><input id="ac-amount" type="number" value="3000"></div>
+        <div class="form-group"><label>贈送金額</label><input id="ac-bonus" type="number" value="300"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>支付方式</label>
+          <select id="ac-pay">
+            <option>現金</option><option>轉帳</option><option>街口支付</option><option>iPASS</option>
+          </select>
+        </div>
+        <div class="form-group"><label>備註</label><input id="ac-note" type="text" placeholder="選填"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('addCreditModal')">取消</button>
+      <button class="btn btn-gold" onclick="submitAddCredit()">確認儲值</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 扣款 Modal ── -->
+<div id="deductModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header"><h3>消費扣款</h3><button onclick="closeModal('deductModal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#888;margin-bottom:14px;">
+        顧客：<strong id="dm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="dm-balance"></span></strong>
+      </p>
+      <div class="form-group"><label>扣款金額 *</label><input id="dm-amount" type="number" placeholder=""></div>
+      <div class="form-group"><label>備註</label><input id="dm-note" type="text" placeholder="消費折抵"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('deductModal')">取消</button>
+      <button class="btn btn-warn" onclick="submitDeduct()">確認扣款</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 退費 Modal ── -->
+<div id="refundModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header"><h3>申請退費</h3><button onclick="closeModal('refundModal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#888;margin-bottom:14px;">
+        顧客：<strong id="rm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="rm-balance"></span></strong>
+      </p>
+      <div class="form-group"><label>退費金額 *</label><input id="rm-amount" type="number" placeholder="" oninput="calcRefundFee()"></div>
+      <div class="form-group"><label>退費時間</label>
+        <select id="rm-fee" onchange="calcRefundFee()">
+          <option value="0.03">7 日內（手續費 3%）</option>
+          <option value="0.05">7 日後（手續費 5%）</option>
+        </select>
+      </div>
+      <div id="refundCalc" style="background:#fff5f5;border:1px solid #f5c6c6;border-radius:8px;padding:12px;font-size:13px;display:none;margin-top:8px;">
+        手續費：<strong id="rc-fee" style="color:#c0392b"></strong>　
+        實退金額：<strong id="rc-actual" style="color:#2d7a4f"></strong>
+      </div>
+      <div class="form-group" style="margin-top:10px"><label>備註</label><input id="rm-note" type="text" placeholder=""></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('refundModal')">取消</button>
+      <button class="btn btn-red" onclick="submitRefund()">確認退費</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+const GAS = 'https://script.google.com/macros/s/AKfycbwEMdOB-L34EUI0RAzy5aSH-naUg7PgU_WD9y8oGb6LVF7fHZP7zRkLnC6GxOFfHy_nTw/exec';
 
 let allCustomers = [];
+let currentCreditPhone = '';
+let currentCreditName  = '';
+let currentCreditBal   = 0;
 
-// 時段選項
 const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
 
 function initSlotSelects() {
@@ -246,26 +397,35 @@ setInterval(() => {
     n.toLocaleDateString('zh-TW') + ' ' + n.toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
 }, 1000);
 
-window.onload = function() {
-  initSlotSelects();
-};
+window.onload = function() { initSlotSelects(); };
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const tabs = ['bookings','services','customers','blacklist','schedule','settings'];
+  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
-  if (name === 'services')   loadServices();
-  if (name === 'customers')  loadCustomers();
-  if (name === 'blacklist')  loadBlacklist();
-  if (name === 'schedule')   { loadSchedule(); loadLockedSlots(); }
-  if (name === 'settings')   loadSettings();
+  if (name === 'services')  loadServices();
+  if (name === 'customers') loadCustomers();
+  if (name === 'blacklist') loadBlacklist();
+  if (name === 'schedule')  { loadSchedule(); loadLockedSlots(); }
+  if (name === 'settings')  loadSettings();
+  if (name === 'credit')    loadAllCredits();
 }
 
 async function api(params) {
   const url = GAS + '?' + new URLSearchParams(params).toString() + '&t=' + Date.now();
   const res = await fetch(url, { cache: 'no-store' });
+  return res.json();
+}
+
+async function gasPost(params) {
+  const body = new URLSearchParams(params);
+  const res = await fetch(GAS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString()
+  });
   return res.json();
 }
 
@@ -498,9 +658,9 @@ async function loadSchedule() {
 }
 
 async function addSchedule() {
-  const date  = document.getElementById('schedDate').value;
-  const type  = document.getElementById('schedType').value;
-  const note  = document.getElementById('schedNote').value;
+  const date = document.getElementById('schedDate').value;
+  const type = document.getElementById('schedType').value;
+  const note = document.getElementById('schedNote').value;
   if (!date) { showMsg('msgSchedule', '❌ 請選擇日期', false); return; }
   let time = '';
   if (type === 'rest') {
@@ -567,6 +727,186 @@ async function saveSetting(key) {
   const value = document.getElementById('setting_' + key).value;
   const data = await api({ action: 'updateSettings', key, value });
   showMsg('msgSettings', data.status === 'ok' ? '✅ 已儲存' : '❌ ' + data.msg, data.status === 'ok');
+}
+
+// ══════════════════════════════════════════
+// 💰 儲值管理
+// ══════════════════════════════════════════
+async function loadAllCredits() {
+  document.getElementById('creditSummary').style.display = 'none';
+  document.getElementById('creditSearchPhone').value = '';
+  currentCreditPhone = '';
+  renderCreditTable([]);
+  try {
+    const data = await gasPost({ action: 'listCredits' });
+    if (data.ok) renderCreditTable(data.data);
+    else alert('載入失敗：' + data.msg);
+  } catch(e) { alert('載入失敗'); }
+}
+
+async function searchCredits() {
+  const phone = document.getElementById('creditSearchPhone').value.trim();
+  if (!phone) { loadAllCredits(); return; }
+  try {
+    const data = await gasPost({ action: 'listCredits', phone });
+    if (!data.ok) { alert(data.msg); return; }
+    renderCreditTable(data.data);
+    if (data.data.length) {
+      const bal = data.data.reduce((s, r) => s + Number(r['餘額'] || 0), 0);
+      currentCreditPhone = phone;
+      currentCreditName  = data.data[0]['姓名'] || '';
+      currentCreditBal   = bal;
+      document.getElementById('cs-name').textContent    = currentCreditName;
+      document.getElementById('cs-phone').textContent   = phone;
+      document.getElementById('cs-balance').textContent = bal.toLocaleString();
+      document.getElementById('creditSummary').style.display = 'flex';
+    } else {
+      document.getElementById('creditSummary').style.display = 'none';
+      alert('查無此電話的儲值紀錄');
+    }
+  } catch(e) { alert('查詢失敗'); }
+}
+
+function renderCreditTable(rows) {
+  const tbody = document.getElementById('creditTbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">查無資料</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const bal = Number(r['餘額'] || 0);
+    const amt = Number(r['儲值金額'] || 0);
+    return `<tr>
+      <td>${r['姓名']||'-'}</td>
+      <td>${r['電話']||'-'}</td>
+      <td class="${amt >= 0 ? 'credit-positive' : 'credit-negative'}">$${amt.toLocaleString()}</td>
+      <td>$${Number(r['贈送金額']||0).toLocaleString()}</td>
+      <td class="${bal >= 0 ? 'credit-positive' : 'credit-negative'}">$${bal.toLocaleString()}</td>
+      <td>${r['支付方式']||'-'}</td>
+      <td style="font-size:11px">${r['建立時間']||'-'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['備註']||''}">${r['備註']||'-'}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteCredit(${r._row})">刪除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddCreditModal() {
+  document.getElementById('ac-phone').value = currentCreditPhone;
+  document.getElementById('ac-name').value  = currentCreditName;
+  document.getElementById('ac-uid').value   = '';
+  document.getElementById('ac-note').value  = '';
+  document.getElementById('ac-plan').value  = '3000';
+  updatePlanFields();
+  document.getElementById('addCreditModal').classList.add('show');
+}
+
+function updatePlanFields() {
+  const plan = document.getElementById('ac-plan').value;
+  if (plan === '3000') {
+    document.getElementById('ac-amount').value = 3000;
+    document.getElementById('ac-bonus').value  = 300;
+  }
+}
+
+async function submitAddCredit() {
+  const phone  = document.getElementById('ac-phone').value.trim();
+  const amount = document.getElementById('ac-amount').value;
+  if (!phone || !amount) { alert('請填寫電話和儲值金額'); return; }
+  try {
+    const data = await gasPost({
+      action:    'addCredit',
+      uid:       document.getElementById('ac-uid').value.trim(),
+      name:      document.getElementById('ac-name').value.trim(),
+      phone, amount,
+      bonus:     document.getElementById('ac-bonus').value || 0,
+      payMethod: document.getElementById('ac-pay').value,
+      note:      document.getElementById('ac-note').value
+    });
+    if (data.ok) {
+      alert(`✅ 儲值成功！餘額：$${data.balance}`);
+      closeModal('addCreditModal');
+      loadAllCredits();
+    } else { alert('失敗：' + data.msg); }
+  } catch(e) { alert('送出失敗'); }
+}
+
+function openDeductModal() {
+  document.getElementById('dm-name').textContent    = currentCreditName;
+  document.getElementById('dm-balance').textContent = currentCreditBal.toLocaleString();
+  document.getElementById('dm-amount').value = '';
+  document.getElementById('dm-note').value   = '';
+  document.getElementById('deductModal').classList.add('show');
+}
+
+async function submitDeduct() {
+  const amount = document.getElementById('dm-amount').value;
+  if (!amount) { alert('請輸入扣款金額'); return; }
+  try {
+    const data = await gasPost({
+      action: 'deductCredit',
+      phone:  currentCreditPhone,
+      amount,
+      note:   document.getElementById('dm-note').value
+    });
+    if (data.ok) {
+      alert(`✅ ${data.msg}\n剩餘餘額：$${data.remainBalance}`);
+      closeModal('deductModal');
+      searchCredits();
+    } else { alert('失敗：' + data.msg); }
+  } catch(e) { alert('送出失敗'); }
+}
+
+function openRefundModal() {
+  document.getElementById('rm-name').textContent    = currentCreditName;
+  document.getElementById('rm-balance').textContent = currentCreditBal.toLocaleString();
+  document.getElementById('rm-amount').value = '';
+  document.getElementById('rm-note').value   = '';
+  document.getElementById('refundCalc').style.display = 'none';
+  document.getElementById('refundModal').classList.add('show');
+}
+
+function calcRefundFee() {
+  const amt  = Number(document.getElementById('rm-amount').value);
+  const rate = Number(document.getElementById('rm-fee').value);
+  if (!amt) { document.getElementById('refundCalc').style.display = 'none'; return; }
+  const fee    = Math.ceil(amt * rate);
+  const actual = amt - fee;
+  document.getElementById('rc-fee').textContent    = `$${fee}`;
+  document.getElementById('rc-actual').textContent = `$${actual}`;
+  document.getElementById('refundCalc').style.display = 'block';
+}
+
+async function submitRefund() {
+  const refundAmount = document.getElementById('rm-amount').value;
+  if (!refundAmount) { alert('請輸入退費金額'); return; }
+  const feeRate = document.getElementById('rm-fee').value;
+  if (!confirm(`確認退費 $${refundAmount}（手續費 ${(feeRate*100).toFixed(0)}%）？`)) return;
+  try {
+    const data = await gasPost({
+      action: 'refundCredit',
+      phone:  currentCreditPhone,
+      refundAmount, feeRate,
+      note:   document.getElementById('rm-note').value
+    });
+    if (data.ok) {
+      alert(`✅ ${data.msg}`);
+      closeModal('refundModal');
+      searchCredits();
+    } else { alert('失敗：' + data.msg); }
+  } catch(e) { alert('送出失敗'); }
+}
+
+async function deleteCredit(row) {
+  if (!confirm('確定刪除這筆紀錄？')) return;
+  try {
+    const data = await gasPost({ action: 'deleteCredit', row });
+    if (data.ok) { alert('已刪除'); loadAllCredits(); }
+    else alert('失敗：' + data.msg);
+  } catch(e) { alert('刪除失敗'); }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
 }
 </script>
 </body>
