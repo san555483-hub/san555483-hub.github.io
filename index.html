@@ -385,16 +385,29 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 
     try {
       // Step 1: 換 access token（透過 GAS）
+      const verifier = localStorage.getItem('line_verifier');
+      const savedState = localStorage.getItem('line_state');
+      console.log('DEBUG code:', code);
+      console.log('DEBUG verifier:', verifier);
+      console.log('DEBUG state match:', state, savedState);
+      console.log('DEBUG REDIRECT_URI:', REDIRECT_URI);
+      console.log('DEBUG LINE_CHANNEL_ID:', LINE_CHANNEL_ID);
+
       const tokenParams = new URLSearchParams({
         action: 'lineToken',
         code,
-        verifier: localStorage.getItem('line_verifier'),
+        verifier: verifier || '',
         redirect: REDIRECT_URI,
         channelId: LINE_CHANNEL_ID
       });
-      const tokenRes = await fetch(GAS_URL_AUTH + '?' + tokenParams.toString());
-      const tokenData = await tokenRes.json();
-      if (!tokenData.access_token) throw new Error('token 交換失敗');
+      const tokenUrl = GAS_URL_AUTH + '?' + tokenParams.toString();
+      console.log('DEBUG tokenUrl:', tokenUrl);
+
+      const tokenRes = await fetch(tokenUrl);
+      const tokenText = await tokenRes.text();
+      console.log('DEBUG tokenRes:', tokenText);
+      const tokenData = JSON.parse(tokenText);
+      if (!tokenData.access_token) throw new Error('token 交換失敗：' + tokenText);
 
       // Step 2: 取得 LINE profile
       const profileRes = await fetch('https://api.line.me/v2/profile', {
