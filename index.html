@@ -693,6 +693,51 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       <div class="order-items" id="order-items"></div>
       <div class="order-gift-row" id="order-gift-row" style="display:none"></div>
       <div class="order-notice"><div class="n-icon">🏪</div><h4>來店兌換贈品</h4><p>請截圖保存此頁面，<br>憑訂單編號來店兌換您選擇的贈品。</p></div>
+
+      <!-- 填寫資料區 -->
+      <div style="margin:14px 0;border-top:1px solid #eee;padding-top:14px;">
+        <div style="font-size:13px;font-weight:600;color:#3d2b1f;margin-bottom:10px;">📋 填寫訂單資料</div>
+
+        <div style="margin-bottom:8px;">
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">聯絡電話 *</label>
+          <input id="inp-phone" type="tel" placeholder="0912345678"
+            style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
+        </div>
+
+        <div style="margin-bottom:8px;">
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:6px;">配送方式 *</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="shipping-options">
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
+              <input type="radio" name="shipping" value="到店取貨"> 🏪 到店取貨
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
+              <input type="radio" name="shipping" value="居家宅配"> 🏠 居家宅配
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
+              <input type="radio" name="shipping" value="超商取貨（依重量）"> 🏪 超商取貨
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
+              <input type="radio" name="shipping" value="黑貓宅配（依重量）"> 🐱 黑貓宅配
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;grid-column:1/-1;">
+              <input type="radio" name="shipping" value="外送到府（附近居民）"> 🛵 外送到府（附近居民）
+            </label>
+          </div>
+        </div>
+
+        <div id="address-wrap" style="margin-bottom:8px;display:none;">
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">地址</label>
+          <input id="inp-address" type="text" placeholder="請填寫收貨地址"
+            style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
+        </div>
+
+        <div style="margin-bottom:8px;">
+          <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">備註（選填）</label>
+          <input id="inp-note" type="text" placeholder="例：門口有電鈴、指定時段..."
+            style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
+        </div>
+      </div>
+
       <div class="order-screenshot-hint">📸 建議截圖保存此畫面</div>
       <div style="margin-bottom:12px;font-size:13px;color:#888;text-align:center;">選擇付款方式</div>
       <div class="order-actions">
@@ -826,10 +871,38 @@ function submitOrderToSheet(orderNum,total,items,gift){
   });
   fetch(GAS_URL + '?' + orderParams.toString()).catch(()=>{});
 }
-function closeOrderModal(){document.getElementById('order-modal-wrap').classList.remove('on');}
+function closeOrderModal(){
+  document.getElementById('order-modal-wrap').classList.remove('on');
+  // 清空表單
+  const phone = document.getElementById('inp-phone');
+  const note  = document.getElementById('inp-note');
+  const addr  = document.getElementById('inp-address');
+  if (phone) phone.value = '';
+  if (note)  note.value  = '';
+  if (addr)  addr.value  = '';
+  document.querySelectorAll('input[name="shipping"]').forEach(r => r.checked = false);
+  document.getElementById('address-wrap').style.display = 'none';
+}
+
+// 配送方式切換 → 顯示/隱藏地址
+document.addEventListener('change', function(e) {
+  if (e.target.name === 'shipping') {
+    const needAddress = ['居家宅配','黑貓宅配（依重量）','外送到府（附近居民）'].includes(e.target.value);
+    document.getElementById('address-wrap').style.display = needAddress ? 'block' : 'none';
+    // 高亮選中的選項
+    document.querySelectorAll('#shipping-options label').forEach(l => {
+      l.style.borderColor = l.querySelector('input').checked ? '#b8895a' : '#ddd';
+      l.style.background  = l.querySelector('input').checked ? '#faf6f0' : '';
+    });
+  }
+});
 async function goToPayment(method) {
+  // 驗證必填
+  const phone    = document.getElementById('inp-phone') ? document.getElementById('inp-phone').value.trim() : '';
+  const shipping = document.querySelector('input[name="shipping"]:checked');
+  if (!phone) { alert('請填寫聯絡電話'); document.getElementById('inp-phone').focus(); return; }
+  if (!shipping) { alert('請選擇配送方式'); return; }
   // 黑名單檢查
-  const phone = document.getElementById('inp-phone') ? document.getElementById('inp-phone').value.trim() : '';
   if (phone) {
     try {
       const blRes = await fetch(GAS_URL, {
