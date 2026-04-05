@@ -385,16 +385,14 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 
     try {
       // Step 1: 換 access token（透過 GAS）
-      const tokenRes = await fetch(GAS_URL_AUTH + '?action=lineToken', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          code,
-          verifier: sessionStorage.getItem('line_verifier'),
-          redirect: REDIRECT_URI,
-          channelId: LINE_CHANNEL_ID
-        })
+      const tokenParams = new URLSearchParams({
+        action: 'lineToken',
+        code,
+        verifier: sessionStorage.getItem('line_verifier'),
+        redirect: REDIRECT_URI,
+        channelId: LINE_CHANNEL_ID
       });
+      const tokenRes = await fetch(GAS_URL_AUTH + '?' + tokenParams.toString());
       const tokenData = await tokenRes.json();
       if (!tokenData.access_token) throw new Error('token 交換失敗');
 
@@ -405,15 +403,13 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       const profile = await profileRes.json();
 
       // Step 3: 向 GAS 要 Firebase Custom Token
-      const ctRes = await fetch(GAS_URL_AUTH + '?action=customToken', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          lineUserId: profile.userId,
-          displayName: profile.displayName,
-          pictureUrl: profile.pictureUrl || ''
-        })
+      const ctParams = new URLSearchParams({
+        action: 'customToken',
+        lineUserId: profile.userId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl || ''
       });
+      const ctRes = await fetch(GAS_URL_AUTH + '?' + ctParams.toString());
       const ctData = await ctRes.json();
       if (!ctData.customToken) throw new Error('Custom Token 失敗');
 
