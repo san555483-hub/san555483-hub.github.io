@@ -352,8 +352,8 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     const verifier = genVerifier();
     const challenge = await genChallenge(verifier);
     const state = Math.random().toString(36).slice(2);
-    localStorage.setItem('line_verifier', verifier);
-    localStorage.setItem('line_state', state);
+    sessionStorage.setItem('line_verifier', verifier);
+    sessionStorage.setItem('line_state', state);
     const url = `https://access.line.me/oauth2/v2.1/authorize?response_type=code`
       + `&client_id=${LINE_CHANNEL_ID}`
       + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`
@@ -369,6 +369,8 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     sessionStorage.removeItem('line_uid');
     sessionStorage.removeItem('line_name');
     sessionStorage.removeItem('line_pic');
+    sessionStorage.removeItem('line_userId');
+    window._lineUser = null;
     renderLineBar(null);
     showToast('已登出 LINE');
   };
@@ -378,36 +380,25 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     const code = params.get('code');
     const state = params.get('state');
     if (!code) return;
-    if (state !== localStorage.getItem('line_state')) return;
+    if (state !== sessionStorage.getItem('line_state')) return;
 
     history.replaceState({}, '', location.pathname);
     showToast('LINE 登入中…');
 
     try {
       // Step 1: 換 access token（透過 GAS）
-      const verifier = localStorage.getItem('line_verifier');
-      const savedState = localStorage.getItem('line_state');
-      console.log('DEBUG code:', code);
-      console.log('DEBUG verifier:', verifier);
-      console.log('DEBUG state match:', state, savedState);
-      console.log('DEBUG REDIRECT_URI:', REDIRECT_URI);
-      console.log('DEBUG LINE_CHANNEL_ID:', LINE_CHANNEL_ID);
-
-      const tokenParams = new URLSearchParams({
-        action: 'lineToken',
-        code,
-        verifier: verifier || '',
-        redirect: REDIRECT_URI,
-        channelId: LINE_CHANNEL_ID
+      const tokenRes = await fetch(GAS_URL_AUTH + '?action=lineToken', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          code,
+          verifier: sessionStorage.getItem('line_verifier'),
+          redirect: REDIRECT_URI,
+          channelId: LINE_CHANNEL_ID
+        })
       });
-      const tokenUrl = GAS_URL_AUTH + '?' + tokenParams.toString();
-      console.log('DEBUG tokenUrl:', tokenUrl);
-
-      const tokenRes = await fetch(tokenUrl);
-      const tokenText = await tokenRes.text();
-      console.log('DEBUG tokenRes:', tokenText);
-      const tokenData = JSON.parse(tokenText);
-      if (!tokenData.access_token) throw new Error('token 交換失敗：' + tokenText);
+      const tokenData = await tokenRes.json();
+      if (!tokenData.access_token) throw new Error('token 交換失敗');
 
       // Step 2: 取得 LINE profile
       const profileRes = await fetch('https://api.line.me/v2/profile', {
@@ -416,13 +407,15 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       const profile = await profileRes.json();
 
       // Step 3: 向 GAS 要 Firebase Custom Token
-      const ctParams = new URLSearchParams({
-        action: 'customToken',
-        lineUserId: profile.userId,
-        displayName: profile.displayName,
-        pictureUrl: profile.pictureUrl || ''
+      const ctRes = await fetch(GAS_URL_AUTH + '?action=customToken', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          lineUserId: profile.userId,
+          displayName: profile.displayName,
+          pictureUrl: profile.pictureUrl || ''
+        })
       });
-      const ctRes = await fetch(GAS_URL_AUTH + '?' + ctParams.toString());
       const ctData = await ctRes.json();
       if (!ctData.customToken) throw new Error('Custom Token 失敗');
 
@@ -441,6 +434,9 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       sessionStorage.setItem('line_uid', uid);
       sessionStorage.setItem('line_name', profile.displayName);
       sessionStorage.setItem('line_pic', profile.pictureUrl || '');
+      sessionStorage.setItem('line_userId', profile.userId);
+      // 全域儲存供訂單使用
+      window._lineUser = { displayName: profile.displayName, userId: profile.userId, pic: profile.pictureUrl || '' };
       renderLineBar({ name: profile.displayName, pic: profile.pictureUrl });
       showToast('✓ 歡迎！' + profile.displayName);
     } catch(e) {
@@ -488,10 +484,16 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   // 頁面載入時，恢復 LINE 登入狀態
   window.addEventListener('DOMContentLoaded', () => {
     handleLineCallback();
-    const name = sessionStorage.getItem('line_name');
-    const pic = sessionStorage.getItem('line_pic');
-    if (name) renderLineBar({ name, pic });
-    else renderLineBar(null);
+    const name   = sessionStorage.getItem('line_name');
+    const pic    = sessionStorage.getItem('line_pic');
+    const userId = sessionStorage.getItem('line_userId');
+    if (name && userId) {
+      window._lineUser = { displayName: name, userId, pic: pic || '' };
+      renderLineBar({ name, pic });
+    } else {
+      window._lineUser = null;
+      renderLineBar(null);
+    }
   });
 
   function renderLineBar(user) {
@@ -512,11 +514,11 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       bar.innerHTML = `
         <div class="line-bar-left">
           <div class="line-avatar-ph">👤</div>
-          <span class="line-welcome">登入 LINE 會員，查看購買紀錄</span>
+          <span class="line-welcome">🔒 請登入 LINE 會員後購買</span>
         </div>
         <button class="line-login-btn" onclick="lineLogin()">
           <svg viewBox="0 0 24 24" fill="#06C755"><path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.73 5.88 4.36 7.6-.19.68-.7 2.49-.8 2.88-.12.48.18.47.38.34.16-.1 2.12-1.43 2.99-2.01.65.09 1.36.14 2.07.14 5.52 0 10-4.03 10-9S17.52 2 12 2z"/></svg>
-          LINE 登入
+          登入才能購買
         </button>`;
     }
   }
@@ -697,44 +699,28 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       <!-- 填寫資料區 -->
       <div style="margin:14px 0;border-top:1px solid #eee;padding-top:14px;">
         <div style="font-size:13px;font-weight:600;color:#3d2b1f;margin-bottom:10px;">📋 填寫訂單資料</div>
-
         <div style="margin-bottom:8px;">
           <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">聯絡電話 *</label>
           <input id="inp-phone" type="tel" placeholder="0912345678"
             style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
         </div>
-
         <div style="margin-bottom:8px;">
           <label style="font-size:11px;color:#888;display:block;margin-bottom:6px;">配送方式 *</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="shipping-options">
-            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
-              <input type="radio" name="shipping" value="到店取貨"> 🏪 到店取貨
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
-              <input type="radio" name="shipping" value="居家宅配"> 🏠 居家宅配
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
-              <input type="radio" name="shipping" value="超商取貨（依重量）"> 🏪 超商取貨
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;">
-              <input type="radio" name="shipping" value="黑貓宅配（依重量）"> 🐱 黑貓宅配
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;grid-column:1/-1;">
-              <input type="radio" name="shipping" value="外送到府（附近居民）"> 🛵 外送到府（附近居民）
-            </label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;"><input type="radio" name="shipping" value="到店取貨"> 🏪 到店取貨</label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;"><input type="radio" name="shipping" value="居家宅配"> 🏠 居家宅配</label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;"><input type="radio" name="shipping" value="超商取貨（依重量）"> 🏪 超商取貨</label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;"><input type="radio" name="shipping" value="黑貓宅配（依重量）"> 🐱 黑貓宅配</label>
+            <label style="display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:6px;padding:8px;cursor:pointer;font-size:12px;grid-column:1/-1;"><input type="radio" name="shipping" value="外送到府（附近居民）"> 🛵 外送到府（附近居民）</label>
           </div>
         </div>
-
         <div id="address-wrap" style="margin-bottom:8px;display:none;">
           <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">地址</label>
-          <input id="inp-address" type="text" placeholder="請填寫收貨地址"
-            style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
+          <input id="inp-address" type="text" placeholder="請填寫收貨地址" style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
         </div>
-
         <div style="margin-bottom:8px;">
           <label style="font-size:11px;color:#888;display:block;margin-bottom:3px;">備註（選填）</label>
-          <input id="inp-note" type="text" placeholder="例：門口有電鈴、指定時段..."
-            style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
+          <input id="inp-note" type="text" placeholder="例：門口有電鈴、指定時段..." style="width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;">
         </div>
       </div>
 
@@ -798,7 +784,20 @@ function toggleDisc(pid){const b=document.getElementById(`disc-${pid}`);b.classL
 function setDiscType(pid,type,btn){const[p,i]=findProd(pid);products[p][i].discType=type;btn.closest('.disc-type-row').querySelectorAll('.disc-type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById(`disc-lbl-${pid}`).textContent=type==='qty'?'買滿':'滿';document.getElementById(`disc-thr-${pid}`).placeholder=type==='qty'?'件數':'金額';saveDisc(pid);}
 function saveDisc(pid){const[p,i]=findProd(pid);const thr=parseInt(document.getElementById(`disc-thr-${pid}`).value)||0;const amt=parseInt(document.getElementById(`disc-amt-${pid}`).value)||0;products[p][i].discThreshold=thr;products[p][i].discAmount=amt;const hint=document.getElementById(`disc-hint-${pid}`);const type=products[p][i].discType;if(thr>0&&amt>0){hint.className='disc-hint show';hint.textContent=`✓ 已設定：${type==='qty'?'買滿'+thr+'件':'滿NT$'+thr} 折NT$${amt}`;}else{hint.className='disc-hint';}}
 function calcProdDiscount(cartItem){const[p,i]=findProd(cartItem.id);const prod=products[p][i];if(!prod||!prod.discThreshold||!prod.discAmount)return 0;const itemTotal=cartItem.price*cartItem.qty;if(prod.discType==='qty'&&cartItem.qty>=prod.discThreshold)return prod.discAmount;if(prod.discType==='amt'&&itemTotal>=prod.discThreshold)return prod.discAmount;return 0;}
-function addCart(btn){const card=btn.closest('.product-card'),pid=btn.dataset.pid,qty=parseInt(card.querySelector('.qty-num').value);const[p,i]=findProd(pid),prod=products[p][i],price=parseInt(prod.priceNow)||0;const ex=cart.find(x=>x.id===pid);if(ex)ex.qty+=qty;else cart.push({id:pid,name:prod.name,series:prod.series,price,qty,imgSrc:prod.imgSrc,imgColor:prod.imgColor,imgIcon:prod.imgIcon});updateCart();showToast('✓ 已加入購物車');btn.textContent='✓ 已加入';btn.classList.add('done');setTimeout(()=>{btn.textContent='加入購物車';btn.classList.remove('done');},1500);}
+function addCart(btn){
+  // 強制 LINE 登入
+  if (!window._lineUser) {
+    showToast('請先登入 LINE 會員才能購買');
+    // 閃爍 LINE 登入按鈕提示
+    const bar = document.getElementById('line-bar');
+    bar.style.transition = 'background .2s';
+    bar.style.background = '#06C755';
+    setTimeout(() => bar.style.background = '#04943e', 400);
+    setTimeout(() => bar.style.background = '#06C755', 800);
+    setTimeout(() => bar.style.background = '#04943e', 1200);
+    return;
+  }
+  const card=btn.closest('.product-card'),pid=btn.dataset.pid,qty=parseInt(card.querySelector('.qty-num').value);const[p,i]=findProd(pid),prod=products[p][i],price=parseInt(prod.priceNow)||0;const ex=cart.find(x=>x.id===pid);if(ex)ex.qty+=qty;else cart.push({id:pid,name:prod.name,series:prod.series,price,qty,imgSrc:prod.imgSrc,imgColor:prod.imgColor,imgIcon:prod.imgIcon});updateCart();showToast('✓ 已加入購物車');btn.textContent='✓ 已加入';btn.classList.add('done');setTimeout(()=>{btn.textContent='加入購物車';btn.classList.remove('done');},1500);}
 function removeItem(id){cart=cart.filter(x=>x.id!==id);updateCart();}
 let discountRules=[];
 function calcDiscount(total){const sorted=discountRules.filter(r=>r.threshold>0&&r.discount>0).sort((a,b)=>b.threshold-a.threshold);const matched=sorted.find(r=>total>=r.threshold);const next=sorted.slice().reverse().find(r=>total<r.threshold);return{matched,next};}
@@ -841,15 +840,49 @@ function submitForm(t){document.getElementById(`modal-${t}-body`).style.display=
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 document.querySelectorAll('.modal-wrap').forEach(w=>w.addEventListener('click',e=>{if(e.target===w)w.classList.remove('on');}));
 function generateOrderNum(){const d=new Date(),ymd=d.getFullYear().toString().slice(2)+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');return'UNI-'+ymd+'-'+(Math.floor(Math.random()*9000)+1000);}
-function openOrderModal(){if(!cart.length)return;currentOrderNum=generateOrderNum();document.getElementById('order-number').textContent=currentOrderNum;const subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);const prodDiscounts=cart.reduce((s,x)=>s+calcProdDiscount(x),0);const{matched}=calcDiscount(subtotal);const orderDiscount=matched?matched.discount:0;const totalDiscount=prodDiscounts+orderDiscount;const total=subtotal-totalDiscount;let itemsHtml=cart.map(x=>{const d=calcProdDiscount(x);return`<div class="order-item-row"><div><span class="order-item-name">${x.name}</span><span class="order-item-qty">×${x.qty}</span></div><div class="order-item-price">${d>0?`<span style="font-size:.65rem;color:var(--moss);text-decoration:line-through;margin-right:4px">NT$${(x.price*x.qty).toLocaleString()}</span>NT$ ${(x.price*x.qty-d).toLocaleString()}`:`NT$ ${(x.price*x.qty).toLocaleString()}`}</div></div>`;}).join('');if(orderDiscount>0){itemsHtml+=`<div class="order-item-row"><div><span class="order-item-name" style="color:var(--moss)">🎉 滿額折扣</span></div><div class="order-item-price" style="color:var(--moss)">-NT$ ${orderDiscount.toLocaleString()}</div></div>`;}itemsHtml+=`<div class="order-total-row"><span class="order-total-lbl">結帳金額</span><span class="order-total-val">NT$ ${total.toLocaleString()}</span></div>`;document.getElementById('order-items').innerHTML=itemsHtml;const giftVal=document.getElementById('gift-choice').value;const giftRow=document.getElementById('order-gift-row');if(giftVal){giftRow.style.display='block';giftRow.innerHTML='🎁 兌換贈品：'+giftVal+'<br><span style="font-size:.68rem;opacity:.8">來店出示訂單編號即可兌換</span>';}else{giftRow.style.display='none';}
+function openOrderModal(){
+  if (!window._lineUser) {
+    showToast('請先登入 LINE 會員才能結帳');
+    const bar = document.getElementById('line-bar');
+    bar.style.background = '#06C755';
+    setTimeout(() => bar.style.background = '#04943e', 600);
+    return;
+  }
+  if(!cart.length)return;
+  // 自動帶入 LINE 名稱到訂單
+  window._currentPayMethod = null;currentOrderNum=generateOrderNum();document.getElementById('order-number').textContent=currentOrderNum;const subtotal=cart.reduce((s,x)=>s+x.price*x.qty,0);const prodDiscounts=cart.reduce((s,x)=>s+calcProdDiscount(x),0);const{matched}=calcDiscount(subtotal);const orderDiscount=matched?matched.discount:0;const totalDiscount=prodDiscounts+orderDiscount;const total=subtotal-totalDiscount;let itemsHtml=cart.map(x=>{const d=calcProdDiscount(x);return`<div class="order-item-row"><div><span class="order-item-name">${x.name}</span><span class="order-item-qty">×${x.qty}</span></div><div class="order-item-price">${d>0?`<span style="font-size:.65rem;color:var(--moss);text-decoration:line-through;margin-right:4px">NT$${(x.price*x.qty).toLocaleString()}</span>NT$ ${(x.price*x.qty-d).toLocaleString()}`:`NT$ ${(x.price*x.qty).toLocaleString()}`}</div></div>`;}).join('');if(orderDiscount>0){itemsHtml+=`<div class="order-item-row"><div><span class="order-item-name" style="color:var(--moss)">🎉 滿額折扣</span></div><div class="order-item-price" style="color:var(--moss)">-NT$ ${orderDiscount.toLocaleString()}</div></div>`;}itemsHtml+=`<div class="order-total-row"><span class="order-total-lbl">結帳金額</span><span class="order-total-val">NT$ ${total.toLocaleString()}</span></div>`;document.getElementById('order-items').innerHTML=itemsHtml;const giftVal=document.getElementById('gift-choice').value;const giftRow=document.getElementById('order-gift-row');if(giftVal){giftRow.style.display='block';giftRow.innerHTML='🎁 兌換贈品：'+giftVal+'<br><span style="font-size:.68rem;opacity:.8">來店出示訂單編號即可兌換</span>';}else{giftRow.style.display='none';}
   // 同時寫入 GAS（Google Sheets）和 Firestore
   const itemsText=cart.map(x=>`${x.name}×${x.qty}`).join('、');
   submitOrderToSheet(currentOrderNum,total,itemsText,giftVal);
   if(typeof saveOrderToFirestore==='function') saveOrderToFirestore(currentOrderNum,total,itemsText,giftVal);
   document.getElementById('order-modal-wrap').classList.add('on');
 }
+function submitOrderToSheet(orderNum,total,items,gift){fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderNum,time:new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}),items,total,gift:gift||'無'})}).catch(()=>{});}
+function closeOrderModal(){
+  document.getElementById('order-modal-wrap').classList.remove('on');
+  const phone = document.getElementById('inp-phone');
+  const note  = document.getElementById('inp-note');
+  const addr  = document.getElementById('inp-address');
+  if(phone) phone.value='';
+  if(note)  note.value='';
+  if(addr)  addr.value='';
+  document.querySelectorAll('input[name="shipping"]').forEach(r=>r.checked=false);
+  const aw = document.getElementById('address-wrap');
+  if(aw) aw.style.display='none';
+}
+
+document.addEventListener('change', function(e){
+  if(e.target.name==='shipping'){
+    const needAddr=['居家宅配','黑貓宅配（依重量）','外送到府（附近居民）'].includes(e.target.value);
+    document.getElementById('address-wrap').style.display=needAddr?'block':'none';
+    document.querySelectorAll('#shipping-options label').forEach(l=>{
+      l.style.borderColor=l.querySelector('input').checked?'#b8895a':'#ddd';
+      l.style.background=l.querySelector('input').checked?'#faf6f0':'';
+    });
+  }
+});
+
 function submitOrderToSheet(orderNum,total,items,gift){
-  // 取得顧客資訊
   const lineName = window._lineUser ? window._lineUser.displayName : '未登入';
   const lineUid  = window._lineUser ? ('line_' + window._lineUser.userId) : '';
   const phone    = document.getElementById('inp-phone') ? document.getElementById('inp-phone').value.trim() : '';
@@ -857,10 +890,7 @@ function submitOrderToSheet(orderNum,total,items,gift){
   const address  = document.getElementById('inp-address') ? document.getElementById('inp-address').value.trim() : '';
   const note     = document.getElementById('inp-note')    ? document.getElementById('inp-note').value.trim()    : '';
   const payMethod = window._currentPayMethod || 'jko';
-  // 判斷是否為服務券
   const isVoucher = items.includes('服務券') || items.includes('套餐');
-
-  // GET 方式送出（避免 CORS 問題）
   const orderParams = new URLSearchParams({
     orderNum,
     time: new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}),
@@ -871,83 +901,36 @@ function submitOrderToSheet(orderNum,total,items,gift){
   });
   fetch(GAS_URL + '?' + orderParams.toString()).catch(()=>{});
 }
-function closeOrderModal(){
-  document.getElementById('order-modal-wrap').classList.remove('on');
-  // 清空表單
-  const phone = document.getElementById('inp-phone');
-  const note  = document.getElementById('inp-note');
-  const addr  = document.getElementById('inp-address');
-  if (phone) phone.value = '';
-  if (note)  note.value  = '';
-  if (addr)  addr.value  = '';
-  document.querySelectorAll('input[name="shipping"]').forEach(r => r.checked = false);
-  document.getElementById('address-wrap').style.display = 'none';
-}
 
-// 配送方式切換 → 顯示/隱藏地址
-document.addEventListener('change', function(e) {
-  if (e.target.name === 'shipping') {
-    const needAddress = ['居家宅配','黑貓宅配（依重量）','外送到府（附近居民）'].includes(e.target.value);
-    document.getElementById('address-wrap').style.display = needAddress ? 'block' : 'none';
-    // 高亮選中的選項
-    document.querySelectorAll('#shipping-options label').forEach(l => {
-      l.style.borderColor = l.querySelector('input').checked ? '#b8895a' : '#ddd';
-      l.style.background  = l.querySelector('input').checked ? '#faf6f0' : '';
-    });
-  }
-});
-async function goToPayment(method) {
-  // 驗證必填
+async function goToPayment(method){
   const phone    = document.getElementById('inp-phone') ? document.getElementById('inp-phone').value.trim() : '';
   const shipping = document.querySelector('input[name="shipping"]:checked');
-  if (!phone) { alert('請填寫聯絡電話'); document.getElementById('inp-phone').focus(); return; }
-  if (!shipping) { alert('請選擇配送方式'); return; }
-  // 黑名單檢查
-  if (phone) {
-    try {
-      const blRes = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'checkBlacklist', phone })
-      });
-      const blData = await blRes.json();
-      if (blData.blacklisted) {
-        alert('很抱歉，此電話無法完成結帳，請聯繫 Elsa。');
-        return;
-      }
-    } catch(_) {}
-  }
-
-  const payMethod = method || 'jko';
-  // 更新訂單付款方式
-  window._currentPayMethod = payMethod;
-
-  if (payMethod === 'jko') {
-    window.open(JKO_PAY_URL, '_blank');
-  } else if (payMethod === 'ipass') {
-    // 從 GAS 取 iPASS 連結
-    try {
-      const res  = await fetch(GAS_URL + '?action=getBankInfo');
-      const data = await res.json();
-      window.open(data.ipass || 'https://www.ipass.com.tw/', '_blank');
-    } catch(_) { window.open('https://www.ipass.com.tw/', '_blank'); }
-  } else if (payMethod === 'transfer') {
-    showTransferInfo();
-  }
-}
-
-async function showTransferInfo() {
-  const el = document.getElementById('transfer-info');
-  if (!el) return;
+  if(!phone){ alert('請填寫聯絡電話'); document.getElementById('inp-phone').focus(); return; }
+  if(!shipping){ alert('請選擇配送方式'); return; }
   try {
-    const res  = await fetch(GAS_URL + '?action=getBankInfo');
-    const data = await res.json();
-    el.innerHTML = '🏦 轉帳資訊<br><strong style="font-size:15px">' + (data.account||'請聯繫 Elsa') + '</strong><br><span style="color:#888;font-size:11px">轉帳後請截圖傳給 Elsa 確認</span>';
-  } catch(_) {
-    el.innerHTML = '🏦 請聯繫 Elsa 取得轉帳帳號';
-  }
-  el.style.display = 'block';
+    const blRes = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'checkBlacklist',phone})});
+    const blData = await blRes.json();
+    if(blData.blacklisted){ alert('很抱歉，此電話無法完成結帳，請聯繫 Elsa。'); return; }
+  } catch(_){}
+  window._currentPayMethod = method || 'jko';
+  if(method==='jko'){ window.open(JKO_PAY_URL,'_blank'); }
+  else if(method==='ipass'){
+    try{ const res=await fetch(GAS_URL+'?action=getBankInfo');const data=await res.json();window.open(data.ipass||'https://www.ipass.com.tw/','_blank'); }
+    catch(_){ window.open('https://www.ipass.com.tw/','_blank'); }
+  } else if(method==='transfer'){ showTransferInfo(); }
 }
+
+async function showTransferInfo(){
+  const el=document.getElementById('transfer-info');
+  if(!el) return;
+  try{
+    const res=await fetch(GAS_URL+'?action=getBankInfo');
+    const data=await res.json();
+    el.innerHTML='🏦 轉帳資訊<br><strong style="font-size:15px">'+(data.account||'請聯繫 Elsa')+'</strong><br><span style="color:#888;font-size:11px">轉帳後請截圖傳給 Elsa 確認</span>';
+  }catch(_){ el.innerHTML='🏦 請聯繫 Elsa 取得轉帳帳號'; }
+  el.style.display='block';
+}
+function goToPayment(){window.open(JKO_PAY_URL,'_blank');}
 document.addEventListener('DOMContentLoaded',()=>{document.getElementById('order-modal-wrap').addEventListener('click',e=>{if(e.target===document.getElementById('order-modal-wrap'))closeOrderModal();});});
 
 // 影音區塊
