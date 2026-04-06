@@ -366,6 +366,28 @@ body.owner-mode .product-card:hover{border-color:var(--rose);}
 
 footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padding:18px 16px;font-size:.65rem;letter-spacing:.05em;font-family:'Noto Sans TC',sans-serif;}
 
+/* ── 影音區塊 ── */
+.video-section{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.video-section-inner{max-width:900px;margin:0 auto;padding:0 16px 40px;}
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+@media(max-width:480px){.video-grid{grid-template-columns:1fr 1fr;gap:10px;}}
+.video-card{background:var(--linen);border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:transform .3s,box-shadow .3s;}
+.video-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px var(--shadow);}
+.video-frame-wrap{position:relative;width:100%;padding-top:56.25%;background:#1a1a1a;}
+.video-frame-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+.video-ph{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.45);font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
+.video-ph-icon{font-size:1.8rem;opacity:.4;}
+.video-ph-txt{font-size:.62rem;letter-spacing:.08em;}
+.video-ph-hint{font-size:.55rem;opacity:.5;}
+.video-url-input{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.78);padding:7px 9px;display:none;}
+.video-url-input.show{display:flex;gap:6px;}
+.video-url-input input{flex:1;padding:5px 8px;border:1px solid rgba(255,255,255,.3);border-radius:2px;background:rgba(255,255,255,.1);color:#fff;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;outline:none;}
+.video-url-input button{padding:5px 10px;background:var(--gold);color:#fff;border:none;border-radius:2px;font-size:.66rem;cursor:pointer;white-space:nowrap;}
+.video-info{padding:10px;}
+.video-title{font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:3px;min-height:18px;}
+.video-desc{font-size:.68rem;color:var(--mid);line-height:1.55;font-family:'Noto Sans TC',sans-serif;min-height:24px;}
+.video-edit-btn{font-size:.58rem;color:var(--rose);background:none;border:none;cursor:pointer;padding:0;margin-top:4px;font-family:'Noto Sans TC',sans-serif;}
+
 /* ══════════ Responsive ══════════ */
 @media(max-width:400px){
   .brand-main{font-size:.95rem;}
@@ -456,12 +478,15 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     history.replaceState({},'',location.pathname);
     showToast('LINE 登入中…');
     try{
-      const tokenRes=await fetch(GAS_URL_AUTH+'?action=lineToken',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,verifier:sessionStorage.getItem('line_verifier'),redirect:REDIRECT_URI,channelId:LINE_CHANNEL_ID})});
+      // 用 GET 方式呼叫 GAS 避免 CORS 問題
+      const tokenParams=new URLSearchParams({action:'lineToken',code,verifier:sessionStorage.getItem('line_verifier'),redirect:REDIRECT_URI,channelId:LINE_CHANNEL_ID});
+      const tokenRes=await fetch(GAS_URL_AUTH+'?'+tokenParams.toString());
       const tokenData=await tokenRes.json();
-      if(!tokenData.access_token)throw new Error('token 交換失敗');
+      if(!tokenData.access_token)throw new Error('token 交換失敗：'+(tokenData.error||''));
       const profileRes=await fetch('https://api.line.me/v2/profile',{headers:{Authorization:'Bearer '+tokenData.access_token}});
       const profile=await profileRes.json();
-      const ctRes=await fetch(GAS_URL_AUTH+'?action=customToken',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lineUserId:profile.userId,displayName:profile.displayName,pictureUrl:profile.pictureUrl||''})});
+      const ctParams=new URLSearchParams({action:'customToken',lineUserId:profile.userId,displayName:profile.displayName,pictureUrl:profile.pictureUrl||''});
+      const ctRes=await fetch(GAS_URL_AUTH+'?'+ctParams.toString());
       const ctData=await ctRes.json();
       if(!ctData.customToken)throw new Error('Custom Token 失敗');
       await signInWithCustomToken(auth,ctData.customToken);
@@ -506,7 +531,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     if(user){
       bar.innerHTML=`<div class="line-bar-left">${user.pic?`<img class="line-avatar" src="${user.pic}" alt="">`: '<div class="line-avatar-ph">👤</div>'}<span class="line-welcome">✓ 歡迎，<strong>${user.name}</strong></span></div><div style="display:flex;gap:6px"><button class="line-history-btn" onclick="showHistory()">📋 紀錄</button><button class="line-logout-btn" onclick="lineLogout()">登出</button></div>`;
     }else{
-      bar.innerHTML=`<div class="line-bar-left"><div class="line-avatar-ph">👤</div><span class="line-welcome">🔒 請登入 LINE 會員後購買</span></div><button class="line-login-btn" onclick="lineLogin()"><svg viewBox="0 0 24 24" fill="#06C755" width="15" height="15"><path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.73 5.88 4.36 7.6-.19.68-.7 2.49-.8 2.88-.12.48.18.47.38.34.16-.1 2.12-1.43 2.99-2.01.65.09 1.36.14 2.07.14 5.52 0 10-4.03 10-9S17.52 2 12 2z"/></svg> 登入才能購買</button>`;
+      bar.innerHTML=`<div class="line-bar-left"><div class="line-avatar-ph">👤</div><span class="line-welcome">🔒 請登入 LINE 會員後購買</span></div><button class="line-login-btn" onclick="lineLogin()"><svg viewBox="0 0 24 24" fill="#06C755" width="15" height="15"><path d="M12 2C6.48 2 2 6.03 2 11c0 3.13 1.73 5.88 4.36 7.6-.19.68-.7 2.49-.8 2.88-.12.48.18.47.38.34.16-.1 2.12-1.43 2.99-2.01.65.09 1.36.14 2.07.14 5.52 0 10-4.03 10-9S17.52 2 12 2z"/></svg> 會員登入</button>`;
     }
   }
 </script>
@@ -615,6 +640,19 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       開始選購
       <span class="start-btn-sub">選擇分類 → 加入購物車 → 結帳</span>
     </button>
+  </div>
+
+  <!-- 影音區塊 -->
+  <div class="video-section">
+    <div class="video-section-inner">
+      <div class="step-header" style="text-align:center;margin-bottom:28px;padding-top:40px;">
+        <div class="step-header-label">Featured Videos</div>
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:400;color:var(--bark);">精選熱門商品影音</h2>
+        <div class="step-header-line"></div>
+        <p style="color:var(--mid);font-size:.76rem;margin-top:8px;font-family:'Noto Sans TC',sans-serif;">點擊影片區域貼上 YouTube 連結即可顯示</p>
+      </div>
+      <div class="video-grid" id="video-grid"></div>
+    </div>
   </div>
 </div>
 
@@ -1213,10 +1251,8 @@ async function saveProdToSheet(){
   btn.textContent='儲存中…'; btn.disabled=true;
   try{
     const prodId = document.getElementById('edit-prod-id').value.trim();
-    // 圖片：優先用上傳的 base64（注意：base64 太大，建議店家先上傳到 Imgur 等圖床再填 URL）
-    // 這裡如果有 base64 就儲存 base64，實際部署建議換成圖床 API
     const imgUrl = editImgBase64 || document.getElementById('edit-img-url').value.trim();
-    const payload = {
+    const params = new URLSearchParams({
       action:        'saveProduct',
       id:            prodId || '',
       page:          document.getElementById('edit-page').value,
@@ -1226,20 +1262,20 @@ async function saveProdToSheet(){
       desc:          document.getElementById('edit-desc').value.trim(),
       price:         Number(document.getElementById('edit-price').value)||0,
       priceOrig:     document.getElementById('edit-price-orig').value.trim(),
-      imgUrl:        imgUrl,
+      imgUrl:        imgUrl.startsWith('data:') ? '' : imgUrl, // base64 太長不走 GET，僅傳 URL
       tag:           document.getElementById('edit-tag').value.trim(),
       stock:         Number(document.getElementById('edit-stock').value)||999,
-      enabled:       document.getElementById('edit-enabled').value === 'true',
+      enabled:       document.getElementById('edit-enabled').value === 'true' ? 'true' : 'false',
       discType:      editDiscType,
       discThreshold: Number(document.getElementById('edit-disc-thr').value)||0,
       discAmount:    Number(document.getElementById('edit-disc-amt').value)||0,
-    };
-    const res  = await fetch(GAS_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    });
+    const res  = await fetch(GAS_URL + '?' + params.toString());
     const data = await res.json();
     if(data.ok){
       showToast('✓ 商品已儲存到 Sheet');
       closeModal('prod-edit');
-      loadAndRenderProducts(); // 重新載入
+      loadAndRenderProducts();
     } else {
       showToast('❌ 儲存失敗：'+(data.msg||''));
     }
@@ -1252,7 +1288,7 @@ async function deleteProdFromSheet(){
   if(!prodId){ closeModal('prod-edit'); return; }
   if(!confirm('確定要刪除此商品？')) return;
   try{
-    const res  = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteProduct',id:prodId})});
+    const res  = await fetch(GAS_URL+'?action=deleteProduct&id='+encodeURIComponent(prodId));
     const data = await res.json();
     if(data.ok){
       showToast('✓ 商品已刪除');
@@ -1529,9 +1565,36 @@ document.querySelectorAll('.modal-wrap').forEach(w=>w.addEventListener('click',e
 document.getElementById('order-modal-wrap').addEventListener('click',e=>{ if(e.target===document.getElementById('order-modal-wrap')) closeOrderModal(); });
 
 // ══════════════════════════════════════════════
+// 影音區塊
+// ══════════════════════════════════════════════
+const videos=[
+  {id:'v0',title:'熱門商品介紹 01',desc:'點擊右下角換影片按鈕，貼上 YouTube 連結',url:''},
+  {id:'v1',title:'熱門商品介紹 02',desc:'點擊右下角換影片按鈕，貼上 YouTube 連結',url:''},
+  {id:'v2',title:'熱門商品介紹 03',desc:'點擊右下角換影片按鈕，貼上 YouTube 連結',url:''},
+  {id:'v3',title:'熱門商品介紹 04',desc:'點擊右下角換影片按鈕，貼上 YouTube 連結',url:''},
+];
+function getYouTubeId(url){const m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&?\/\s]{11})/);return m?m[1]:null;}
+function renderVideos(){
+  const g=document.getElementById('video-grid');
+  if(!g) return;
+  g.innerHTML='';
+  videos.forEach(v=>{
+    const card=document.createElement('div');card.className='video-card';
+    const frameHtml=v.url&&getYouTubeId(v.url)
+      ?`<iframe src="https://www.youtube.com/embed/${getYouTubeId(v.url)}" allowfullscreen></iframe>`
+      :`<div class="video-ph" onclick="showVideoInput('${v.id}')"><span class="video-ph-icon">▶</span><span class="video-ph-txt">點擊貼上 YouTube 連結</span><span class="video-ph-hint">支援一般影片 / Shorts</span></div>`;
+    card.innerHTML=`<div class="video-frame-wrap">${frameHtml}<div class="video-url-input" id="vi-${v.id}"><input type="text" id="vurl-${v.id}" placeholder="貼上 YouTube 網址..."><button onclick="setVideo('${v.id}')">確認</button></div></div><div class="video-info"><div class="video-title">${v.title}</div><div class="video-desc">${v.desc}</div><button class="video-edit-btn" onclick="showVideoInput('${v.id}')">🔗 換影片連結</button></div>`;
+    g.appendChild(card);
+  });
+}
+function showVideoInput(vid){const wrap=document.getElementById(`vi-${vid}`);wrap.classList.toggle('show');if(wrap.classList.contains('show'))document.getElementById(`vurl-${vid}`).focus();}
+function setVideo(vid){const url=document.getElementById(`vurl-${vid}`).value.trim();const idx=videos.findIndex(v=>v.id===vid);if(!url)return;if(!getYouTubeId(url)){showToast('❌ 請輸入有效的 YouTube 連結');return;}videos[idx].url=url;renderVideos();showToast('✓ 影片已更新');}
+
+// ══════════════════════════════════════════════
 // 初始化
 // ══════════════════════════════════════════════
 updateCart();
+renderVideos();
 </script>
 </body>
 </html>
