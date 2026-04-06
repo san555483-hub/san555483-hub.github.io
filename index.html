@@ -1251,7 +1251,40 @@ async function saveProdToSheet(){
   btn.textContent='儲存中…'; btn.disabled=true;
   try{
     const prodId = document.getElementById('edit-prod-id').value.trim();
-    const imgUrl = editImgBase64 || document.getElementById('edit-img-url').value.trim();
+    let imgUrl   = document.getElementById('edit-img-url').value.trim();
+
+    // ── 如果有 base64 圖片，先 POST 上傳到 GAS → Google Drive ──
+    if(editImgBase64 && editImgBase64.startsWith('data:')){
+      btn.textContent='上傳圖片中…';
+      try{
+        // 拆出 mimeType 和純 base64
+        const match    = editImgBase64.match(/^data:([^;]+);base64,(.+)$/);
+        const mimeType = match ? match[1] : 'image/jpeg';
+        const b64data  = match ? match[2] : editImgBase64;
+        const ext      = mimeType.split('/')[1] || 'jpg';
+        const filename = 'prod_' + Date.now() + '.' + ext;
+
+        const upRes  = await fetch(GAS_URL, {
+          method:  'POST',
+          headers: {'Content-Type':'application/json'},
+          body:    JSON.stringify({ action:'uploadImage', base64: b64data, mimeType, filename })
+        });
+        const upData = await upRes.json();
+        if(upData.ok && upData.url){
+          imgUrl = upData.url;
+          // 更新預覽欄位顯示
+          document.getElementById('edit-img-url').value = imgUrl;
+          showToast('✓ 圖片已上傳');
+        } else {
+          showToast('⚠️ 圖片上傳失敗，改用 URL：'+(upData.msg||''));
+        }
+      } catch(upErr){
+        showToast('⚠️ 圖片上傳錯誤：'+upErr.message);
+      }
+    }
+
+    btn.textContent='儲存商品中…';
+    // ── 儲存商品資料（GET 方式）──
     const params = new URLSearchParams({
       action:        'saveProduct',
       id:            prodId || '',
@@ -1262,7 +1295,7 @@ async function saveProdToSheet(){
       desc:          document.getElementById('edit-desc').value.trim(),
       price:         Number(document.getElementById('edit-price').value)||0,
       priceOrig:     document.getElementById('edit-price-orig').value.trim(),
-      imgUrl:        imgUrl.startsWith('data:') ? '' : imgUrl, // base64 太長不走 GET，僅傳 URL
+      imgUrl:        imgUrl,
       tag:           document.getElementById('edit-tag').value.trim(),
       stock:         Number(document.getElementById('edit-stock').value)||999,
       enabled:       document.getElementById('edit-enabled').value === 'true' ? 'true' : 'false',
@@ -1274,6 +1307,7 @@ async function saveProdToSheet(){
     const data = await res.json();
     if(data.ok){
       showToast('✓ 商品已儲存到 Sheet');
+      editImgBase64 = ''; // 清空暫存
       closeModal('prod-edit');
       loadAndRenderProducts();
     } else {
