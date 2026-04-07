@@ -1262,89 +1262,7 @@ function setEditDiscType(type){
   document.getElementById('disc-thr-label').textContent = type==='qty' ? '買滿（件）' : '滿（NT$）';
 }
 
-async function saveProdToSheet(){
-  const btn = document.querySelector('.save-prod-btn');
-  btn.textContent='儲存中…'; btn.disabled=true;
-  try{
-    const prodId = document.getElementById('edit-prod-id').value.trim();
-    let imgUrl   = document.getElementById('edit-img-url').value.trim();
-
-    if(editImgBase64 && editImgBase64.startsWith('data:')){
-      btn.textContent='壓縮圖片中…';
-      try{
-        const compressed = await compressImage(editImgBase64, 800, 0.75);
-        btn.textContent='上傳圖片中…';
-        const match   = compressed.match(/^data:[^;]+;base64,(.+)$/);
-        const b64data = match ? match[2] : '';
-        if(b64data){
-          const clientIds = ['546c25a59c58ad7','f0ea04148a54268','8d26ccd12712fca'];
-          let uploaded = false;
-          for(const cid of clientIds){
-            try{
-              const r = await fetch('https://api.imgur.com/3/image',{
-                method:'POST',
-                headers:{'Authorization':'Client-ID '+cid,'Content-Type':'application/json'},
-                body:JSON.stringify({image:b64data,type:'base64'})
-              });
-              const d = await r.json();
-              if(d.success && d.data && d.data.link){
-                imgUrl=d.data.link;
-                document.getElementById('edit-img-url').value=imgUrl;
-                showToast('✓ 圖片已上傳');
-                uploaded=true; break;
-              }
-            }catch(_){}
-          }
-          if(!uploaded){
-            try{
-              const fd=new FormData();
-              fd.append('source',b64data); fd.append('type','base64');
-              const r2=await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a2',{method:'POST',body:fd});
-              const d2=await r2.json();
-              if(d2.status_code===200 && d2.image && d2.image.url){
-                imgUrl=d2.image.url;
-                document.getElementById('edit-img-url').value=imgUrl;
-                showToast('✓ 圖片已上傳');
-                uploaded=true;
-              }
-            }catch(_){}
-          }
-          if(!uploaded) showToast('⚠️ 圖片上傳失敗，商品資料仍會儲存（圖片欄空白）');
-        }
-      }catch(upErr){ showToast('⚠️ 圖片處理錯誤：'+upErr.message); }
-    }
-
-    btn.textContent='儲存商品中…';
-    const params=new URLSearchParams({
-      action:'saveProduct', id:prodId||'',
-      page:document.getElementById('edit-page').value,
-      category:document.getElementById('edit-category').value.trim(),
-      name:document.getElementById('edit-name').value.trim(),
-      series:document.getElementById('edit-series').value.trim(),
-      desc:document.getElementById('edit-desc').value.trim(),
-      price:Number(document.getElementById('edit-price').value)||0,
-      priceOrig:document.getElementById('edit-price-orig').value.trim(),
-      imgUrl:imgUrl,
-      tag:document.getElementById('edit-tag').value.trim(),
-      stock:Number(document.getElementById('edit-stock').value)||999,
-      enabled:document.getElementById('edit-enabled').value==='true'?'true':'false',
-      discType:editDiscType,
-      discThreshold:Number(document.getElementById('edit-disc-thr').value)||0,
-      discAmount:Number(document.getElementById('edit-disc-amt').value)||0,
-    });
-    const res=await fetch(GAS_URL+'?'+params.toString());
-    const data=await res.json();
-    if(data.ok){
-      showToast('✓ 商品已儲存到 Sheet');
-      editImgBase64='';
-      closeModal('prod-edit');
-      loadAndRenderProducts();
-    }else{ showToast('❌ 儲存失敗：'+(data.msg||'')); }
-  }catch(e){ showToast('❌ 網路錯誤：'+e.message); }
-  btn.textContent='💾 儲存到 Google Sheet'; btn.disabled=false;
-}
-
-// 圖片壓縮 helper
+// 圖片壓縮 helper（300px, q=0.6 → 約 20~40KB，適合 Sheet 儲存）
 function compressImage(base64, maxWidth, quality){
   return new Promise(resolve=>{
     const img=new Image();
@@ -1358,6 +1276,76 @@ function compressImage(base64, maxWidth, quality){
     };
     img.src=base64;
   });
+}
+
+async function saveProdToSheet(){
+  const btn = document.querySelector('.save-prod-btn');
+  btn.textContent='儲存中…'; btn.disabled=true;
+  try{
+    const prodId = document.getElementById('edit-prod-id').value.trim();
+    // 圖片：如果有上傳，壓縮後直接當 base64 存；否則用 hidden 欄位裡的既有 URL
+    let imgData = document.getElementById('edit-img-url').value.trim(); // 已存過的 URL 或 base64
+
+    if(editImgBase64 && editImgBase64.startsWith('data:')){
+      btn.textContent='壓縮圖片中…';
+      // 壓縮到 300px / q=0.6，確保 GAS URL 參數放得下（約 30KB → base64 40KB → URL ~54KB，GAS 上限 ~200KB OK）
+      imgData = await compressImage(editImgBase64, 300, 0.6);
+    }
+
+    btn.textContent='儲存商品中…';
+    // 圖片用 POST 送（base64 可能超過 URL 長度限制），其他欄位也一起 POST
+    // 用 no-cors 送出，GAS 用暫存 key 存起來，前端再 GET 輪詢確認
+    const payload = {
+      action:'saveProduct', id:prodId||'',
+      page:document.getElementById('edit-page').value,
+      category:document.getElementById('edit-category').value.trim(),
+      name:document.getElementById('edit-name').value.trim(),
+      series:document.getElementById('edit-series').value.trim(),
+      desc:document.getElementById('edit-desc').value.trim(),
+      price:Number(document.getElementById('edit-price').value)||0,
+      priceOrig:document.getElementById('edit-price-orig').value.trim(),
+      imgUrl: imgData,
+      tag:document.getElementById('edit-tag').value.trim(),
+      stock:Number(document.getElementById('edit-stock').value)||999,
+      enabled:document.getElementById('edit-enabled').value==='true'?'true':'false',
+      discType:editDiscType,
+      discThreshold:Number(document.getElementById('edit-disc-thr').value)||0,
+      discAmount:Number(document.getElementById('edit-disc-amt').value)||0,
+    };
+
+    // 用 no-cors POST（繞過 CORS），GAS 接收後存 Sheet
+    // 同時送一個有 token 的 GET 請求輪詢結果
+    const token = 'tok_' + Date.now();
+    payload.token = token;
+
+    fetch(GAS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(payload)
+    });
+
+    // 輪詢 GAS 確認已儲存（最多等 12 秒）
+    let saved = false;
+    for(let i=0; i<12; i++){
+      await new Promise(r=>setTimeout(r,1000));
+      try{
+        const chk = await fetch(GAS_URL+'?action=checkToken&token='+token);
+        const chkData = await chk.json();
+        if(chkData.ok){ saved=true; break; }
+      }catch(_){}
+    }
+
+    if(saved){
+      showToast('✓ 商品已儲存到 Sheet');
+    } else {
+      showToast('✓ 已送出（請稍等 Sheet 更新）');
+    }
+    editImgBase64='';
+    closeModal('prod-edit');
+    loadAndRenderProducts();
+  }catch(e){ showToast('❌ 網路錯誤：'+e.message); }
+  btn.textContent='💾 儲存到 Google Sheet'; btn.disabled=false;
 }
 
 async function deleteProdFromSheet(){
@@ -1715,46 +1703,14 @@ function handleVideoImg(e, idx){
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = async ev => {
-    showToast('壓縮圖片中…');
+    showToast('處理圖片中…');
     try{
-      const compressed = await compressImage(ev.target.result, 800, 0.75);
-      showToast('上傳圖片中…');
-      const match   = compressed.match(/^data:[^;]+;base64,(.+)$/);
-      const b64data = match ? match[2] : '';
-      if(b64data){
-        const clientIds = ['546c25a59c58ad7','f0ea04148a54268','8d26ccd12712fca'];
-        let uploaded = false;
-        for(const cid of clientIds){
-          try{
-            const r = await fetch('https://api.imgur.com/3/image',{
-              method:'POST',
-              headers:{'Authorization':'Client-ID '+cid,'Content-Type':'application/json'},
-              body:JSON.stringify({image:b64data,type:'base64'})
-            });
-            const d = await r.json();
-            if(d.success && d.data && d.data.link){
-              videoCards[idx].imgUrl=d.data.link;
-              showToast('✓ 封面圖已上傳');
-              renderVideos(); uploaded=true; break;
-            }
-          }catch(_){}
-        }
-        if(!uploaded){
-          try{
-            const fd=new FormData();
-            fd.append('source',b64data); fd.append('type','base64');
-            const r2=await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a2',{method:'POST',body:fd});
-            const d2=await r2.json();
-            if(d2.status_code===200 && d2.image && d2.image.url){
-              videoCards[idx].imgUrl=d2.image.url;
-              showToast('✓ 封面圖已上傳');
-              renderVideos(); uploaded=true;
-            }
-          }catch(_){}
-        }
-        if(!uploaded) showToast('⚠️ 封面圖上傳失敗');
-      }
-    }catch(err){ showToast('⚠️ 上傳錯誤：'+err.message); }
+      // 壓縮到 300px / q=0.6，直接存 base64 到 Sheet，不依賴圖床
+      const compressed = await compressImage(ev.target.result, 300, 0.6);
+      videoCards[idx].imgUrl = compressed;
+      showToast('✓ 封面圖已更新，記得按儲存');
+      renderVideos();
+    }catch(err){ showToast('⚠️ 圖片處理錯誤：'+err.message); }
   };
   reader.readAsDataURL(file);
 }
@@ -1765,14 +1721,26 @@ function updateVideoField(idx, key, val){
 
 async function saveVideo(idx){
   const v = videoCards[idx];
+  const token = 'vtok_'+Date.now();
   try{
-    const params = new URLSearchParams({
-      action:'saveVideo', id:v.id, title:v.title, imgUrl:v.imgUrl||'', link:v.link||''
+    // 用 no-cors POST 送（imgUrl 可能是 base64，太長不能用 GET）
+    fetch(GAS_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'saveVideo', id:v.id, title:v.title, imgUrl:v.imgUrl||'', link:v.link||'', token})
     });
-    const res  = await fetch(GAS_URL+'?'+params.toString());
-    const data = await res.json();
-    if(data.ok){ showToast('✓ 影音已儲存'); renderVideos(); }
-    else { showToast('❌ 儲存失敗：'+(data.msg||'')); }
+    // 輪詢確認
+    let saved = false;
+    for(let i=0; i<12; i++){
+      await new Promise(r=>setTimeout(r,1000));
+      try{
+        const chk = await fetch(GAS_URL+'?action=checkToken&token='+token);
+        const d = await chk.json();
+        if(d.ok){ saved=true; break; }
+      }catch(_){}
+    }
+    showToast(saved ? '✓ 影音已儲存' : '✓ 已送出（請稍等 Sheet 更新）');
+    renderVideos();
   }catch(err){ showToast('❌ 網路錯誤：'+err.message); }
 }
 
