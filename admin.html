@@ -1018,8 +1018,9 @@ async function addCoupon_() {
   const note   = document.getElementById('cp-note').value.trim();
   if(!amount) { showMsg('msgCouponAdd','❌ 請輸入面額',false); return; }
   try {
-    const r = await fetch(GAS_COUPON, {method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'addCoupon', type, amount, code:code||'', expiry, note})});
+    const params = new URLSearchParams({action:'addCoupon', type, amount, expiry, note});
+    if(code) params.set('code', code);
+    const r = await fetch(GAS_COUPON+'?'+params.toString());
     const d = await r.json();
     if(d.ok) {
       document.getElementById('cpNewCode').textContent = d.code;
@@ -1047,8 +1048,8 @@ async function openEditCouponModal(row, code, amount, status, expiry, note) {
   const newNote = prompt(`備註（目前：${note||'無'}）：`, note||'');
   if(newNote === null) return;
   try {
-    const r = await fetch(GAS_COUPON,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'editCoupon', row, amount:parseInt(newAmount)||amount, status:newStatus, note:newNote})});
+    const params = new URLSearchParams({action:'editCoupon', row, amount:parseInt(newAmount)||amount, status:newStatus, note:newNote});
+    const r = await fetch(GAS_COUPON+'?'+params.toString());
     const d = await r.json();
     if(d.ok) { showMsg('msgCouponAdd','✅ 已儲存',true); loadAllCoupons(); }
     else showMsg('msgCouponAdd','❌ '+d.msg,false);
@@ -1058,8 +1059,7 @@ async function openEditCouponModal(row, code, amount, status, expiry, note) {
 async function deleteCoupon_(row) {
   if(!confirm('確定刪除此折扣券？')) return;
   try {
-    const r = await fetch(GAS_COUPON,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'deleteCoupon', row})});
+    const r = await fetch(GAS_COUPON+'?'+new URLSearchParams({action:'deleteCoupon', row}).toString());
     const d = await r.json();
     if(d.ok) { showMsg('msgCouponAdd','✅ 已刪除',true); loadAllCoupons(); }
     else showMsg('msgCouponAdd','❌ '+d.msg,false);
