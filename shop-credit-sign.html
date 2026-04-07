@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>UNI Hair 購物金儲值同意書</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1209; --warm: #2d5a8e; --gold: #3a7bc8; --gold-light: #e8f0fa;
+    --cream: #f5f8ff; --paper: #f0f5ff; --border: #b8cce8; --red: #c0392b; --green: #2d7a4f;
+  }
+  html { background: #d0dae8; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; max-width: 680px; margin: 0 auto; padding: 0 0 60px; }
+  .header { background: var(--warm); color: #fff; text-align: center; padding: 28px 20px 24px; position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.04) 10px, rgba(255,255,255,.04) 20px); }
+  .header-logo { font-family: 'Noto Serif TC', serif; font-size: 11px; letter-spacing: 4px; color: rgba(255,255,255,.7); margin-bottom: 8px; }
+  .header h1 { font-family: 'Noto Serif TC', serif; font-size: 22px; font-weight: 700; letter-spacing: 2px; position: relative; }
+  .header-sub { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,.75); letter-spacing: 1px; }
+  /* 方案選擇 */
+  .plan-section { margin: 20px 16px 0; }
+  .plan-title { font-size: 12px; color: var(--warm); font-weight: 600; letter-spacing: 1px; margin-bottom: 12px; }
+  .plan-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .plan-card { border: 2px solid var(--border); border-radius: 12px; padding: 14px; background: #fff; cursor: pointer; transition: all .2s; text-align: center; }
+  .plan-card:hover { border-color: var(--gold); }
+  .plan-card.selected { border-color: var(--gold); background: var(--gold-light); }
+  .plan-card .plan-amount { font-family: 'Noto Serif TC', serif; font-size: 22px; font-weight: 700; color: var(--warm); }
+  .plan-card .plan-bonus { font-size: 12px; color: var(--green); margin-top: 4px; font-weight: 500; }
+  .plan-card .plan-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+  /* 支付方式 */
+  .pay-section { margin: 16px 16px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .pay-title { font-size: 12px; color: var(--warm); font-weight: 500; letter-spacing: 1px; margin-bottom: 10px; }
+  .pay-methods { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pay-btn { flex: 1; min-width: 60px; border: 1.5px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-family: 'Noto Sans TC', sans-serif; color: var(--ink); cursor: pointer; text-align: center; transition: all .2s; }
+  .pay-btn.selected { border-color: var(--gold); background: var(--gold-light); color: var(--warm); font-weight: 600; }
+  /* 備註 */
+  .note-section { margin: 12px 16px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .note-section label { font-size: 12px; color: var(--warm); font-weight: 500; display: block; margin-bottom: 8px; }
+  .note-section textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; padding: 10px 12px; resize: none; color: var(--ink); outline: none; transition: border-color .2s; }
+  .note-section textarea:focus { border-color: var(--gold); }
+  /* 契約 */
+  .contract-wrap { margin: 20px 16px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .contract-header { background: var(--gold-light); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+  .contract-header .seal { width: 36px; height: 36px; border: 2px solid var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Noto Serif TC', serif; font-size: 10px; color: var(--gold); text-align: center; line-height: 1.2; flex-shrink: 0; }
+  .contract-header-text h2 { font-family: 'Noto Serif TC', serif; font-size: 15px; font-weight: 700; color: var(--warm); }
+  .contract-header-text p { font-size: 11px; color: #888; margin-top: 2px; }
+  .contract-body { padding: 20px; }
+  .contract-intro { font-size: 13px; line-height: 1.8; color: #555; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); }
+  .clause-list { list-style: none; }
+  .clause-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid #dde8f5; }
+  .clause-item:last-child { border-bottom: none; }
+  .clause-icon { width: 22px; height: 22px; background: var(--warm); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .clause-icon svg { width: 12px; height: 12px; }
+  .clause-text { font-size: 14px; line-height: 1.7; color: var(--ink); flex: 1; }
+  .clause-text strong { color: var(--warm); }
+  .contract-footer { margin-top: 18px; padding: 14px; background: #e8f0fa; border-radius: 10px; font-size: 12px; color: var(--warm); text-align: center; font-weight: 500; }
+  /* 簽名 */
+  .sign-section { margin: 20px 16px 0; background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .sign-label { font-size: 13px; font-weight: 600; color: var(--warm); margin-bottom: 4px; }
+  .sign-sublabel { font-size: 11px; color: #999; margin-bottom: 14px; }
+  #signCanvas { width: 100%; height: 160px; border: 2px dashed var(--border); border-radius: 10px; background: #fff; touch-action: none; cursor: crosshair; display: block; transition: border-color .2s; }
+  #signCanvas.active { border-color: var(--gold); border-style: solid; }
+  .sign-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .btn-clear { flex: 1; padding: 11px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: #888; cursor: pointer; transition: all .2s; }
+  .btn-clear:hover { border-color: var(--red); color: var(--red); }
+  /* 送出 */
+  .submit-section { margin: 20px 16px 0; }
+  .agree-row { display: flex; align-items: flex-start; gap: 10px; padding: 14px; background: var(--gold-light); border-radius: 10px; margin-bottom: 14px; cursor: pointer; }
+  .agree-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); flex-shrink: 0; margin-top: 1px; cursor: pointer; }
+  .agree-row span { font-size: 13px; line-height: 1.6; color: var(--warm); user-select: none; }
+  .btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--gold), #2d6fb5); border: none; border-radius: 12px; font-family: 'Noto Serif TC', serif; font-size: 17px; font-weight: 700; color: #fff; letter-spacing: 2px; cursor: pointer; box-shadow: 0 6px 24px rgba(58,123,200,.4); transition: all .25s; }
+  .btn-submit:hover { transform: translateY(-2px); }
+  .btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-submit .spinner { display: none; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
+  .btn-submit.loading .btn-text { display: none; }
+  .btn-submit.loading .spinner { display: block; }
+  #successScreen { display: none; position: fixed; inset: 0; background: rgba(245,248,255,.97); z-index: 999; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 40px; }
+  #successScreen.show { display: flex; }
+  .success-icon { width: 80px; height: 80px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: popIn .5s cubic-bezier(.34,1.56,.64,1); }
+  .success-icon svg { width: 40px; height: 40px; }
+  #successScreen h2 { font-family: 'Noto Serif TC', serif; font-size: 22px; color: var(--ink); margin-bottom: 8px; }
+  #successBalance { margin: 20px auto; padding: 16px 32px; background: var(--gold-light); border-radius: 12px; font-family: 'Noto Serif TC', serif; font-size: 28px; font-weight: 700; color: var(--warm); }
+  #successBalance span { font-size: 13px; font-weight: 400; display: block; color: #999; font-family: 'Noto Sans TC', sans-serif; }
+  .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
+  .no-plans { text-align: center; padding: 30px; color: #999; font-size: 14px; }
+  @keyframes popIn { from { transform:scale(0); } to { transform:scale(1); } }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-logo">UNI HAIR SHOP</div>
+  <h1>購物金儲值同意書</h1>
+  <div class="header-sub">職人選品 · 髮品坊</div>
+</div>
+
+<!-- 方案選擇 -->
+<div class="plan-section">
+  <div class="plan-title">▸ 選擇儲值方案</div>
+  <div class="plan-grid" id="planGrid">
+    <div class="no-plans">載入方案中...</div>
+  </div>
+</div>
+
+<!-- 支付方式 -->
+<div class="pay-section">
+  <div class="pay-title">▸ 支付方式</div>
+  <div class="pay-methods" id="payMethods"></div>
+</div>
+
+<!-- 備註 -->
+<div class="note-section">
+  <label>▸ 備註（選填）</label>
+  <textarea id="noteInput" rows="2" placeholder="選填..."></textarea>
+</div>
+
+<!-- 契約 -->
+<div class="contract-wrap">
+  <div class="contract-header">
+    <div class="seal">定型化<br>契約</div>
+    <div class="contract-header-text">
+      <h2>UNI Hair 購物金使用說明</h2>
+      <p>請仔細閱讀以下條款，簽名後視為同意</p>
+    </div>
+  </div>
+  <div class="contract-body">
+    <p class="contract-intro">感謝您選擇 UNI Hair Shop 購物金方案。<br>購物金專用於線上購物車購買髮品，讓您享有儲值優惠。</p>
+    <ul class="clause-list">
+      <li class="clause-item">
+        <div class="clause-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="clause-text"><strong>僅限線上購物使用</strong> — 購物金限用於 UNI Hair Shop 線上髮品購物，不適用於店內服務</div>
+      </li>
+      <li class="clause-item">
+        <div class="clause-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="clause-text"><strong>無使用期限</strong> — 購物金永久有效，安心保存</div>
+      </li>
+      <li class="clause-item">
+        <div class="clause-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="clause-text"><strong>彈性折抵</strong> — 可分次使用，不強迫一次消費完畢</div>
+      </li>
+      <li class="clause-item">
+        <div class="clause-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="clause-text"><strong>隨時可退費</strong> — 不滿意可申請退費，退費以<strong>實付金額</strong>計算</div>
+      </li>
+      <li class="clause-item">
+        <div class="clause-icon"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="clause-text"><strong>無隱藏條款</strong> — 所有條款公開透明，簽名即為確認</div>
+      </li>
+    </ul>
+    <div class="contract-footer">✦ 本契約依消費者保護法相關規定訂定 ✦<br>退費申請請直接聯繫 Elsa，7 個工作日內處理完畢</div>
+  </div>
+</div>
+
+<!-- 簽名 -->
+<div class="sign-section">
+  <div class="sign-label">✍ 顧客親筆簽名</div>
+  <div class="sign-sublabel">請在下方框內簽署，表示已閱讀並同意以上條款</div>
+  <canvas id="signCanvas"></canvas>
+  <div class="sign-actions">
+    <button class="btn-clear" onclick="clearSign()">✕ 清除重簽</button>
+  </div>
+</div>
+
+<!-- 送出 -->
+<div class="submit-section">
+  <label class="agree-row" for="agreeCheck">
+    <input type="checkbox" id="agreeCheck">
+    <span>我已詳閱並同意「UNI Hair 購物金使用說明」定型化契約之所有條款</span>
+  </label>
+  <button class="btn-submit" id="submitBtn" onclick="submitSign()" disabled>
+    <span class="btn-text">確認儲值 ✦ 簽署送出</span>
+    <div class="spinner"></div>
+  </button>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<!-- 成功畫面 -->
+<div id="successScreen">
+  <div class="success-icon">
+    <svg viewBox="0 0 40 40" fill="none"><path d="M8 20l9 9 15-15" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <h2>購物金儲值成功！</h2>
+  <p>感謝您的支持 🛍️<br>購物金已存入您的帳戶</p>
+  <div id="successBalance">
+    <span>您的購物金餘額</span>
+    $<span id="balanceNum">0</span>
+  </div>
+  <p style="font-size:13px;color:#999;margin-top:8px">購物時可直接折抵使用 💳</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+<script>
+const urlParams = new URLSearchParams(location.search);
+const UID   = urlParams.get('uid')   || '';
+const NAME  = urlParams.get('name')  || '';
+const PHONE = urlParams.get('phone') || '';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
+
+let selectedPlanAmount = 0;
+let selectedPlanBonus  = 0;
+let selectedPay = '';
+let pad;
+
+// ── 載入設定 ────────────────────────────────
+async function loadSettings() {
+  try {
+    const r = await fetch(GAS_URL+'?action=getSettings&t='+Date.now());
+    const d = await r.json();
+    const s = d.settings || {};
+
+    // 載入方案
+    const grid = document.getElementById('planGrid');
+    const plans = [];
+    for(let i=1;i<=5;i++){
+      const p = s['shop_credit_plan_'+i];
+      if(p && p.enabled && p.amount>0) plans.push(p);
+    }
+    if(!plans.length){
+      grid.innerHTML='<div class="no-plans" style="grid-column:1/-1">目前尚無可用方案，請聯繫店家</div>';
+    } else {
+      grid.innerHTML = plans.map((p,i)=>`
+        <div class="plan-card" data-amount="${p.amount}" data-bonus="${p.bonus||0}" onclick="selectPlan(this)">
+          <div class="plan-label">${p.label||'方案'}</div>
+          <div class="plan-amount">$${Number(p.amount).toLocaleString()}</div>
+          <div class="plan-bonus">${p.bonus>0?'🎁 贈送 $'+Number(p.bonus).toLocaleString():'無贈送'}</div>
+        </div>`).join('');
+    }
+
+    // 載入支付方式
+    const payMap = [
+      {key:'shop_pay_jko',   label:'街口支付'},
+      {key:'shop_pay_ipass', label:'iPASS'},
+      {key:'shop_pay_cash',  label:'現金'},
+      {key:'shop_pay_transfer',label:'轉帳'},
+    ];
+    const container = document.getElementById('payMethods');
+    container.innerHTML = '';
+    payMap.forEach(p=>{
+      if(String(s[p.key]||'TRUE').toUpperCase()!=='TRUE') return;
+      const btn = document.createElement('button');
+      btn.className='pay-btn'; btn.dataset.method=p.label; btn.textContent=p.label;
+      container.appendChild(btn);
+    });
+    container.addEventListener('click', e=>{
+      const btn=e.target.closest('.pay-btn'); if(!btn)return;
+      container.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected'); selectedPay=btn.dataset.method; checkReady();
+    });
+  } catch(e){
+    document.getElementById('planGrid').innerHTML='<div class="no-plans" style="grid-column:1/-1">載入失敗，請重新整理</div>';
+  }
+}
+
+function selectPlan(el){
+  document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPlanAmount = Number(el.dataset.amount);
+  selectedPlanBonus  = Number(el.dataset.bonus);
+  checkReady();
+}
+
+// ── SignaturePad ─────────────────────────────
+const canvas = document.getElementById('signCanvas');
+function initPad(){
+  const rect=canvas.parentElement.getBoundingClientRect();
+  canvas.width=Math.floor(rect.width-36)*window.devicePixelRatio;
+  canvas.height=160*window.devicePixelRatio;
+  canvas.style.width=(Math.floor(rect.width-36))+'px';
+  canvas.style.height='160px';
+  canvas.getContext('2d').scale(window.devicePixelRatio,window.devicePixelRatio);
+  pad=new SignaturePad(canvas,{minWidth:1.5,maxWidth:3,penColor:'#1a1209',backgroundColor:'rgba(255,255,255,0)'});
+  pad.addEventListener('beginStroke',()=>{canvas.classList.add('active');checkReady();});
+  pad.addEventListener('endStroke',checkReady);
+}
+window.addEventListener('load',()=>{initPad();loadSettings();});
+window.addEventListener('resize',()=>{const data=pad?pad.toData():[];initPad();if(data.length)pad.fromData(data);});
+function clearSign(){pad.clear();canvas.classList.remove('active');checkReady();}
+
+document.getElementById('agreeCheck').addEventListener('change',checkReady);
+
+function checkReady(){
+  const ok=!pad.isEmpty()&&selectedPlanAmount>0&&selectedPay&&document.getElementById('agreeCheck').checked;
+  document.getElementById('submitBtn').disabled=!ok;
+}
+
+// ── 送出 ────────────────────────────────────
+async function submitSign(){
+  const btn=document.getElementById('submitBtn');
+  const errEl=document.getElementById('errorMsg');
+  errEl.style.display='none';
+  if(pad.isEmpty()){showErr('請先完成簽名');return;}
+  if(!selectedPlanAmount){showErr('請選擇儲值方案');return;}
+  if(!selectedPay){showErr('請選擇支付方式');return;}
+  btn.classList.add('loading'); btn.disabled=true;
+  try{
+    const signDataUrl=pad.toDataURL('image/png');
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'addShopCredit',
+        uid:UID, name:NAME, phone:PHONE,
+        amount:selectedPlanAmount,
+        bonus:selectedPlanBonus,
+        payMethod:selectedPay,
+        signUrl:signDataUrl.substring(0,500),
+        note:document.getElementById('noteInput').value
+      })
+    });
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.msg||'儲值失敗');
+    document.getElementById('balanceNum').textContent=Number(data.balance).toLocaleString();
+    document.getElementById('successScreen').classList.add('show');
+  }catch(e){
+    showErr('送出失敗：'+e.message);
+    btn.classList.remove('loading'); btn.disabled=false;
+  }
+}
+
+function showErr(msg){const el=document.getElementById('errorMsg');el.textContent=msg;el.style.display='block';}
+</script>
+</body>
+</html>

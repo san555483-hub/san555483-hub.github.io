@@ -103,6 +103,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="tab" onclick="switchTab('credit')">💰 儲值管理</div>
   <div class="tab" onclick="switchTab('settings')">⚙️ 系統設定</div>
   <div class="tab" onclick="switchTab('shop')">🛒 購物車設定</div>
+  <div class="tab" onclick="switchTab('shopcredit')">🛍️ 購物金</div>
 </div>
 <div class="content">
 
@@ -278,6 +279,79 @@ input:checked + .slider:before { transform: translateX(16px); }
     </div>
   </div>
 
+  <!-- 🛍️ 購物金 -->
+  <div class="panel" id="panel-shopcredit">
+    <!-- 方案設定 -->
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>💳 購物金方案設定（最多5組）</span>
+        <button class="btn btn-primary btn-sm" onclick="saveShopCreditPlans()">💾 儲存方案</button>
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:14px;">設定顧客可選的儲值方案，空白方案不顯示。</p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>方案</th><th>名稱</th><th>儲值金額</th><th>贈送金額</th><th>啟用</th></tr></thead>
+          <tbody id="shopPlanTbody"></tbody>
+        </table>
+      </div>
+      <div id="msgShopPlan" class="msg" style="margin-top:8px;"></div>
+    </div>
+    <!-- 支付方式 -->
+    <div class="card">
+      <div class="card-title">💳 支付方式設定</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="sp_cash" checked> 現金</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="sp_transfer" checked> 轉帳</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="sp_jko" checked> 街口支付</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="sp_ipass"> iPASS</label>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveShopPayMethods()">💾 儲存支付設定</button>
+      <div id="msgShopPay" class="msg" style="margin-top:8px;"></div>
+    </div>
+    <!-- 產生簽名連結 -->
+    <div class="card">
+      <div class="card-title">📲 產生購物金簽名連結</div>
+      <div class="form-row">
+        <div class="form-group"><label>顧客姓名 *</label><input id="sc-name" type="text" placeholder="王小明"></div>
+        <div class="form-group"><label>顧客電話 *</label><input id="sc-phone" type="tel" placeholder="0912345678"></div>
+      </div>
+      <button class="btn btn-gold" onclick="genShopCreditLink()">產生連結</button>
+      <div id="scLinkResult" style="display:none;margin-top:14px;">
+        <div style="background:#fdf8ee;border:1px solid #e6c77a;border-radius:8px;padding:12px 14px;">
+          <div style="font-size:12px;color:#888;margin-bottom:6px;">購物金簽名頁連結</div>
+          <div id="scLinkUrl" style="font-size:13px;color:#6b4c2a;word-break:break-all;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-gold btn-sm" onclick="copyScLink()">📋 複製</button>
+            <button class="btn btn-primary btn-sm" onclick="openScLink()">🔗 預覽</button>
+          </div>
+          <div id="scLinkCopied" style="font-size:12px;color:#2d7a4f;margin-top:6px;display:none;">✅ 已複製！</div>
+        </div>
+      </div>
+    </div>
+    <!-- 購物金記錄 -->
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🛍️ 購物金儲值記錄</span>
+        <button class="btn btn-gold" onclick="openAddShopCreditModal()">＋ 手動新增</button>
+      </div>
+      <div class="filter-row">
+        <input id="scSearchPhone" type="text" placeholder="電話查詢" style="flex:1;min-width:140px;">
+        <button class="btn btn-primary" onclick="searchShopCredits()">🔍 查詢</button>
+        <button class="btn btn-gold" onclick="loadAllShopCredits()">全部</button>
+      </div>
+      <div id="scSummary" style="display:none;background:var(--gold2-light);border:1px solid #e6c77a;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;">
+        顧客：<strong id="sc-cs-name"></strong>&nbsp;|&nbsp;餘額：<strong style="color:var(--warm)">$<span id="sc-cs-balance"></span></strong>&nbsp;
+        <button onclick="openScDeductModal()" class="btn btn-warn btn-sm">扣款</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="scCreditTable">
+          <thead><tr><th>姓名</th><th>電話</th><th>儲值</th><th>贈送</th><th>此筆餘額</th><th>支付</th><th>建立時間</th><th>備註</th><th>操作</th></tr></thead>
+          <tbody id="scCreditTbody"><tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- 系統設定 -->
   <div class="panel" id="panel-settings">
     <div class="card">
@@ -424,6 +498,7 @@ function switchTab(name) {
   if (name === 'settings')  loadSettings();
   if (name === 'credit')    loadAllCredits();
   if (name === 'shop')      loadShopSettings();
+  if (name === 'shopcredit') loadShopCreditTab();
 }
 
 async function api(params) {
@@ -719,5 +794,48 @@ async function saveShopDiscounts() {
   } catch(e) { showMsg('msgDiscount','❌ 儲存失敗',false); }
 }
 </script>
+<!-- 手動新增購物金 Modal -->
+<div id="addShopCreditModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header"><h3>新增購物金</h3><button onclick="closeModal('addShopCreditModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>姓名</label><input id="asc-name" type="text" placeholder="顧客姓名"></div>
+        <div class="form-group"><label>電話 *</label><input id="asc-phone" type="tel" placeholder="0912345678"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>儲值金額 *</label><input id="asc-amount" type="number" value="1000"></div>
+        <div class="form-group"><label>贈送金額</label><input id="asc-bonus" type="number" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>支付方式</label>
+          <select id="asc-pay"><option>現金</option><option>轉帳</option><option>街口支付</option><option>iPASS</option></select>
+        </div>
+        <div class="form-group"><label>備註</label><input id="asc-note" type="text" placeholder="選填"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('addShopCreditModal')">取消</button>
+      <button class="btn btn-gold" onclick="submitAddShopCredit()">確認新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 購物金扣款 Modal -->
+<div id="scDeductModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header"><h3>購物金扣款</h3><button onclick="closeModal('scDeductModal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#888;margin-bottom:14px;">顧客：<strong id="scdm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="scdm-balance"></span></strong></p>
+      <div class="form-group"><label>扣款金額 *</label><input id="scdm-amount" type="number" placeholder=""></div>
+      <div class="form-group"><label>備註</label><input id="scdm-note" type="text" placeholder="購物折抵"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('scDeductModal')">取消</button>
+      <button class="btn btn-warn" onclick="submitScDeduct()">確認扣款</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
