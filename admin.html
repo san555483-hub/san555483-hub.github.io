@@ -105,6 +105,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="tab" onclick="switchTab('shop')">🛒 購物車設定</div>
   <div class="tab" onclick="switchTab('shopcredit')">🛍️ 購物金</div>
   <div class="tab" onclick="switchTab('coupon')">🎫 折扣券</div>
+  <div class="tab" onclick="switchTab('payment')">💳 付款方式</div>
 </div>
 <div class="content">
 
@@ -416,6 +417,71 @@ input:checked + .slider:before { transform: translateX(16px); }
     </div>
   </div>
 
+  <!-- 💳 付款方式 -->
+  <div class="panel" id="panel-payment">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>💳 付款方式管理</span>
+        <button class="btn btn-gold btn-sm" onclick="openPayModal()">＋ 新增付款方式</button>
+      </div>
+      <p style="font-size:12px;color:#999;margin-bottom:16px;">設定顧客結帳可選的付款方式。連結型（街口/iPASS）點後跳轉；帳號型（轉帳）顯示帳號資訊。</p>
+      <div id="payMethodList"><div class="loading">點擊分頁載入...</div></div>
+    </div>
+  </div>
+
+  <!-- 💳 付款方式編輯 Modal -->
+  <div class="modal-overlay" id="pay-modal" style="display:none;align-items:center;justify-content:center;">
+    <div class="modal" style="max-width:480px;width:95vw;">
+      <div class="modal-head">
+        <h3 id="pay-modal-title">新增付款方式</h3>
+        <button class="modal-close" onclick="closePayModal()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+        <input type="hidden" id="pm-id-orig">
+        <div class="form-group">
+          <label>ID（唯一識別碼，英文小寫，新增後不可改）</label>
+          <input id="pm-id" type="text" placeholder="例：jko / ipass / transfer / linepay" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
+        </div>
+        <div class="form-group">
+          <label>顯示名稱</label>
+          <input id="pm-name" type="text" placeholder="例：街口支付、iPASS 一卡通、銀行轉帳" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
+        </div>
+        <div class="form-group">
+          <label>圖示 Emoji</label>
+          <input id="pm-icon" type="text" placeholder="例：🟡 🔵 🏦 💰 📱" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>按鈕顏色</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="pm-color" type="text" placeholder="#e03c3c" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
+            <input id="pm-color-picker" type="color" value="#888888" style="width:40px;height:36px;border:none;border-radius:4px;cursor:pointer;padding:2px;" oninput="document.getElementById('pm-color').value=this.value">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>連結網址 或 帳號資訊</label>
+          <textarea id="pm-info" rows="3" placeholder="連結型：https://service.jkopay.com/...&#10;帳號型：玉山銀行 808 帳號：xxxx 戶名：xxx" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'Noto Sans TC',sans-serif;box-sizing:border-box;"></textarea>
+          <div style="font-size:11px;color:#aaa;margin-top:3px;">填 https:// 開頭 → 付款時跳轉連結；填文字 → 付款時顯示帳號</div>
+        </div>
+        <div class="form-group">
+          <label>排序（數字越小越前面）</label>
+          <input id="pm-order" type="number" value="99" min="1" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+          <span style="font-size:13px;font-weight:600;">啟用此付款方式</span>
+          <label class="toggle-switch" style="margin:0;">
+            <input type="checkbox" id="pm-enabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div id="pm-msg" style="display:none;font-size:12px;padding:8px;border-radius:4px;margin-top:4px;"></div>
+      </div>
+      <div class="modal-foot" style="display:flex;gap:8px;justify-content:flex-end;padding:16px;">
+        <button class="btn" onclick="closePayModal()" style="background:#eee;color:#555;">取消</button>
+        <button class="btn btn-gold" onclick="savePayMethodForm()">💾 儲存</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 系統設定 -->
   <div class="panel" id="panel-settings">
     <div class="card">
@@ -552,7 +618,7 @@ window.onload = function() { initSlotSelects(); };
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit','coupon'];
+  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit','coupon','payment'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'services')  loadServices();
@@ -564,6 +630,7 @@ function switchTab(name) {
   if (name === 'shop')      loadShopSettings();
   if (name === 'shopcredit') loadShopCreditTab();
   if (name === 'coupon')      loadCouponTab();
+  if (name === 'payment')     loadPaymentTab();
 }
 
 async function api(params) {
@@ -710,6 +777,106 @@ async function lockSlot() {
   if (data.status==='ok') { showMsg('msgLock','✅ 已鎖定',true); loadLockedSlots(); } else showMsg('msgLock','❌ '+data.msg,false);
 }
 async function unlockSlot(date, time) { await api({ action:'unlockSlot', date, time }); loadLockedSlots(); }
+
+// ════════════════════════════════════════════════════════════
+// 💳 付款方式管理
+// ════════════════════════════════════════════════════════════
+let _payMethods = [];
+
+async function loadPaymentTab() {
+  const el = document.getElementById('payMethodList');
+  el.innerHTML = '<div class="loading">載入中...</div>';
+  try {
+    const r = await fetch(GAS+'?action=getPayMethods&t='+Date.now());
+    const d = await r.json();
+    if(!d.ok){ el.innerHTML='<div style="color:#c00;padding:12px;">載入失敗：'+d.msg+'</div>'; return; }
+    _payMethods = d.methods || [];
+    renderPayMethodList();
+  } catch(e) { el.innerHTML='<div style="color:#c00;padding:12px;">連線失敗</div>'; }
+}
+
+function renderPayMethodList() {
+  const el = document.getElementById('payMethodList');
+  if(!_payMethods.length){ el.innerHTML='<div style="color:#aaa;padding:20px;text-align:center;">尚無付款方式，點右上角新增</div>'; return; }
+  el.innerHTML = _payMethods.map(m => {
+    const isLink = m.info && m.info.startsWith('http');
+    const infoDisplay = isLink
+      ? `<a href="${m.info}" target="_blank" style="font-size:11px;color:#3a7bc8;word-break:break-all;">${m.info}</a>`
+      : `<span style="font-size:11px;color:#555;white-space:pre-wrap;">${m.info||'（未設定）'}</span>`;
+    return `<div style="border:1.5px solid ${m.enabled?'var(--border)':'#eee'};border-radius:8px;padding:14px 16px;margin-bottom:10px;background:${m.enabled?'#fff':'#fafafa'};display:flex;align-items:flex-start;gap:14px;">
+      <div style="width:44px;height:44px;border-radius:8px;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${m.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <strong style="font-size:14px;color:${m.enabled?'var(--bark)':'#bbb'};">${m.name}</strong>
+          <span style="font-size:10px;color:#999;background:#f0f0f0;padding:2px 6px;border-radius:8px;">ID: ${m.id}</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:8px;background:${m.enabled?'#e8f5ee':'#fdf0ee'};color:${m.enabled?'#2d7a4f':'#c0392b'};">${m.enabled?'啟用中':'已停用'}</span>
+          <span style="font-size:10px;color:#aaa;">排序${m.order}</span>
+        </div>
+        <div style="margin-bottom:4px;">${infoDisplay}</div>
+        <div style="font-size:11px;color:#aaa;">${isLink?'🔗 連結型（點擊跳轉）':'📋 帳號型（顯示資訊）'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button class="btn btn-gold btn-sm" onclick="openPayModal(${JSON.stringify(JSON.stringify(m))})">✏️ 編輯</button>
+        <button class="btn btn-red btn-sm" onclick="deletePayMethod('${m.id}','${m.name}')">🗑️ 刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPayModal(mJson) {
+  const isEdit = !!mJson;
+  const m = isEdit ? JSON.parse(mJson) : {};
+  document.getElementById('pay-modal-title').textContent = isEdit ? '✏️ 編輯付款方式' : '＋ 新增付款方式';
+  document.getElementById('pm-id-orig').value = m.id || '';
+  document.getElementById('pm-id').value      = m.id || '';
+  document.getElementById('pm-id').readOnly   = isEdit; // 編輯時ID不可改
+  document.getElementById('pm-id').style.background = isEdit ? '#f5f5f5' : '';
+  document.getElementById('pm-name').value    = m.name || '';
+  document.getElementById('pm-icon').value    = m.icon || '💳';
+  document.getElementById('pm-color').value   = m.color || '#888888';
+  document.getElementById('pm-color-picker').value = m.color || '#888888';
+  document.getElementById('pm-info').value    = m.info || '';
+  document.getElementById('pm-order').value   = m.order || 99;
+  document.getElementById('pm-enabled').checked = m.enabled !== false;
+  document.getElementById('pm-msg').style.display = 'none';
+  document.getElementById('pay-modal').style.display = 'flex';
+}
+
+function closePayModal() {
+  document.getElementById('pay-modal').style.display = 'none';
+}
+
+async function savePayMethodForm() {
+  const idOrig = document.getElementById('pm-id-orig').value;
+  const id     = idOrig || document.getElementById('pm-id').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const name   = document.getElementById('pm-name').value.trim();
+  const icon   = document.getElementById('pm-icon').value.trim();
+  const color  = document.getElementById('pm-color').value.trim();
+  const info   = document.getElementById('pm-info').value.trim();
+  const order  = document.getElementById('pm-order').value;
+  const enabled= document.getElementById('pm-enabled').checked;
+  const msgEl  = document.getElementById('pm-msg');
+  if(!id || !name){ msgEl.style.display='block'; msgEl.style.background='#fdf0ee'; msgEl.style.color='#c00'; msgEl.textContent='ID 和名稱必填'; return; }
+  msgEl.style.display='block'; msgEl.style.background='#f5f5f5'; msgEl.style.color='#555'; msgEl.textContent='儲存中…';
+  try {
+    const r = await fetch(GAS, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'savePayMethod', id, name, icon, color, info, order, enabled }) });
+    const d = await r.json();
+    if(d.ok){ closePayModal(); loadPaymentTab(); }
+    else { msgEl.style.background='#fdf0ee'; msgEl.style.color='#c00'; msgEl.textContent='❌ '+d.msg; }
+  } catch(e) { msgEl.style.background='#fdf0ee'; msgEl.style.color='#c00'; msgEl.textContent='連線失敗'; }
+}
+
+async function deletePayMethod(id, name) {
+  if(!confirm(`確定刪除「${name}」？刪除後顧客結帳頁將不再顯示此付款方式。`)) return;
+  try {
+    const r = await fetch(GAS, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'deletePayMethod', id }) });
+    const d = await r.json();
+    if(d.ok) loadPaymentTab();
+    else alert('刪除失敗：'+d.msg);
+  } catch(e) { alert('連線失敗'); }
+}
 
 // 系統設定
 async function loadSettings() {
