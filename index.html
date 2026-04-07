@@ -2017,21 +2017,53 @@ async function checkCouponCode() {
     // 根據訂單金額自動計算最優折抵
     const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
     const autoDisc   = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
-    let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
-    if(couponRules.length) infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
+    const amtInput   = document.getElementById('coupon-deduct-amt');
+    // 有規則：自動填入最優折抵，鎖定輸入框；無規則：開放手動輸入
+    if(couponRules.length) {
+      amtInput.value    = autoDisc;
+      amtInput.readOnly = true;
+      amtInput.style.background = '#f5f5f5';
+      amtInput.style.color = '#888';
+      // 判斷是否有符合條件的規則
+      const hasMatch = couponRules.some(r => orderTotal >= (r.minAmount||0));
+      if(!hasMatch) {
+        const minReq = Math.min(...couponRules.map(r=>r.minAmount||0).filter(v=>v>0));
+        infoEl.textContent = `⚠️ ${d.type}驗證成功｜餘額 NT$${d.balance.toLocaleString()}｜需滿 NT$${minReq.toLocaleString()} 才可使用`;
+        infoEl.style.display='block';
+        document.getElementById('coupon-deduct-row').style.display='none';
+        return;
+      }
+    } else {
+      amtInput.value    = autoDisc;
+      amtInput.readOnly = false;
+      amtInput.style.background = '';
+      amtInput.style.color = '';
+    }
+    let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}｜本次最優折抵：NT$ ${autoDisc.toLocaleString()}`;
     infoEl.textContent = infoTxt;
     infoEl.style.display='block';
-    document.getElementById('coupon-deduct-amt').value = autoDisc;
     document.getElementById('coupon-deduct-row').style.display='flex';
+    // 自動套用（省去再按套用按鈕）
+    couponDeduct = autoDisc;
+    updateCouponDisplay();
+    if(autoDisc > 0) showToast(`✓ ${d.type} 自動套用折抵 NT$${autoDisc.toLocaleString()}`);
   } catch(e) { showToast('驗證失敗：'+e.message); }
 }
 
 function applyCoupon() {
-  const amt = parseInt(document.getElementById('coupon-deduct-amt').value)||0;
-  if(amt<=0) { showToast('請輸入折抵金額'); return; }
-  if(amt>couponBalance) { showToast('折抵金額不可超過券餘額 $'+couponBalance); return; }
   const orderTotal = getCurrentOrderTotal()-shopCreditDeduct;
-  if(amt>orderTotal) { showToast('折抵金額不可超過訂單金額 $'+orderTotal); return; }
+  let amt;
+  if(couponRules && couponRules.length) {
+    // 有規則：重新計算最優（防止訂單金額變動）
+    amt = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
+    if(amt<=0) { showToast('訂單金額不符合任何折抵條件'); return; }
+    document.getElementById('coupon-deduct-amt').value = amt;
+  } else {
+    amt = parseInt(document.getElementById('coupon-deduct-amt').value)||0;
+    if(amt<=0) { showToast('請輸入折抵金額'); return; }
+    if(amt>couponBalance) { showToast('折抵金額不可超過券餘額 $'+couponBalance); return; }
+    if(amt>orderTotal) { showToast('折抵金額不可超過訂單金額 $'+orderTotal); return; }
+  }
   couponDeduct = amt;
   updateCouponDisplay();
   showToast('✓ 折扣碼折抵 NT$'+amt+' 已套用');
@@ -2068,7 +2100,9 @@ function r_calcValue(rule, orderTotal) {
 }
 
 function clearCoupon() {
-  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0; couponRules=[]; couponMaxuse=0;
+  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0;
+  const amtInput = document.getElementById('coupon-deduct-amt');
+  if(amtInput){ amtInput.readOnly=false; amtInput.style.background=''; amtInput.style.color=''; amtInput.value=''; }
   document.getElementById('coupon-applied').style.display='none';
   document.getElementById('coupon-deduct-row').style.display='none';
   document.getElementById('coupon-info').style.display='none';
