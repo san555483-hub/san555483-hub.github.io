@@ -804,6 +804,27 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       </div>
     </div>
 
+    <!-- 折扣碼 -->
+    <div class="checkout-card">
+      <div class="cc-head"><h3>🎫 折扣碼</h3></div>
+      <div class="cc-body">
+        <div class="shop-credit-section" style="border-color:rgba(184,137,90,.3);background:rgba(184,137,90,.04);">
+          <div class="shop-credit-title" style="color:var(--gold);">🎫 輸入折扣碼（購物券 / 現金券）</div>
+          <div class="shop-credit-row">
+            <input class="shop-credit-input" type="text" id="coupon-code-input" placeholder="例：UNI-SHOP-ABC123" style="text-transform:uppercase;letter-spacing:1px;">
+            <button class="shop-credit-btn" style="background:var(--gold);" onclick="checkCouponCode()">驗證</button>
+          </div>
+          <div id="coupon-info" class="shop-credit-info" style="display:none;border-left-color:var(--gold);background:rgba(184,137,90,.08);color:var(--bark);"></div>
+          <div class="shop-credit-deduct-row" id="coupon-deduct-row" style="display:none;">
+            <input type="number" id="coupon-deduct-amt" placeholder="輸入折抵金額" min="0" class="shop-credit-input">
+            <button class="shop-credit-apply-btn" style="background:var(--gold);" onclick="applyCoupon()">套用</button>
+            <button style="padding:7px 10px;background:none;border:1.5px solid #ccc;border-radius:3px;font-size:.72rem;color:#888;cursor:pointer;" onclick="clearCoupon()">取消</button>
+          </div>
+          <div class="shop-credit-applied" id="coupon-applied" style="display:none;border-left-color:var(--gold);color:var(--bark);"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 付款 -->
     <div class="checkout-card">
       <div class="cc-head"><h3>💳 選擇付款方式</h3></div>
@@ -1050,7 +1071,12 @@ const JKO_PAY_URL = 'https://service.jkopay.com/r/transfer?j=Transfer:900666675'
 const GAS_SHOP_URL = GAS_URL; // 購物金用同一條GAS
 
 // 購物金狀態
-let shopCreditBalance = 0;   // 查到的餘額
+let shopCreditBalance = 0;
+// 折扣碼狀態
+let couponBalance = 0;   // 券的餘額
+let couponDeduct  = 0;   // 本次折抵
+let couponCode    = '';  // 使用的券碼
+let couponType    = '';  // 購物券 or 現金券   // 查到的餘額
 let shopCreditDeduct  = 0;   // 本次折抵金額
 let shopCreditPhone   = '';  // 查詢用的電話
 
@@ -1533,7 +1559,7 @@ function renderCheckoutPage(){
   const existPhone = document.getElementById('inp-phone').value.trim();
   if(existPhone) document.getElementById('sc-query-phone').value = existPhone;
   // 清除上次購物金折抵
-  shopCreditDeduct=0; shopCreditBalance=0;
+  shopCreditDeduct=0; shopCreditBalance=0; couponDeduct=0; couponCode=''; couponBalance=0;
   document.getElementById('sc-info').style.display='none';
   document.getElementById('sc-deduct-row').style.display='none';
   document.getElementById('sc-applied').style.display='none';
@@ -1594,9 +1620,17 @@ async function goToPayment(method){
   const prodDisc   = cart.reduce((s,x)=>s+calcProdDiscount(x),0);
   const{matched}   = calcDiscount(subtotal);
   const orderDisc  = matched?matched.discount:0;
-  const finalTotal = subtotal-prodDisc-orderDisc-shopCreditDeduct;
+  const finalTotal = subtotal-prodDisc-orderDisc-shopCreditDeduct-couponDeduct;
   const itemsText  = cart.map(x=>`${x.name}×${x.qty}`).join('、');
   const giftVal    = document.getElementById('gift-choice').value;
+
+  // 如果有用折扣碼，先扣券
+  if(couponDeduct > 0 && couponCode){
+    try{
+      await fetch(GAS_URL, {method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'useCoupon', code:couponCode, amount:couponDeduct, note:`訂單${currentOrderNum}`})});
+    }catch(_){}
+  }
 
   // 如果有用購物金折抵，先扣款
   if(shopCreditDeduct > 0 && shopCreditPhone){
@@ -1655,7 +1689,7 @@ function submitOrderToSheet(orderNum,total,items,gift,phone,shipping,address,not
 function closeOrderModal(){
   document.getElementById('order-modal-wrap').classList.remove('on');
   // 清空購物車並回 Step 1
-  cart=[]; updateCart(); shopCreditDeduct=0; shopCreditBalance=0; shopCreditPhone='';
+  cart=[]; updateCart(); shopCreditDeduct=0; shopCreditBalance=0; shopCreditPhone=''; couponDeduct=0; couponCode=''; couponBalance=0; couponType='';
   document.getElementById('inp-phone').value='';
   document.getElementById('inp-note').value='';
   document.getElementById('inp-address').value='';
@@ -1956,6 +1990,74 @@ function updateShopCreditDisplay(){
   const totalDisc = prodDisc + orderDisc + shopCreditDeduct;
   if(totalDisc > 0){ discBar.style.display='block'; discBar.textContent=`🎉 已享折扣 -NT$${totalDisc.toLocaleString()}${shopCreditDeduct>0?' (含購物金折抵)':''}`; }
   else { discBar.style.display='none'; }
+}
+
+// ── 折扣碼功能 ──
+async function checkCouponCode() {
+  const code = document.getElementById('coupon-code-input').value.trim().toUpperCase();
+  if(!code) { showToast('請輸入折扣碼'); return; }
+  showToast('驗證中…');
+  try {
+    const r = await fetch(GAS_URL+'?action=checkCoupon&code='+encodeURIComponent(code)+'&context=shop&t='+Date.now());
+    const d = await r.json();
+    const infoEl = document.getElementById('coupon-info');
+    if(!d.ok) {
+      infoEl.textContent = '❌ '+d.msg;
+      infoEl.style.display='block';
+      document.getElementById('coupon-deduct-row').style.display='none';
+      return;
+    }
+    couponBalance = d.balance;
+    couponCode    = d.code;
+    couponType    = d.type;
+    infoEl.textContent = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
+    infoEl.style.display='block';
+    const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
+    document.getElementById('coupon-deduct-amt').value = Math.min(d.balance, orderTotal);
+    document.getElementById('coupon-deduct-row').style.display='flex';
+  } catch(e) { showToast('驗證失敗：'+e.message); }
+}
+
+function applyCoupon() {
+  const amt = parseInt(document.getElementById('coupon-deduct-amt').value)||0;
+  if(amt<=0) { showToast('請輸入折抵金額'); return; }
+  if(amt>couponBalance) { showToast('折抵金額不可超過券餘額 $'+couponBalance); return; }
+  const orderTotal = getCurrentOrderTotal()-shopCreditDeduct;
+  if(amt>orderTotal) { showToast('折抵金額不可超過訂單金額 $'+orderTotal); return; }
+  couponDeduct = amt;
+  updateCouponDisplay();
+  showToast('✓ 折扣碼折抵 NT$'+amt+' 已套用');
+}
+
+function clearCoupon() {
+  couponDeduct=0; couponCode=''; couponBalance=0; couponType='';
+  document.getElementById('coupon-applied').style.display='none';
+  document.getElementById('coupon-deduct-row').style.display='none';
+  document.getElementById('coupon-info').style.display='none';
+  document.getElementById('coupon-code-input').value='';
+  updateCouponDisplay();
+}
+
+function updateCouponDisplay() {
+  const appliedEl = document.getElementById('coupon-applied');
+  if(couponDeduct>0) {
+    appliedEl.textContent = `✅ ${couponType} 折抵 -NT$ ${couponDeduct.toLocaleString()}（已套用）`;
+    appliedEl.style.display='block';
+    document.getElementById('coupon-deduct-row').style.display='none';
+  } else {
+    appliedEl.style.display='none';
+  }
+  // 更新結帳金額
+  const subtotal  = cart.reduce((s,x)=>s+x.price*x.qty,0);
+  const prodDisc  = cart.reduce((s,x)=>s+calcProdDiscount(x),0);
+  const{matched}  = calcDiscount(subtotal);
+  const orderDisc = matched?matched.discount:0;
+  const final     = subtotal-prodDisc-orderDisc-shopCreditDeduct-couponDeduct;
+  document.getElementById('checkout-total').textContent='NT$ '+final.toLocaleString();
+  const totalDisc = prodDisc+orderDisc+shopCreditDeduct+couponDeduct;
+  const discBar   = document.getElementById('checkout-discount-bar');
+  if(totalDisc>0){discBar.style.display='block';discBar.textContent=`🎉 已享折扣 -NT$${totalDisc.toLocaleString()}`;}
+  else{discBar.style.display='none';}
 }
 
 // 電話輸入時同步到購物金查詢欄

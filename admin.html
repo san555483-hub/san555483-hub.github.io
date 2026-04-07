@@ -104,6 +104,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="tab" onclick="switchTab('settings')">⚙️ 系統設定</div>
   <div class="tab" onclick="switchTab('shop')">🛒 購物車設定</div>
   <div class="tab" onclick="switchTab('shopcredit')">🛍️ 購物金</div>
+  <div class="tab" onclick="switchTab('coupon')">🎫 折扣券</div>
 </div>
 <div class="content">
 
@@ -352,6 +353,64 @@ input:checked + .slider:before { transform: translateX(16px); }
     </div>
   </div>
 
+  <!-- 🎫 折扣券 -->
+  <div class="panel" id="panel-coupon">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🎫 新增折扣券</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="form-group"><label>類型</label>
+          <select id="cp-type" class="form-group input" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
+            <option value="購物券">🛍️ 購物券（僅線上購物）</option>
+            <option value="現金券">💵 現金券（線上+店內）</option>
+          </select>
+        </div>
+        <div class="form-group"><label>面額（NT$）*</label><input id="cp-amount" type="number" placeholder="例：500" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
+        <div class="form-group"><label>自訂券碼（選填，空白自動生成）</label><input id="cp-code" type="text" placeholder="留空自動生成" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;text-transform:uppercase;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="form-group"><label>到期日（選填）</label><input id="cp-expiry" type="date" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
+        <div class="form-group"><label>備註（顧客姓名/說明）</label><input id="cp-note" type="text" placeholder="例：王小明生日券" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
+      </div>
+      <button class="btn btn-gold" onclick="addCoupon_()">＋ 產生折扣券</button>
+      <div id="cpAddResult" style="display:none;margin-top:12px;background:#e8f5e9;border-radius:6px;padding:12px 16px;">
+        <div style="font-size:12px;color:#888;margin-bottom:4px;">已產生券碼（複製傳給顧客）</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <strong id="cpNewCode" style="font-size:18px;color:#2a2420;letter-spacing:2px;"></strong>
+          <button class="btn btn-gold btn-sm" onclick="copyCouponCode()">📋 複製</button>
+        </div>
+        <div id="cpNewInfo" style="font-size:12px;color:#888;margin-top:4px;"></div>
+      </div>
+      <div id="msgCouponAdd" class="msg" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔍 查詢 & 管理</div>
+      <div class="filter-row">
+        <input id="cpSearch" type="text" placeholder="券碼查詢" style="flex:1;">
+        <select id="cpTypeFilter" style="border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;">
+          <option value="">全部類型</option>
+          <option value="購物券">購物券</option>
+          <option value="現金券">現金券</option>
+        </select>
+        <select id="cpStatusFilter" style="border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;">
+          <option value="">全部狀態</option>
+          <option value="有效">有效</option>
+          <option value="已用完">已用完</option>
+          <option value="停用">停用</option>
+        </select>
+        <button class="btn btn-primary" onclick="searchCoupons()">🔍 查詢</button>
+        <button class="btn btn-gold" onclick="loadAllCoupons()">全部</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>券碼</th><th>類型</th><th>面額</th><th>已用</th><th>餘額</th><th>狀態</th><th>建立時間</th><th>到期日</th><th>備註</th><th>操作</th></tr></thead>
+          <tbody id="couponTbody"><tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- 系統設定 -->
   <div class="panel" id="panel-settings">
     <div class="card">
@@ -488,7 +547,7 @@ window.onload = function() { initSlotSelects(); };
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit'];
+  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit','coupon'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'services')  loadServices();
@@ -499,6 +558,7 @@ function switchTab(name) {
   if (name === 'credit')    loadAllCredits();
   if (name === 'shop')      loadShopSettings();
   if (name === 'shopcredit') loadShopCreditTab();
+  if (name === 'coupon')      loadCouponTab();
 }
 
 async function api(params) {
@@ -889,6 +949,121 @@ async function deleteScCredit(row){
   if(!confirm('確定刪除這筆記錄？'))return;
   try{const r=await fetch(GAS_SHOP_CREDIT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deleteShopCredit',row})});const d=await r.json();if(d.ok){alert('已刪除');loadAllShopCredits();}else alert('失敗：'+d.msg);}
   catch(e){alert('刪除失敗');}
+}
+
+
+// ══ 折扣券系統 ══
+const GAS_COUPON = GAS_SHOP; // 同購物車GAS
+
+function loadCouponTab() { loadAllCoupons(); }
+
+async function loadAllCoupons() {
+  renderCouponTable([]);
+  try {
+    const r = await fetch(GAS_COUPON+'?action=listCoupons&t='+Date.now());
+    const d = await r.json();
+    if(d.ok) renderCouponTable(d.coupons);
+    else alert('載入失敗：'+d.msg);
+  } catch(e) { alert('載入失敗'); }
+}
+
+async function searchCoupons() {
+  const code   = document.getElementById('cpSearch').value.trim();
+  const type   = document.getElementById('cpTypeFilter').value;
+  const status = document.getElementById('cpStatusFilter').value;
+  const params = new URLSearchParams({action:'listCoupons', t:Date.now()});
+  if(code)   params.set('code', code);
+  if(type)   params.set('type', type);
+  if(status) params.set('status', status);
+  try {
+    const r = await fetch(GAS_COUPON+'?'+params.toString());
+    const d = await r.json();
+    if(d.ok) renderCouponTable(d.coupons);
+    else alert('查詢失敗：'+d.msg);
+  } catch(e) { alert('查詢失敗'); }
+}
+
+function renderCouponTable(rows) {
+  const tb = document.getElementById('couponTbody');
+  if(!rows.length) { tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">查無資料</td></tr>'; return; }
+  tb.innerHTML = rows.map(r => {
+    const bal = Number(r['餘額']||0);
+    const statusColor = r['狀態']==='有效'?'badge-ok':r['狀態']==='已用完'?'badge-red':'badge-warn';
+    const typeColor = r['類型']==='購物券'?'#2d5a8e':'#2d7a4f';
+    return `<tr>
+      <td><strong style="letter-spacing:1px;font-size:12px">${r['券碼']||'-'}</strong>
+        <button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--gold)" onclick="navigator.clipboard.writeText('${r['券碼']}').then(()=>showMsg('msgCouponAdd','✅ 已複製',true))">📋</button>
+      </td>
+      <td><span style="color:${typeColor};font-size:12px;font-weight:600">${r['類型']||'-'}</span></td>
+      <td>$${Number(r['面額']||0).toLocaleString()}</td>
+      <td>$${Number(r['已用金額']||0).toLocaleString()}</td>
+      <td style="font-weight:600;color:${bal>0?'var(--green)':'#999'}">$${bal.toLocaleString()}</td>
+      <td><span class="badge ${statusColor}">${r['狀態']||'-'}</span></td>
+      <td style="font-size:11px">${String(r['建立時間']||'').substring(0,16)}</td>
+      <td style="font-size:11px">${r['到期日']||'無期限'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['備註']||''}">${r['備註']||'-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-gold btn-sm" style="margin-right:4px" onclick="openEditCouponModal(${r._row},'${r['券碼']}',${r['面額']||0},'${r['狀態']||''}','${r['到期日']||''}','${(r['備註']||'').replace(/'/g,'')}')">編輯</button>
+        <button class="btn btn-red btn-sm" onclick="deleteCoupon_(${r._row})">刪除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function addCoupon_() {
+  const type   = document.getElementById('cp-type').value;
+  const amount = document.getElementById('cp-amount').value;
+  const code   = document.getElementById('cp-code').value.trim().toUpperCase();
+  const expiry = document.getElementById('cp-expiry').value;
+  const note   = document.getElementById('cp-note').value.trim();
+  if(!amount) { showMsg('msgCouponAdd','❌ 請輸入面額',false); return; }
+  try {
+    const r = await fetch(GAS_COUPON, {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'addCoupon', type, amount, code:code||'', expiry, note})});
+    const d = await r.json();
+    if(d.ok) {
+      document.getElementById('cpNewCode').textContent = d.code;
+      document.getElementById('cpNewInfo').textContent = `類型：${type}｜面額：NT$${Number(d.amount).toLocaleString()}${expiry?'｜到期：'+expiry:''}${note?'｜備註：'+note:''}`;
+      document.getElementById('cpAddResult').style.display = 'block';
+      document.getElementById('cp-code').value='';
+      document.getElementById('cp-note').value='';
+      loadAllCoupons();
+    } else { showMsg('msgCouponAdd','❌ '+d.msg,false); }
+  } catch(e) { showMsg('msgCouponAdd','❌ 新增失敗',false); }
+}
+
+function copyCouponCode() {
+  const code = document.getElementById('cpNewCode').textContent;
+  if(!code) return;
+  navigator.clipboard.writeText(code).then(()=>showMsg('msgCouponAdd','✅ 券碼已複製！',true));
+}
+
+// 編輯Modal（用inline prompt簡化）
+async function openEditCouponModal(row, code, amount, status, expiry, note) {
+  const newAmount = prompt(`編輯券碼：${code}\n\n面額（目前：$${amount}）：`, amount);
+  if(newAmount === null) return;
+  const newStatus = prompt(`狀態（目前：${status}）\n輸入：有效 / 停用 / 已用完`, status);
+  if(newStatus === null) return;
+  const newNote = prompt(`備註（目前：${note||'無'}）：`, note||'');
+  if(newNote === null) return;
+  try {
+    const r = await fetch(GAS_COUPON,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'editCoupon', row, amount:parseInt(newAmount)||amount, status:newStatus, note:newNote})});
+    const d = await r.json();
+    if(d.ok) { showMsg('msgCouponAdd','✅ 已儲存',true); loadAllCoupons(); }
+    else showMsg('msgCouponAdd','❌ '+d.msg,false);
+  } catch(e) { showMsg('msgCouponAdd','❌ 儲存失敗',false); }
+}
+
+async function deleteCoupon_(row) {
+  if(!confirm('確定刪除此折扣券？')) return;
+  try {
+    const r = await fetch(GAS_COUPON,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'deleteCoupon', row})});
+    const d = await r.json();
+    if(d.ok) { showMsg('msgCouponAdd','✅ 已刪除',true); loadAllCoupons(); }
+    else showMsg('msgCouponAdd','❌ '+d.msg,false);
+  } catch(e) { showMsg('msgCouponAdd','❌ 刪除失敗',false); }
 }
 
 </script>
