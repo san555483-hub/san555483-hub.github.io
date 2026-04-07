@@ -976,6 +976,23 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   </div>
 </div>
 
+<!-- 頁籤名稱編輯 Modal（店家版） -->
+<div id="page-config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:10px;padding:24px;width:min(480px,94vw);max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="font-family:'Noto Serif TC',serif;font-size:1.05rem;color:var(--bark);margin:0;">✏️ 編輯頁籤名稱</h3>
+      <button onclick="closePageConfigModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;">✕</button>
+    </div>
+    <p style="font-size:.72rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;margin-bottom:16px;">修改後點「儲存」，顧客端頁籤名稱立即更新。</p>
+    <div id="page-config-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;"></div>
+    <div id="page-config-msg" style="display:none;font-size:.75rem;padding:8px 12px;border-radius:4px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closePageConfigModal()" style="padding:9px 20px;background:#eee;color:#555;border:none;border-radius:4px;font-size:.82rem;cursor:pointer;">取消</button>
+      <button onclick="savePageConfigs()" style="padding:9px 20px;background:var(--bark);color:#fff;border:none;border-radius:4px;font-size:.82rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">💾 儲存頁籤名稱</button>
+    </div>
+  </div>
+</div>
+
 <!-- 店家商品編輯 Modal -->
 <div class="modal-wrap" id="modal-prod-edit">
   <div class="prod-edit-modal">
@@ -1106,13 +1123,15 @@ let currentOrderNum = '';
 let editDiscType  = 'qty';
 let editImgBase64 = '';          // 上傳圖片的 base64（暫存，實際儲存要用圖床）
 
-const PAGE_CONFIGS = [
-  {name:'第一頁',label:'Collection 01',cats:['洗髮','護髮','精油']},
-  {name:'第二頁',label:'Collection 02',cats:['頭皮','修護','滋養']},
-  {name:'第三頁',label:'Collection 03',cats:['染後','燙後','保濕']},
-  {name:'第四頁',label:'Collection 04',cats:['香氛','精華','特殊']},
-  {name:'美髮周邊',label:'Accessories',cats:['造型','髮夾','工具']},
+// PAGE_CONFIGS 從 GAS 動態載入，此為預設值（首次載入前暫用）
+let PAGE_CONFIGS = [
+  {name:'愛德華 / C系列',      idx:0},
+  {name:'香水髮膜',            idx:1},
+  {name:'卡碧兒',              idx:2},
+  {name:'髮品造型 / 美髮工具', idx:3},
+  {name:'髮飾周邊商品',        idx:4},
 ];
+const PAGE_SLOTS = 20; // 每頁固定顯示格數
 
 const PH_COLORS=['linear-gradient(145deg,#3d2b1f,#6b4226)','linear-gradient(145deg,#4a3228,#9a6a5a)','linear-gradient(145deg,#2e2018,#7a5a3a)','linear-gradient(145deg,#3a2a1e,#8a6040)','linear-gradient(145deg,#5a3a2a,#a07860)'];
 const PH_ICONS=['🌿','✨','🫙','🌸','🌾','🍃','💧','🧴','🪴','🌻'];
@@ -1155,15 +1174,64 @@ let selectedCategory = null;
 // ════════════════════════════════════════════════════════════
 let _homeCurPage = -1; // -1 = 全部
 
-async function initHomeShop() {
-  // 商品資料若已載入就直接渲染，否則先撈
-  if (!allProducts.length) {
-    try {
-      const res  = await fetch(`${GAS_URL}?action=getProducts`);
-      const data = await res.json();
-      allProducts = (data.ok && data.products) ? data.products : [];
-    } catch(e) { allProducts = []; }
+// ══ 頁籤名稱編輯（店家版） ══
+function openPageConfigModal() {
+  const list = document.getElementById('page-config-list');
+  list.innerHTML = PAGE_CONFIGS.map((cfg, i) =>
+    `<div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:.72rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;min-width:40px;">頁面${i+1}</span>
+      <input type="text" id="pc-name-${i}" value="${cfg.name}" maxlength="20"
+        style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;font-family:'Noto Sans TC',sans-serif;outline:none;"
+        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+    </div>`
+  ).join('');
+  const msgEl = document.getElementById('page-config-msg');
+  msgEl.style.display = 'none';
+  document.getElementById('page-config-modal').style.display = 'flex';
+}
+
+function closePageConfigModal() {
+  document.getElementById('page-config-modal').style.display = 'none';
+}
+
+async function savePageConfigs() {
+  const msgEl = document.getElementById('page-config-msg');
+  const newConfigs = PAGE_CONFIGS.map((cfg, i) => {
+    const val = (document.getElementById(`pc-name-${i}`)?.value || '').trim();
+    return { name: val || cfg.name, idx: i };
+  });
+  msgEl.style.display='block'; msgEl.style.background='#f5f5f5'; msgEl.style.color='#555'; msgEl.textContent='儲存中…';
+  try {
+    const params = new URLSearchParams({ action:'saveSettings', pageConfigs: JSON.stringify(newConfigs) });
+    const r = await fetch(GAS_URL+'?'+params.toString());
+    const d = await r.json();
+    if(d.ok) {
+      PAGE_CONFIGS = newConfigs;
+      closePageConfigModal();
+      renderHomeCatTabs();
+      showToast('✓ 頁籤名稱已更新');
+    } else {
+      msgEl.style.background='#fdf0ee'; msgEl.style.color='#c00'; msgEl.textContent='❌ 儲存失敗：'+d.msg;
+    }
+  } catch(e) {
+    msgEl.style.background='#fdf0ee'; msgEl.style.color='#c00'; msgEl.textContent='❌ 連線失敗';
   }
+}
+
+async function initHomeShop() {
+  // 同時載入 pageConfigs + 商品資料
+  const fetches = [
+    fetch(`${GAS_URL}?action=getSettings&t=`+Date.now()).then(r=>r.json()).catch(()=>({ok:false}))
+  ];
+  if(!allProducts.length) fetches.push(fetch(`${GAS_URL}?action=getProducts`).then(r=>r.json()).catch(()=>({ok:false})));
+  const results = await Promise.all(fetches);
+  const cfgResp = results[0];
+  const prodResp = results[1]||null;
+  // 更新 pageConfigs（從 GAS settings 的 pageConfigs key）
+  if(cfgResp.ok && cfgResp.settings && cfgResp.settings.pageConfigs) {
+    try { const cfg = JSON.parse(cfgResp.settings.pageConfigs); if(Array.isArray(cfg)&&cfg.length) PAGE_CONFIGS=cfg; } catch(_){}
+  }
+  if(prodResp && prodResp.ok && prodResp.products) allProducts = prodResp.products;
   _homeCurPage = -1;
   renderHomeCatTabs();
   renderHomeProducts();
@@ -1173,19 +1241,30 @@ async function initHomeShop() {
 function renderHomeCatTabs() {
   const bar = document.getElementById('home-cat-tabs');
   if(!bar) return;
-  // 統計各頁商品數
+  const isOwner = document.body.classList.contains('owner-mode');
   const counts = {};
   allProducts.forEach(p => { const pg=Number(p.page)||0; counts[pg]=(counts[pg]||0)+1; });
   const total = allProducts.length;
 
+  // 全部 + 五頁都顯示（店家版空頁也要看到才能新增商品）
   const tabs = [{ label:'全部商品', idx:-1, count: total }];
   PAGE_CONFIGS.forEach((cfg, i) => {
-    if(counts[i]) tabs.push({ label: cfg.name, idx: i, count: counts[i] });
+    tabs.push({ label: cfg.name, idx: i, count: counts[i]||0 });
   });
 
   bar.innerHTML = tabs.map(t =>
-    `<button class="home-cat-tab ${_homeCurPage===t.idx?'active':''}" onclick="switchHomeCat(${t.idx})">${t.label}<span style="font-size:.68rem;opacity:.7;margin-left:4px;">${t.count}</span></button>`
+    `<button class="home-cat-tab ${_homeCurPage===t.idx?'active':''}" onclick="switchHomeCat(${t.idx})">${t.label}${t.idx>=0?`<span style="font-size:.65rem;opacity:.55;margin-left:3px;">${t.count}</span>`:''}</button>`
   ).join('');
+
+  // 店家版：加「✏️ 編輯頁籤名稱」按鈕
+  if(isOwner) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'home-cat-tab';
+    editBtn.style.cssText = 'border-style:dashed;color:var(--gold);border-color:rgba(184,137,90,.5);margin-left:6px;flex-shrink:0;';
+    editBtn.textContent = '✏️ 編輯頁籤';
+    editBtn.onclick = openPageConfigModal;
+    bar.appendChild(editBtn);
+  }
 }
 
 function switchHomeCat(idx) {
@@ -1197,21 +1276,48 @@ function switchHomeCat(idx) {
   renderHomeProducts();
 }
 
+let _prefillPage = 0; // 點空格時預帶頁面idx
+
 function renderHomeProducts() {
   const wrap = document.getElementById('home-product-wrap');
   if(!wrap) return;
+  const isOwner = document.body.classList.contains('owner-mode');
 
   const prods = _homeCurPage === -1
     ? allProducts
     : allProducts.filter(p => Number(p.page) === _homeCurPage);
 
-  if(!prods.length) {
-    wrap.innerHTML = `<div class="empty-wrap"><span class="empty-icon">🛍️</span><p class="empty-txt">此分類目前沒有商品</p></div>`;
-    return;
-  }
   const grid = document.createElement('div');
   grid.className = 'product-grid';
+
+  // 已有商品
   prods.forEach(prod => grid.appendChild(makeProductCard(prod)));
+
+  if(_homeCurPage >= 0) {
+    // 單頁：補到固定20格
+    const filled = prods.length;
+    const total  = Math.max(PAGE_SLOTS, filled);
+    for(let i = filled; i < total; i++) {
+      const slot = document.createElement('div');
+      if(isOwner) {
+        // 店家：空格可點新增
+        const pageIdx = _homeCurPage;
+        slot.style.cssText = 'border:2px dashed rgba(184,137,90,.3);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;color:rgba(184,137,90,.5);cursor:pointer;transition:all .2s;';
+        slot.innerHTML = '<span style="font-size:26px;margin-bottom:6px;">＋</span><span style="font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">新增商品</span>';
+        slot.onmouseenter = ()=>{ slot.style.borderColor='var(--gold)'; slot.style.color='var(--gold)'; slot.style.background='rgba(184,137,90,.04)'; };
+        slot.onmouseleave = ()=>{ slot.style.borderColor='rgba(184,137,90,.3)'; slot.style.color='rgba(184,137,90,.5)'; slot.style.background=''; };
+        slot.onclick = ()=>{ _prefillPage=pageIdx; openNewProdModal(); };
+      } else {
+        // 顧客：隱藏空格
+        slot.style.display='none';
+      }
+      grid.appendChild(slot);
+    }
+  } else if(!prods.length) {
+    wrap.innerHTML = '<div class="empty-wrap"><span class="empty-icon">🛍️</span><p class="empty-txt">尚無商品</p></div>';
+    return;
+  }
+
   wrap.innerHTML = '';
   wrap.appendChild(grid);
 }
