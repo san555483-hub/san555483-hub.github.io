@@ -67,8 +67,6 @@ input:checked + .slider:before { transform: translateX(16px); }
 .time-range-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
 .time-range-row select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font-size: 13px; }
 #restTimeArea { display: none; margin-top: 10px; }
-
-/* ── 儲值模組 CSS ── */
 #creditTable { width: 100%; border-collapse: collapse; font-size: 13px; }
 #creditTable th { background: var(--gold2-light); color: var(--warm); font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e6c77a; }
 #creditTable td { padding: 10px 12px; border-bottom: 1px solid #f0ebe0; vertical-align: middle; }
@@ -84,6 +82,11 @@ input:checked + .slider:before { transform: translateX(16px); }
 .modal-header button { background: none; border: none; font-size: 18px; cursor: pointer; color: #aaa; }
 .modal-body { padding: 20px; }
 .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+/* 購物車設定 */
+.shop-edit-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.shop-edit-row input { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; }
+.shop-edit-row input[type=number] { flex: 0 0 100px; }
+.shop-edit-row span { color: var(--muted); font-size: 13px; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -99,6 +102,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="tab" onclick="switchTab('schedule')">🗓 排程設定</div>
   <div class="tab" onclick="switchTab('credit')">💰 儲值管理</div>
   <div class="tab" onclick="switchTab('settings')">⚙️ 系統設定</div>
+  <div class="tab" onclick="switchTab('shop')">🛒 購物車設定</div>
 </div>
 <div class="content">
 
@@ -219,9 +223,7 @@ input:checked + .slider:before { transform: translateX(16px); }
       <div id="msgLock" class="msg"></div>
       <div class="form-row">
         <div class="form-group"><label>日期</label><input type="date" id="lockDate"></div>
-        <div class="form-group"><label>時段</label>
-          <select id="lockTime"></select>
-        </div>
+        <div class="form-group"><label>時段</label><select id="lockTime"></select></div>
       </div>
       <div class="form-group" style="margin-bottom:12px"><label>備註</label><input id="lockNote" placeholder="例：保留給加價客"></div>
       <button class="btn btn-red btn-sm" onclick="lockSlot()">鎖定時段</button>
@@ -229,10 +231,8 @@ input:checked + .slider:before { transform: translateX(16px); }
     </div>
   </div>
 
-  <!-- 💰 儲值管理 -->
+  <!-- 儲值管理 -->
   <div class="panel" id="panel-credit">
-
-    <!-- 產生簽名連結 -->
     <div class="card">
       <div class="card-title">📲 產生顧客簽名連結</div>
       <p style="font-size:13px;color:#888;margin-bottom:14px;">輸入顧客資料，產生簽名頁連結傳給顧客，顧客在手機上簽名後自動寫入系統。</p>
@@ -249,46 +249,30 @@ input:checked + .slider:before { transform: translateX(16px); }
             <button class="btn btn-gold btn-sm" onclick="copyLink()">📋 複製連結</button>
             <button class="btn btn-primary btn-sm" onclick="openLink()">🔗 預覽開啟</button>
           </div>
-          <div id="linkCopied" style="font-size:12px;color:#2d7a4f;margin-top:6px;display:none;">✅ 已複製！可以傳給顧客了</div>
+          <div id="linkCopied" style="font-size:12px;color:#2d7a4f;margin-top:6px;display:none;">✅ 已複製！</div>
         </div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
         <span>💰 養護金儲值管理</span>
         <button class="btn btn-gold" onclick="openAddCreditModal()">＋ 直接新增儲值</button>
       </div>
-
-      <!-- 查詢列 -->
       <div class="filter-row">
         <input id="creditSearchPhone" type="text" placeholder="電話查詢" style="flex:1;min-width:140px;">
         <button class="btn btn-primary" onclick="searchCredits()">🔍 查詢</button>
         <button class="btn btn-gold" onclick="loadAllCredits()">全部</button>
       </div>
-
-      <!-- 總覽列 -->
       <div id="creditSummary" class="credit-summary-bar">
-        顧客：<strong id="cs-name"></strong>
-        &nbsp;|&nbsp; 電話：<strong id="cs-phone"></strong>
-        &nbsp;|&nbsp; <span style="color:var(--warm);font-weight:700;">餘額：$<span id="cs-balance"></span></span>
-        &nbsp;
+        顧客：<strong id="cs-name"></strong>&nbsp;|&nbsp;電話：<strong id="cs-phone"></strong>
+        &nbsp;|&nbsp;<span style="color:var(--warm);font-weight:700;">餘額：$<span id="cs-balance"></span></span>&nbsp;
         <button onclick="openDeductModal()" class="btn btn-warn btn-sm">扣款</button>
         <button onclick="openRefundModal()" class="btn btn-red btn-sm">退費</button>
       </div>
-
-      <!-- 列表 -->
       <div style="overflow-x:auto">
         <table id="creditTable">
-          <thead>
-            <tr>
-              <th>姓名</th><th>電話</th><th>儲值</th><th>贈送</th>
-              <th>此筆餘額</th><th>支付</th><th>建立時間</th><th>備註</th><th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="creditTbody">
-            <tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入資料</td></tr>
-          </tbody>
+          <thead><tr><th>姓名</th><th>電話</th><th>儲值</th><th>贈送</th><th>此筆餘額</th><th>支付</th><th>建立時間</th><th>備註</th><th>操作</th></tr></thead>
+          <tbody id="creditTbody"><tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入資料</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -303,9 +287,32 @@ input:checked + .slider:before { transform: translateX(16px); }
     </div>
   </div>
 
+  <!-- 🛒 購物車設定 -->
+  <div class="panel" id="panel-shop">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>🎁 贈品列表</span>
+        <button class="btn btn-gold btn-sm" onclick="addGiftRow()">＋ 新增贈品</button>
+      </div>
+      <div id="giftEditArea" style="margin-bottom:14px;"><div class="loading">載入中...</div></div>
+      <button class="btn btn-primary" onclick="saveShopGifts()">儲存贈品</button>
+      <div id="msgGift" class="msg" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>💰 滿額折扣規則</span>
+        <button class="btn btn-gold btn-sm" onclick="addDiscountRow()">＋ 新增規則</button>
+      </div>
+      <p style="font-size:12px;color:#999;margin-bottom:12px;">例：滿 1000 折 100</p>
+      <div id="discountEditArea" style="margin-bottom:14px;"><div class="loading">載入中...</div></div>
+      <button class="btn btn-primary" onclick="saveShopDiscounts()">儲存折扣</button>
+      <div id="msgDiscount" class="msg" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
 </div>
 
-<!-- ── 新增儲值 Modal ── -->
+<!-- Modals -->
 <div id="addCreditModal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header"><h3>新增儲值</h3><button onclick="closeModal('addCreditModal')">✕</button></div>
@@ -329,9 +336,7 @@ input:checked + .slider:before { transform: translateX(16px); }
       </div>
       <div class="form-row">
         <div class="form-group"><label>支付方式</label>
-          <select id="ac-pay">
-            <option>現金</option><option>轉帳</option><option>街口支付</option><option>iPASS</option>
-          </select>
+          <select id="ac-pay"><option>現金</option><option>轉帳</option><option>街口支付</option><option>iPASS</option></select>
         </div>
         <div class="form-group"><label>備註</label><input id="ac-note" type="text" placeholder="選填"></div>
       </div>
@@ -343,14 +348,11 @@ input:checked + .slider:before { transform: translateX(16px); }
   </div>
 </div>
 
-<!-- ── 扣款 Modal ── -->
 <div id="deductModal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header"><h3>消費扣款</h3><button onclick="closeModal('deductModal')">✕</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:#888;margin-bottom:14px;">
-        顧客：<strong id="dm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="dm-balance"></span></strong>
-      </p>
+      <p style="font-size:13px;color:#888;margin-bottom:14px;">顧客：<strong id="dm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="dm-balance"></span></strong></p>
       <div class="form-group"><label>扣款金額 *</label><input id="dm-amount" type="number" placeholder=""></div>
       <div class="form-group"><label>備註</label><input id="dm-note" type="text" placeholder="消費折抵"></div>
     </div>
@@ -361,14 +363,11 @@ input:checked + .slider:before { transform: translateX(16px); }
   </div>
 </div>
 
-<!-- ── 退費 Modal ── -->
 <div id="refundModal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header"><h3>申請退費</h3><button onclick="closeModal('refundModal')">✕</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:#888;margin-bottom:14px;">
-        顧客：<strong id="rm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="rm-balance"></span></strong>
-      </p>
+      <p style="font-size:13px;color:#888;margin-bottom:14px;">顧客：<strong id="rm-name"></strong>　餘額：<strong style="color:var(--gold2)">$<span id="rm-balance"></span></strong></p>
       <div class="form-group"><label>退費金額 *</label><input id="rm-amount" type="number" placeholder="" oninput="calcRefundFee()"></div>
       <div class="form-group"><label>退費時間</label>
         <select id="rm-fee" onchange="calcRefundFee()">
@@ -377,8 +376,7 @@ input:checked + .slider:before { transform: translateX(16px); }
         </select>
       </div>
       <div id="refundCalc" style="background:#fff5f5;border:1px solid #f5c6c6;border-radius:8px;padding:12px;font-size:13px;display:none;margin-top:8px;">
-        手續費：<strong id="rc-fee" style="color:#c0392b"></strong>　
-        實退金額：<strong id="rc-actual" style="color:#2d7a4f"></strong>
+        手續費：<strong id="rc-fee" style="color:#c0392b"></strong>　實退金額：<strong id="rc-actual" style="color:#2d7a4f"></strong>
       </div>
       <div class="form-group" style="margin-top:10px"><label>備註</label><input id="rm-note" type="text" placeholder=""></div>
     </div>
@@ -391,41 +389,31 @@ input:checked + .slider:before { transform: translateX(16px); }
 
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
-
 let allCustomers = [];
-let currentCreditPhone = '';
-let currentCreditName  = '';
-let currentCreditBal   = 0;
-
+let currentCreditPhone = '', currentCreditName = '', currentCreditBal = 0;
 const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
 
 function initSlotSelects() {
   ['restStart','restEnd','lockTime'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
+    const sel = document.getElementById(id); if (!sel) return;
     sel.innerHTML = ALL_SLOTS.map(t => `<option value="${t}">${t}</option>`).join('');
   });
   const restEnd = document.getElementById('restEnd');
   if (restEnd) restEnd.value = '13:00';
 }
-
 function toggleRestTime() {
-  const type = document.getElementById('schedType').value;
-  document.getElementById('restTimeArea').style.display = type === 'rest' ? 'block' : 'none';
+  document.getElementById('restTimeArea').style.display = document.getElementById('schedType').value === 'rest' ? 'block' : 'none';
 }
-
 setInterval(() => {
   const n = new Date();
-  document.getElementById('topTime').textContent =
-    n.toLocaleDateString('zh-TW') + ' ' + n.toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('topTime').textContent = n.toLocaleDateString('zh-TW') + ' ' + n.toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
 }, 1000);
-
 window.onload = function() { initSlotSelects(); };
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings'];
+  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'services')  loadServices();
@@ -434,130 +422,67 @@ function switchTab(name) {
   if (name === 'schedule')  { loadSchedule(); loadLockedSlots(); }
   if (name === 'settings')  loadSettings();
   if (name === 'credit')    loadAllCredits();
+  if (name === 'shop')      loadShopSettings();
 }
 
 async function api(params) {
-  const url = GAS + '?' + new URLSearchParams(params).toString() + '&t=' + Date.now();
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(GAS + '?' + new URLSearchParams(params).toString() + '&t=' + Date.now(), { cache: 'no-store' });
   return res.json();
 }
-
 async function gasPost(params) {
-  const body = new URLSearchParams(params);
-  const res = await fetch(GAS, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString()
-  });
+  const res = await fetch(GAS, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params).toString() });
   return res.json();
 }
-
 function showMsg(id, text, ok) {
   const el = document.getElementById(id);
-  el.textContent = text;
-  el.className = 'msg ' + (ok ? 'msg-ok' : 'msg-err');
-  el.style.display = 'block';
+  el.textContent = text; el.className = 'msg ' + (ok ? 'msg-ok' : 'msg-err'); el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 3000);
 }
 
-// ── 預約管理 ──
+// 預約管理
 async function loadBookings() {
   const date = document.getElementById('bookingDate').value;
   const el = document.getElementById('bookingList');
   el.innerHTML = '<div class="loading">載入中...</div>';
   try {
-    const params = { action: 'getBookings' };
-    if (date) params.date = date;
-    const data = await api(params);
-    const bookings = data.bookings || [];
+    const params = { action: 'getBookings' }; if (date) params.date = date;
+    const data = await api(params); const bookings = data.bookings || [];
     if (!bookings.length) { el.innerHTML = '<div class="loading">無預約資料</div>'; return; }
     el.innerHTML = '<table><thead><tr><th>編號</th><th>日期</th><th>時間</th><th>姓名</th><th>電話</th><th>服務</th><th>備註</th><th>加價</th><th>狀態</th><th>操作</th></tr></thead><tbody>' +
-      bookings.map(b => '<tr>' +
-        '<td style="font-size:11px">' + b.id + '</td>' +
-        '<td>' + b.date + '</td>' +
-        '<td><strong>' + b.time + '</strong></td>' +
-        '<td>' + b.name + '</td>' +
-        '<td>' + b.phone + '</td>' +
-        '<td>' + b.service + '</td>' +
-        '<td style="font-size:11px">' + (b.note||'') + '</td>' +
-        '<td>' + (b.priority ? '✅' : '') + '</td>' +
-        '<td><span class="badge ' + (b.status==='已確認'?'badge-ok':b.status==='已取消'?'badge-red':'badge-warn') + '">' + b.status + '</span></td>' +
-        '<td>' +
-          '<button class="btn btn-green btn-sm" style="margin-right:4px" onclick="updateBooking(\'' + b.id + '\',\'已確認\')">確認</button>' +
-          '<button class="btn btn-red btn-sm" onclick="updateBooking(\'' + b.id + '\',\'已取消\')">取消</button>' +
-        '</td></tr>'
+      bookings.map(b => `<tr><td style="font-size:11px">${b.id}</td><td>${b.date}</td><td><strong>${b.time}</strong></td><td>${b.name}</td><td>${b.phone}</td><td>${b.service}</td><td style="font-size:11px">${b.note||''}</td><td>${b.priority?'✅':''}</td><td><span class="badge ${b.status==='已確認'?'badge-ok':b.status==='已取消'?'badge-red':'badge-warn'}">${b.status}</span></td><td><button class="btn btn-green btn-sm" style="margin-right:4px" onclick="updateBooking('${b.id}','已確認')">確認</button><button class="btn btn-red btn-sm" onclick="updateBooking('${b.id}','已取消')">取消</button></td></tr>`
       ).join('') + '</tbody></table>';
   } catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
 }
+async function updateBooking(id, status) { await api({ action: 'updateBooking', id, status }); loadBookings(); }
 
-async function updateBooking(id, status) {
-  await api({ action: 'updateBooking', id, status });
-  loadBookings();
-}
-
-// ── 服務項目 ──
+// 服務項目
 async function loadServices() {
-  const el = document.getElementById('serviceList');
-  el.innerHTML = '<div class="loading">載入中...</div>';
+  const el = document.getElementById('serviceList'); el.innerHTML = '<div class="loading">載入中...</div>';
   try {
-    const data = await api({ action: 'getServices' });
-    const svcs = data.services || [];
+    const data = await api({ action: 'getServices' }); const svcs = data.services || [];
     el.innerHTML = '<table><thead><tr><th>ID</th><th>分類</th><th>名稱</th><th>價格</th><th>時長</th><th>備註</th><th>啟用</th><th>操作</th></tr></thead><tbody>' +
-      svcs.map(s => '<tr id="srow_' + s.id + '">' +
-        '<td style="font-size:11px">' + s.id + '</td>' +
-        '<td><input style="width:90px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + s.category + '" id="cat_' + s.id + '"></td>' +
-        '<td><input style="width:110px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + s.name + '" id="name_' + s.id + '"></td>' +
-        '<td><input style="width:80px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + s.price + '" id="price_' + s.id + '"></td>' +
-        '<td><input style="width:60px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" type="number" value="' + s.duration + '" id="dur_' + s.id + '"></td>' +
-        '<td><input style="width:120px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + s.note + '" id="note_' + s.id + '"></td>' +
-        '<td><label class="toggle"><input type="checkbox" ' + (s.active?'checked':'') + ' id="act_' + s.id + '"><span class="slider"></span></label></td>' +
-        '<td><button class="btn btn-gold btn-sm" onclick="saveService(\'' + s.id + '\')">儲存</button></td>' +
-      '</tr>').join('') + '</tbody></table>';
+      svcs.map(s => `<tr><td style="font-size:11px">${s.id}</td><td><input style="width:90px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${s.category}" id="cat_${s.id}"></td><td><input style="width:110px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${s.name}" id="name_${s.id}"></td><td><input style="width:80px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${s.price}" id="price_${s.id}"></td><td><input style="width:60px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" type="number" value="${s.duration}" id="dur_${s.id}"></td><td><input style="width:120px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${s.note}" id="note_${s.id}"></td><td><label class="toggle"><input type="checkbox" ${s.active?'checked':''} id="act_${s.id}"><span class="slider"></span></label></td><td><button class="btn btn-gold btn-sm" onclick="saveService('${s.id}')">儲存</button></td></tr>`
+      ).join('') + '</tbody></table>';
   } catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
 }
-
 async function saveService(id) {
-  const params = {
-    action: 'updateService', id,
-    category: document.getElementById('cat_'   + id).value,
-    name:     document.getElementById('name_'  + id).value,
-    price:    document.getElementById('price_' + id).value,
-    duration: document.getElementById('dur_'   + id).value,
-    note:     document.getElementById('note_'  + id).value,
-    active:   document.getElementById('act_'   + id).checked ? 'true' : 'false',
-  };
-  const data = await api(params);
-  showMsg('msgSvc', data.status === 'ok' ? '✅ 已儲存' : '❌ ' + data.msg, data.status === 'ok');
+  const data = await api({ action:'updateService', id, category:document.getElementById('cat_'+id).value, name:document.getElementById('name_'+id).value, price:document.getElementById('price_'+id).value, duration:document.getElementById('dur_'+id).value, note:document.getElementById('note_'+id).value, active:document.getElementById('act_'+id).checked?'true':'false' });
+  showMsg('msgSvc', data.status==='ok'?'✅ 已儲存':'❌ '+data.msg, data.status==='ok');
 }
-
 async function addService() {
-  const id       = document.getElementById('newSvcId').value.trim();
-  const category = document.getElementById('newSvcCat').value.trim();
-  const name     = document.getElementById('newSvcName').value.trim();
-  const price    = document.getElementById('newSvcPrice').value.trim();
-  const duration = document.getElementById('newSvcDuration').value.trim();
-  const note     = document.getElementById('newSvcNote').value.trim();
-  const active   = document.getElementById('newSvcActive').value;
-  if (!id || !category || !name || !price) { showMsg('msgAddSvc', '❌ 請填寫必填欄位', false); return; }
-  const data = await api({ action: 'addService', id, category, name, price, duration, note, active });
-  if (data.status === 'ok') {
-    showMsg('msgAddSvc', '✅ 新增成功', true);
-    ['newSvcId','newSvcName','newSvcPrice','newSvcNote'].forEach(i => document.getElementById(i).value = '');
-    loadServices();
-  } else { showMsg('msgAddSvc', '❌ ' + data.msg, false); }
+  const id=document.getElementById('newSvcId').value.trim(), category=document.getElementById('newSvcCat').value.trim(), name=document.getElementById('newSvcName').value.trim(), price=document.getElementById('newSvcPrice').value.trim(), duration=document.getElementById('newSvcDuration').value.trim(), note=document.getElementById('newSvcNote').value.trim(), active=document.getElementById('newSvcActive').value;
+  if (!id||!category||!name||!price) { showMsg('msgAddSvc','❌ 請填寫必填欄位',false); return; }
+  const data = await api({ action:'addService', id, category, name, price, duration, note, active });
+  if (data.status==='ok') { showMsg('msgAddSvc','✅ 新增成功',true); ['newSvcId','newSvcName','newSvcPrice','newSvcNote'].forEach(i=>document.getElementById(i).value=''); loadServices(); }
+  else showMsg('msgAddSvc','❌ '+data.msg,false);
 }
 
-// ── 顧客回訪 ──
+// 顧客回訪
 async function loadCustomers() {
-  const el = document.getElementById('customerList');
-  el.innerHTML = '<div class="loading">載入中...</div>';
-  try {
-    const data = await api({ action: 'getCustomers' });
-    allCustomers = data.customers || [];
-    renderCustomers(allCustomers);
-  } catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
+  const el = document.getElementById('customerList'); el.innerHTML = '<div class="loading">載入中...</div>';
+  try { const data = await api({ action:'getCustomers' }); allCustomers = data.customers||[]; renderCustomers(allCustomers); }
+  catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
 }
-
 function filterCustomers() {
   const search = document.getElementById('customerSearch').value.toLowerCase();
   const filter = document.getElementById('customerFilter').value;
@@ -566,416 +491,230 @@ function filterCustomers() {
   if (filter) list = list.filter(c => c.status === filter);
   renderCustomers(list);
 }
-
 function renderCustomers(list) {
   const el = document.getElementById('customerList');
   if (!list.length) { el.innerHTML = '<div class="loading">無資料</div>'; return; }
   const today = new Date(); today.setHours(0,0,0,0);
   el.innerHTML = '<table><thead><tr><th>LINE名稱</th><th>UID</th><th>服務項目</th><th>客型</th><th>下次回訪日</th><th>狀態</th><th>備註</th><th>操作</th></tr></thead><tbody>' +
     list.map(c => {
-      const fd = c.followDate ? new Date(c.followDate) : null;
-      fd && fd.setHours(0,0,0,0);
-      const diff = fd ? Math.floor((today - fd) / 86400000) : 0;
-      const urgent = diff > 0;
-      return '<tr>' +
-        '<td>' + (c.lineName || '—') + '</td>' +
-        '<td style="font-size:10px">' + c.userId.substring(0,12) + '...</td>' +
-        '<td><input style="width:100px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + c.service + '" id="csvc_' + c.rowIndex + '"></td>' +
-        '<td><select style="border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" id="ctype_' + c.rowIndex + '">' +
-          ['新客','熟客','VIP'].map(t => '<option ' + (c.customerType===t?'selected':'') + '>' + t + '</option>').join('') + '</select></td>' +
-        '<td><input type="date" style="border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + (c.followDate||'') + '" id="cdate_' + c.rowIndex + '"></td>' +
-        '<td>' + (urgent ? '<span class="badge badge-red">🔥 逾期' + diff + '天</span>' : '<span class="badge badge-ok">' + (c.status||'未發送') + '</span>') + '</td>' +
-        '<td><input style="width:100px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + (c.remark||'') + '" id="cremark_' + c.rowIndex + '"></td>' +
-        '<td><button class="btn btn-gold btn-sm" onclick="saveCustomer(' + c.rowIndex + ')">儲存</button></td>' +
-      '</tr>';
+      const fd = c.followDate ? new Date(c.followDate) : null; fd && fd.setHours(0,0,0,0);
+      const diff = fd ? Math.floor((today-fd)/86400000) : 0; const urgent = diff > 0;
+      return `<tr><td>${c.lineName||'—'}</td><td style="font-size:10px">${c.userId.substring(0,12)}...</td><td><input style="width:100px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${c.service}" id="csvc_${c.rowIndex}"></td><td><select style="border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" id="ctype_${c.rowIndex}">${['新客','熟客','VIP'].map(t=>`<option ${c.customerType===t?'selected':''}>${t}</option>`).join('')}</select></td><td><input type="date" style="border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${c.followDate||''}" id="cdate_${c.rowIndex}"></td><td>${urgent?`<span class="badge badge-red">🔥 逾期${diff}天</span>`:`<span class="badge badge-ok">${c.status||'未發送'}</span>`}</td><td><input style="width:100px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${c.remark||''}" id="cremark_${c.rowIndex}"></td><td><button class="btn btn-gold btn-sm" onclick="saveCustomer(${c.rowIndex})">儲存</button></td></tr>`;
     }).join('') + '</tbody></table>';
 }
-
 async function saveCustomer(rowIndex) {
-  const data = await api({
-    action: 'updateCustomer', rowIndex,
-    service:      document.getElementById('csvc_'    + rowIndex).value,
-    customerType: document.getElementById('ctype_'   + rowIndex).value,
-    followDate:   document.getElementById('cdate_'   + rowIndex).value,
-    remark:       document.getElementById('cremark_' + rowIndex).value,
-  });
-  if (data.status === 'ok') alert('✅ 已儲存');
-  else alert('❌ ' + data.msg);
+  const data = await api({ action:'updateCustomer', rowIndex, service:document.getElementById('csvc_'+rowIndex).value, customerType:document.getElementById('ctype_'+rowIndex).value, followDate:document.getElementById('cdate_'+rowIndex).value, remark:document.getElementById('cremark_'+rowIndex).value });
+  if (data.status==='ok') alert('✅ 已儲存'); else alert('❌ '+data.msg);
 }
 
-// ── 黑名單 ──
+// 黑名單
 async function loadBlacklist() {
-  const el = document.getElementById('blacklistList');
-  el.innerHTML = '<div class="loading">載入中...</div>';
+  const el = document.getElementById('blacklistList'); el.innerHTML = '<div class="loading">載入中...</div>';
   try {
-    const data = await api({ action: 'getBlacklist' });
-    const list = data.list || [];
+    const data = await api({ action:'getBlacklist' }); const list = data.list||[];
     if (!list.length) { el.innerHTML = '<div class="loading">黑名單為空</div>'; return; }
     el.innerHTML = '<table><thead><tr><th>電話</th><th>姓名</th><th>分類</th><th>備註</th><th>自訂提示文字</th><th>建立時間</th><th>操作</th></tr></thead><tbody>' +
-      list.map(b => '<tr>' +
-        '<td>' + b.phone + '</td>' +
-        '<td><input style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + (b.name||'') + '" id="blname_' + b.rowIndex + '"></td>' +
-        '<td><select style="border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" id="blcat_' + b.rowIndex + '">' +
-          ['爽約慣犯','騷擾客','拒絕服務','備註觀察'].map(t => '<option ' + (b.category===t?'selected':'') + '>' + t + '</option>').join('') + '</select></td>' +
-        '<td><input style="width:100px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + (b.remark||'') + '" id="blremark_' + b.rowIndex + '"></td>' +
-        '<td><input style="width:200px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="' + (b.customMsg||'') + '" placeholder="預設：請改由 Elsa 為您現場安排預約" id="blmsg_' + b.rowIndex + '"></td>' +
-        '<td style="font-size:11px">' + (b.createdAt||'') + '</td>' +
-        '<td style="white-space:nowrap">' +
-          '<button class="btn btn-gold btn-sm" style="margin-right:4px" onclick="saveBlacklist(' + b.rowIndex + ')">儲存</button>' +
-          '<button class="btn btn-green btn-sm" onclick="removeBlacklist(' + b.rowIndex + ')">移除</button>' +
-        '</td></tr>'
+      list.map(b => `<tr><td>${b.phone}</td><td><input style="width:70px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${b.name||''}" id="blname_${b.rowIndex}"></td><td><select style="border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" id="blcat_${b.rowIndex}">${['爽約慣犯','騷擾客','拒絕服務','備註觀察'].map(t=>`<option ${b.category===t?'selected':''}>${t}</option>`).join('')}</select></td><td><input style="width:100px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${b.remark||''}" id="blremark_${b.rowIndex}"></td><td><input style="width:200px;border:1px solid #ddd;border-radius:4px;padding:3px 6px;font-size:12px" value="${b.customMsg||''}" placeholder="預設：請改由 Elsa 為您現場安排預約" id="blmsg_${b.rowIndex}"></td><td style="font-size:11px">${b.createdAt||''}</td><td style="white-space:nowrap"><button class="btn btn-gold btn-sm" style="margin-right:4px" onclick="saveBlacklist(${b.rowIndex})">儲存</button><button class="btn btn-green btn-sm" onclick="removeBlacklist(${b.rowIndex})">移除</button></td></tr>`
       ).join('') + '</tbody></table>';
   } catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
 }
-
 async function addBlacklist() {
-  const phone    = document.getElementById('blPhone').value.trim();
-  const name     = document.getElementById('blName').value.trim();
-  const category = document.getElementById('blCategory').value;
-  const remark   = document.getElementById('blRemark').value.trim();
-  if (!phone) { showMsg('msgBlacklist', '❌ 請輸入電話', false); return; }
-  const data = await api({ action: 'addBlacklist', phone, name, category, remark });
-  if (data.status === 'ok') {
-    showMsg('msgBlacklist', '✅ 已加入黑名單', true);
-    ['blPhone','blName','blRemark'].forEach(i => document.getElementById(i).value = '');
-    loadBlacklist();
-  } else { showMsg('msgBlacklist', '❌ ' + data.msg, false); }
+  const phone=document.getElementById('blPhone').value.trim(), name=document.getElementById('blName').value.trim(), category=document.getElementById('blCategory').value, remark=document.getElementById('blRemark').value.trim();
+  if (!phone) { showMsg('msgBlacklist','❌ 請輸入電話',false); return; }
+  const data = await api({ action:'addBlacklist', phone, name, category, remark });
+  if (data.status==='ok') { showMsg('msgBlacklist','✅ 已加入黑名單',true); ['blPhone','blName','blRemark'].forEach(i=>document.getElementById(i).value=''); loadBlacklist(); }
+  else showMsg('msgBlacklist','❌ '+data.msg,false);
 }
-
 async function saveBlacklist(rowIndex) {
-  const data = await api({
-    action: 'updateBlacklist', rowIndex,
-    name:      document.getElementById('blname_'   + rowIndex).value,
-    category:  document.getElementById('blcat_'    + rowIndex).value,
-    remark:    document.getElementById('blremark_' + rowIndex).value,
-    customMsg: document.getElementById('blmsg_'    + rowIndex).value,
-  });
-  if (data.status === 'ok') alert('✅ 已儲存');
-  else alert('❌ ' + data.msg);
+  const data = await api({ action:'updateBlacklist', rowIndex, name:document.getElementById('blname_'+rowIndex).value, category:document.getElementById('blcat_'+rowIndex).value, remark:document.getElementById('blremark_'+rowIndex).value, customMsg:document.getElementById('blmsg_'+rowIndex).value });
+  if (data.status==='ok') alert('✅ 已儲存'); else alert('❌ '+data.msg);
 }
-
 async function removeBlacklist(rowIndex) {
   if (!confirm('確定移除此黑名單？')) return;
-  const data = await api({ action: 'removeBlacklist', rowIndex });
-  if (data.status === 'ok') loadBlacklist();
-  else alert('❌ ' + data.msg);
+  const data = await api({ action:'removeBlacklist', rowIndex });
+  if (data.status==='ok') loadBlacklist(); else alert('❌ '+data.msg);
 }
 
-// ── 排程 ──
+// 排程
 async function loadSchedule() {
-  const el = document.getElementById('scheduleList');
-  el.innerHTML = '<div class="loading">載入中...</div>';
+  const el = document.getElementById('scheduleList'); el.innerHTML = '<div class="loading">載入中...</div>';
   try {
-    const data = await api({ action: 'getSchedule' });
-    const list = data.schedule || [];
+    const data = await api({ action:'getSchedule' }); const list = data.schedule||[];
     if (!list.length) { el.innerHTML = '<div class="loading">無排程設定</div>'; return; }
     el.innerHTML = '<table><thead><tr><th>日期</th><th>類型</th><th>時段</th><th>備註</th><th>操作</th></tr></thead><tbody>' +
-      list.map(s => '<tr>' +
-        '<td>' + s.date + '</td>' +
-        '<td><span class="badge ' + (s.type==='closed'?'badge-red':'badge-warn') + '">' + (s.type==='closed'?'公休':'特殊休息') + '</span></td>' +
-        '<td>' + (s.time||'—') + '</td>' +
-        '<td>' + (s.note||'') + '</td>' +
-        '<td><button class="btn btn-red btn-sm" onclick="removeSchedule(\'' + s.date + '\',\'' + s.type + '\')">刪除</button></td>' +
-      '</tr>').join('') + '</tbody></table>';
+      list.map(s => `<tr><td>${s.date}</td><td><span class="badge ${s.type==='closed'?'badge-red':'badge-warn'}">${s.type==='closed'?'公休':'特殊休息'}</span></td><td>${s.time||'—'}</td><td>${s.note||''}</td><td><button class="btn btn-red btn-sm" onclick="removeSchedule('${s.date}','${s.type}')">刪除</button></td></tr>`
+      ).join('') + '</tbody></table>';
   } catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
 }
-
 async function addSchedule() {
-  const date = document.getElementById('schedDate').value;
-  const type = document.getElementById('schedType').value;
-  const note = document.getElementById('schedNote').value;
-  if (!date) { showMsg('msgSchedule', '❌ 請選擇日期', false); return; }
+  const date=document.getElementById('schedDate').value, type=document.getElementById('schedType').value, note=document.getElementById('schedNote').value;
+  if (!date) { showMsg('msgSchedule','❌ 請選擇日期',false); return; }
   let time = '';
-  if (type === 'rest') {
-    const start = document.getElementById('restStart').value;
-    const end   = document.getElementById('restEnd').value;
-    if (start >= end) { showMsg('msgSchedule', '❌ 結束時間必須晚於開始時間', false); return; }
-    time = start + '-' + end;
-  }
-  const data = await api({ action: 'updateSchedule', date, type, time, note });
-  if (data.status === 'ok') { showMsg('msgSchedule', '✅ 已新增', true); loadSchedule(); }
-  else showMsg('msgSchedule', '❌ ' + data.msg, false);
+  if (type==='rest') { const start=document.getElementById('restStart').value, end=document.getElementById('restEnd').value; if (start>=end) { showMsg('msgSchedule','❌ 結束時間必須晚於開始時間',false); return; } time=start+'-'+end; }
+  const data = await api({ action:'updateSchedule', date, type, time, note });
+  if (data.status==='ok') { showMsg('msgSchedule','✅ 已新增',true); loadSchedule(); } else showMsg('msgSchedule','❌ '+data.msg,false);
 }
-
-async function removeSchedule(date, type) {
-  if (!confirm('確定刪除此排程？')) return;
-  await api({ action: 'updateSchedule', date, type, remove: 'true' });
-  loadSchedule();
-}
-
+async function removeSchedule(date, type) { if (!confirm('確定刪除此排程？')) return; await api({ action:'updateSchedule', date, type, remove:'true' }); loadSchedule(); }
 async function loadLockedSlots() {
-  const data = await api({ action: 'getLockedSlots' });
-  const slots = data.slots || [];
+  const data = await api({ action:'getLockedSlots' }); const slots = data.slots||[];
   const el = document.getElementById('lockedList');
   if (!slots.length) { el.innerHTML = '<div style="color:var(--muted);font-size:13px">目前無鎖定時段</div>'; return; }
   el.innerHTML = '<table><thead><tr><th>日期</th><th>時段</th><th>備註</th><th>操作</th></tr></thead><tbody>' +
-    slots.map(s => '<tr><td>' + s.date + '</td><td>' + s.time + '</td><td style="font-size:11px">' + (s.note||'') + '</td>' +
-      '<td><button class="btn btn-green btn-sm" onclick="unlockSlot(\'' + s.date + '\',\'' + s.time + '\')">解鎖</button></td></tr>'
-    ).join('') + '</tbody></table>';
+    slots.map(s => `<tr><td>${s.date}</td><td>${s.time}</td><td style="font-size:11px">${s.note||''}</td><td><button class="btn btn-green btn-sm" onclick="unlockSlot('${s.date}','${s.time}')">解鎖</button></td></tr>`).join('') + '</tbody></table>';
 }
-
 async function lockSlot() {
-  const date = document.getElementById('lockDate').value;
-  const time = document.getElementById('lockTime').value;
-  const note = document.getElementById('lockNote').value;
-  if (!date) { showMsg('msgLock', '❌ 請選擇日期', false); return; }
-  const data = await api({ action: 'lockSlot', date, time, note });
-  if (data.status === 'ok') { showMsg('msgLock', '✅ 已鎖定', true); loadLockedSlots(); }
-  else showMsg('msgLock', '❌ ' + data.msg, false);
+  const date=document.getElementById('lockDate').value, time=document.getElementById('lockTime').value, note=document.getElementById('lockNote').value;
+  if (!date) { showMsg('msgLock','❌ 請選擇日期',false); return; }
+  const data = await api({ action:'lockSlot', date, time, note });
+  if (data.status==='ok') { showMsg('msgLock','✅ 已鎖定',true); loadLockedSlots(); } else showMsg('msgLock','❌ '+data.msg,false);
 }
+async function unlockSlot(date, time) { await api({ action:'unlockSlot', date, time }); loadLockedSlots(); }
 
-async function unlockSlot(date, time) {
-  await api({ action: 'unlockSlot', date, time });
-  loadLockedSlots();
-}
-
-// ── 系統設定 ──
+// 系統設定
 async function loadSettings() {
-  const el = document.getElementById('settingsList');
-  el.innerHTML = '<div class="loading">載入中...</div>';
+  const el = document.getElementById('settingsList'); el.innerHTML = '<div class="loading">載入中...</div>';
   try {
-    const data = await api({ action: 'getSettings' });
-    const settings = data.settings || [];
+    const data = await api({ action:'getSettings' }); const settings = data.settings||[];
     el.innerHTML = '<table><thead><tr><th>設定名稱</th><th>說明</th><th>值</th><th>操作</th></tr></thead><tbody>' +
-      settings.map(s => '<tr>' +
-        '<td style="font-size:11px">' + s.key + '</td>' +
-        '<td style="font-size:12px">' + (s.label||'') + '</td>' +
-        '<td><input style="width:200px;border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:13px" value="' + s.value + '" id="setting_' + s.key + '"></td>' +
-        '<td><button class="btn btn-gold btn-sm" onclick="saveSetting(\'' + s.key + '\')">儲存</button></td>' +
-      '</tr>').join('') + '</tbody></table>';
+      settings.map(s => `<tr><td style="font-size:11px">${s.key}</td><td style="font-size:12px">${s.label||''}</td><td><input style="width:200px;border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:13px" value="${s.value}" id="setting_${s.key}"></td><td><button class="btn btn-gold btn-sm" onclick="saveSetting('${s.key}')">儲存</button></td></tr>`
+      ).join('') + '</tbody></table>';
   } catch(e) { el.innerHTML = '<div class="loading" style="color:red">載入失敗</div>'; }
 }
-
 async function saveSetting(key) {
-  const value = document.getElementById('setting_' + key).value;
-  const data = await api({ action: 'updateSettings', key, value });
-  showMsg('msgSettings', data.status === 'ok' ? '✅ 已儲存' : '❌ ' + data.msg, data.status === 'ok');
+  const data = await api({ action:'updateSettings', key, value:document.getElementById('setting_'+key).value });
+  showMsg('msgSettings', data.status==='ok'?'✅ 已儲存':'❌ '+data.msg, data.status==='ok');
 }
 
-// ══════════════════════════════════════════
-// 💰 儲值管理
-// ══════════════════════════════════════════
+// 儲值管理
 async function loadAllCredits() {
   document.getElementById('creditSummary').style.display = 'none';
-  document.getElementById('creditSearchPhone').value = '';
-  currentCreditPhone = '';
-  renderCreditTable([]);
-  try {
-    const data = await gasPost({ action: 'listCredits' });
-    if (data.ok) renderCreditTable(data.data);
-    else alert('載入失敗：' + data.msg);
-  } catch(e) { alert('載入失敗'); }
+  document.getElementById('creditSearchPhone').value = ''; currentCreditPhone = ''; renderCreditTable([]);
+  try { const data = await gasPost({ action:'listCredits' }); if (data.ok) renderCreditTable(data.data); else alert('載入失敗：'+data.msg); }
+  catch(e) { alert('載入失敗'); }
 }
-
 async function searchCredits() {
   const phone = document.getElementById('creditSearchPhone').value.trim();
   if (!phone) { loadAllCredits(); return; }
   try {
-    const data = await gasPost({ action: 'listCredits', phone });
+    const data = await gasPost({ action:'listCredits', phone });
     if (!data.ok) { alert(data.msg); return; }
     renderCreditTable(data.data);
     if (data.data.length) {
-      const bal = data.data.reduce((s, r) => s + Number(r['餘額'] || 0), 0);
-      currentCreditPhone = phone;
-      currentCreditName  = data.data[0]['姓名'] || '';
-      currentCreditBal   = bal;
-      document.getElementById('cs-name').textContent    = currentCreditName;
-      document.getElementById('cs-phone').textContent   = phone;
-      document.getElementById('cs-balance').textContent = bal.toLocaleString();
-      document.getElementById('creditSummary').style.display = 'flex';
-    } else {
-      document.getElementById('creditSummary').style.display = 'none';
-      alert('查無此電話的儲值紀錄');
-    }
+      const bal = data.data.reduce((s,r) => s+Number(r['餘額']||0), 0);
+      currentCreditPhone=phone; currentCreditName=data.data[0]['姓名']||''; currentCreditBal=bal;
+      document.getElementById('cs-name').textContent=currentCreditName;
+      document.getElementById('cs-phone').textContent=phone;
+      document.getElementById('cs-balance').textContent=bal.toLocaleString();
+      document.getElementById('creditSummary').style.display='flex';
+    } else { document.getElementById('creditSummary').style.display='none'; alert('查無此電話的儲值紀錄'); }
   } catch(e) { alert('查詢失敗'); }
 }
-
 function renderCreditTable(rows) {
   const tbody = document.getElementById('creditTbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">查無資料</td></tr>';
-    return;
-  }
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#999;padding:30px;">查無資料</td></tr>'; return; }
   tbody.innerHTML = rows.map(r => {
-    const bal = Number(r['餘額'] || 0);
-    const amt = Number(r['儲值金額'] || 0);
-    return `<tr>
-      <td>${r['姓名']||'-'}</td>
-      <td>${r['電話']||'-'}</td>
-      <td class="${amt >= 0 ? 'credit-positive' : 'credit-negative'}">$${amt.toLocaleString()}</td>
-      <td>$${Number(r['贈送金額']||0).toLocaleString()}</td>
-      <td class="${bal >= 0 ? 'credit-positive' : 'credit-negative'}">$${bal.toLocaleString()}</td>
-      <td>${r['支付方式']||'-'}</td>
-      <td style="font-size:11px">${r['建立時間']||'-'}</td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['備註']||''}">${r['備註']||'-'}</td>
-      <td><button class="btn btn-red btn-sm" onclick="deleteCredit(${r._row})">刪除</button></td>
-    </tr>`;
+    const bal=Number(r['餘額']||0), amt=Number(r['儲值金額']||0);
+    return `<tr><td>${r['姓名']||'-'}</td><td>${r['電話']||'-'}</td><td class="${amt>=0?'credit-positive':'credit-negative'}">$${amt.toLocaleString()}</td><td>$${Number(r['贈送金額']||0).toLocaleString()}</td><td class="${bal>=0?'credit-positive':'credit-negative'}">$${bal.toLocaleString()}</td><td>${r['支付方式']||'-'}</td><td style="font-size:11px">${r['建立時間']||'-'}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['備註']||''}">${r['備註']||'-'}</td><td><button class="btn btn-red btn-sm" onclick="deleteCredit(${r._row})">刪除</button></td></tr>`;
   }).join('');
 }
-
 function openAddCreditModal() {
-  document.getElementById('ac-phone').value = currentCreditPhone;
-  document.getElementById('ac-name').value  = currentCreditName;
-  document.getElementById('ac-uid').value   = '';
-  document.getElementById('ac-note').value  = '';
-  // 動態讀系統設定填入方案和支付方式
-  api({ action: 'getSettings' }).then(data => {
-    const map = {};
-    (data.settings || []).forEach(s => { map[s.key] = s.value; });
-    const amt   = Number(map['credit_plan_amount'] || 3000);
-    const bonus = Number(map['credit_plan_bonus']  || 300);
-    document.getElementById('ac-amount').value = amt;
-    document.getElementById('ac-bonus').value  = bonus;
-    document.getElementById('ac-plan').innerHTML =
-      `<option value="plan" selected>$${amt.toLocaleString()} 送 $${bonus.toLocaleString()}</option>
-       <option value="custom">自訂金額</option>`;
-    // 支付方式
-    const payMap = [
-      { key: 'credit_pay_cash',     label: '現金' },
-      { key: 'credit_pay_transfer', label: '轉帳' },
-      { key: 'credit_pay_jko',      label: '街口支付' },
-      { key: 'credit_pay_ipass',    label: 'iPASS' },
-    ];
-    document.getElementById('ac-pay').innerHTML = payMap
-      .filter(p => String(map[p.key] || 'TRUE').toUpperCase() === 'TRUE')
-      .map(p => `<option>${p.label}</option>`).join('');
-  }).catch(() => {
-    document.getElementById('ac-amount').value = 3000;
-    document.getElementById('ac-bonus').value  = 300;
-  });
+  document.getElementById('ac-phone').value=currentCreditPhone; document.getElementById('ac-name').value=currentCreditName;
+  document.getElementById('ac-uid').value=''; document.getElementById('ac-note').value='';
+  api({ action:'getSettings' }).then(data => {
+    const map={}; (data.settings||[]).forEach(s=>{map[s.key]=s.value;});
+    const amt=Number(map['credit_plan_amount']||3000), bonus=Number(map['credit_plan_bonus']||300);
+    document.getElementById('ac-amount').value=amt; document.getElementById('ac-bonus').value=bonus;
+    document.getElementById('ac-plan').innerHTML=`<option value="plan" selected>$${amt.toLocaleString()} 送 $${bonus.toLocaleString()}</option><option value="custom">自訂金額</option>`;
+    const payMap=[{key:'credit_pay_cash',label:'現金'},{key:'credit_pay_transfer',label:'轉帳'},{key:'credit_pay_jko',label:'街口支付'},{key:'credit_pay_ipass',label:'iPASS'}];
+    document.getElementById('ac-pay').innerHTML=payMap.filter(p=>String(map[p.key]||'TRUE').toUpperCase()==='TRUE').map(p=>`<option>${p.label}</option>`).join('');
+  }).catch(()=>{ document.getElementById('ac-amount').value=3000; document.getElementById('ac-bonus').value=300; });
   document.getElementById('addCreditModal').classList.add('show');
 }
-
-function updatePlanFields() {
-  const plan = document.getElementById('ac-plan').value;
-  if (plan === '3000') {
-    document.getElementById('ac-amount').value = 3000;
-    document.getElementById('ac-bonus').value  = 300;
-  }
-}
-
+function updatePlanFields() { const plan=document.getElementById('ac-plan').value; if(plan==='3000'){document.getElementById('ac-amount').value=3000;document.getElementById('ac-bonus').value=300;} }
 async function submitAddCredit() {
-  const phone  = document.getElementById('ac-phone').value.trim();
-  const amount = document.getElementById('ac-amount').value;
-  if (!phone || !amount) { alert('請填寫電話和儲值金額'); return; }
+  const phone=document.getElementById('ac-phone').value.trim(), amount=document.getElementById('ac-amount').value;
+  if (!phone||!amount) { alert('請填寫電話和儲值金額'); return; }
   try {
-    const data = await gasPost({
-      action:    'addCredit',
-      uid:       document.getElementById('ac-uid').value.trim(),
-      name:      document.getElementById('ac-name').value.trim(),
-      phone, amount,
-      bonus:     document.getElementById('ac-bonus').value || 0,
-      payMethod: document.getElementById('ac-pay').value,
-      note:      document.getElementById('ac-note').value
-    });
-    if (data.ok) {
-      alert(`✅ 儲值成功！餘額：$${data.balance}`);
-      closeModal('addCreditModal');
-      loadAllCredits();
-    } else { alert('失敗：' + data.msg); }
+    const data = await gasPost({ action:'addCredit', uid:document.getElementById('ac-uid').value.trim(), name:document.getElementById('ac-name').value.trim(), phone, amount, bonus:document.getElementById('ac-bonus').value||0, payMethod:document.getElementById('ac-pay').value, note:document.getElementById('ac-note').value });
+    if (data.ok) { alert(`✅ 儲值成功！餘額：$${data.balance}`); closeModal('addCreditModal'); loadAllCredits(); }
+    else alert('失敗：'+data.msg);
   } catch(e) { alert('送出失敗'); }
 }
-
-function openDeductModal() {
-  document.getElementById('dm-name').textContent    = currentCreditName;
-  document.getElementById('dm-balance').textContent = currentCreditBal.toLocaleString();
-  document.getElementById('dm-amount').value = '';
-  document.getElementById('dm-note').value   = '';
-  document.getElementById('deductModal').classList.add('show');
-}
-
+function openDeductModal() { document.getElementById('dm-name').textContent=currentCreditName; document.getElementById('dm-balance').textContent=currentCreditBal.toLocaleString(); document.getElementById('dm-amount').value=''; document.getElementById('dm-note').value=''; document.getElementById('deductModal').classList.add('show'); }
 async function submitDeduct() {
-  const amount = document.getElementById('dm-amount').value;
-  if (!amount) { alert('請輸入扣款金額'); return; }
-  try {
-    const data = await gasPost({
-      action: 'deductCredit',
-      phone:  currentCreditPhone,
-      amount,
-      note:   document.getElementById('dm-note').value
-    });
-    if (data.ok) {
-      alert(`✅ ${data.msg}\n剩餘餘額：$${data.remainBalance}`);
-      closeModal('deductModal');
-      searchCredits();
-    } else { alert('失敗：' + data.msg); }
-  } catch(e) { alert('送出失敗'); }
+  const amount=document.getElementById('dm-amount').value; if(!amount){alert('請輸入扣款金額');return;}
+  try { const data=await gasPost({action:'deductCredit',phone:currentCreditPhone,amount,note:document.getElementById('dm-note').value}); if(data.ok){alert(`✅ ${data.msg}
+剩餘餘額：$${data.remainBalance}`);closeModal('deductModal');searchCredits();}else alert('失敗：'+data.msg); } catch(e){alert('送出失敗');}
 }
-
-function openRefundModal() {
-  document.getElementById('rm-name').textContent    = currentCreditName;
-  document.getElementById('rm-balance').textContent = currentCreditBal.toLocaleString();
-  document.getElementById('rm-amount').value = '';
-  document.getElementById('rm-note').value   = '';
-  document.getElementById('refundCalc').style.display = 'none';
-  document.getElementById('refundModal').classList.add('show');
-}
-
-function calcRefundFee() {
-  const amt  = Number(document.getElementById('rm-amount').value);
-  const rate = Number(document.getElementById('rm-fee').value);
-  if (!amt) { document.getElementById('refundCalc').style.display = 'none'; return; }
-  const fee    = Math.ceil(amt * rate);
-  const actual = amt - fee;
-  document.getElementById('rc-fee').textContent    = `$${fee}`;
-  document.getElementById('rc-actual').textContent = `$${actual}`;
-  document.getElementById('refundCalc').style.display = 'block';
-}
-
+function openRefundModal() { document.getElementById('rm-name').textContent=currentCreditName; document.getElementById('rm-balance').textContent=currentCreditBal.toLocaleString(); document.getElementById('rm-amount').value=''; document.getElementById('rm-note').value=''; document.getElementById('refundCalc').style.display='none'; document.getElementById('refundModal').classList.add('show'); }
+function calcRefundFee() { const amt=Number(document.getElementById('rm-amount').value),rate=Number(document.getElementById('rm-fee').value); if(!amt){document.getElementById('refundCalc').style.display='none';return;} const fee=Math.ceil(amt*rate),actual=amt-fee; document.getElementById('rc-fee').textContent=`$${fee}`; document.getElementById('rc-actual').textContent=`$${actual}`; document.getElementById('refundCalc').style.display='block'; }
 async function submitRefund() {
-  const refundAmount = document.getElementById('rm-amount').value;
-  if (!refundAmount) { alert('請輸入退費金額'); return; }
-  const feeRate = document.getElementById('rm-fee').value;
-  if (!confirm(`確認退費 $${refundAmount}（手續費 ${(feeRate*100).toFixed(0)}%）？`)) return;
-  try {
-    const data = await gasPost({
-      action: 'refundCredit',
-      phone:  currentCreditPhone,
-      refundAmount, feeRate,
-      note:   document.getElementById('rm-note').value
-    });
-    if (data.ok) {
-      alert(`✅ ${data.msg}`);
-      closeModal('refundModal');
-      searchCredits();
-    } else { alert('失敗：' + data.msg); }
-  } catch(e) { alert('送出失敗'); }
+  const refundAmount=document.getElementById('rm-amount').value; if(!refundAmount){alert('請輸入退費金額');return;}
+  const feeRate=document.getElementById('rm-fee').value; if(!confirm(`確認退費 $${refundAmount}（手續費 ${(feeRate*100).toFixed(0)}%）？`))return;
+  try { const data=await gasPost({action:'refundCredit',phone:currentCreditPhone,refundAmount,feeRate,note:document.getElementById('rm-note').value}); if(data.ok){alert(`✅ ${data.msg}`);closeModal('refundModal');searchCredits();}else alert('失敗：'+data.msg); } catch(e){alert('送出失敗');}
 }
+async function deleteCredit(row) { if(!confirm('確定刪除這筆紀錄？'))return; try{const data=await gasPost({action:'deleteCredit',row});if(data.ok){alert('已刪除');loadAllCredits();}else alert('失敗：'+data.msg);}catch(e){alert('刪除失敗');} }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
-async function deleteCredit(row) {
-  if (!confirm('確定刪除這筆紀錄？')) return;
-  try {
-    const data = await gasPost({ action: 'deleteCredit', row });
-    if (data.ok) { alert('已刪除'); loadAllCredits(); }
-    else alert('失敗：' + data.msg);
-  } catch(e) { alert('刪除失敗'); }
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('show');
-}
-
-// ── 產生簽名連結 ──
-let _currentSignLink = '';
+// 簽名連結
+let _currentSignLink='';
 function genSignLink() {
-  const name  = document.getElementById('link-name').value.trim();
-  const phone = document.getElementById('link-phone').value.trim();
-  if (!name || !phone) { alert('請填寫姓名和電話'); return; }
-  const base = 'https://san555483-hub.github.io/credit-sign.html';
-  _currentSignLink = base + '?name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(phone);
-  document.getElementById('linkUrl').textContent = _currentSignLink;
-  document.getElementById('linkResult').style.display = 'block';
-  document.getElementById('linkCopied').style.display = 'none';
+  const name=document.getElementById('link-name').value.trim(), phone=document.getElementById('link-phone').value.trim();
+  if(!name||!phone){alert('請填寫姓名和電話');return;}
+  _currentSignLink='https://san555483-hub.github.io/credit-sign.html?name='+encodeURIComponent(name)+'&phone='+encodeURIComponent(phone);
+  document.getElementById('linkUrl').textContent=_currentSignLink; document.getElementById('linkResult').style.display='block'; document.getElementById('linkCopied').style.display='none';
 }
-function copyLink() {
-  if (!_currentSignLink) return;
-  navigator.clipboard.writeText(_currentSignLink).then(() => {
-    document.getElementById('linkCopied').style.display = 'block';
-    setTimeout(() => document.getElementById('linkCopied').style.display = 'none', 3000);
-  });
+function copyLink() { if(!_currentSignLink)return; navigator.clipboard.writeText(_currentSignLink).then(()=>{document.getElementById('linkCopied').style.display='block';setTimeout(()=>document.getElementById('linkCopied').style.display='none',3000);}); }
+function openLink() { if(_currentSignLink)window.open(_currentSignLink,'_blank'); }
+
+// ══════════════════════════════════════════
+// 🛒 購物車設定（贈品 & 折扣）
+// ══════════════════════════════════════════
+let _shopGifts=[], _shopDiscounts=[];
+
+async function loadShopSettings() {
+  try {
+    const data = await api({ action:'getSettings' });
+    if (data.ok && data.settings) {
+      _shopGifts     = Array.isArray(data.settings.giftOptions)   ? data.settings.giftOptions   : [];
+      _shopDiscounts = Array.isArray(data.settings.discountRules) ? data.settings.discountRules : [];
+    } else { _shopGifts=[]; _shopDiscounts=[]; }
+  } catch(e) { _shopGifts=[]; _shopDiscounts=[]; }
+  renderGiftArea();
+  renderDiscountArea();
 }
-function openLink() {
-  if (_currentSignLink) window.open(_currentSignLink, '_blank');
+
+function renderGiftArea() {
+  const el = document.getElementById('giftEditArea');
+  if (!_shopGifts.length) { el.innerHTML='<div style="color:#aaa;font-size:13px;padding:8px 0">尚無贈品，點右上角新增</div>'; return; }
+  el.innerHTML = _shopGifts.map((g,i) => `<div class="shop-edit-row"><input value="${g.replace(/"/g,'&quot;')}" id="gift_${i}"><button class="btn btn-red btn-sm" onclick="removeGiftRow(${i})">✕</button></div>`).join('');
+}
+function addGiftRow() { _shopGifts.push('新贈品（點此修改）'); renderGiftArea(); }
+function removeGiftRow(i) { _shopGifts.splice(i,1); renderGiftArea(); }
+async function saveShopGifts() {
+  _shopGifts = Array.from(document.querySelectorAll('[id^="gift_"]')).map(x=>x.value.trim()).filter(Boolean);
+  try {
+    const r = await fetch(GAS+'?'+new URLSearchParams({action:'saveSettings',giftOptions:JSON.stringify(_shopGifts)}).toString());
+    const d = await r.json();
+    showMsg('msgGift', d.ok?'✅ 贈品已儲存':'❌ '+(d.msg||''), d.ok);
+  } catch(e) { showMsg('msgGift','❌ 儲存失敗',false); }
+}
+
+function renderDiscountArea() {
+  const el = document.getElementById('discountEditArea');
+  if (!_shopDiscounts.length) { el.innerHTML='<div style="color:#aaa;font-size:13px;padding:8px 0">尚無折扣規則，點右上角新增</div>'; return; }
+  el.innerHTML = _shopDiscounts.map((r,i) => `<div class="shop-edit-row"><span>滿</span><input type="number" value="${r.threshold}" id="dt_${i}" placeholder="金額"><span>折</span><input type="number" value="${r.discount}" id="dd_${i}" placeholder="折扣"><button class="btn btn-red btn-sm" onclick="removeDiscountRow(${i})">✕</button></div>`).join('');
+}
+function addDiscountRow() { _shopDiscounts.push({threshold:0,discount:0}); renderDiscountArea(); }
+function removeDiscountRow(i) { _shopDiscounts.splice(i,1); renderDiscountArea(); }
+async function saveShopDiscounts() {
+  _shopDiscounts = _shopDiscounts.map((_,i)=>({threshold:parseInt(document.getElementById('dt_'+i).value)||0,discount:parseInt(document.getElementById('dd_'+i).value)||0})).filter(r=>r.threshold>0&&r.discount>0);
+  try {
+    const r = await fetch(GAS+'?'+new URLSearchParams({action:'saveSettings',discountRules:JSON.stringify(_shopDiscounts)}).toString());
+    const d = await r.json();
+    showMsg('msgDiscount', d.ok?'✅ 折扣已儲存':'❌ '+(d.msg||''), d.ok);
+    if(d.ok) renderDiscountArea();
+  } catch(e) { showMsg('msgDiscount','❌ 儲存失敗',false); }
 }
 </script>
 </body>
