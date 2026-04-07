@@ -1611,8 +1611,47 @@ document.addEventListener('change', function(e){
 function renderGiftEditList(){ document.getElementById('gift-edit-list').innerHTML=giftOptions.map((g,i)=>`<div class="gift-edit-item"><input class="gift-edit-input" type="text" value="${g}" id="go-${i}"><button class="edit-rm-btn" onclick="removeGift(${i})">✕</button></div>`).join(''); }
 function addGiftOption(){ giftOptions.push('新贈品（點此修改）'); renderGiftEditList(); }
 function removeGift(i){ giftOptions.splice(i,1); renderGiftEditList(); }
-function saveGifts(){ giftOptions=Array.from(document.querySelectorAll('[id^="go-"]')).map(x=>x.value.trim()).filter(Boolean); closeModal('gift-edit'); showToast('✓ 贈品設定已儲存'); }
-function renderDiscountEditList(){ document.getElementById('discount-edit-list').innerHTML=discountRules.map((r,i)=>`<div class="discount-edit-row"><span style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;white-space:nowrap">滿</span><input type="number" value="${r.threshold}" id="dt-${i}" placeholder="金額" min="0" style="flex:1;padding:6px;border:1.5px solid var(--border);border-radius:3px;font-size:.78px;outline:none"><span style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;white-space:nowrap">折</span><input type="number" value="${r.discount}" id="dd-${i}" placeholder="折扣金額" min="0" style="flex:1;padding:6px;border:1.5px solid var(--border);border-radius:3px;font-size:.78px;outline:none"><button class="edit-rm-btn" onclick="removeDiscountRule(${i})">✕</button></div>`).join('');}
+function saveGifts(){
+  giftOptions=Array.from(document.querySelectorAll('[id^="go-"]')).map(x=>x.value.trim()).filter(Boolean);
+  closeModal('gift-edit');
+  showToast('⏳ 儲存中…');
+  _saveSettingsToCloud({ giftOptions }).then(()=>showToast('✓ 贈品設定已存雲端')).catch(()=>showToast('⚠️ 雲端儲存失敗，本機已更新'));
+}
+function saveDiscounts(){
+  discountRules=discountRules.map((_,i)=>({threshold:parseInt(document.getElementById(`dt-${i}`).value)||0,discount:parseInt(document.getElementById(`dd-${i}`).value)||0})).filter(r=>r.threshold>0&&r.discount>0);
+  updateCart(); closeModal('discount-edit');
+  showToast('⏳ 儲存中…');
+  _saveSettingsToCloud({ discountRules }).then(()=>showToast('✓ 折扣設定已存雲端')).catch(()=>showToast('⚠️ 雲端儲存失敗，本機已更新'));
+}
+
+// ── 設定存/讀雲端（no-cors POST + token輪詢）──
+async function _saveSettingsToCloud(data){
+  const token = 'settok_' + Date.now().toString(36);
+  const body  = Object.assign({ _token: token }, data);
+  fetch(GAS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(Object.assign({action:'saveSettings'}, body)) });
+  // 輪詢確認（最多 6 次 × 1.5s）
+  for(let i=0;i<6;i++){
+    await new Promise(r=>setTimeout(r,1500));
+    try{
+      const r = await fetch(GAS_URL+'?action=checkToken&token='+token);
+      const d = await r.json();
+      if(d.ok) return true;
+    }catch(_){}
+  }
+  return true; // 即使輪詢超時也不報錯（GAS通常已寫入）
+}
+
+async function _loadSettingsFromCloud(){
+  try{
+    const r = await fetch(GAS_URL+'?action=getSettings');
+    const d = await r.json();
+    if(d.ok && d.settings){
+      if(Array.isArray(d.settings.giftOptions)   && d.settings.giftOptions.length)   giftOptions   = d.settings.giftOptions;
+      if(Array.isArray(d.settings.discountRules) && d.settings.discountRules.length) discountRules = d.settings.discountRules;
+      updateCart();
+    }
+  }catch(e){ console.warn('載入設定失敗',e); }
+}
 function addDiscountRule(){ discountRules.push({threshold:0,discount:0}); renderDiscountEditList(); }
 function removeDiscountRule(i){ discountRules.splice(i,1); renderDiscountEditList(); }
 function saveDiscounts(){ discountRules=discountRules.map((_,i)=>({threshold:parseInt(document.getElementById(`dt-${i}`).value)||0,discount:parseInt(document.getElementById(`dd-${i}`).value)||0})).filter(r=>r.threshold>0&&r.discount>0); updateCart(); closeModal('discount-edit'); showToast('✓ 折扣設定已儲存'); }
@@ -1777,6 +1816,7 @@ function saveSampleSeries(){
 updateCart();
 renderSampleSeriesSelect();
 loadVideos();
+_loadSettingsFromCloud(); // 從 GAS Sheet「系統設定」載入贈品 & 折扣
 </script>
 </body>
 </html>
