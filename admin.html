@@ -488,7 +488,7 @@ window.onload = function() { initSlotSelects(); };
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop'];
+  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'services')  loadServices();
