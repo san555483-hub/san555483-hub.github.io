@@ -1285,24 +1285,24 @@ async function saveProdToSheet(){
     const prodId = document.getElementById('edit-prod-id').value.trim();
     let imgUrl = document.getElementById('edit-img-url').value.trim();
 
-    // ── 步驟1：有新圖片 → POST 上傳到 Google Drive 拿 URL ──
+    // ── 步驟1：有新圖片 → 壓縮後用 GET 上傳到 Google Drive ──
     if(editImgBase64 && editImgBase64.startsWith('data:')){
       btn.textContent='上傳圖片中…';
       try{
-        const compressed = await compressImage(editImgBase64, 600, 0.75);
+        // 壓縮到 200px/q=0.5，確保 base64 在 URL 長度限制內（GAS GET 上限約 8KB query）
+        const compressed = await compressImage(editImgBase64, 200, 0.5);
+        const base64Only = compressed.replace(/^data:[^;]+;base64,/, '');
         const mimeMatch  = compressed.match(/^data:([^;]+);base64,/);
         const mimeType   = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-        const base64Only = compressed.replace(/^data:[^;]+;base64,/, '');
-        const uploadRes  = await fetch(GAS_URL, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            action:'uploadImage',
-            base64: base64Only,
-            mimeType,
-            filename: 'prod_'+(prodId||Date.now())+'.jpg'
-          })
+        const filename   = 'prod_'+(prodId||Date.now())+'.jpg';
+        // 用 GET 送（GAS 有處理 uploadImage GET）
+        const uploadParams = new URLSearchParams({
+          action:'uploadImage',
+          base64: base64Only,
+          mimeType,
+          filename
         });
+        const uploadRes  = await fetch(GAS_URL+'?'+uploadParams.toString());
         const uploadData = await uploadRes.json();
         if(uploadData.ok && uploadData.url) imgUrl = uploadData.url;
         else showToast('⚠️ 圖片上傳失敗，使用舊圖或空白');
