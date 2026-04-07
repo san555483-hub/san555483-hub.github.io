@@ -541,6 +541,14 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     const name=sessionStorage.getItem('line_name'),pic=sessionStorage.getItem('line_pic'),userId=sessionStorage.getItem('line_userId');
     if(name&&userId){window._lineUser={displayName:name,userId,pic:pic||''};renderLineBar({name,pic});}
     else{window._lineUser=null;renderLineBar(null);}
+    // URL帶 ?coupon=XXX 時自動存入 sessionStorage，等進入結帳再自動填入
+    const urlP = new URLSearchParams(location.search);
+    const urlCoupon = urlP.get('coupon');
+    if(urlCoupon) {
+      sessionStorage.setItem('pending_coupon', urlCoupon.toUpperCase());
+      history.replaceState({}, '', location.pathname); // 清掉URL參數
+      showToast('🎫 已讀取您的折扣券，結帳時自動套用');
+    }
   });
 
   function renderLineBar(user){
@@ -783,45 +791,57 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       </div>
     </div>
 
-    <!-- 購物金抵扣 -->
+    <!-- 優惠區塊（購物金 + 折扣券 合一查詢） -->
     <div class="checkout-card" id="shop-credit-card">
-      <div class="cc-head"><h3>🛍️ 購物金折抵</h3></div>
+      <div class="cc-head"><h3>🎁 優惠折抵</h3></div>
       <div class="cc-body">
-        <div class="shop-credit-section">
-          <div class="shop-credit-title">💳 輸入電話查詢購物金餘額</div>
+
+        <!-- STEP A：電話查詢（購物金 + 我的券 一次查） -->
+        <div class="shop-credit-section" id="credit-query-section">
+          <div class="shop-credit-title">💳 輸入電話 — 查購物金 &amp; 我的折扣券</div>
           <div class="shop-credit-row">
             <input class="shop-credit-input" type="tel" id="sc-query-phone" placeholder="0912345678（自動帶入已填電話）">
-            <button class="shop-credit-btn" onclick="queryShopCredit()">查詢餘額</button>
+            <button class="shop-credit-btn" onclick="queryAllBenefits()">查詢</button>
           </div>
+          <!-- 購物金結果 -->
           <div class="shop-credit-info" id="sc-info"></div>
           <div class="shop-credit-deduct-row" id="sc-deduct-row" style="display:none">
             <input type="number" id="sc-deduct-amt" placeholder="輸入折抵金額" min="0" class="shop-credit-input">
-            <button class="shop-credit-apply-btn" onclick="applyShopCredit()">套用折抵</button>
+            <button class="shop-credit-apply-btn" onclick="applyShopCredit()">套用購物金</button>
             <button style="padding:7px 10px;background:none;border:1.5px solid #ccc;border-radius:3px;font-size:.72rem;color:#888;cursor:pointer;" onclick="clearShopCredit()">取消</button>
           </div>
           <div class="shop-credit-applied" id="sc-applied"></div>
+          <!-- 我的券列表 -->
+          <div id="my-coupons-area" style="display:none;margin-top:12px;">
+            <div style="font-size:.75rem;font-weight:600;color:var(--gold);margin-bottom:8px;">🎫 我的折扣券</div>
+            <div id="my-coupons-list"></div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 折扣碼 -->
-    <div class="checkout-card">
-      <div class="cc-head"><h3>🎫 折扣碼</h3></div>
-      <div class="cc-body">
-        <div class="shop-credit-section" style="border-color:rgba(184,137,90,.3);background:rgba(184,137,90,.04);">
-          <div class="shop-credit-title" style="color:var(--gold);">🎫 輸入折扣碼（購物券 / 現金券）</div>
-          <div class="shop-credit-row">
-            <input class="shop-credit-input" type="text" id="coupon-code-input" placeholder="例：UNI-SHOP-ABC123" style="text-transform:uppercase;letter-spacing:1px;">
-            <button class="shop-credit-btn" style="background:var(--gold);" onclick="checkCouponCode()">驗證</button>
+        <!-- STEP B：手動輸入券碼（有券碼才展開） -->
+        <div style="margin-top:10px;">
+          <button onclick="toggleManualCoupon()" id="manual-coupon-toggle-btn"
+            style="width:100%;padding:9px;background:none;border:1.5px dashed rgba(184,137,90,.4);border-radius:6px;font-size:.75rem;color:var(--gold);cursor:pointer;font-family:'Noto Sans TC',sans-serif;">
+            🎫 我有折扣券碼，手動輸入
+          </button>
+          <div id="manual-coupon-area" style="display:none;margin-top:8px;">
+            <div class="shop-credit-section" style="border-color:rgba(184,137,90,.3);background:rgba(184,137,90,.04);">
+              <div class="shop-credit-title" style="color:var(--gold);">🎫 輸入折扣碼</div>
+              <div class="shop-credit-row">
+                <input class="shop-credit-input" type="text" id="coupon-code-input" placeholder="例：UNI-CASH-0SYYG0" style="text-transform:uppercase;letter-spacing:1px;">
+                <button class="shop-credit-btn" style="background:var(--gold);" onclick="checkCouponCode()">驗證</button>
+              </div>
+              <div id="coupon-info" class="shop-credit-info" style="display:none;border-left-color:var(--gold);background:rgba(184,137,90,.08);color:var(--bark);"></div>
+              <div class="shop-credit-deduct-row" id="coupon-deduct-row" style="display:none;">
+                <input type="number" id="coupon-deduct-amt" placeholder="折抵金額" min="0" class="shop-credit-input">
+                <button class="shop-credit-apply-btn" style="background:var(--gold);" onclick="applyCoupon()">套用</button>
+                <button style="padding:7px 10px;background:none;border:1.5px solid #ccc;border-radius:3px;font-size:.72rem;color:#888;cursor:pointer;" onclick="clearCoupon()">取消</button>
+              </div>
+              <div class="shop-credit-applied" id="coupon-applied" style="display:none;border-left-color:var(--gold);color:var(--bark);"></div>
+            </div>
           </div>
-          <div id="coupon-info" class="shop-credit-info" style="display:none;border-left-color:var(--gold);background:rgba(184,137,90,.08);color:var(--bark);"></div>
-          <div class="shop-credit-deduct-row" id="coupon-deduct-row" style="display:none;">
-            <input type="number" id="coupon-deduct-amt" placeholder="輸入折抵金額" min="0" class="shop-credit-input">
-            <button class="shop-credit-apply-btn" style="background:var(--gold);" onclick="applyCoupon()">套用</button>
-            <button style="padding:7px 10px;background:none;border:1.5px solid #ccc;border-radius:3px;font-size:.72rem;color:#888;cursor:pointer;" onclick="clearCoupon()">取消</button>
-          </div>
-          <div class="shop-credit-applied" id="coupon-applied" style="display:none;border-left-color:var(--gold);color:var(--bark);"></div>
         </div>
+
       </div>
     </div>
 
@@ -1559,7 +1579,26 @@ function renderCheckoutPage(){
   if(!window._lineUser){ showToast('請先登入 LINE 才能結帳'); goStep(3); return; }
   // 自動帶入已填電話到購物金查詢欄
   const existPhone = document.getElementById('inp-phone').value.trim();
-  if(existPhone) document.getElementById('sc-query-phone').value = existPhone;
+  if(existPhone) {
+    document.getElementById('sc-query-phone').value = existPhone;
+    // 自動查詢購物金和我的券
+    setTimeout(()=>queryAllBenefits(), 300);
+  }
+  // URL帶來的券碼（從LINE點連結進來）自動填入並驗證
+  const pendingCoupon = sessionStorage.getItem('pending_coupon');
+  if(pendingCoupon) {
+    sessionStorage.removeItem('pending_coupon');
+    const inp = document.getElementById('coupon-code-input');
+    if(inp) {
+      inp.value = pendingCoupon;
+      // 展開手動輸入區
+      const area = document.getElementById('manual-coupon-area');
+      const btn  = document.getElementById('manual-coupon-toggle-btn');
+      if(area) { area.style.display='block'; }
+      if(btn)  { btn.style.borderStyle='solid'; btn.textContent='🎫 收起手動輸入'; }
+      setTimeout(()=>checkCouponCode(), 600); // 等頁面渲染完再驗證
+    }
+  }
   // 清除上次購物金折抵
   shopCreditDeduct=0; shopCreditBalance=0; couponDeduct=0; couponCode=''; couponBalance=0; couponRules=[]; couponMaxuse=0;
   document.getElementById('sc-info').style.display='none';
@@ -1918,6 +1957,121 @@ function saveSampleSeries(){
 // ══════════════════════════════════════════════
 // 購物金折抵功能
 // ══════════════════════════════════════════════
+// ══ 一鍵查購物金 + 我的折扣券 ══
+async function queryAllBenefits() {
+  const phone = document.getElementById('sc-query-phone').value.trim() ||
+                document.getElementById('inp-phone').value.trim();
+  if(!phone){ showToast('請輸入電話'); return; }
+  showToast('查詢中…');
+  // 同時查購物金 + 我的券
+  const [creditResp, couponResp] = await Promise.all([
+    fetch(GAS_SHOP_URL+'?action=listShopCredits&phone='+encodeURIComponent(phone)+'&t='+Date.now()).then(r=>r.json()).catch(()=>({ok:false})),
+    fetch(GAS_SHOP_URL+'?action=queryCouponsByPhone&phone='+encodeURIComponent(phone)+'&t='+Date.now()).then(r=>r.json()).catch(()=>({ok:false,coupons:[]}))
+  ]);
+  // ── 購物金 ──
+  const infoEl = document.getElementById('sc-info');
+  if(creditResp.ok) {
+    const bal = (creditResp.data||[]).reduce((s,row)=>s+Number(row['餘額']||0),0);
+    shopCreditBalance = bal;
+    shopCreditPhone   = phone;
+    if(bal > 0) {
+      infoEl.textContent = `💳 購物金餘額：NT$ ${bal.toLocaleString()}`;
+      infoEl.style.display='block';
+      const orderTotal = getCurrentOrderTotal();
+      document.getElementById('sc-deduct-amt').value = Math.min(bal, orderTotal);
+      document.getElementById('sc-deduct-row').style.display='flex';
+    } else {
+      infoEl.textContent = '💳 購物金餘額：$0';
+      infoEl.style.display='block';
+      document.getElementById('sc-deduct-row').style.display='none';
+    }
+  }
+  // ── 我的折扣券 ──
+  const myCoupons = (couponResp.ok && couponResp.coupons) ? couponResp.coupons : [];
+  const myCouponsArea = document.getElementById('my-coupons-area');
+  const myCouponsList = document.getElementById('my-coupons-list');
+  if(myCoupons.length) {
+    myCouponsArea.style.display = 'block';
+    const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
+    myCouponsList.innerHTML = myCoupons.map(c => {
+      const autoDisc = calcCouponDiscount(orderTotal, c.rules||[], c.maxuse||0, c.balance);
+      const typeColor = c.type==='現金券' ? '#2d7a4f' : '#2d5a8e';
+      const typeLabel = c.type==='現金券' ? '💵 現金券' : '🛍️ 購物券';
+      const maxLabel  = c.maxuse>0 ? `單次最高折$${c.maxuse}` : '不限折抵';
+      const expiLabel = c.expiry ? `到期 ${c.expiry}` : '不限期';
+      const canUse    = autoDisc > 0;
+      return `<div style="border:1.5px solid ${canUse?'rgba(184,137,90,.5)':'#ddd'};border-radius:8px;padding:10px 12px;margin-bottom:8px;background:${canUse?'rgba(184,137,90,.04)':'#fafafa'};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:.72rem;font-weight:700;color:${typeColor};background:${typeColor}18;padding:2px 7px;border-radius:10px;">${typeLabel}</span>
+          <span style="font-size:.7rem;color:#999;">${expiLabel}</span>
+        </div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--bark);margin:4px 0;">面額 NT$${Number(c.balance).toLocaleString()} ｜ ${maxLabel}</div>
+        <div style="font-size:.72rem;color:#777;margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;">券碼：${c.code}</div>
+        ${canUse
+          ? `<button onclick="applyMyCoupon('${c.code}','${c.type}',${c.balance},${c.maxuse},${JSON.stringify(JSON.stringify(c.rules||[]))})"
+               style="width:100%;padding:8px;background:var(--gold);color:#fff;border:none;border-radius:4px;font-size:.78rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">
+               ✓ 套用 — 折抵 NT$${autoDisc.toLocaleString()}
+             </button>`
+          : `<div style="font-size:.72rem;color:#bbb;text-align:center;padding:4px;">訂單金額不符合此券折抵條件</div>`
+        }
+      </div>`;
+    }).join('');
+  } else {
+    myCouponsArea.style.display = myCoupons.length===0 && couponResp.ok ? 'block' : 'none';
+    if(couponResp.ok) myCouponsList.innerHTML = '<div style="font-size:.72rem;color:#bbb;padding:4px 0;">此電話號碼目前沒有可用折扣券</div>';
+  }
+}
+
+// 直接從「我的券」點選套用
+function applyMyCoupon(code, type, balance, maxuse, rulesJson) {
+  // 填入券碼輸入框並觸發驗證流程
+  const input = document.getElementById('coupon-code-input');
+  if(input) {
+    input.value = code;
+    // 展開手動輸入區（以防收起）
+    document.getElementById('manual-coupon-area').style.display = 'none'; // 不需展開，直接用內部狀態
+  }
+  couponCode    = code;
+  couponType    = type;
+  couponBalance = balance;
+  couponMaxuse  = maxuse;
+  try{ couponRules = JSON.parse(rulesJson); }catch(_){ couponRules=[]; }
+  const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
+  const autoDisc   = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
+  if(autoDisc <= 0){ showToast('此券目前無法折抵（訂單金額不符）'); return; }
+  couponDeduct = autoDisc;
+  updateCouponDisplay();
+  showToast(`✓ ${type} 已套用，折抵 NT$${autoDisc.toLocaleString()}`);
+  // 更新我的券列表按鈕狀態
+  document.getElementById('my-coupons-area') && queryAllBenefitsUpdateDisplay();
+}
+
+function queryAllBenefitsUpdateDisplay() {
+  // 刷新套用按鈕顯示（已套用的券變成「已套用」狀態）
+  const btns = document.querySelectorAll('#my-coupons-list button[onclick^="applyMyCoupon"]');
+  btns.forEach(btn => {
+    if(btn.closest('div') && btn.textContent.includes(couponCode)) {
+      btn.textContent = '✅ 已套用';
+      btn.style.background = '#2d7a4f';
+      btn.disabled = true;
+    }
+  });
+}
+
+function toggleManualCoupon() {
+  const area = document.getElementById('manual-coupon-area');
+  const btn  = document.getElementById('manual-coupon-toggle-btn');
+  if(area.style.display==='none') {
+    area.style.display='block';
+    btn.style.borderStyle='solid';
+    btn.textContent='🎫 收起手動輸入';
+  } else {
+    area.style.display='none';
+    btn.style.borderStyle='dashed';
+    btn.textContent='🎫 我有折扣券碼，手動輸入';
+  }
+}
+
 async function queryShopCredit(){
   const phone = document.getElementById('sc-query-phone').value.trim() ||
                 document.getElementById('inp-phone').value.trim();
@@ -2017,53 +2171,21 @@ async function checkCouponCode() {
     // 根據訂單金額自動計算最優折抵
     const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
     const autoDisc   = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
-    const amtInput   = document.getElementById('coupon-deduct-amt');
-    // 有規則：自動填入最優折抵，鎖定輸入框；無規則：開放手動輸入
-    if(couponRules.length) {
-      amtInput.value    = autoDisc;
-      amtInput.readOnly = true;
-      amtInput.style.background = '#f5f5f5';
-      amtInput.style.color = '#888';
-      // 判斷是否有符合條件的規則
-      const hasMatch = couponRules.some(r => orderTotal >= (r.minAmount||0));
-      if(!hasMatch) {
-        const minReq = Math.min(...couponRules.map(r=>r.minAmount||0).filter(v=>v>0));
-        infoEl.textContent = `⚠️ ${d.type}驗證成功｜餘額 NT$${d.balance.toLocaleString()}｜需滿 NT$${minReq.toLocaleString()} 才可使用`;
-        infoEl.style.display='block';
-        document.getElementById('coupon-deduct-row').style.display='none';
-        return;
-      }
-    } else {
-      amtInput.value    = autoDisc;
-      amtInput.readOnly = false;
-      amtInput.style.background = '';
-      amtInput.style.color = '';
-    }
-    let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}｜本次最優折抵：NT$ ${autoDisc.toLocaleString()}`;
+    let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
+    if(couponRules.length) infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
     infoEl.textContent = infoTxt;
     infoEl.style.display='block';
+    document.getElementById('coupon-deduct-amt').value = autoDisc;
     document.getElementById('coupon-deduct-row').style.display='flex';
-    // 自動套用（省去再按套用按鈕）
-    couponDeduct = autoDisc;
-    updateCouponDisplay();
-    if(autoDisc > 0) showToast(`✓ ${d.type} 自動套用折抵 NT$${autoDisc.toLocaleString()}`);
   } catch(e) { showToast('驗證失敗：'+e.message); }
 }
 
 function applyCoupon() {
+  const amt = parseInt(document.getElementById('coupon-deduct-amt').value)||0;
+  if(amt<=0) { showToast('請輸入折抵金額'); return; }
+  if(amt>couponBalance) { showToast('折抵金額不可超過券餘額 $'+couponBalance); return; }
   const orderTotal = getCurrentOrderTotal()-shopCreditDeduct;
-  let amt;
-  if(couponRules && couponRules.length) {
-    // 有規則：重新計算最優（防止訂單金額變動）
-    amt = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
-    if(amt<=0) { showToast('訂單金額不符合任何折抵條件'); return; }
-    document.getElementById('coupon-deduct-amt').value = amt;
-  } else {
-    amt = parseInt(document.getElementById('coupon-deduct-amt').value)||0;
-    if(amt<=0) { showToast('請輸入折抵金額'); return; }
-    if(amt>couponBalance) { showToast('折抵金額不可超過券餘額 $'+couponBalance); return; }
-    if(amt>orderTotal) { showToast('折抵金額不可超過訂單金額 $'+orderTotal); return; }
-  }
+  if(amt>orderTotal) { showToast('折抵金額不可超過訂單金額 $'+orderTotal); return; }
   couponDeduct = amt;
   updateCouponDisplay();
   showToast('✓ 折扣碼折抵 NT$'+amt+' 已套用');
@@ -2100,9 +2222,7 @@ function r_calcValue(rule, orderTotal) {
 }
 
 function clearCoupon() {
-  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0;
-  const amtInput = document.getElementById('coupon-deduct-amt');
-  if(amtInput){ amtInput.readOnly=false; amtInput.style.background=''; amtInput.style.color=''; amtInput.value=''; }
+  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0; couponRules=[]; couponMaxuse=0;
   document.getElementById('coupon-applied').style.display='none';
   document.getElementById('coupon-deduct-row').style.display='none';
   document.getElementById('coupon-info').style.display='none';
