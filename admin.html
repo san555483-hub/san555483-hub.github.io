@@ -389,6 +389,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
 let allCustomers = [];
 let currentCreditPhone = '', currentCreditName = '', currentCreditBal = 0;
 const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'];
@@ -674,7 +675,8 @@ let _shopGifts=[], _shopDiscounts=[];
 
 async function loadShopSettings() {
   try {
-    const data = await api({ action:'getSettings' });
+    const r = await fetch(GAS_SHOP+'?action=getSettings&t='+Date.now());
+    const data = await r.json();
     if (data.ok && data.settings) {
       _shopGifts     = Array.isArray(data.settings.giftOptions)   ? data.settings.giftOptions   : [];
       _shopDiscounts = Array.isArray(data.settings.discountRules) ? data.settings.discountRules : [];
@@ -694,7 +696,7 @@ function removeGiftRow(i) { _shopGifts.splice(i,1); renderGiftArea(); }
 async function saveShopGifts() {
   _shopGifts = Array.from(document.querySelectorAll('[id^="gift_"]')).map(x=>x.value.trim()).filter(Boolean);
   try {
-    const r = await fetch(GAS+'?'+new URLSearchParams({action:'saveSettings',giftOptions:JSON.stringify(_shopGifts)}).toString());
+    const r = await fetch(GAS_SHOP+'?'+new URLSearchParams({action:'saveSettings',giftOptions:JSON.stringify(_shopGifts)}).toString());
     const d = await r.json();
     showMsg('msgGift', d.ok?'✅ 贈品已儲存':'❌ '+(d.msg||''), d.ok);
   } catch(e) { showMsg('msgGift','❌ 儲存失敗',false); }
@@ -710,7 +712,7 @@ function removeDiscountRow(i) { _shopDiscounts.splice(i,1); renderDiscountArea()
 async function saveShopDiscounts() {
   _shopDiscounts = _shopDiscounts.map((_,i)=>({threshold:parseInt(document.getElementById('dt_'+i).value)||0,discount:parseInt(document.getElementById('dd_'+i).value)||0})).filter(r=>r.threshold>0&&r.discount>0);
   try {
-    const r = await fetch(GAS+'?'+new URLSearchParams({action:'saveSettings',discountRules:JSON.stringify(_shopDiscounts)}).toString());
+    const r = await fetch(GAS_SHOP+'?'+new URLSearchParams({action:'saveSettings',discountRules:JSON.stringify(_shopDiscounts)}).toString());
     const d = await r.json();
     showMsg('msgDiscount', d.ok?'✅ 折扣已儲存':'❌ '+(d.msg||''), d.ok);
     if(d.ok) renderDiscountArea();
