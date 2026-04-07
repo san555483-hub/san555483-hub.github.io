@@ -1639,9 +1639,9 @@ async function _loadSettingsFromCloud(){
     }
   }catch(e){ console.warn('載入設定失敗',e); }
 }
+function renderDiscountEditList(){ document.getElementById('discount-edit-list').innerHTML=discountRules.map((r,i)=>`<div class="discount-edit-row"><span style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;white-space:nowrap">滿</span><input type="number" value="${r.threshold}" id="dt-${i}" placeholder="金額" min="0" style="flex:1;padding:6px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;outline:none"><span style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;white-space:nowrap">折</span><input type="number" value="${r.discount}" id="dd-${i}" placeholder="折扣金額" min="0" style="flex:1;padding:6px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;outline:none"><button class="edit-rm-btn" onclick="removeDiscountRule(${i})">✕</button></div>`).join('');}
 function addDiscountRule(){ discountRules.push({threshold:0,discount:0}); renderDiscountEditList(); }
 function removeDiscountRule(i){ discountRules.splice(i,1); renderDiscountEditList(); }
-function saveDiscounts(){ discountRules=discountRules.map((_,i)=>({threshold:parseInt(document.getElementById(`dt-${i}`).value)||0,discount:parseInt(document.getElementById(`dd-${i}`).value)||0})).filter(r=>r.threshold>0&&r.discount>0); updateCart(); closeModal('discount-edit'); showToast('✓ 折扣設定已儲存'); }
 
 // ══════════════════════════════════════════════
 // Modal & Toast
