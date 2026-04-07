@@ -355,27 +355,36 @@ input:checked + .slider:before { transform: translateX(16px); }
 
   <!-- 🎫 折扣券 -->
   <div class="panel" id="panel-coupon">
+    <!-- 新增折扣券 -->
     <div class="card">
-      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>🎫 新增折扣券</span>
-      </div>
+      <div class="card-title">🎫 新增折扣券</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-group"><label>類型</label>
-          <select id="cp-type" class="form-group input" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
+          <select id="cp-type" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;">
             <option value="購物券">🛍️ 購物券（僅線上購物）</option>
             <option value="現金券">💵 現金券（線上+店內）</option>
           </select>
         </div>
-        <div class="form-group"><label>面額（NT$）*</label><input id="cp-amount" type="number" placeholder="例：500" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
-        <div class="form-group"><label>自訂券碼（選填，空白自動生成）</label><input id="cp-code" type="text" placeholder="留空自動生成" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;text-transform:uppercase;"></div>
+        <div class="form-group"><label>總面額（NT$）*</label><input id="cp-amount" type="number" placeholder="例：1000" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
+        <div class="form-group"><label>單次最高折抵（NT$，0=不限）</label><input id="cp-maxuse" type="number" placeholder="0=不限" value="0" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="form-group"><label>自訂券碼（選填）</label><input id="cp-code" type="text" placeholder="留空自動生成" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;text-transform:uppercase;"></div>
         <div class="form-group"><label>到期日（選填）</label><input id="cp-expiry" type="date" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
         <div class="form-group"><label>備註（顧客姓名/說明）</label><input id="cp-note" type="text" placeholder="例：王小明生日券" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;"></div>
       </div>
+      <!-- 折抵規則 -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label style="font-size:13px;font-weight:600;color:var(--gold-dark);">📋 折抵規則（可多條，不限數量）</label>
+          <button class="btn btn-gold btn-sm" onclick="addCpRule()">＋ 新增規則</button>
+        </div>
+        <div style="font-size:12px;color:#888;margin-bottom:8px;">每條規則：設定滿額條件 → 折抵方式（固定金額 or 百分比折扣）</div>
+        <div id="cpRuleList" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
       <button class="btn btn-gold" onclick="addCoupon_()">＋ 產生折扣券</button>
       <div id="cpAddResult" style="display:none;margin-top:12px;background:#e8f5e9;border-radius:6px;padding:12px 16px;">
-        <div style="font-size:12px;color:#888;margin-bottom:4px;">已產生券碼（複製傳給顧客）</div>
+        <div style="font-size:12px;color:#888;margin-bottom:4px;">✅ 已產生券碼（複製傳給顧客）</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <strong id="cpNewCode" style="font-size:18px;color:#2a2420;letter-spacing:2px;"></strong>
           <button class="btn btn-gold btn-sm" onclick="copyCouponCode()">📋 複製</button>
@@ -384,28 +393,24 @@ input:checked + .slider:before { transform: translateX(16px); }
       </div>
       <div id="msgCouponAdd" class="msg" style="margin-top:8px;"></div>
     </div>
+    <!-- 查詢管理 -->
     <div class="card">
       <div class="card-title">🔍 查詢 & 管理</div>
       <div class="filter-row">
         <input id="cpSearch" type="text" placeholder="券碼查詢" style="flex:1;">
         <select id="cpTypeFilter" style="border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;">
-          <option value="">全部類型</option>
-          <option value="購物券">購物券</option>
-          <option value="現金券">現金券</option>
+          <option value="">全部類型</option><option value="購物券">購物券</option><option value="現金券">現金券</option>
         </select>
         <select id="cpStatusFilter" style="border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;">
-          <option value="">全部狀態</option>
-          <option value="有效">有效</option>
-          <option value="已用完">已用完</option>
-          <option value="停用">停用</option>
+          <option value="">全部狀態</option><option value="有效">有效</option><option value="已用完">已用完</option><option value="停用">停用</option>
         </select>
         <button class="btn btn-primary" onclick="searchCoupons()">🔍 查詢</button>
         <button class="btn btn-gold" onclick="loadAllCoupons()">全部</button>
       </div>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>券碼</th><th>類型</th><th>面額</th><th>已用</th><th>餘額</th><th>狀態</th><th>建立時間</th><th>到期日</th><th>備註</th><th>操作</th></tr></thead>
-          <tbody id="couponTbody"><tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入</td></tr></tbody>
+          <thead><tr><th>券碼</th><th>類型</th><th>面額</th><th>單次上限</th><th>已用</th><th>餘額</th><th>折抵規則</th><th>狀態</th><th>到期日</th><th>備註</th><th>操作</th></tr></thead>
+          <tbody id="couponTbody"><tr><td colspan="11" style="text-align:center;color:#999;padding:30px;">點擊「全部」載入</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -952,58 +957,111 @@ async function deleteScCredit(row){
 }
 
 
-// ══ 折扣券系統 ══
-const GAS_COUPON = GAS_SHOP; // 同購物車GAS
+// ══ 折扣券系統（升級版：支援多規則）══
+const GAS_COUPON = GAS_SHOP;
 
-function loadCouponTab() { loadAllCoupons(); }
+// 新增券時的規則暫存
+let _cpRules = [];
+
+function loadCouponTab() { loadAllCoupons(); initCpRules(); }
+
+function initCpRules() {
+  _cpRules = [];
+  renderCpRuleList();
+}
+
+function addCpRule() {
+  _cpRules.push({minAmount:0, type:'fixed', value:0});
+  renderCpRuleList();
+}
+
+function removeCpRule(i) {
+  _cpRules.splice(i,1);
+  renderCpRuleList();
+}
+
+function renderCpRuleList() {
+  const el = document.getElementById('cpRuleList');
+  if(!_cpRules.length) {
+    el.innerHTML = '<div style="color:#aaa;font-size:12px;padding:8px 0">尚無規則（不設規則代表任何金額都可用全額折抵）</div>';
+    return;
+  }
+  el.innerHTML = _cpRules.map((r,i) => `
+    <div style="display:flex;align-items:center;gap:8px;background:#f9f9f9;border:1px solid #eee;border-radius:6px;padding:10px 12px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#888;white-space:nowrap">滿</span>
+      <input type="number" value="${r.minAmount}" placeholder="金額（0=不限）" min="0"
+        style="width:100px;border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:13px;"
+        onchange="_cpRules[${i}].minAmount=parseInt(this.value)||0">
+      <span style="font-size:12px;color:#888;white-space:nowrap">元，折抵方式</span>
+      <select style="border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:13px;"
+        onchange="_cpRules[${i}].type=this.value;renderCpRuleList()">
+        <option value="fixed" ${r.type==='fixed'?'selected':''}>固定金額折</option>
+        <option value="percent" ${r.type==='percent'?'selected':''}>百分比折扣</option>
+      </select>
+      ${r.type==='fixed'
+        ? `<input type="number" value="${r.value}" placeholder="折多少元" min="0"
+             style="width:90px;border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:13px;"
+             onchange="_cpRules[${i}].value=parseInt(this.value)||0">
+           <span style="font-size:12px;color:#888">元</span>`
+        : `<input type="number" value="${r.value}" placeholder="幾折(0~100)" min="0" max="100"
+             style="width:80px;border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:13px;"
+             onchange="_cpRules[${i}].value=parseFloat(this.value)||0">
+           <span style="font-size:12px;color:#888">%（打折，例如輸入80代表打八折）</span>`
+      }
+      <button class="btn btn-red btn-sm" onclick="removeCpRule(${i})">✕</button>
+    </div>`).join('');
+}
 
 async function loadAllCoupons() {
   renderCouponTable([]);
   try {
     const r = await fetch(GAS_COUPON+'?action=listCoupons&t='+Date.now());
     const d = await r.json();
-    if(d.ok) renderCouponTable(d.coupons);
-    else alert('載入失敗：'+d.msg);
+    if(d.ok) renderCouponTable(d.coupons); else alert('載入失敗：'+d.msg);
   } catch(e) { alert('載入失敗'); }
 }
 
 async function searchCoupons() {
-  const code   = document.getElementById('cpSearch').value.trim();
-  const type   = document.getElementById('cpTypeFilter').value;
-  const status = document.getElementById('cpStatusFilter').value;
-  const params = new URLSearchParams({action:'listCoupons', t:Date.now()});
-  if(code)   params.set('code', code);
-  if(type)   params.set('type', type);
-  if(status) params.set('status', status);
-  try {
-    const r = await fetch(GAS_COUPON+'?'+params.toString());
-    const d = await r.json();
-    if(d.ok) renderCouponTable(d.coupons);
-    else alert('查詢失敗：'+d.msg);
-  } catch(e) { alert('查詢失敗'); }
+  const code=document.getElementById('cpSearch').value.trim();
+  const type=document.getElementById('cpTypeFilter').value;
+  const status=document.getElementById('cpStatusFilter').value;
+  const params=new URLSearchParams({action:'listCoupons',t:Date.now()});
+  if(code) params.set('code',code);
+  if(type) params.set('type',type);
+  if(status) params.set('status',status);
+  try{const r=await fetch(GAS_COUPON+'?'+params.toString());const d=await r.json();if(d.ok)renderCouponTable(d.coupons);else alert('查詢失敗');}
+  catch(e){alert('查詢失敗');}
 }
 
 function renderCouponTable(rows) {
   const tb = document.getElementById('couponTbody');
-  if(!rows.length) { tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#999;padding:30px;">查無資料</td></tr>'; return; }
+  if(!rows.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#999;padding:30px;">查無資料</td></tr>';return;}
   tb.innerHTML = rows.map(r => {
-    const bal = Number(r['餘額']||0);
-    const statusColor = r['狀態']==='有效'?'badge-ok':r['狀態']==='已用完'?'badge-red':'badge-warn';
-    const typeColor = r['類型']==='購物券'?'#2d5a8e':'#2d7a4f';
+    const bal=Number(r['餘額']||0);
+    const statusColor=r['狀態']==='有效'?'badge-ok':r['狀態']==='已用完'?'badge-red':'badge-warn';
+    const typeColor=r['類型']==='購物券'?'#2d5a8e':'#2d7a4f';
+    const maxuse=Number(r['單次上限']||0);
+    // 解析規則
+    let rulesHtml='<span style="color:#aaa;font-size:11px">不限</span>';
+    try{
+      const rules=JSON.parse(String(r['折抵規則']||'[]'));
+      if(rules.length) rulesHtml=rules.map(ru=>`<div style="font-size:11px;color:#555;white-space:nowrap">${ru.minAmount>0?'滿$'+ru.minAmount:'不限金額'} → ${ru.type==='fixed'?'折$'+ru.value:ru.value+'% off'}</div>`).join('');
+    }catch(_){}
+    const code=String(r['券碼']||'');
     return `<tr>
-      <td><strong style="letter-spacing:1px;font-size:12px">${r['券碼']||'-'}</strong>
-        <button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--gold)" onclick="navigator.clipboard.writeText('${r['券碼']}').then(()=>showMsg('msgCouponAdd','✅ 已複製',true))">📋</button>
-      </td>
+      <td><strong style="letter-spacing:1px;font-size:12px">${code}</strong>
+        <button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--gold)" onclick="navigator.clipboard.writeText('${code}')">📋</button></td>
       <td><span style="color:${typeColor};font-size:12px;font-weight:600">${r['類型']||'-'}</span></td>
       <td>$${Number(r['面額']||0).toLocaleString()}</td>
+      <td>${maxuse>0?'$'+maxuse.toLocaleString():'不限'}</td>
       <td>$${Number(r['已用金額']||0).toLocaleString()}</td>
       <td style="font-weight:600;color:${bal>0?'var(--green)':'#999'}">$${bal.toLocaleString()}</td>
+      <td>${rulesHtml}</td>
       <td><span class="badge ${statusColor}">${r['狀態']||'-'}</span></td>
-      <td style="font-size:11px">${String(r['建立時間']||'').substring(0,16)}</td>
       <td style="font-size:11px">${r['到期日']||'無期限'}</td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r['備註']||''}">${r['備註']||'-'}</td>
+      <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r['備註']||'-'}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-gold btn-sm" style="margin-right:4px" onclick="openEditCouponModal(${r._row},'${r['券碼']}',${r['面額']||0},'${r['狀態']||''}','${r['到期日']||''}','${(r['備註']||'').replace(/'/g,'')}')">編輯</button>
+        <button class="btn btn-gold btn-sm" style="margin-right:4px" onclick="openCouponEditModal(${r._row},'${code}',${r['面額']||0},${r['單次上限']||0},'${r['狀態']||''}','${r['到期日']||''}','${(r['備註']||'').replace(/'/g,'')}','${encodeURIComponent(r['折抵規則']||'[]')}')">編輯</button>
         <button class="btn btn-red btn-sm" onclick="deleteCoupon_(${r._row})">刪除</button>
       </td>
     </tr>`;
@@ -1011,59 +1069,140 @@ function renderCouponTable(rows) {
 }
 
 async function addCoupon_() {
-  const type   = document.getElementById('cp-type').value;
-  const amount = document.getElementById('cp-amount').value;
-  const code   = document.getElementById('cp-code').value.trim().toUpperCase();
-  const expiry = document.getElementById('cp-expiry').value;
-  const note   = document.getElementById('cp-note').value.trim();
-  if(!amount) { showMsg('msgCouponAdd','❌ 請輸入面額',false); return; }
-  try {
-    const params = new URLSearchParams({action:'addCoupon', type, amount, expiry, note});
-    if(code) params.set('code', code);
-    const r = await fetch(GAS_COUPON+'?'+params.toString());
-    const d = await r.json();
-    if(d.ok) {
-      document.getElementById('cpNewCode').textContent = d.code;
-      document.getElementById('cpNewInfo').textContent = `類型：${type}｜面額：NT$${Number(d.amount).toLocaleString()}${expiry?'｜到期：'+expiry:''}${note?'｜備註：'+note:''}`;
-      document.getElementById('cpAddResult').style.display = 'block';
-      document.getElementById('cp-code').value='';
-      document.getElementById('cp-note').value='';
+  const type=document.getElementById('cp-type').value;
+  const amount=document.getElementById('cp-amount').value;
+  const maxuse=document.getElementById('cp-maxuse').value||0;
+  const code=document.getElementById('cp-code').value.trim().toUpperCase();
+  const expiry=document.getElementById('cp-expiry').value;
+  const note=document.getElementById('cp-note').value.trim();
+  // 收集規則（從DOM重新讀取）
+  const ruleEls=document.querySelectorAll('#cpRuleList > div');
+  const rules=_cpRules.map((r,i)=>{
+    const inputs=ruleEls[i]?ruleEls[i].querySelectorAll('input,select'):[];
+    if(inputs.length>=3){
+      return{minAmount:parseInt(inputs[0].value)||0, type:inputs[1].value, value:parseFloat(inputs[2].value)||0};
+    }
+    return r;
+  });
+  if(!amount){showMsg('msgCouponAdd','❌ 請輸入面額',false);return;}
+  try{
+    const params=new URLSearchParams({action:'addCoupon',type,amount,maxuse,expiry,note,rules:JSON.stringify(rules)});
+    if(code) params.set('code',code);
+    const r=await fetch(GAS_COUPON+'?'+params.toString());
+    const d=await r.json();
+    if(d.ok){
+      document.getElementById('cpNewCode').textContent=d.code;
+      document.getElementById('cpNewInfo').textContent=`類型：${type}｜面額：NT$${Number(d.amount).toLocaleString()}｜規則：${rules.length}條${expiry?'｜到期：'+expiry:''}${note?'｜備註：'+note:''}`;
+      document.getElementById('cpAddResult').style.display='block';
+      document.getElementById('cp-code').value='';document.getElementById('cp-note').value='';
+      _cpRules=[];renderCpRuleList();
       loadAllCoupons();
-    } else { showMsg('msgCouponAdd','❌ '+d.msg,false); }
-  } catch(e) { showMsg('msgCouponAdd','❌ 新增失敗',false); }
+    }else{showMsg('msgCouponAdd','❌ '+d.msg,false);}
+  }catch(e){showMsg('msgCouponAdd','❌ 新增失敗',false);}
 }
 
-function copyCouponCode() {
-  const code = document.getElementById('cpNewCode').textContent;
-  if(!code) return;
+function copyCouponCode(){
+  const code=document.getElementById('cpNewCode').textContent;
+  if(!code)return;
   navigator.clipboard.writeText(code).then(()=>showMsg('msgCouponAdd','✅ 券碼已複製！',true));
 }
 
-// 編輯Modal（用inline prompt簡化）
-async function openEditCouponModal(row, code, amount, status, expiry, note) {
-  const newAmount = prompt(`編輯券碼：${code}\n\n面額（目前：$${amount}）：`, amount);
-  if(newAmount === null) return;
-  const newStatus = prompt(`狀態（目前：${status}）\n輸入：有效 / 停用 / 已用完`, status);
-  if(newStatus === null) return;
-  const newNote = prompt(`備註（目前：${note||'無'}）：`, note||'');
-  if(newNote === null) return;
-  try {
-    const params = new URLSearchParams({action:'editCoupon', row, amount:parseInt(newAmount)||amount, status:newStatus, note:newNote});
-    const r = await fetch(GAS_COUPON+'?'+params.toString());
-    const d = await r.json();
-    if(d.ok) { showMsg('msgCouponAdd','✅ 已儲存',true); loadAllCoupons(); }
-    else showMsg('msgCouponAdd','❌ '+d.msg,false);
-  } catch(e) { showMsg('msgCouponAdd','❌ 儲存失敗',false); }
+// 編輯Modal（展開式，可修改規則）
+let _editCpRow=0, _editCpRules=[];
+function openCouponEditModal(row,code,amount,maxuse,status,expiry,note,rulesEnc){
+  _editCpRow=row;
+  try{_editCpRules=JSON.parse(decodeURIComponent(rulesEnc));}catch(_){_editCpRules=[];}
+  const html=`<div style="background:#fff;border-radius:10px;padding:20px;position:fixed;inset:40px auto;left:50%;transform:translateX(-50%);width:min(560px,95vw);max-height:80vh;overflow-y:auto;z-index:1000;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <strong style="font-size:15px">✏️ 編輯折扣券：${code}</strong>
+      <button onclick="document.getElementById('cpEditOverlay').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#aaa">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="form-group"><label>面額</label><input type="number" id="ce-amount" value="${amount}" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;"></div>
+      <div class="form-group"><label>單次最高折抵（0=不限）</label><input type="number" id="ce-maxuse" value="${maxuse}" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;"></div>
+      <div class="form-group"><label>狀態</label>
+        <select id="ce-status" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;">
+          <option ${status==='有效'?'selected':''}>有效</option>
+          <option ${status==='停用'?'selected':''}>停用</option>
+          <option ${status==='已用完'?'selected':''}>已用完</option>
+        </select>
+      </div>
+      <div class="form-group"><label>到期日</label><input type="date" id="ce-expiry" value="${expiry}" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;"><label>備註</label><input type="text" id="ce-note" value="${note}" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <strong style="font-size:13px">📋 折抵規則</strong>
+      <button class="btn btn-gold btn-sm" onclick="addEditCpRule()">＋ 新增規則</button>
+    </div>
+    <div id="ceRuleList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="document.getElementById('cpEditOverlay').remove()">取消</button>
+      <button class="btn btn-gold" onclick="saveCouponEdit()">💾 儲存</button>
+    </div>
+  </div>
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999" onclick="document.getElementById('cpEditOverlay').remove()"></div>`;
+  const overlay=document.createElement('div');
+  overlay.id='cpEditOverlay';
+  overlay.style.position='fixed';overlay.style.inset='0';overlay.style.zIndex='998';
+  overlay.innerHTML=html;
+  document.body.appendChild(overlay);
+  renderEditCpRuleList();
 }
 
-async function deleteCoupon_(row) {
-  if(!confirm('確定刪除此折扣券？')) return;
-  try {
-    const r = await fetch(GAS_COUPON+'?'+new URLSearchParams({action:'deleteCoupon', row}).toString());
-    const d = await r.json();
-    if(d.ok) { showMsg('msgCouponAdd','✅ 已刪除',true); loadAllCoupons(); }
+function renderEditCpRuleList(){
+  const el=document.getElementById('ceRuleList');
+  if(!el)return;
+  if(!_editCpRules.length){el.innerHTML='<div style="color:#aaa;font-size:12px;padding:8px">尚無規則</div>';return;}
+  el.innerHTML=_editCpRules.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;background:#f9f9f9;border:1px solid #eee;border-radius:6px;padding:8px 10px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#888">滿</span>
+      <input type="number" value="${r.minAmount}" min="0" style="width:90px;border:1px solid var(--border);border-radius:4px;padding:4px 7px;font-size:12px;" onchange="_editCpRules[${i}].minAmount=parseInt(this.value)||0">
+      <span style="font-size:12px;color:#888">元</span>
+      <select style="border:1px solid var(--border);border-radius:4px;padding:4px 7px;font-size:12px;" onchange="_editCpRules[${i}].type=this.value;renderEditCpRuleList()">
+        <option value="fixed" ${r.type==='fixed'?'selected':''}>固定折</option>
+        <option value="percent" ${r.type==='percent'?'selected':''}>百分比</option>
+      </select>
+      <input type="number" value="${r.value}" min="0" style="width:80px;border:1px solid var(--border);border-radius:4px;padding:4px 7px;font-size:12px;" onchange="_editCpRules[${i}].value=parseFloat(this.value)||0">
+      <span style="font-size:12px;color:#888">${r.type==='fixed'?'元':'%'}</span>
+      <button class="btn btn-red btn-sm" onclick="_editCpRules.splice(${i},1);renderEditCpRuleList()">✕</button>
+    </div>`).join('');
+}
+
+function addEditCpRule(){
+  _editCpRules.push({minAmount:0,type:'fixed',value:0});
+  renderEditCpRuleList();
+}
+
+async function saveCouponEdit(){
+  const amount=document.getElementById('ce-amount').value;
+  const maxuse=document.getElementById('ce-maxuse').value||0;
+  const status=document.getElementById('ce-status').value;
+  const expiry=document.getElementById('ce-expiry').value;
+  const note=document.getElementById('ce-note').value;
+  // 重新從DOM收集規則
+  const ruleEls=document.querySelectorAll('#ceRuleList > div');
+  const rules=_editCpRules.map((r,i)=>{
+    const inputs=ruleEls[i]?ruleEls[i].querySelectorAll('input,select'):[];
+    if(inputs.length>=3) return{minAmount:parseInt(inputs[0].value)||0,type:inputs[1].value,value:parseFloat(inputs[2].value)||0};
+    return r;
+  });
+  try{
+    const params=new URLSearchParams({action:'editCoupon',row:_editCpRow,amount,maxuse,status,expiry,note,rules:JSON.stringify(rules)});
+    const r=await fetch(GAS_COUPON+'?'+params.toString());
+    const d=await r.json();
+    if(d.ok){showMsg('msgCouponAdd','✅ 已儲存',true);document.getElementById('cpEditOverlay').remove();loadAllCoupons();}
     else showMsg('msgCouponAdd','❌ '+d.msg,false);
-  } catch(e) { showMsg('msgCouponAdd','❌ 刪除失敗',false); }
+  }catch(e){showMsg('msgCouponAdd','❌ 儲存失敗',false);}
+}
+
+async function deleteCoupon_(row){
+  if(!confirm('確定刪除此折扣券？'))return;
+  try{
+    const r=await fetch(GAS_COUPON+'?'+new URLSearchParams({action:'deleteCoupon',row}).toString());
+    const d=await r.json();
+    if(d.ok){showMsg('msgCouponAdd','✅ 已刪除',true);loadAllCoupons();}
+    else showMsg('msgCouponAdd','❌ '+d.msg,false);
+  }catch(e){showMsg('msgCouponAdd','❌ 刪除失敗',false);}
 }
 
 </script>

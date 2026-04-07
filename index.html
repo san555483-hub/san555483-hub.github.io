@@ -1073,7 +1073,9 @@ const GAS_SHOP_URL = GAS_URL; // 購物金用同一條GAS
 // 購物金狀態
 let shopCreditBalance = 0;
 // 折扣碼狀態
-let couponBalance = 0;   // 券的餘額
+let couponBalance = 0;
+let couponRules   = [];  // 折抵規則陣列
+let couponMaxuse  = 0;   // 單次最高折抵（0=不限）   // 券的餘額
 let couponDeduct  = 0;   // 本次折抵
 let couponCode    = '';  // 使用的券碼
 let couponType    = '';  // 購物券 or 現金券   // 查到的餘額
@@ -1559,7 +1561,7 @@ function renderCheckoutPage(){
   const existPhone = document.getElementById('inp-phone').value.trim();
   if(existPhone) document.getElementById('sc-query-phone').value = existPhone;
   // 清除上次購物金折抵
-  shopCreditDeduct=0; shopCreditBalance=0; couponDeduct=0; couponCode=''; couponBalance=0;
+  shopCreditDeduct=0; shopCreditBalance=0; couponDeduct=0; couponCode=''; couponBalance=0; couponRules=[]; couponMaxuse=0;
   document.getElementById('sc-info').style.display='none';
   document.getElementById('sc-deduct-row').style.display='none';
   document.getElementById('sc-applied').style.display='none';
@@ -1689,7 +1691,7 @@ function submitOrderToSheet(orderNum,total,items,gift,phone,shipping,address,not
 function closeOrderModal(){
   document.getElementById('order-modal-wrap').classList.remove('on');
   // 清空購物車並回 Step 1
-  cart=[]; updateCart(); shopCreditDeduct=0; shopCreditBalance=0; shopCreditPhone=''; couponDeduct=0; couponCode=''; couponBalance=0; couponType='';
+  cart=[]; updateCart(); shopCreditDeduct=0; shopCreditBalance=0; shopCreditPhone=''; couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0;
   document.getElementById('inp-phone').value='';
   document.getElementById('inp-note').value='';
   document.getElementById('inp-address').value='';
@@ -2010,10 +2012,16 @@ async function checkCouponCode() {
     couponBalance = d.balance;
     couponCode    = d.code;
     couponType    = d.type;
-    infoEl.textContent = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
-    infoEl.style.display='block';
+    couponRules   = d.rules || [];
+    couponMaxuse  = d.maxuse || 0;
+    // 根據訂單金額自動計算最優折抵
     const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
-    document.getElementById('coupon-deduct-amt').value = Math.min(d.balance, orderTotal);
+    const autoDisc   = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
+    let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
+    if(couponRules.length) infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
+    infoEl.textContent = infoTxt;
+    infoEl.style.display='block';
+    document.getElementById('coupon-deduct-amt').value = autoDisc;
     document.getElementById('coupon-deduct-row').style.display='flex';
   } catch(e) { showToast('驗證失敗：'+e.message); }
 }
@@ -2029,8 +2037,38 @@ function applyCoupon() {
   showToast('✓ 折扣碼折抵 NT$'+amt+' 已套用');
 }
 
+// 自動計算最優折抵金額
+function calcCouponDiscount(orderTotal, rules, maxuse, balance) {
+  let disc = 0;
+  if(!rules || !rules.length) {
+    // 無規則：直接用餘額（受單次上限限制）
+    disc = balance;
+  } else {
+    // 找符合條件的最大折扣
+    const sorted = rules.filter(r=>orderTotal >= (r.minAmount||0)).sort((a,b)=>{
+      const va = r_calcValue(a, orderTotal);
+      const vb = r_calcValue(b, orderTotal);
+      return vb - va;
+    });
+    if(sorted.length) disc = r_calcValue(sorted[0], orderTotal);
+  }
+  // 受單次上限限制
+  if(maxuse > 0) disc = Math.min(disc, maxuse);
+  // 不超過餘額
+  disc = Math.min(disc, balance);
+  // 不超過訂單金額
+  disc = Math.min(disc, orderTotal);
+  return Math.floor(disc);
+}
+
+function r_calcValue(rule, orderTotal) {
+  if(rule.type === 'fixed') return rule.value || 0;
+  if(rule.type === 'percent') return Math.floor(orderTotal * (rule.value||0) / 100);
+  return 0;
+}
+
 function clearCoupon() {
-  couponDeduct=0; couponCode=''; couponBalance=0; couponType='';
+  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0; couponRules=[]; couponMaxuse=0;
   document.getElementById('coupon-applied').style.display='none';
   document.getElementById('coupon-deduct-row').style.display='none';
   document.getElementById('coupon-info').style.display='none';
