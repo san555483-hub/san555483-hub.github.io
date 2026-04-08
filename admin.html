@@ -87,6 +87,13 @@ input:checked + .slider:before { transform: translateX(16px); }
 .shop-edit-row input { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; }
 .shop-edit-row input[type=number] { flex: 0 0 100px; }
 .shop-edit-row span { color: var(--muted); font-size: 13px; white-space: nowrap; }
+/* 廣播跑馬燈 */
+@keyframes mqScroll { 0%{transform:translateX(100vw)} 100%{transform:translateX(-100%)} }
+.mq-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+.mq-card textarea{flex:1;min-width:220px;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;min-height:56px;font-family:inherit;}
+.mq-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#e8d0b0;color:#3d2b1f;}
+.mq-badge.active{background:#2d7a4f;color:#fff;}
+.mq-badge.inactive{background:#ccc;color:#666;}
 </style>
 </head>
 <body>
@@ -106,6 +113,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="tab" onclick="switchTab('shopcredit')">🛍️ 購物金</div>
   <div class="tab" onclick="switchTab('coupon')">🎫 折扣券</div>
   <div class="tab" onclick="switchTab('payment')">💳 付款方式</div>
+  <div class="tab" onclick="switchTab('marquee')">📢 廣播跑馬燈</div>
 </div>
 <div class="content">
 
@@ -430,7 +438,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   </div>
 
   <!-- 💳 付款方式編輯 Modal -->
-  <div class="modal-overlay" id="pay-modal" style="display:none;position:fixed;inset:0;z-index:999;align-items:center;justify-content:center;">
+  <div class="modal-overlay" id="pay-modal" style="display:none;align-items:center;justify-content:center;">
     <div class="modal" style="max-width:480px;width:95vw;">
       <div class="modal-head">
         <h3 id="pay-modal-title">新增付款方式</h3>
@@ -448,19 +456,7 @@ input:checked + .slider:before { transform: translateX(16px); }
         </div>
         <div class="form-group">
           <label>圖示 Emoji</label>
-          <div style="display:flex;gap:8px;">
-            <input id="pm-icon" type="text" placeholder="🟡" style="width:60px;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:22px;text-align:center;" maxlength="2">
-            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-              <span style="font-size:11px;color:#aaa;">快選：</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='🟡'">🟡</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='🔵'">🔵</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='🏦'">🏦</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='💰'">💰</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='📱'">📱</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='💳'">💳</span>
-              <span style="cursor:pointer;font-size:20px;" onclick="document.getElementById('pm-icon').value='🪙'">🪙</span>
-            </div>
-          </div>
+          <input id="pm-icon" type="text" placeholder="例：🟡 🔵 🏦 💰 📱" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;" maxlength="4">
         </div>
         <div class="form-group">
           <label>按鈕顏色</label>
@@ -500,6 +496,38 @@ input:checked + .slider:before { transform: translateX(16px); }
       <div class="card-title">系統設定</div>
       <div id="msgSettings" class="msg"></div>
       <div id="settingsList"><div class="loading">載入中...</div></div>
+    </div>
+  </div>
+
+  <!-- 📢 廣播跑馬燈 -->
+  <div class="panel" id="panel-marquee">
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>📢 廣播跑馬燈管理</span>
+        <button class="btn btn-gold btn-sm" onclick="addMarqueeRow()">＋ 新增廣播器</button>
+      </div>
+      <p style="font-size:12px;color:#999;margin-bottom:14px;">各網站最多 5 個廣播器，即時更新不需重新部署。</p>
+      <div id="msgMarquee" class="msg"></div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:var(--bark);margin-bottom:10px;padding:8px 12px;background:var(--sand);border-radius:8px;border-left:4px solid var(--gold);">
+          🛒 購物網站廣播器（shop） <span style="font-size:11px;color:#999;font-weight:400;">共 5 個槽位</span>
+        </div>
+        <div id="marqueeList-shop" style="display:flex;flex-direction:column;gap:10px;"><div class="loading">載入中...</div></div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--bark);margin-bottom:10px;padding:8px 12px;background:var(--sand);border-radius:8px;border-left:4px solid var(--rose);">
+          📅 預約網站廣播器（booking） <span style="font-size:11px;color:#999;font-weight:400;">共 5 個槽位</span>
+        </div>
+        <div id="marqueeList-booking" style="display:flex;flex-direction:column;gap:10px;"><div class="loading">載入中...</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">🔍 跑馬燈預覽（實際顯示效果）</div>
+      <div style="background:var(--bark);border-radius:8px;padding:12px 16px;overflow:hidden;">
+        <div id="marqueePreviewTrack" style="white-space:nowrap;overflow:hidden;">
+          <span id="marqueePreviewText" style="display:inline-block;color:#fff;font-size:16px;font-weight:600;letter-spacing:.05em;animation:mqScroll 18s linear infinite;">— 目前無啟用廣播 —</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -630,7 +658,7 @@ window.onload = function() { initSlotSelects(); };
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit','coupon','payment'];
+  const tabs = ['bookings','services','customers','blacklist','schedule','credit','settings','shop','shopcredit','coupon','payment','marquee'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'services')  loadServices();
@@ -643,6 +671,7 @@ function switchTab(name) {
   if (name === 'shopcredit') loadShopCreditTab();
   if (name === 'coupon')      loadCouponTab();
   if (name === 'payment')     loadPaymentTab();
+  if (name === 'marquee')     loadMarqueeTab();
 }
 
 async function api(params) {
@@ -799,9 +828,9 @@ async function loadPaymentTab() {
   const el = document.getElementById('payMethodList');
   el.innerHTML = '<div class="loading">載入中...</div>';
   try {
-    const r = await fetch(GAS_SHOP+'?action=getPayMethods&t='+Date.now());
+    const r = await fetch(GAS+'?action=getPayMethods&t='+Date.now());
     const d = await r.json();
-    if(!d.ok){ el.innerHTML='<div style="color:#c00;padding:12px;background:#fdf0ee;border-radius:6px;border-left:3px solid #c00;">⚠️ 載入失敗：'+d.msg+'<br><span style="font-size:11px;color:#888;margin-top:4px;display:block;">請確認 GAS 已部署新版本（包含 getPayMethods API）</span></div>'; return; }
+    if(!d.ok){ el.innerHTML='<div style="color:#c00;padding:12px;">載入失敗：'+d.msg+'</div>'; return; }
     _payMethods = d.methods || [];
     renderPayMethodList();
   } catch(e) { el.innerHTML='<div style="color:#c00;padding:12px;">連線失敗</div>'; }
@@ -871,7 +900,7 @@ async function savePayMethodForm() {
   if(!id || !name){ msgEl.style.display='block'; msgEl.style.background='#fdf0ee'; msgEl.style.color='#c00'; msgEl.textContent='ID 和名稱必填'; return; }
   msgEl.style.display='block'; msgEl.style.background='#f5f5f5'; msgEl.style.color='#555'; msgEl.textContent='儲存中…';
   try {
-    const r = await fetch(GAS_SHOP, { method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await fetch(GAS, { method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'savePayMethod', id, name, icon, color, info, order, enabled }) });
     const d = await r.json();
     if(d.ok){ closePayModal(); loadPaymentTab(); }
@@ -882,7 +911,7 @@ async function savePayMethodForm() {
 async function deletePayMethod(id, name) {
   if(!confirm(`確定刪除「${name}」？刪除後顧客結帳頁將不再顯示此付款方式。`)) return;
   try {
-    const r = await fetch(GAS_SHOP, { method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await fetch(GAS, { method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'deletePayMethod', id }) });
     const d = await r.json();
     if(d.ok) loadPaymentTab();

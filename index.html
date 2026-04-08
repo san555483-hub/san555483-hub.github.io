@@ -20,6 +20,47 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
 body{font-family:'Noto Serif TC',serif;background:var(--linen);color:var(--ink);overflow-x:hidden;}
 
+
+/* 廣播跑馬燈 */
+.marquee-bar{
+  background:var(--bark2);
+  border-bottom:2px solid var(--gold);
+  padding:10px 0;
+  overflow:hidden;
+  position:sticky;
+  top:56px;          /* header 高度 */
+  z-index:190;
+  display:none;       /* 預設隱藏，有內容才顯示 */
+}
+.marquee-bar.has-content{ display:block; }
+.marquee-track{
+  white-space:nowrap;
+  display:inline-block;
+  animation:mqRoll 30s linear infinite;
+}
+.marquee-track:hover{ animation-play-state:paused; }
+@keyframes mqRoll{
+  0%  { transform: translateX(100vw); }
+  100%{ transform: translateX(-100%); }
+}
+.marquee-text{
+  font-size:17px;          /* ← 大字，顯眼 */
+  font-weight:700;
+  color:#fff;
+  letter-spacing:.06em;
+  padding:0 48px;
+  font-family:'Noto Sans TC',sans-serif;
+}
+.marquee-sep{
+  color:var(--gold-lt);
+  font-size:14px;
+  padding:0 8px;
+  opacity:.7;
+}
+@media(max-width:480px){
+  .marquee-text{ font-size:15px; padding:0 32px; }
+}
+
 /* ══════════════════════════════════════════════════════════
    Header（精簡版）
 ══════════════════════════════════════════════════════════ */
@@ -544,6 +585,8 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     handleLineCallback();
     // 首頁商品直覽初始載入
     setTimeout(initHomeShop, 300);
+    // 廣播跑馬燈
+    loadMarqueeBanner();
     const name=sessionStorage.getItem('line_name'),pic=sessionStorage.getItem('line_pic'),userId=sessionStorage.getItem('line_userId');
     if(name&&userId){window._lineUser={displayName:name,userId,pic:pic||''};renderLineBar({name,pic});}
     else{window._lineUser=null;renderLineBar(null);}
@@ -575,6 +618,14 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
       <button class="h-btn" onclick="toggleCart()">🛒 <span class="cart-badge" id="cart-count">0</span></button>
     </div>
   </div>
+
+<!-- 📢 廣播跑馬燈 -->
+<div class="marquee-bar" id="marqueeBar">
+  <div class="marquee-track" id="marqueeTrack">
+    <!-- 內容由 JS 動態填入 -->
+  </div>
+</div>
+
 </header>
 
 <div class="line-bar" id="line-bar"></div>
@@ -2301,6 +2352,45 @@ document.getElementById('inp-phone').addEventListener('input', function(){
 // ══════════════════════════════════════════════
 // 初始化
 // ══════════════════════════════════════════════
+
+// ============================================================
+// 📢 廣播跑馬燈（購物網站，只撈 site=shop 啟用者）
+// ============================================================
+async function loadMarqueeBanner() {
+  try {
+    const r = await fetch(GAS_URL + '?action=getMarquees&site=shop&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok || !d.marquees || !d.marquees.length) return; // 無內容就不顯示
+    const texts = d.marquees
+      .filter(m => m.content && m.content.trim())
+      .sort((a,b) => a.order - b.order)
+      .map(m => m.content.trim());
+    if (!texts.length) return;
+
+    // 建立跑馬燈內容（重複一次讓捲動無縫）
+    const combined = texts.join('　　✦　　');
+    const track = document.getElementById('marqueeTrack');
+    const bar   = document.getElementById('marqueeBar');
+    if (!track || !bar) return;
+
+    // 兩份文字讓動畫無縫接續
+    track.innerHTML =
+      `<span class="marquee-text">${combined}</span>` +
+      `<span class="marquee-sep">　　✦　　</span>` +
+      `<span class="marquee-text">${combined}</span>`;
+
+    // 依文字長度動態算動畫時間（每個字約 0.4s，最少 12s，最多 60s）
+    const totalChars = combined.length;
+    const duration   = Math.min(60, Math.max(12, Math.round(totalChars * 0.38)));
+    track.style.animation = `mqRoll ${duration}s linear infinite`;
+
+    bar.classList.add('has-content'); // 顯示 bar
+  } catch(e) {
+    // 靜默失敗，不影響主頁面
+    console.warn('marquee load failed', e);
+  }
+}
+
 updateCart();
 renderSampleSeriesSelect();
 loadVideos();
