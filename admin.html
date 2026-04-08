@@ -1417,15 +1417,15 @@ async function deleteCoupon_(row){
 // ============================================================
 let _marquees = { shop: [], booking: [] };
 
-// 產生預設空槽位（Sheet 空白時用）
-function _defaultSlots(site) {
-  return [1,2,3,4,5].map(i => ({
-    id:      site + '_' + i,
-    site:    site,
-    order:   i,
-    content: '',
-    enabled: false
-  }));
+function _fillSlots(site, data) {
+  const slots = [];
+  for (let i = 1; i <= 5; i++) {
+    const found = data.find(m => String(m.order) === String(i));
+    slots.push(found
+      ? { ...found, enabled: found.enabled === true || found.enabled === 'true' }
+      : { id: site + '_' + i, site, order: i, content: '', enabled: false });
+  }
+  return slots;
 }
 
 async function loadMarqueeTab() {
@@ -1433,33 +1433,27 @@ async function loadMarqueeTab() {
     document.getElementById('marqueeList-'+site).innerHTML = '<div class="loading">載入中...</div>';
   });
   try {
-    const r = await fetch(GAS + '?action=getMarquees&t=' + Date.now());
+    const r = await fetch(GAS_SHOP + '?action=getMarquees&t=' + Date.now());
     const d = await r.json();
     if (!d.ok) throw new Error(d.msg);
-
-    // ★ 核心修正：Sheet 空白或該 site 無資料 → 前端補預設槽位
-    const shopData    = d.marquees.filter(m => m.site === 'shop');
-    const bookingData = d.marquees.filter(m => m.site === 'booking');
-    _marquees.shop    = shopData.length    ? shopData    : _defaultSlots('shop');
-    _marquees.booking = bookingData.length ? bookingData : _defaultSlots('booking');
-
+    _marquees.shop    = _fillSlots('shop',    d.marquees.filter(m => m.site === 'shop'));
+    _marquees.booking = _fillSlots('booking', d.marquees.filter(m => m.site === 'booking'));
     renderMarqueeList('shop');
     renderMarqueeList('booking');
     updateMarqueePreview();
   } catch(err) {
-    ['shop','booking'].forEach(site => {
-      // ★ 網路失敗也給預設槽位，不讓使用者卡住
-      _marquees[site] = _defaultSlots(site);
-      renderMarqueeList(site);
-    });
-    showMsg('msgMarquee', '⚠️ 從 GAS 載入失敗，顯示本地空槽位，儲存後將寫入 Sheet。', false);
+    _marquees.shop    = _fillSlots('shop', []);
+    _marquees.booking = _fillSlots('booking', []);
+    renderMarqueeList('shop');
+    renderMarqueeList('booking');
+    showMsg('msgMarquee', '⚠️ 載入失敗（' + err.message + '），顯示空槽位，儲存後將寫入 Sheet。', false);
   }
 }
 
 function renderMarqueeList(site) {
   const list = _marquees[site];
   const el   = document.getElementById('marqueeList-' + site);
-  if (!list.length) { el.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:12px;">載入中...</p>'; return; }
+  if (!list.length) { el.innerHTML = ''; return; }
   el.innerHTML = list.map(m => `
     <div class="mq-card" id="mqcard-${m.id}">
       <div style="min-width:36px;text-align:center;font-size:12px;color:#999;">
@@ -1484,7 +1478,7 @@ async function saveOneMarquee(id, site, order) {
   const enabled = (document.getElementById('mqen-'+id)||{}).checked || false;
   showMsg('msgMarquee','⏳ 儲存中...',null);
   try {
-    const r = await fetch(GAS + '?action=saveMarquee&id='+encodeURIComponent(id)+'&site='+site+'&order='+order+'&content='+encodeURIComponent(content)+'&enabled='+(enabled?'true':'false')+'&t='+Date.now());
+    const r = await fetch(GAS_SHOP + '?action=saveMarquee&id='+encodeURIComponent(id)+'&site='+site+'&order='+order+'&content='+encodeURIComponent(content)+'&enabled='+(enabled?'true':'false')+'&t='+Date.now());
     const d = await r.json();
     showMsg('msgMarquee', d.ok ? '✅ 廣播器 #'+order+' 已儲存' : '❌ '+d.msg, d.ok);
     if (d.ok) loadMarqueeTab();
