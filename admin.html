@@ -1422,7 +1422,7 @@ async function loadMarqueeTab() {
     document.getElementById('marqueeList-'+site).innerHTML = '<div class="loading">載入中...</div>';
   });
   try {
-    const r = await fetch(GAS_SHOP + '?action=getMarquees&t=' + Date.now());
+    const r = await fetch(GAS + '?action=getMarquees&t=' + Date.now());
     const d = await r.json();
     if (!d.ok) throw new Error(d.msg);
     _marquees.shop    = d.marquees.filter(m => m.site === 'shop');
@@ -1465,7 +1465,7 @@ async function saveOneMarquee(id, site, order) {
   const enabled = (document.getElementById('mqen-'+id)||{}).checked || false;
   showMsg('msgMarquee','⏳ 儲存中...',null);
   try {
-    const r = await fetch(GAS_SHOP + '?action=saveMarquee&id='+encodeURIComponent(id)+'&site='+site+'&order='+order+'&content='+encodeURIComponent(content)+'&enabled='+(enabled?'true':'false')+'&t='+Date.now());
+    const r = await fetch(GAS + '?action=saveMarquee&id='+encodeURIComponent(id)+'&site='+site+'&order='+order+'&content='+encodeURIComponent(content)+'&enabled='+(enabled?'true':'false')+'&t='+Date.now());
     const d = await r.json();
     showMsg('msgMarquee', d.ok ? '✅ 廣播器 #'+order+' 已儲存' : '❌ '+d.msg, d.ok);
     if (d.ok) loadMarqueeTab();
