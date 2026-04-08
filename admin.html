@@ -1412,6 +1412,100 @@ async function deleteCoupon_(row){
     else showMsg('msgCouponAdd','❌ '+d.msg,false);
   }catch(e){showMsg('msgCouponAdd','❌ 刪除失敗',false);}
 }
+// ============================================================
+// 📢 廣播跑馬燈
+// ============================================================
+let _marquees = { shop: [], booking: [] };
+
+async function loadMarqueeTab() {
+  ['shop','booking'].forEach(site => {
+    document.getElementById('marqueeList-'+site).innerHTML = '<div class="loading">載入中...</div>';
+  });
+  try {
+    const r = await fetch(GAS_SHOP + '?action=getMarquees&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.msg);
+    _marquees.shop    = d.marquees.filter(m => m.site === 'shop');
+    _marquees.booking = d.marquees.filter(m => m.site === 'booking');
+    renderMarqueeList('shop');
+    renderMarqueeList('booking');
+    updateMarqueePreview();
+  } catch(err) {
+    ['shop','booking'].forEach(site => {
+      document.getElementById('marqueeList-'+site).innerHTML = '<p style="color:#c0392b;font-size:13px;">載入失敗：' + err.message + '</p>';
+    });
+  }
+}
+
+function renderMarqueeList(site) {
+  const list = _marquees[site];
+  const el   = document.getElementById('marqueeList-' + site);
+  if (!list.length) { el.innerHTML = '<p style="color:#999;font-size:13px;text-align:center;padding:12px;">尚無廣播器</p>'; return; }
+  el.innerHTML = list.map(m => `
+    <div class="mq-card" id="mqcard-${m.id}">
+      <div style="min-width:36px;text-align:center;font-size:12px;color:#999;">
+        <div style="font-weight:700;color:var(--bark);font-size:15px;">#${m.order}</div>
+        <div>${site==='shop'?'購物':'預約'}</div>
+      </div>
+      <textarea id="mqtext-${m.id}" placeholder="廣播文字內容（空白=不顯示）" style="flex:1;min-width:220px;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;min-height:56px;font-family:inherit;">${m.content}</textarea>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
+        <span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:${m.enabled && m.content.trim() ? '#2d7a4f' : '#ccc'};color:${m.enabled && m.content.trim() ? '#fff' : '#666'};">${m.enabled && m.content.trim() ? '啟用中' : '停用'}</span>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+          <input type="checkbox" id="mqen-${m.id}" ${m.enabled ? 'checked' : ''} onchange="updateMarqueePreview()"> 啟用
+        </label>
+        <button class="btn btn-primary btn-sm" onclick="saveOneMarquee('${m.id}','${site}',${m.order})">儲存</button>
+        <button class="btn btn-warn btn-sm" onclick="clearMarquee('${m.id}')">清空</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveOneMarquee(id, site, order) {
+  const content = (document.getElementById('mqtext-'+id)||{}).value || '';
+  const enabled = (document.getElementById('mqen-'+id)||{}).checked || false;
+  showMsg('msgMarquee','⏳ 儲存中...',null);
+  try {
+    const r = await fetch(GAS_SHOP + '?action=saveMarquee&id='+encodeURIComponent(id)+'&site='+site+'&order='+order+'&content='+encodeURIComponent(content)+'&enabled='+(enabled?'true':'false')+'&t='+Date.now());
+    const d = await r.json();
+    showMsg('msgMarquee', d.ok ? '✅ 廣播器 #'+order+' 已儲存' : '❌ '+d.msg, d.ok);
+    if (d.ok) loadMarqueeTab();
+  } catch(e) { showMsg('msgMarquee','❌ 網路錯誤',false); }
+}
+
+async function clearMarquee(id) {
+  if (!confirm('確定要清空此廣播內容？')) return;
+  document.getElementById('mqtext-'+id).value = '';
+  document.getElementById('mqen-'+id).checked = false;
+  const m = [..._marquees.shop, ..._marquees.booking].find(x=>x.id===id);
+  if (m) await saveOneMarquee(id, m.site, m.order);
+}
+
+function addMarqueeRow() {
+  showMsg('msgMarquee', '⚠️ 每個網站固定 5 個槽位，直接在上方槽位填寫內容即可，無需新增。', null);
+}
+
+function updateMarqueePreview() {
+  const allActive = [..._marquees.shop, ..._marquees.booking].filter(m => {
+    const en  = document.getElementById('mqen-'+m.id);
+    const txt = (document.getElementById('mqtext-'+m.id)||{}).value !== undefined
+      ? document.getElementById('mqtext-'+m.id).value
+      : m.content;
+    return (en ? en.checked : m.enabled) && txt.trim();
+  });
+  const text = allActive.length
+    ? allActive.map(m => {
+        const el = document.getElementById('mqtext-'+m.id);
+        return el ? el.value.trim() : m.content.trim();
+      }).join('　　⭐　　')
+    : '— 目前無啟用廣播 —';
+  const el = document.getElementById('marqueePreviewText');
+  if (el) {
+    el.textContent = text;
+    el.style.animation = 'none';
+    setTimeout(() => { el.style.animation = 'mqScroll 20s linear infinite'; }, 50);
+  }
+}
+
 
 </script>
 <!-- 手動新增購物金 Modal -->
