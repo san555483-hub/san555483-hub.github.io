@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>UNI 髮型設計 · 尊爵預約</title>
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8D08A;
+  --dark: #1A0F08;
+  --dark2: #2C1810;
+  --dark3: #3D2416;
+  --cream: #FDF8F0;
+  --cream2: #F5EBD8;
+  --text: #1A0F08;
+  --text2: #6B4C35;
+  --border: #D4B896;
+  --success: #4A8A4A;
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { min-height: 100vh; background: var(--dark); font-family: -apple-system,'PingFang TC','Microsoft JhengHei',sans-serif; }
+
+/* ===== LOADING ===== */
+#loading {
+  position: fixed; inset: 0; background: var(--dark);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; transition: opacity 0.5s;
+}
+.loading-logo { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: 4px; margin-bottom: 8px; }
+.loading-sub { font-size: 13px; color: var(--gold-light); opacity: 0.7; letter-spacing: 2px; }
+.loading-bar { width: 120px; height: 2px; background: var(--dark3); border-radius: 1px; margin-top: 24px; overflow: hidden; }
+.loading-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 1px; animation: loadFill 1.8s ease-in-out infinite; }
+@keyframes loadFill { 0%{width:0%} 50%{width:80%} 100%{width:100%} }
+
+/* ===== WRAP ===== */
+#app { display: none; min-height: 100vh; background: var(--cream); }
+
+/* ===== HEADER ===== */
+.header {
+  background: linear-gradient(160deg, var(--dark) 0%, var(--dark2) 60%, var(--dark3) 100%);
+  padding: 28px 20px 24px; text-align: center; position: relative; overflow: hidden;
+}
+.header::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-logo { font-size: 11px; letter-spacing: 5px; color: var(--gold); opacity: 0.8; text-transform: uppercase; margin-bottom: 6px; }
+.header-title { font-size: 26px; font-weight: 900; color: white; letter-spacing: 3px; }
+.header-title span { color: var(--gold); }
+.header-sub { font-size: 12px; color: var(--gold-light); opacity: 0.7; margin-top: 6px; letter-spacing: 1px; }
+
+/* ===== STEPS ===== */
+.steps { display: flex; justify-content: center; gap: 0; padding: 14px 20px; background: var(--dark2); }
+.step { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 70px; opacity: 0.4; transition: opacity 0.3s; }
+.step.active { opacity: 1; }
+.step.done { opacity: 0.7; }
+.step-num {
+  width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--gold);
+}
+.step.active .step-num { background: var(--gold); color: var(--dark); }
+.step.done .step-num { background: var(--success); border-color: var(--success); color: white; font-size: 14px; }
+.step-label { font-size: 9px; color: var(--gold-light); margin-top: 4px; letter-spacing: 0.5px; text-align: center; }
+.step-line { flex: 1; height: 1px; background: var(--gold); opacity: 0.3; margin: 13px -8px 0; max-width: 20px; }
+
+/* ===== PANELS ===== */
+.panel { display: none; padding: 20px; max-width: 500px; margin: 0 auto; }
+.panel.active { display: block; }
+
+/* ===== CARD ===== */
+.card { background: white; border-radius: var(--radius); box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 20px; margin-bottom: 14px; border: 1px solid rgba(201,168,76,0.15); }
+.card-title { font-size: 13px; font-weight: 800; color: var(--dark2); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.5px; }
+.card-title .ct-line { width: 3px; height: 14px; background: var(--gold); border-radius: 2px; }
+
+/* ===== INPUT ===== */
+label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; margin-top: 14px; }
+label:first-of-type { margin-top: 0; }
+input, select { width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; background: var(--cream); color: var(--text); font-family: inherit; transition: all 0.2s; }
+input:focus, select:focus { outline: none; border-color: var(--gold); background: white; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+input[type=tel] { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-align: center; }
+
+/* ===== BUTTON ===== */
+.btn { padding: 14px 20px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; width: 100%; margin-top: 14px; letter-spacing: 0.5px; }
+.btn-gold { background: linear-gradient(135deg, #C9A84C, #E8D08A, #C9A84C); color: var(--dark); }
+.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.4); }
+.btn-gold:active { transform: translateY(0); }
+.btn-outline { background: transparent; border: 1.5px solid var(--gold); color: var(--dark); }
+
+/* ===== VIP CARD ===== */
+.vip-card {
+  background: linear-gradient(135deg, var(--dark) 0%, var(--dark2) 50%, var(--dark3) 100%);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden;
+}
+.vip-card::before {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.2) 0%, transparent 70%);
+}
+.vip-tag { display: inline-block; padding: 3px 10px; border: 1px solid var(--gold); border-radius: 20px; font-size: 10px; color: var(--gold); letter-spacing: 1px; margin-bottom: 10px; }
+.vip-name { font-size: 24px; font-weight: 900; color: white; letter-spacing: 1px; }
+.vip-meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+.vip-meta-item { font-size: 11px; color: rgba(255,255,255,0.65); display: flex; align-items: center; gap: 4px; }
+.vip-meta-item strong { color: var(--gold-light); }
+.hair-note-box { margin-top: 12px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.6; }
+.hair-note-box .hn-label { color: var(--gold); font-size: 10px; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+
+/* ===== TIME SLOTS ===== */
+.time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.time-btn {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 4px;
+  text-align: center; font-size: 13px; font-weight: 700; cursor: pointer;
+  background: var(--cream); color: var(--text); transition: all 0.18s; font-family: inherit;
+}
+.time-btn.selected { background: var(--dark); border-color: var(--gold); color: var(--gold); }
+.time-btn.booked { background: var(--cream2); color: var(--border); cursor: not-allowed; text-decoration: line-through; font-weight: 400; }
+.time-btn:not(.booked):not(.selected):hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+
+/* ===== SERVICE GRID ===== */
+.svc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+.svc-btn {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 13px 10px;
+  cursor: pointer; background: var(--cream); transition: all 0.18s; text-align: left; font-family: inherit;
+}
+.svc-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+.svc-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.svc-price { font-size: 13px; font-weight: 800; color: var(--dark2); margin-top: 3px; }
+.svc-dur { font-size: 11px; color: var(--text2); }
+.svc-btn.selected .svc-name { color: var(--dark); }
+.svc-btn.selected .svc-price { color: var(--gold); }
+
+/* ===== TOTAL BAR ===== */
+.total-bar {
+  background: var(--dark); border-radius: 12px; padding: 14px 16px;
+  display: none; justify-content: space-between; align-items: center; margin-top: 12px;
+}
+.total-bar.show { display: flex; }
+.total-label { font-size: 12px; color: rgba(255,255,255,0.65); }
+.total-label small { display: block; font-size: 11px; color: var(--gold-light); opacity: 0.7; }
+.total-price { font-size: 24px; font-weight: 900; color: var(--gold); }
+
+/* ===== NOTE ===== */
+textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--cream); color: var(--text); font-family: inherit; resize: vertical; min-height: 80px; transition: all 0.2s; }
+textarea:focus { outline: none; border-color: var(--gold); background: white; box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+
+/* ===== CONFIRM ===== */
+.confirm-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--cream2); font-size: 13px; }
+.confirm-row:last-of-type { border-bottom: none; }
+.confirm-label { color: var(--text2); }
+.confirm-value { font-weight: 700; color: var(--text); text-align: right; max-width: 60%; }
+
+/* ===== SUCCESS ===== */
+.success-wrap { text-align: center; padding: 30px 20px; }
+.success-icon { font-size: 60px; margin-bottom: 16px; animation: bounceIn 0.6s; }
+@keyframes bounceIn { 0%{transform:scale(0)} 60%{transform:scale(1.1)} 100%{transform:scale(1)} }
+.success-title { font-size: 22px; font-weight: 900; color: var(--dark); letter-spacing: 1px; }
+.success-sub { font-size: 13px; color: var(--text2); margin-top: 8px; line-height: 1.6; }
+.success-card { background: linear-gradient(135deg, var(--dark), var(--dark2)); border-radius: var(--radius); padding: 20px; margin: 20px 0; text-align: left; }
+.success-card .sc-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 13px; }
+.success-card .sc-row:last-child { border-bottom: none; }
+.success-card .sc-label { color: rgba(255,255,255,0.55); }
+.success-card .sc-value { color: var(--gold-light); font-weight: 600; }
+
+/* ===== ALERT ===== */
+.alert { border-radius: 10px; padding: 13px 15px; font-size: 13px; margin-top: 12px; line-height: 1.5; }
+.alert-error { background: #FFF0EE; border: 1px solid #FFCCC7; color: #A8352E; }
+.alert-info { background: #FFF8E8; border: 1px solid var(--gold-light); color: var(--dark2); }
+
+/* ===== SKELETON ===== */
+.skeleton { background: linear-gradient(90deg, var(--cream2) 25%, var(--cream) 50%, var(--cream2) 75%); background-size: 200%; animation: shimmer 1.5s infinite; border-radius: 8px; height: 44px; }
+@keyframes shimmer { 0%{background-position:200%} 100%{background-position:-200%} }
+
+.nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); cursor: pointer; margin-bottom: 14px; font-weight: 600; }
+.nav-back span { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loading-logo">UNI</div>
+  <div class="loading-sub">HAIR DESIGN · ELSA</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<!-- App -->
+<div id="app">
+
+  <div class="header">
+    <div class="header-logo">UNI Hair Design</div>
+    <div class="header-title">尊<span>爵</span>預約</div>
+    <div class="header-sub">✦ 專屬會員 · 優先服務 ✦</div>
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">身份確認</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">日期時段</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="step3"><div class="step-num">3</div><div class="step-label">服務項目</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="step4"><div class="step-num">4</div><div class="step-label">確認預約</div></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="panel active" id="panel1">
+    <div style="height:6px;"></div>
+    <div class="card">
+      <div class="card-title"><div class="ct-line"></div>輸入您的手機號碼</div>
+      <label>手機號碼</label>
+      <input type="tel" id="phoneInput" placeholder="09xxxxxxxx" maxlength="10" inputmode="numeric" autocomplete="tel" />
+      <div id="phoneError"></div>
+      <button class="btn btn-gold" id="searchBtn" onclick="searchCustomer()">確認身份 →</button>
+    </div>
+    <div class="alert alert-info">
+      🔐 本頁面為尊爵會員專屬預約服務。<br>請輸入您的登記手機號碼以確認資格。
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="panel" id="panel2">
+    <div class="nav-back" onclick="goStep(1)"><span>‹</span> 返回</div>
+    <div class="vip-card" id="vipCard"></div>
+    <div class="card">
+      <div class="card-title"><div class="ct-line"></div>選擇預約日期</div>
+      <input type="date" id="dateInput" onchange="loadSlots()" />
+    </div>
+    <div class="card" id="slotCard" style="display:none;">
+      <div class="card-title"><div class="ct-line"></div>選擇時段</div>
+      <div class="time-grid" id="timeGrid"></div>
+    </div>
+    <button class="btn btn-gold" onclick="goStep(3)" id="nextToService" style="display:none;">選擇服務項目 →</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="panel" id="panel3">
+    <div class="nav-back" onclick="goStep(2)"><span>‹</span> 返回</div>
+    <div class="card">
+      <div class="card-title"><div class="ct-line"></div>選擇服務項目</div>
+      <div class="svc-grid" id="svcGrid"></div>
+      <div class="total-bar" id="totalBar">
+        <div>
+          <div class="total-label">預估費用<small id="durLabel"></small></div>
+        </div>
+        <div class="total-price" id="totalPrice">$0</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="ct-line"></div>特殊備註（選填）</div>
+      <textarea id="noteInput" placeholder="例如：想保留些許蓬鬆感、上次頭皮有點刺激、這次想換更深的棕色..."></textarea>
+    </div>
+    <button class="btn btn-gold" onclick="goConfirm()">預覽確認 →</button>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="panel" id="panel4">
+    <div class="nav-back" onclick="goStep(3)"><span>‹</span> 修改</div>
+    <div class="card">
+      <div class="card-title"><div class="ct-line"></div>預約確認</div>
+      <div id="confirmSummary"></div>
+    </div>
+    <div id="submitError"></div>
+    <button class="btn btn-gold" id="submitBtn" onclick="doSubmit()">✅ 確定送出預約</button>
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="goStep(1)">重新開始</button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="panel" id="panelSuccess">
+    <div class="success-wrap">
+      <div class="success-icon">🌟</div>
+      <div class="success-title">預約成功！</div>
+      <div class="success-sub">ELSA 已收到您的預約通知<br>期待在預約時間為您服務</div>
+      <div class="success-card" id="successDetail"></div>
+      <div class="alert alert-info">📌 如需更改或取消，請直接透過 LINE 聯繫 ELSA</div>
+      <button class="btn btn-gold" onclick="resetAll()" style="margin-top:16px;">再次預約</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// =============================================
+//  ⚙️ 填入你的 GAS Web App 網址（部署後取得）
+// =============================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
+// 範例：'https://script.google.com/macros/s/AKfy.../exec'
+// =============================================
+
+// ===== STATE =====
+const state = {
+  customer: null,
+  selectedDate: '',
+  selectedTime: '',
+  selectedServices: [],
+  services: [],
+};
+
+// ===== GAS fetch 呼叫（取代 google.script.run）=====
+async function callGAS(fn, params = {}) {
+  const url = new URL(GAS_URL);
+  url.searchParams.set('fn', fn);
+  url.searchParams.set('params', JSON.stringify(params));
+  url.searchParams.set('t', Date.now()); // 防快取
+  const res = await fetch(url.toString(), { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// ===== INIT =====
+window.addEventListener('load', async () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('dateInput').value = today;
+  document.getElementById('dateInput').min = today;
+
+  try {
+    const res = await callGAS('getServices');
+    if (res.success) state.services = res.services;
+  } catch(e) { console.warn('服務項目載入失敗', e); }
+
+  setTimeout(() => {
+    document.getElementById('loading').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }, 500);
+  }, 1400);
+});
+
+// ===== STEP NAVIGATION =====
+function goStep(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById('panel'+i).classList.toggle('active', i===n);
+  });
+  document.getElementById('panelSuccess').classList.remove('active');
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  });
+  if (n === 3) renderServices();
+  window.scrollTo(0, 0);
+}
+
+// ===== STEP 1：電話查詢 =====
+async function searchCustomer() {
+  const phone = document.getElementById('phoneInput').value.trim();
+  const errDiv = document.getElementById('phoneError');
+  errDiv.innerHTML = '';
+
+  if (phone.length < 10) {
+    errDiv.innerHTML = '<div class="alert alert-error">請輸入完整10碼手機號碼</div>';
+    return;
+  }
+
+  const btn = document.getElementById('searchBtn');
+  btn.textContent = '查詢中…'; btn.disabled = true;
+
+  try {
+    const res = await callGAS('getCustomerByPhone', { phone });
+    if (res.success) {
+      state.customer = res.customer;
+      renderVipCard();
+      goStep(2);
+      loadSlots();
+    } else {
+      errDiv.innerHTML = `<div class="alert alert-error">⚠️ ${res.message}</div>`;
+    }
+  } catch(e) {
+    errDiv.innerHTML = '<div class="alert alert-error">連線錯誤，請稍後再試</div>';
+  } finally {
+    btn.textContent = '確認身份 →'; btn.disabled = false;
+  }
+}
+
+document.getElementById('phoneInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchCustomer();
+});
+
+// ===== VIP CARD =====
+function renderVipCard() {
+  const c = state.customer;
+  document.getElementById('vipCard').innerHTML = `
+    <div class="vip-tag">${c.memberLevel || '尊爵會員'}</div>
+    <div class="vip-name">${c.name}</div>
+    <div class="vip-meta">
+      <div class="vip-meta-item">✂️ 到訪 <strong>${c.visitCount} 次</strong></div>
+      <div class="vip-meta-item">💰 累計 <strong>$${(c.totalSpend||0).toLocaleString()}</strong></div>
+      ${c.lastVisit ? `<div class="vip-meta-item">🕐 上次 <strong>${c.lastVisit}</strong></div>` : ''}
+      ${c.lastServices ? `<div class="vip-meta-item">📋 上次：<strong>${c.lastServices}</strong></div>` : ''}
+    </div>
+    ${c.hairNote ? `<div class="hair-note-box"><div class="hn-label">💆 髮質備註</div>${c.hairNote}</div>` : ''}
+  `;
+}
+
+// ===== STEP 2：時段 =====
+async function loadSlots() {
+  const date = document.getElementById('dateInput').value;
+  if (!date) return;
+  state.selectedDate = date;
+
+  const slotCard = document.getElementById('slotCard');
+  const grid = document.getElementById('timeGrid');
+  slotCard.style.display = 'block';
+  grid.innerHTML = '<div class="skeleton" style="grid-column:1/-1;"></div>';
+
+  try {
+    const res = await callGAS('getAvailableSlots', { dateStr: date });
+    if (res.success) {
+      grid.innerHTML = res.slots.map(s => `
+        <button class="time-btn ${!s.available ? 'booked' : ''} ${state.selectedTime===s.time ? 'selected' : ''}"
+          onclick="${s.available ? `selectTime('${s.time}')` : ''}">
+          ${s.time}${!s.available ? '<br><small style="font-size:9px;">已約</small>' : ''}
+        </button>
+      `).join('');
+      if (state.selectedTime) document.getElementById('nextToService').style.display = 'block';
+    }
+  } catch(e) {
+    grid.innerHTML = '<div class="alert alert-error" style="grid-column:1/-1;">無法載入時段，請重試</div>';
+  }
+}
+
+function selectTime(t) {
+  state.selectedTime = t;
+  loadSlots();
+  document.getElementById('nextToService').style.display = 'block';
+}
+
+// ===== STEP 3：服務項目 =====
+function renderServices() {
+  const grid = document.getElementById('svcGrid');
+  if (!state.services.length) {
+    grid.innerHTML = '<div class="alert alert-info" style="grid-column:1/-1;">載入服務項目中…</div>';
+    return;
+  }
+  grid.innerHTML = state.services.map(s => `
+    <button class="svc-btn ${state.selectedServices.includes(s.id) ? 'selected' : ''}" onclick="toggleService('${s.id}')">
+      <div class="svc-name">${s.name}</div>
+      <div class="svc-price">$${Number(s.price).toLocaleString()}</div>
+      <div class="svc-dur">約 ${s.duration} 分鐘</div>
+    </button>
+  `).join('');
+  updateTotal();
+}
+
+function toggleService(id) {
+  const idx = state.selectedServices.indexOf(id);
+  if (idx >= 0) state.selectedServices.splice(idx, 1);
+  else state.selectedServices.push(id);
+  renderServices();
+}
+
+function updateTotal() {
+  const selected = state.services.filter(s => state.selectedServices.includes(s.id));
+  const total = selected.reduce((s,x) => s + x.price, 0);
+  const dur   = selected.reduce((s,x) => s + x.duration, 0);
+  const bar = document.getElementById('totalBar');
+  if (selected.length > 0) {
+    bar.classList.add('show');
+    document.getElementById('totalPrice').textContent = '$' + total.toLocaleString();
+    document.getElementById('durLabel').textContent = '預估約 ' + dur + ' 分鐘';
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+// ===== CONFIRM =====
+function goConfirm() {
+  if (!state.selectedServices.length) { alert('請至少選擇一項服務'); return; }
+  const selected = state.services.filter(s => state.selectedServices.includes(s.id));
+  const total = selected.reduce((s,x) => s + x.price, 0);
+  const dur   = selected.reduce((s,x) => s + x.duration, 0);
+  const note  = document.getElementById('noteInput').value;
+
+  document.getElementById('confirmSummary').innerHTML = `
+    <div class="confirm-row"><span class="confirm-label">👤 顧客</span><span class="confirm-value">${state.customer.name}（${state.customer.memberLevel||'尊爵'}）</span></div>
+    <div class="confirm-row"><span class="confirm-label">📅 日期</span><span class="confirm-value">${state.selectedDate}</span></div>
+    <div class="confirm-row"><span class="confirm-label">⏰ 時段</span><span class="confirm-value">${state.selectedTime}</span></div>
+    <div class="confirm-row"><span class="confirm-label">✂️ 服務</span><span class="confirm-value">${selected.map(s=>s.name).join('<br>')}</span></div>
+    <div class="confirm-row"><span class="confirm-label">⏱ 預估時間</span><span class="confirm-value">約 ${dur} 分鐘</span></div>
+    <div class="confirm-row"><span class="confirm-label">💰 費用</span><span class="confirm-value" style="font-size:20px;color:#C9A84C;">$${total.toLocaleString()}</span></div>
+    ${note ? `<div class="confirm-row"><span class="confirm-label">📝 備註</span><span class="confirm-value">${note}</span></div>` : ''}
+  `;
+  goStep(4);
+}
+
+// ===== SUBMIT =====
+async function doSubmit() {
+  const btn = document.getElementById('submitBtn');
+  const errDiv = document.getElementById('submitError');
+  errDiv.innerHTML = '';
+  btn.textContent = '送出中…'; btn.disabled = true;
+
+  const selected = state.services.filter(s => state.selectedServices.includes(s.id));
+  const total    = selected.reduce((s,x) => s + x.price, 0);
+
+  const payload = {
+    customerId:    state.customer.id,
+    customerName:  state.customer.name,
+    customerPhone: state.customer.phone,
+    memberLevel:   state.customer.memberLevel || '',
+    lineUserId:    state.customer.lineUserId || '',
+    date:          state.selectedDate,
+    time:          state.selectedTime,
+    services:      selected.map(s => s.name),
+    totalPrice:    total,
+    note:          document.getElementById('noteInput').value,
+  };
+
+  try {
+    const res = await callGAS('submitBooking', payload);
+    if (res.success) {
+      showSuccess(payload, res.appointmentId);
+    } else {
+      errDiv.innerHTML = `<div class="alert alert-error">⚠️ ${res.message}</div>`;
+    }
+  } catch(e) {
+    errDiv.innerHTML = '<div class="alert alert-error">連線失敗，請稍後再試或直接聯繫 ELSA</div>';
+  } finally {
+    btn.textContent = '✅ 確定送出預約'; btn.disabled = false;
+  }
+}
+
+// ===== SUCCESS =====
+function showSuccess(data, aptId) {
+  [1,2,3,4].forEach(i => document.getElementById('panel'+i).classList.remove('active'));
+  document.getElementById('panelSuccess').classList.add('active');
+  [1,2,3,4].forEach(i => document.getElementById('step'+i).classList.add('done'));
+  window.scrollTo(0, 0);
+
+  document.getElementById('successDetail').innerHTML = `
+    <div class="sc-row"><span class="sc-label">預約編號</span><span class="sc-value">${aptId}</span></div>
+    <div class="sc-row"><span class="sc-label">日期時段</span><span class="sc-value">${data.date}  ${data.time}</span></div>
+    <div class="sc-row"><span class="sc-label">服務項目</span><span class="sc-value">${data.services.join('、')}</span></div>
+    <div class="sc-row"><span class="sc-label">預估費用</span><span class="sc-value" style="color:#E8D08A;font-size:18px;">$${data.totalPrice.toLocaleString()}</span></div>
+  `;
+}
+
+// ===== RESET =====
+function resetAll() {
+  state.customer = null;
+  state.selectedDate = '';
+  state.selectedTime = '';
+  state.selectedServices = [];
+  document.getElementById('phoneInput').value = '';
+  document.getElementById('phoneError').innerHTML = '';
+  document.getElementById('noteInput').value = '';
+  document.getElementById('slotCard').style.display = 'none';
+  document.getElementById('nextToService').style.display = 'none';
+  document.getElementById('panelSuccess').classList.remove('active');
+  goStep(1);
+}
+</script>
+</body>
+</html>
