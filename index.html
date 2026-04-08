@@ -2383,7 +2383,7 @@ async function loadMarqueeBanner() {
 
     // 依文字長度動態算動畫時間（每個字約 0.6s，最少 25s，最多 90s）
     const totalChars = combined.length;
-    const duration   = Math.min(90, Math.max(25, Math.round(totalChars * 0.6)));
+    const duration   = Math.min(120, Math.max(40, Math.round(totalChars * 1.8)));
     track.style.animation = `mqRoll ${duration}s linear infinite`;
 
     bar.classList.add('has-content'); // 顯示 bar

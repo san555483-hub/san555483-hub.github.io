@@ -305,7 +305,7 @@ async function loadMarqueeBanner() {
       `<span class="marquee-sep">　　✦　　</span>` +
       `<span class="marquee-text">${combined}</span>`;
 
-    const duration = Math.min(90, Math.max(25, Math.round(combined.length * 0.6)));
+    const duration = Math.min(120, Math.max(40, Math.round(combined.length * 1.8)));
     track.style.animation = `mqRoll ${duration}s linear infinite`;
 
     bar.classList.add('has-content');
