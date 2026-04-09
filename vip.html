@@ -216,7 +216,7 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
       <button class="btn btn-gold" id="searchBtn" onclick="searchCustomer()">確認身份 →</button>
     </div>
     <div class="alert alert-info">
-      🔐 本頁面為尊爵會員專屬預約服務。<br>請輸入您的登記手機號碼以確認資格。
+      🔐 本頁面為尊爵會員專屬預約服務。<br>請輸入您的登記手機號碼。
     </div>
   </div>
 
@@ -367,7 +367,7 @@ async function searchCustomer() {
       goStep(2);
       loadSlots();
     } else {
-      errDiv.innerHTML = `<div class="alert alert-error">⚠️ ${res.message}</div>`;
+      errDiv.innerHTML = `<div class="alert alert-error">⚠️ 查無此號碼，請聯繫 ELSA 為您服務，謝謝您。</div>`;
     }
   } catch(e) {
     errDiv.innerHTML = '<div class="alert alert-error">連線錯誤，請稍後再試</div>';
