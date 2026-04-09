@@ -674,7 +674,7 @@ function renderMemberMarquees() {
         <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">
           <input type="checkbox" id="mqen-${m.id}" ${m.enabled ? 'checked' : ''}> 啟用
         </label>
-        <button onclick="saveMemberMarquee('${m.id}','member',${m.order})" style="padding:5px 11px;background:var(--bark);color:#fff;border:none;border-radius:4px;font-size:.68rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">儲存</button>
+        <button onclick="saveMemberMarquee('${m.id}','vip',${m.order})" style="padding:5px 11px;background:var(--bark);color:#fff;border:none;border-radius:4px;font-size:.68rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">儲存</button>
         <button onclick="clearMemberMarquee('${m.id}')" style="padding:5px 11px;background:#e05050;color:#fff;border:none;border-radius:4px;font-size:.68rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">清空</button>
       </div>
     </div>
