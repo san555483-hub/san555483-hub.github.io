@@ -602,23 +602,47 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   }
 
 // ══════════════════════════════════════════════
-// 🏆 尊爵會員 Tab
+// 🛠️ 後台共用工具
+// ══════════════════════════════════════════════
+function showMsg(id, msg, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.padding = '8px 12px';
+  el.style.borderRadius = '4px';
+  el.style.fontSize = '.73rem';
+  el.style.fontFamily = "'Noto Sans TC',sans-serif";
+  el.style.marginTop = '10px';
+  if (ok === null) {
+    el.style.background = '#f5f5f5'; el.style.color = '#555';
+  } else if (ok) {
+    el.style.background = '#e8f5ee'; el.style.color = '#2d7a4f';
+  } else {
+    el.style.background = '#fdf0ee'; el.style.color = '#c0392b';
+  }
+  if (ok !== null) setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+// ══════════════════════════════════════════════
+// 🏆 尊爵會員 Tab（全部用 GAS_URL，購物GAS）
 // ══════════════════════════════════════════════
 let _memberMarquees = [];
 let _memberPayMethods = [];
 
-async function loadMemberTab() {
+function loadMemberTab() {
   loadMemberMarquees();
   loadMemberPayList();
   loadMemberDiscounts();
 }
 
-// 尊爵跑馬燈
+// 尊爵跑馬燈（site=member）
 async function loadMemberMarquees() {
   const el = document.getElementById('marqueeList-member');
-  el.innerHTML = '<div class="loading">載入中...</div>';
+  if (!el) return;
+  el.innerHTML = '<div style="padding:16px;text-align:center;color:#aaa;font-size:.8rem;">載入中...</div>';
   try {
-    const r = await fetch(GAS_SHOP + '?action=getMarquees&t=' + Date.now());
+    const r = await fetch(GAS_URL + '?action=getMarquees&t=' + Date.now());
     const d = await r.json();
     const raw = d.ok ? (d.marquees || []).filter(m => m.site === 'member') : [];
     _memberMarquees = [];
@@ -630,26 +654,27 @@ async function loadMemberMarquees() {
     }
     renderMemberMarquees();
   } catch(e) {
-    el.innerHTML = '<div style="color:#c00;padding:12px;">載入失敗</div>';
+    el.innerHTML = '<div style="color:#c00;padding:12px;font-size:.8rem;">載入失敗，請稍後重試</div>';
   }
 }
 
 function renderMemberMarquees() {
   const el = document.getElementById('marqueeList-member');
+  if (!el) return;
   el.innerHTML = _memberMarquees.map(m => `
-    <div class="mq-card">
-      <div style="min-width:36px;text-align:center;font-size:12px;color:#999;">
+    <div style="display:flex;align-items:flex-start;gap:10px;background:var(--linen);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px;">
+      <div style="min-width:36px;text-align:center;font-size:12px;color:#999;flex-shrink:0;">
         <div style="font-weight:700;color:var(--bark);font-size:15px;">#${m.order}</div>
         <div>尊爵</div>
       </div>
-      <textarea id="mqtext-${m.id}" placeholder="廣播文字（空白=不顯示）" style="flex:1;min-width:200px;border:1px solid #ddd;border-radius:6px;padding:8px;font-size:13px;resize:vertical;min-height:56px;font-family:inherit;">${m.content}</textarea>
-      <div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
-        <span class="mq-badge ${m.enabled && m.content.trim() ? 'active' : 'inactive'}">${m.enabled && m.content.trim() ? '啟用中' : '停用'}</span>
-        <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+      <textarea id="mqtext-${m.id}" placeholder="廣播文字（空白=不顯示）" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:8px;font-size:13px;resize:vertical;min-height:56px;font-family:inherit;width:100%;">${m.content}</textarea>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center;flex-shrink:0;">
+        <span style="font-size:.62rem;padding:2px 7px;border-radius:8px;font-family:'Noto Sans TC',sans-serif;background:${m.enabled && m.content.trim() ? '#e8f5ee' : '#eee'};color:${m.enabled && m.content.trim() ? '#2d7a4f' : '#aaa'};">${m.enabled && m.content.trim() ? '啟用中' : '停用'}</span>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">
           <input type="checkbox" id="mqen-${m.id}" ${m.enabled ? 'checked' : ''}> 啟用
         </label>
-        <button class="btn btn-primary btn-sm" onclick="saveMemberMarquee('${m.id}','member',${m.order})">儲存</button>
-        <button class="btn btn-warn btn-sm" onclick="clearMemberMarquee('${m.id}')">清空</button>
+        <button onclick="saveMemberMarquee('${m.id}','member',${m.order})" style="padding:5px 11px;background:var(--bark);color:#fff;border:none;border-radius:4px;font-size:.68rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">儲存</button>
+        <button onclick="clearMemberMarquee('${m.id}')" style="padding:5px 11px;background:#e05050;color:#fff;border:none;border-radius:4px;font-size:.68rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">清空</button>
       </div>
     </div>
   `).join('');
@@ -658,83 +683,98 @@ function renderMemberMarquees() {
 async function saveMemberMarquee(id, site, order) {
   const content = (document.getElementById('mqtext-'+id)||{}).value || '';
   const enabled = (document.getElementById('mqen-'+id)||{}).checked || false;
-  showMsg('msgMemberMarquee','⏳ 儲存中...',null);
+  showMsg('msgMemberMarquee', '⏳ 儲存中...', null);
   try {
-    const r = await fetch(GAS_SHOP+'?action=saveMarquee&id='+encodeURIComponent(id)+'&site='+site+'&order='+order+'&content='+encodeURIComponent(content)+'&enabled='+(enabled?'true':'false')+'&t='+Date.now());
+    const r = await fetch(GAS_URL + '?action=saveMarquee&id=' + encodeURIComponent(id) + '&site=' + site + '&order=' + order + '&content=' + encodeURIComponent(content) + '&enabled=' + (enabled ? 'true' : 'false') + '&t=' + Date.now());
     const d = await r.json();
-    showMsg('msgMemberMarquee', d.ok ? '✅ 廣播器 #'+order+' 已儲存' : '❌ '+d.msg, d.ok);
+    showMsg('msgMemberMarquee', d.ok ? '✅ 廣播器 #' + order + ' 已儲存' : '❌ ' + (d.msg || '失敗'), d.ok);
     if (d.ok) loadMemberMarquees();
-  } catch(e) { showMsg('msgMemberMarquee','❌ 網路錯誤',false); }
+  } catch(e) { showMsg('msgMemberMarquee', '❌ 網路錯誤', false); }
 }
 
 async function clearMemberMarquee(id) {
-  if (!confirm('確定清空？')) return;
-  document.getElementById('mqtext-'+id).value = '';
-  document.getElementById('mqen-'+id).checked = false;
-  const m = _memberMarquees.find(x=>x.id===id);
+  if (!confirm('確定清空此廣播？')) return;
+  const textEl = document.getElementById('mqtext-' + id);
+  const enEl   = document.getElementById('mqen-'   + id);
+  if (textEl) textEl.value = '';
+  if (enEl)   enEl.checked = false;
+  const m = _memberMarquees.find(x => x.id === id);
   if (m) await saveMemberMarquee(id, m.site, m.order);
 }
 
-// 尊爵付款方式（共用主 GAS 的 getPayMethods/savePayMethod）
+// 尊爵付款方式（只讀顯示，改用 GAS_URL）
 async function loadMemberPayList() {
   const el = document.getElementById('memberPayList');
-  el.innerHTML = '<div class="loading">載入中...</div>';
+  if (!el) return;
+  el.innerHTML = '<div style="padding:16px;text-align:center;color:#aaa;font-size:.8rem;">載入中...</div>';
   try {
-    const r = await fetch(GAS+'?action=getPayMethods&t='+Date.now());
+    const r = await fetch(GAS_URL + '?action=getPayMethods&t=' + Date.now());
     const d = await r.json();
     _memberPayMethods = d.ok ? (d.methods || []) : [];
     renderMemberPayList();
-  } catch(e) { el.innerHTML = '<div style="color:#c00;padding:12px;">載入失敗</div>'; }
+  } catch(e) {
+    el.innerHTML = '<div style="color:#c00;padding:12px;font-size:.8rem;">載入失敗</div>';
+  }
 }
 
 function renderMemberPayList() {
   const el = document.getElementById('memberPayList');
+  if (!el) return;
   if (!_memberPayMethods.length) {
-    el.innerHTML = '<div style="color:#aaa;padding:16px;text-align:center;">尚無付款方式，點右上角新增<br><small style="color:#bbb;">（與付款方式分頁共用同一筆資料）</small></div>';
+    el.innerHTML = '<div style="color:#aaa;padding:16px;text-align:center;font-size:.8rem;font-family:\'Noto Sans TC\',sans-serif;">尚無付款方式<br><small>（到「付款方式」分頁新增後，這裡會同步顯示）</small></div>';
     return;
   }
   el.innerHTML = _memberPayMethods.map(m => {
     const isLink = m.info && m.info.startsWith('http');
-    return `<div style="border:1.5px solid ${m.enabled?'var(--border)':'#eee'};border-radius:8px;padding:12px 14px;margin-bottom:8px;background:${m.enabled?'#fff':'#fafafa'};display:flex;align-items:center;gap:12px;">
-      <div style="width:36px;height:36px;border-radius:7px;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:18px;">${m.icon}</div>
+    return `<div style="border:1.5px solid ${m.enabled ? 'var(--border)' : '#eee'};border-radius:8px;padding:12px 14px;margin-bottom:8px;background:${m.enabled ? '#fff' : '#fafafa'};display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:7px;background:${m.color || '#eee'};display:flex;align-items:center;justify-content:center;font-size:18px;">${m.icon || '💳'}</div>
       <div style="flex:1;">
-        <div style="font-weight:700;font-size:13px;color:${m.enabled?'var(--bark)':'#bbb'};">${m.name}</div>
-        <div style="font-size:11px;color:#999;">${isLink?'🔗 '+m.info.substring(0,40)+'...':m.info||'（未設定）'}</div>
+        <div style="font-weight:700;font-size:13px;color:${m.enabled ? 'var(--bark)' : '#bbb'};">${m.name}</div>
+        <div style="font-size:11px;color:#999;">${isLink ? '🔗 ' + m.info.substring(0, 40) + '...' : (m.info || '（未設定說明）')}</div>
       </div>
-      <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:${m.enabled?'#e8f5ee':'#fdf0ee'};color:${m.enabled?'#2d7a4f':'#c0392b'};">${m.enabled?'啟用':'停用'}</span>
+      <span style="font-size:11px;padding:2px 8px;border-radius:8px;background:${m.enabled ? '#e8f5ee' : '#fdf0ee'};color:${m.enabled ? '#2d7a4f' : '#c0392b'};">${m.enabled ? '啟用' : '停用'}</span>
     </div>`;
   }).join('');
 }
 
-function openMemberPayModal() {
-  // 直接切到付款方式分頁並開啟新增
-  switchTab('payment');
-  setTimeout(() => openPayModal(), 300);
-}
-
-// 尊爵折扣設定
+// 尊爵折扣設定（存到 GAS_URL 的 saveSettings）
 async function loadMemberDiscounts() {
   try {
-    const r = await fetch(GAS+'?action=getSettings&t='+Date.now());
+    const r = await fetch(GAS_URL + '?action=getSettings&t=' + Date.now());
     const d = await r.json();
-    const map = {};
-    (d.settings||[]).forEach(s => { map[s.key] = s.value; });
-    document.getElementById('md-vip-price').value = map['member_vip_price'] || '$200';
-    document.getElementById('md-mem-price').value = map['member_mem_price'] || '$250';
-    document.getElementById('md-non-price').value = map['member_non_price'] || '$350';
-  } catch(e) {}
+    // getSettings 回傳格式：d.settings 可能是 array 或 object
+    let map = {};
+    if (Array.isArray(d.settings)) {
+      d.settings.forEach(s => { if (s.key) map[s.key] = s.value; });
+    } else if (d.settings && typeof d.settings === 'object') {
+      map = d.settings;
+    }
+    const vipEl = document.getElementById('md-vip-price');
+    const memEl = document.getElementById('md-mem-price');
+    const nonEl = document.getElementById('md-non-price');
+    if (vipEl) vipEl.value = map['member_vip_price'] || '';
+    if (memEl) memEl.value = map['member_mem_price'] || '';
+    if (nonEl) nonEl.value = map['member_non_price'] || '';
+  } catch(e) { /* 靜默失敗 */ }
 }
 
 async function saveMemberDiscounts() {
-  const vip = document.getElementById('md-vip-price').value.trim();
-  const mem = document.getElementById('md-mem-price').value.trim();
-  const non = document.getElementById('md-non-price').value.trim();
+  const vip = (document.getElementById('md-vip-price') || {}).value || '';
+  const mem = (document.getElementById('md-mem-price') || {}).value || '';
+  const non = (document.getElementById('md-non-price') || {}).value || '';
+  showMsg('msgMemberDiscount', '⏳ 儲存中...', null);
   try {
-    await api({ action:'updateSettings', key:'member_vip_price', value:vip });
-    await api({ action:'updateSettings', key:'member_mem_price', value:mem });
-    await api({ action:'updateSettings', key:'member_non_price', value:non });
-    showMsg('msgMemberDiscount','✅ 折扣設定已儲存',true);
-  } catch(e) { showMsg('msgMemberDiscount','❌ 儲存失敗',false); }
+    // 三個 key 一次打包送出（saveSettings 支援多 key）
+    const params = new URLSearchParams({
+      action: 'saveSettings',
+      member_vip_price: vip.trim(),
+      member_mem_price: mem.trim(),
+      member_non_price: non.trim()
+    });
+    const r = await fetch(GAS_URL + '?' + params.toString());
+    const d = await r.json();
+    showMsg('msgMemberDiscount', d.ok ? '✅ 折扣設定已儲存' : '❌ ' + (d.msg || '失敗'), d.ok);
+  } catch(e) { showMsg('msgMemberDiscount', '❌ 網路錯誤', false); }
 }
 
 </script>
@@ -773,8 +813,180 @@ async function saveMemberDiscounts() {
     <button class="edit-bar-btn" onclick="openModal('sample-edit')">🫧 體驗包</button>
     <button class="edit-bar-btn" onclick="openModal('gift-edit')">⚙️ 贈品</button>
     <button class="edit-bar-btn" onclick="openModal('discount-edit')">💰 折扣</button>
+    <button class="edit-bar-btn" onclick="toggleMemberPanel()" id="member-panel-toggle" style="background:linear-gradient(135deg,var(--gold),var(--bark2));color:#fff;border-color:transparent;">🏆 尊爵會員</button>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════════
+     🏆 尊爵會員後台面板（店家模式才顯示，預設隱藏）
+══════════════════════════════════════════════════════════ -->
+<div id="member-panel" style="display:none;background:#f5f0eb;border-bottom:3px solid var(--gold);">
+<style>
+/* ── 尊爵面板內部樣式 ── */
+#member-panel .mp-inner{max-width:900px;margin:0 auto;padding:20px 16px;}
+#member-panel .mp-tabs{display:flex;gap:0;background:var(--bark);overflow-x:auto;scrollbar-width:none;}
+#member-panel .mp-tabs::-webkit-scrollbar{display:none;}
+#member-panel .mp-tab{flex-shrink:0;padding:11px 20px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.6);font-family:'Noto Serif TC',serif;font-size:.75rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+#member-panel .mp-tab:hover{color:rgba(255,255,255,.9);}
+#member-panel .mp-tab.active{color:#fff;border-bottom-color:var(--gold);font-weight:600;}
+#member-panel .mp-pane{display:none;padding:20px 16px;max-width:900px;margin:0 auto;}
+#member-panel .mp-pane.active{display:block;}
+/* 卡片 */
+#member-panel .mc{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:16px;overflow:hidden;}
+#member-panel .mc-head{background:linear-gradient(135deg,var(--bark),var(--bark2));padding:13px 18px;display:flex;align-items:center;justify-content:space-between;}
+#member-panel .mc-head h4{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:400;color:#fff;margin:0;}
+#member-panel .mc-body{padding:16px 18px;}
+/* 折扣格 */
+#member-panel .disc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media(max-width:500px){#member-panel .disc-grid{grid-template-columns:1fr;}}
+#member-panel .disc-card{background:var(--linen);border:1.5px solid var(--border);border-radius:7px;padding:14px;}
+#member-panel .disc-card label{display:block;font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:6px;}
+#member-panel .disc-card input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:4px;font-family:'Noto Serif TC',serif;font-size:.9rem;color:var(--bark);font-weight:600;outline:none;}
+#member-panel .disc-card input:focus{border-color:var(--gold);}
+/* 快速連結 */
+#member-panel .ql-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:7px;padding:12px 14px;margin-bottom:8px;text-decoration:none;color:var(--ink);transition:all .2s;}
+#member-panel .ql-card:hover{border-color:var(--gold);box-shadow:0 3px 12px rgba(184,137,90,.12);}
+#member-panel .ql-icon{font-size:1.4rem;flex-shrink:0;}
+#member-panel .ql-title{font-size:.82rem;font-weight:600;}
+#member-panel .ql-url{font-size:.62rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;}
+/* 訊息 */
+.mp-msg{padding:8px 12px;border-radius:4px;font-size:.73rem;font-family:'Noto Sans TC',sans-serif;margin-top:10px;display:none;}
+/* 小按鈕 */
+.mp-btn{display:inline-flex;align-items:center;padding:7px 14px;border:none;border-radius:4px;font-family:'Noto Sans TC',sans-serif;font-size:.72rem;cursor:pointer;transition:all .2s;}
+.mp-btn-dark{background:var(--bark);color:#fff;}
+.mp-btn-dark:hover{background:var(--bark2);}
+.mp-btn-outline{background:none;border:1.5px solid rgba(255,255,255,.4);color:rgba(255,255,255,.8);}
+.mp-btn-outline:hover{border-color:#fff;color:#fff;}
+</style>
+
+<!-- Tab列 -->
+<div id="member-panel-tabs" style="background:var(--bark);display:flex;gap:0;overflow-x:auto;scrollbar-width:none;">
+  <button class="mp-tab active" onclick="switchMemberTab('marquee')">📢 尊爵跑馬燈</button>
+  <button class="mp-tab" onclick="switchMemberTab('payment')">💳 付款方式</button>
+  <button class="mp-tab" onclick="switchMemberTab('discount')">💰 折扣設定</button>
+  <button class="mp-tab" onclick="switchMemberTab('links')">🔗 快速連結</button>
+</div>
+
+<!-- 📢 尊爵跑馬燈 -->
+<div class="mp-pane active" id="mp-pane-marquee">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="mc">
+      <div class="mc-head">
+        <h4>📢 尊爵廣播跑馬燈（最多5則，site=member）</h4>
+        <button class="mp-btn mp-btn-outline" onclick="loadMemberMarquees()">🔄 重新載入</button>
+      </div>
+      <div class="mc-body">
+        <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
+          啟用中且有文字的廣播才會顯示在尊爵頁頂端。儲存後即時生效。
+        </p>
+        <div id="marqueeList-member"></div>
+        <div id="msgMemberMarquee" class="mp-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 💳 付款方式 -->
+<div class="mp-pane" id="mp-pane-payment">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="mc">
+      <div class="mc-head">
+        <h4>💳 付款方式（與購物結帳共用）</h4>
+      </div>
+      <div class="mc-body">
+        <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
+          這裡顯示的付款方式與購物結帳頁共用同一份資料。
+        </p>
+        <div id="memberPayList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 💰 折扣設定 -->
+<div class="mp-pane" id="mp-pane-discount">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="mc">
+      <div class="mc-head"><h4>💰 尊爵折扣設定</h4></div>
+      <div class="mc-body">
+        <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:16px;line-height:1.6">
+          設定各等級的費用，儲存後同步到 GAS Sheet「系統設定」。
+        </p>
+        <div class="disc-grid">
+          <div class="disc-card">
+            <label>👑 尊爵會員費用</label>
+            <input type="text" id="md-vip-price" placeholder="例：$200">
+          </div>
+          <div class="disc-card">
+            <label>⭐ 一般會員費用</label>
+            <input type="text" id="md-mem-price" placeholder="例：$250">
+          </div>
+          <div class="disc-card">
+            <label>👤 非會員費用</label>
+            <input type="text" id="md-non-price" placeholder="例：$350">
+          </div>
+        </div>
+        <button class="mp-btn mp-btn-dark" style="margin-top:14px;width:100%;padding:11px;" onclick="saveMemberDiscounts()">💾 儲存折扣設定</button>
+        <div id="msgMemberDiscount" class="mp-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔗 快速連結 -->
+<div class="mp-pane" id="mp-pane-links">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="mc">
+      <div class="mc-head"><h4>🔗 快速連結</h4></div>
+      <div class="mc-body">
+        <a class="ql-card" href="https://san555483-hub.github.io/booking.html" target="_blank">
+          <span class="ql-icon">📅</span>
+          <div><div class="ql-title">預約系統</div><div class="ql-url">san555483-hub.github.io/booking.html</div></div>
+          <span style="color:#aaa;margin-left:auto;">↗</span>
+        </a>
+        <a class="ql-card" href="https://san555483-hub.github.io" target="_blank">
+          <span class="ql-icon">🛍️</span>
+          <div><div class="ql-title">購物網站首頁</div><div class="ql-url">san555483-hub.github.io</div></div>
+          <span style="color:#aaa;margin-left:auto;">↗</span>
+        </a>
+        <a class="ql-card" href="https://san555483-hub.github.io/credit-sign.html" target="_blank">
+          <span class="ql-icon">💳</span>
+          <div><div class="ql-title">養護金簽署頁</div><div class="ql-url">san555483-hub.github.io/credit-sign.html</div></div>
+          <span style="color:#aaa;margin-left:auto;">↗</span>
+        </a>
+        <a class="ql-card" href="https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec" target="_blank">
+          <span class="ql-icon">⚙️</span>
+          <div><div class="ql-title">主 GAS 後台（預約/CRM）</div><div class="ql-url">AKfycbyG9T1Udo...</div></div>
+          <span style="color:#aaa;margin-left:auto;">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #member-panel -->
+
+<script>
+// ── 🏆 尊爵面板開關 & Tab切換 ──
+function toggleMemberPanel() {
+  const panel = document.getElementById('member-panel');
+  const isHidden = panel.style.display === 'none';
+  panel.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) loadMemberTab(); // 展開時載入資料
+}
+
+function switchMemberTab(tab) {
+  document.querySelectorAll('#member-panel-tabs .mp-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#member-panel .mp-pane').forEach(p => p.classList.remove('active'));
+  const tabs = ['marquee','payment','discount','links'];
+  const idx = tabs.indexOf(tab);
+  if (idx >= 0) document.querySelectorAll('#member-panel-tabs .mp-tab')[idx].classList.add('active');
+  const pane = document.getElementById('mp-pane-' + tab);
+  if (pane) pane.classList.add('active');
+  // 切到付款方式時重新載入
+  if (tab === 'payment') loadMemberPayList();
+}
+</script>
 
 <!-- ─────────────── 步驟導覽 ─────────────── -->
 <div class="steps-nav">
