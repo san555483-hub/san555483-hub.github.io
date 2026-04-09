@@ -175,6 +175,32 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
 
 .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); cursor: pointer; margin-bottom: 14px; font-weight: 600; }
 .nav-back span { font-size: 18px; }
+
+/* ===== 📢 尊爵跑馬燈 ===== */
+.vip-marquee-bar {
+  background: var(--dark2);
+  border-bottom: 2px solid var(--gold);
+  padding: 9px 0;
+  overflow: hidden;
+  display: none;
+}
+.vip-marquee-bar.has-content { display: block; }
+.vip-marquee-track {
+  white-space: nowrap;
+  display: inline-block;
+  animation: vipMqRoll 80s linear infinite;
+}
+.vip-marquee-track:hover { animation-play-state: paused; }
+@keyframes vipMqRoll {
+  0%   { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+.vip-marquee-text {
+  font-size: 15px; font-weight: 700;
+  color: var(--gold-light); letter-spacing: .05em; padding: 0 40px;
+}
+.vip-marquee-sep { color: var(--gold); font-size: 12px; padding: 0 6px; opacity: .6; }
+@media(max-width:480px){ .vip-marquee-text{ font-size:13px; padding:0 24px; } }
 </style>
 </head>
 <body>
@@ -193,6 +219,11 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
     <div class="header-logo">UNI Hair Design</div>
     <div class="header-title">尊<span>爵</span>預約</div>
     <div class="header-sub">✦ 專屬會員 · 優先服務 ✦</div>
+  </div>
+
+  <!-- 📢 尊爵跑馬燈 -->
+  <div class="vip-marquee-bar" id="vipMarqueeBar">
+    <div class="vip-marquee-track" id="vipMarqueeTrack"></div>
   </div>
 
   <div class="steps">
@@ -319,6 +350,8 @@ window.addEventListener('load', async () => {
     const res = await callGAS('getServices');
     if (res.success) state.services = res.services;
   } catch(e) { console.warn('服務項目載入失敗', e); }
+
+  loadVipMarquee(); // 📢 載入尊爵跑馬燈
 
   setTimeout(() => {
     document.getElementById('loading').style.opacity = '0';
@@ -537,6 +570,31 @@ function showSuccess(data, aptId) {
     <div class="sc-row"><span class="sc-label">服務項目</span><span class="sc-value">${data.services.join('、')}</span></div>
     <div class="sc-row"><span class="sc-label">預估費用</span><span class="sc-value" style="color:#E8D08A;font-size:18px;">$${data.totalPrice.toLocaleString()}</span></div>
   `;
+}
+
+// ===== 📢 尊爵跑馬燈（用尊爵自己的 GAS） =====
+async function loadVipMarquee() {
+  try {
+    const r = await fetch(GAS_URL + '?action=getMarquees&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok || !d.marquees || !d.marquees.length) return;
+    const texts = d.marquees
+      .filter(m => m.content && m.content.trim())
+      .sort((a, b) => a.order - b.order)
+      .map(m => m.content.trim());
+    if (!texts.length) return;
+    const combined = texts.join('　　✦　　');
+    const track = document.getElementById('vipMarqueeTrack');
+    const bar   = document.getElementById('vipMarqueeBar');
+    if (!track || !bar) return;
+    track.innerHTML =
+      `<span class="vip-marquee-text">${combined}</span>` +
+      `<span class="vip-marquee-sep">　　✦　　</span>` +
+      `<span class="vip-marquee-text">${combined}</span>`;
+    const duration = Math.min(180, Math.max(60, Math.round(combined.length * 1.8)));
+    track.style.animation = `vipMqRoll ${duration}s linear infinite`;
+    bar.classList.add('has-content');
+  } catch(e) { console.warn('vip marquee load failed', e); }
 }
 
 // ===== RESET =====

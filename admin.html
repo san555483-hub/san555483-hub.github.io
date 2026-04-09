@@ -625,7 +625,8 @@ function showMsg(id, msg, ok) {
 }
 
 // ══════════════════════════════════════════════
-// 🏆 尊爵會員 Tab（全部用 GAS_URL，購物GAS）
+// 🏆 尊爵會員 Tab（跑馬燈用尊爵GAS，付款/折扣仍用購物GAS）
+const GAS_VIP_URL = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
 // ══════════════════════════════════════════════
 let _memberMarquees = [];
 let _memberPayMethods = [];
@@ -636,21 +637,21 @@ function loadMemberTab() {
   loadMemberDiscounts();
 }
 
-// 尊爵跑馬燈（site=member）
+// 尊爵跑馬燈（串尊爵GAS，id格式 vip_1~vip_5）
 async function loadMemberMarquees() {
   const el = document.getElementById('marqueeList-member');
   if (!el) return;
   el.innerHTML = '<div style="padding:16px;text-align:center;color:#aaa;font-size:.8rem;">載入中...</div>';
   try {
-    const r = await fetch(GAS_URL + '?action=getMarquees&t=' + Date.now());
+    const r = await fetch(GAS_VIP_URL + '?action=getMarquees&t=' + Date.now());
     const d = await r.json();
-    const raw = d.ok ? (d.marquees || []).filter(m => m.site === 'member') : [];
+    const raw = d.ok ? (d.marquees || []) : [];
     _memberMarquees = [];
     for (let i = 1; i <= 5; i++) {
       const found = raw.find(m => String(m.order) === String(i));
       _memberMarquees.push(found
         ? { ...found, enabled: found.enabled === true || found.enabled === 'true' }
-        : { id: 'member_' + i, site: 'member', order: i, content: '', enabled: false });
+        : { id: 'vip_' + i, order: i, content: '', enabled: false });
     }
     renderMemberMarquees();
   } catch(e) {
@@ -685,7 +686,7 @@ async function saveMemberMarquee(id, site, order) {
   const enabled = (document.getElementById('mqen-'+id)||{}).checked || false;
   showMsg('msgMemberMarquee', '⏳ 儲存中...', null);
   try {
-    const r = await fetch(GAS_URL + '?action=saveMarquee&id=' + encodeURIComponent(id) + '&site=' + site + '&order=' + order + '&content=' + encodeURIComponent(content) + '&enabled=' + (enabled ? 'true' : 'false') + '&t=' + Date.now());
+    const r = await fetch(GAS_VIP_URL + '?action=saveMarquee&id=' + encodeURIComponent(id) + '&order=' + order + '&content=' + encodeURIComponent(content) + '&enabled=' + (enabled ? 'true' : 'false') + '&t=' + Date.now());
     const d = await r.json();
     showMsg('msgMemberMarquee', d.ok ? '✅ 廣播器 #' + order + ' 已儲存' : '❌ ' + (d.msg || '失敗'), d.ok);
     if (d.ok) loadMemberMarquees();
@@ -872,7 +873,7 @@ async function saveMemberDiscounts() {
   <div style="max-width:900px;margin:0 auto;">
     <div class="mc">
       <div class="mc-head">
-        <h4>📢 尊爵廣播跑馬燈（最多5則，site=member）</h4>
+        <h4>📢 尊爵廣播跑馬燈（最多5則，顯示於 vip.html）</h4>
         <button class="mp-btn mp-btn-outline" onclick="loadMemberMarquees()">🔄 重新載入</button>
       </div>
       <div class="mc-body">
