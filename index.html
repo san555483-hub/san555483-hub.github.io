@@ -515,7 +515,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   // ── LINE Login ──
   const LINE_CHANNEL_ID = '2009635359';
   const REDIRECT_URI    = 'https://san555483-hub.github.io';
-  const GAS_URL_AUTH    = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+  const GAS_URL_AUTH    = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
 
   function genVerifier(){const a=new Uint8Array(32);crypto.getRandomValues(a);return btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
   async function genChallenge(v){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');}
@@ -1145,7 +1145,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 ══════════════════════════════════════════════════════════ -->
 <script>
 // ══════ 設定 ══════
-const GAS_URL     = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
 const JKO_PAY_URL = 'https://service.jkopay.com/r/transfer?j=Transfer:900666675';
 const GAS_SHOP_URL = GAS_URL; // 購物金用同一條GAS
 
