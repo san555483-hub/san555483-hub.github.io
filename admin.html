@@ -823,11 +823,12 @@ let _orders=[];
 async function loadOrders(){
   show('order-loading');document.getElementById('order-tbody').innerHTML='';
   try{
-    const r=await fetch(GAS+'?action=getOrders&t='+Date.now());const d=await r.json();
+    const r=await fetch(GAS+'?action=getOrders&t='+Date.now());
+    const d=await r.json();
     _orders=d.orders||[];hide('order-loading');filterOrderTable();
   }catch(e){
     hide('order-loading');
-    document.getElementById('order-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">GAS 尚未支援此功能或無訂單資料</td></tr>';
+    document.getElementById('order-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">載入失敗，GAS 尚未部署新版本</td></tr>';
   }
 }
 function filterOrderTable(){
@@ -858,17 +859,25 @@ async function addManualOrder(){
   const orderNum='UNI-'+ymd+'-M'+(Math.floor(Math.random()*9000)+1000);
   try{
     const p=new URLSearchParams({
-      orderNum,time:twTime,items,total,
-      gift:'無',lineName:name,lineUid:'',phone,
+      action:'saveOrder',
+      orderNum, time:twTime, items, total,
+      gift:'無', lineName:name, lineUid:'', phone,
       shipping:document.getElementById('mo-ship').value,
-      address:'',note:document.getElementById('mo-note').value.trim(),
-      payMethod:document.getElementById('mo-pay').value,isVoucher:'false'
+      address:'',
+      note:document.getElementById('mo-note').value.trim(),
+      payMethod:document.getElementById('mo-pay').value,
+      isVoucher:'false'
     });
-    await fetch(GAS+'?'+p.toString());
-    showMsg('mo-msg','✅ 訂單 '+orderNum+' 已新增','ok');
-    ['mo-name','mo-phone','mo-items','mo-total','mo-note'].forEach(i=>document.getElementById(i).value='');
-    loadOrders();
-  }catch(e){showMsg('mo-msg','❌ 新增失敗：'+e.message,'err');}
+    const r=await fetch(GAS+'?'+p.toString());
+    const d=await r.json();
+    if(d.ok){
+      showMsg('mo-msg','✅ 訂單 '+(d.orderNum||orderNum)+' 已儲存，顧客可用電話查詢消費紀錄','ok');
+      ['mo-name','mo-phone','mo-items','mo-total','mo-note'].forEach(i=>document.getElementById(i).value='');
+      loadOrders();
+    } else {
+      showMsg('mo-msg','❌ 儲存失敗：'+(d.msg||''),'err');
+    }
+  }catch(e){showMsg('mo-msg','❌ 網路錯誤：'+e.message,'err');}
 }
 </script>
 </body>
