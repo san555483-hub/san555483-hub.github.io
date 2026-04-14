@@ -1923,9 +1923,9 @@ async function goToPayment(method){
   if(!phone){ alert('請填寫聯絡電話'); document.getElementById('inp-phone').focus(); return; }
   if(!shipping){ alert('請選擇配送方式'); return; }
 
-  // 黑名單
+  // 黑名單（用 GET 避免 CORS 問題）
   try{
-    const blRes  = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'checkBlacklist',phone})});
+    const blRes  = await fetch(GAS_URL+'?action=checkBlacklist&phone='+encodeURIComponent(phone));
     const blData = await blRes.json();
     if(blData.blacklisted){ alert('很抱歉，此電話無法完成結帳，請聯繫 Elsa。'); return; }
   }catch(_){}
