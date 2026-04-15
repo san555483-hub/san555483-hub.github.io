@@ -133,6 +133,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('marquee')">📢 跑馬燈</button>
       <button class="tab-btn" onclick="switchTab('orders')">🛍️ 購物訂單</button>
       <button class="tab-btn" onclick="switchTab('coupon')">🎫 折扣券</button>
+      <button class="tab-btn" onclick="switchTab('quickmenu')">💬 快速選單</button>
     </div>
   </div>
 
@@ -519,6 +520,66 @@ tr:hover td{background:rgba(61,43,31,.03);}
   </div>
 </div>
 
+
+  <!-- 💬 快速選單 -->
+  <div class="tab-pane" id="pane-quickmenu">
+    <div class="pane-inner">
+      <div class="card">
+        <div class="card-head">
+          <h3>💬 快速選單管理</h3>
+          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadQuickMenu()">🔄 重新載入</button>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
+            顧客在圖文選單點「服務選單」後，Bot 會推送以下輪播卡片。共 3 頁，每頁最多 5 個按鈕。儲存後即時生效。
+          </p>
+          <!-- 新增按鈕 -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-head"><h3>➕ 新增按鈕</h3></div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">頁次（1～3）</label>
+                  <select class="form-select" id="qm-page">
+                    <option value="1">第 1 頁</option>
+                    <option value="2">第 2 頁</option>
+                    <option value="3">第 3 頁</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">排序（1在最上面）</label>
+                  <input class="form-input" type="number" id="qm-order" value="1" min="1" max="5">
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">按鈕名稱 *</label>
+                  <input class="form-input" type="text" id="qm-label" placeholder="例：📅 線上預約">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">類型</label>
+                  <select class="form-select" id="qm-type">
+                    <option value="uri">開啟連結（uri）</option>
+                    <option value="message">傳送訊息（message）</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">連結網址 或 傳送文字 *</label>
+                <input class="form-input" type="text" id="qm-action" placeholder="https://... 或 傳送給Bot的文字">
+              </div>
+              <button class="btn btn-gold" onclick="addQuickMenuItem()">➕ 新增</button>
+              <div id="qm-add-msg" class="msg-box"></div>
+            </div>
+          </div>
+          <!-- 列表 -->
+          <div id="qm-pages"></div>
+          <div id="qm-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -559,7 +620,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCoupons();loadCouponTypes();}};
+  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCoupons();loadCouponTypes();},quickmenu:loadQuickMenu};
   if(map[name])map[name]();
 }
 
@@ -1229,6 +1290,93 @@ async function deleteCoupon(row, code){
     else showToast('❌ 刪除失敗');
   }catch(e){showToast('❌ 網路錯誤');}
 }
+
+// ════ 快速選單 ════
+let _qmItems = [];
+
+async function loadQuickMenu(){
+  show('qm-loading');
+  document.getElementById('qm-pages').innerHTML='';
+  try{
+    const r = await fetch(GAS+'?action=getQuickMenu&t='+Date.now());
+    const d = await r.json();
+    _qmItems = d.items || [];
+    hide('qm-loading');
+    renderQuickMenu();
+  }catch(e){hide('qm-loading');showToast('載入失敗');}
+}
+
+function renderQuickMenu(){
+  const pages = {1:[],2:[],3:[]};
+  _qmItems.forEach(item=>{
+    const p = item.page >= 1 && item.page <= 3 ? item.page : 1;
+    pages[p].push(item);
+  });
+  const pageNames = ['第 1 頁','第 2 頁','第 3 頁'];
+  document.getElementById('qm-pages').innerHTML = [1,2,3].map(p=>`
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-head"><h3>📄 ${pageNames[p-1]}</h3></div>
+      <div class="card-body">
+        ${pages[p].length ? pages[p].sort((a,b)=>a.order-b.order).map(item=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+            <span style="min-width:24px;text-align:center;font-weight:700;color:var(--bark);">${item.order}</span>
+            <input type="text" value="${item.label}" id="qm-lbl-${item.row}" style="flex:1;min-width:100px;padding:5px 7px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
+            <input type="text" value="${item.action}" id="qm-act-${item.row}" style="flex:2;min-width:140px;padding:5px 7px;border:1.5px solid var(--border);border-radius:3px;font-size:.75rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
+            <span style="font-size:.62rem;padding:2px 7px;border-radius:8px;background:${item.type==='uri'?'#e8f5ee':'#fff3cd'};color:${item.type==='uri'?'#2d7a4f':'#856404'}">${item.type}</span>
+            <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;"><input type="checkbox" id="qm-en-${item.row}" ${item.enabled?'checked':''}> 啟用</label>
+            <button class="btn btn-dark btn-sm" onclick="saveQuickMenuItem(${item.row},${item.page},${item.order},'${item.type}')">儲存</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteQuickMenuItem(${item.row},'${item.label}')">刪除</button>
+          </div>`).join('')
+        : '<p style="color:#aaa;font-size:.78rem;padding:8px 0;">此頁尚無按鈕</p>'}
+      </div>
+    </div>`).join('');
+}
+
+async function addQuickMenuItem(){
+  const page   = document.getElementById('qm-page').value;
+  const order  = document.getElementById('qm-order').value;
+  const label  = document.getElementById('qm-label').value.trim();
+  const type   = document.getElementById('qm-type').value;
+  const action = document.getElementById('qm-action').value.trim();
+  if(!label||!action){showMsg('qm-add-msg','名稱和連結/訊息必填','err');return;}
+  showMsg('qm-add-msg','新增中…','loading');
+  try{
+    const p = new URLSearchParams({action:'saveQuickMenu',page,order,label,type,action,enabled:'true'});
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('qm-add-msg','✅ 已新增','ok');
+      ['qm-label','qm-action'].forEach(i=>document.getElementById(i).value='');
+      loadQuickMenu();
+    }else showMsg('qm-add-msg','❌ '+(d.msg||'失敗'),'err');
+  }catch(e){showMsg('qm-add-msg','❌ 網路錯誤','err');}
+}
+
+async function saveQuickMenuItem(row,page,order,type){
+  const label   = document.getElementById('qm-lbl-'+row).value.trim();
+  const action  = document.getElementById('qm-act-'+row).value.trim();
+  const enabled = document.getElementById('qm-en-'+row).checked;
+  if(!label||!action){showToast('名稱和連結不能空白');return;}
+  try{
+    const p = new URLSearchParams({action:'saveQuickMenu',row,page,order,label,type,action:action,enabled:String(enabled)});
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){showToast('✅ 已儲存');loadQuickMenu();}
+    else showToast('❌ '+(d.msg||'失敗'));
+  }catch(e){showToast('❌ 網路錯誤');}
+}
+
+async function deleteQuickMenuItem(row,label){
+  if(!confirm('確定刪除「'+label+'」？'))return;
+  try{
+    const p = new URLSearchParams({action:'deleteQuickMenu',row});
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){showToast('✅ 已刪除');loadQuickMenu();}
+    else showToast('❌ '+(d.msg||'失敗'));
+  }catch(e){showToast('❌ 網路錯誤');}
+}
+
 </script>
 </body>
 </html>
