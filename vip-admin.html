@@ -274,10 +274,24 @@ tr:hover td{background:var(--cream);}
 
 <!-- ===== 折扣券 ===== -->
 <div class="section" id="sec-coupon">
+  <!-- 類型管理 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><div class="line"></div>⚙️ 折扣券類型管理</div>
+      <button class="btn btn-outline btn-sm" onclick="loadCouponTypesVip()">🔄 重新整理</button>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">類型清單動態從 GAS 載入，空白不顯示。修改後下拉選單即時更新。</p>
+    <div id="ct-list"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <input type="text" id="ct-new-name" placeholder="輸入新類型名稱" style="flex:1;">
+      <button class="btn btn-gold" onclick="addCouponTypeVip()">＋ 新增</button>
+    </div>
+    <div id="ct-msg"></div>
+  </div>
   <div class="card">
     <div class="card-header"><div class="card-title"><div class="line"></div>產生折扣券</div></div>
     <div class="form-grid">
-      <div><label>類型</label><select id="cp-type"><option value="購物券">購物券（僅限線上購物）</option><option value="現金券">現金券（購物及服務均可）</option></select></div>
+      <div><label>類型</label><select id="cp-type"><option value="">載入中…</option></select></div>
       <div><label>面額 *</label><input type="number" id="cp-amount" placeholder="例：500"></div>
       <div><label>到期日（選填）</label><input type="date" id="cp-expiry"></div>
       <div><label>備註（顧客姓名或用途）</label><input type="text" id="cp-note" placeholder="例：劉曦璟 週年慶"></div>
@@ -322,7 +336,7 @@ function switchTab(name){
   if(name==='blacklist')loadBlacklist();
   if(name==='settings')loadSettings();
   if(name==='purchase_log')loadProductsForSelect();
-  if(name==='coupon')loadCouponsVip();
+  if(name==='coupon'){loadCouponsVip();loadCouponTypesVip();}
 }
 
 async function searchCustomer(){
@@ -493,6 +507,84 @@ async function loadSettings(){
 }
 
 async function saveSetting(key,label){const value=document.getElementById('setting-'+key).value.trim();try{const r=await callGAS('updateSettings',{key,value,label});if(r.success){const btn=event.target,orig=btn.textContent;btn.textContent='✅';setTimeout(()=>btn.textContent=orig,1500);}else alert('失敗：'+r.message);}catch(e){alert('連線失敗');}}
+
+// ===== 🎫 折扣券類型管理 =====
+let _vipCouponTypes = [];
+
+async function loadCouponTypesVip(){
+  const el = document.getElementById('ct-list');
+  el.innerHTML = '<div class="alert alert-info"><span class="spin"></span>載入中…</div>';
+  try{
+    const r = await fetch(GAS_SHOP_URL+'?action=getCouponTypes&t='+Date.now());
+    const d = await r.json();
+    _vipCouponTypes = d.types || [];
+    renderCouponTypeListVip();
+    populateCouponTypeSelectVip();
+  }catch(e){ el.innerHTML='<div class="alert alert-error">載入失敗</div>'; }
+}
+
+function renderCouponTypeListVip(){
+  const el = document.getElementById('ct-list');
+  if(!_vipCouponTypes.length){
+    el.innerHTML='<div class="empty" style="padding:16px;">尚無類型，請新增</div>';
+    return;
+  }
+  el.innerHTML = _vipCouponTypes.map(t=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--cream2);">
+      <input type="text" value="${t.name}" id="ct-name-${t.row}" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--cream);">
+      <button class="btn btn-gold btn-sm" onclick="saveCouponTypeVip(${t.row})">儲存</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCouponTypeVip(${t.row},'${t.name}')">刪除</button>
+    </div>`).join('');
+}
+
+function populateCouponTypeSelectVip(){
+  const sel = document.getElementById('cp-type');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = _vipCouponTypes.length
+    ? _vipCouponTypes.map(t=>`<option value="${t.name}">${t.name}</option>`).join('')
+    : '<option value="">（無類型，請先新增）</option>';
+  if(cur) sel.value = cur;
+}
+
+async function addCouponTypeVip(){
+  const name = document.getElementById('ct-new-name').value.trim();
+  if(!name){ showMsg('ct-msg','請輸入類型名稱','error'); return; }
+  showMsg('ct-msg','<span class="spin"></span>新增中…','info');
+  try{
+    const p = new URLSearchParams({action:'saveCouponType', name, enabled:'true'});
+    const r = await fetch(GAS_SHOP_URL+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('ct-msg','✅ 已新增','success');
+      document.getElementById('ct-new-name').value='';
+      loadCouponTypesVip();
+    }else showMsg('ct-msg','❌ '+(d.msg||'失敗'),'error');
+  }catch(e){ showMsg('ct-msg','連線失敗','error'); }
+}
+
+async function saveCouponTypeVip(row){
+  const name = document.getElementById('ct-name-'+row).value.trim();
+  if(!name){ showMsg('ct-msg','類型名稱不能空白','error'); return; }
+  try{
+    const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:'true'});
+    const r = await fetch(GAS_SHOP_URL+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){ loadCouponTypesVip(); }
+    else alert('失敗：'+d.msg);
+  }catch(e){ alert('連線失敗'); }
+}
+
+async function deleteCouponTypeVip(row, name){
+  if(!confirm('確定刪除類型「'+name+'」？'))return;
+  try{
+    const p = new URLSearchParams({action:'deleteCouponType', row});
+    const r = await fetch(GAS_SHOP_URL+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){ loadCouponTypesVip(); }
+    else alert('失敗：'+d.msg);
+  }catch(e){ alert('連線失敗'); }
+}
 
 // ===== 🎫 折扣券（呼叫購物系統GAS）=====
 let _vipCoupons=[];

@@ -447,16 +447,26 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <!-- 🎫 折扣券 -->
   <div class="tab-pane" id="pane-coupon">
     <div class="pane-inner">
+      <!-- 折扣券類型管理 -->
+      <div class="card">
+        <div class="card-head"><h3>⚙️ 折扣券類型管理</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCouponTypes()">🔄 重新載入</button></div>
+        <div class="card-body">
+          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">類型清單從 GAS 動態載入，空白槽位不顯示。修改後「產生折扣券」的下拉選單即時更新。</p>
+          <div id="ct-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <input class="form-input" type="text" id="ct-new-name" placeholder="輸入新類型名稱" style="flex:1;">
+            <button class="btn btn-gold" onclick="addCouponType()">＋ 新增</button>
+          </div>
+          <div id="ct-msg" class="msg-box"></div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-head"><h3>🎫 新增折扣券</h3></div>
         <div class="card-body">
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">類型</label>
-              <select class="form-select" id="cp-type">
-                <option value="購物券">購物券（僅限線上購物折抵）</option>
-                <option value="現金券">現金券（購物及服務均可用）</option>
-              </select>
+              <select class="form-select" id="cp-type"><option value="">載入中…</option></select>
             </div>
             <div class="form-group">
               <label class="form-label">面額 *</label>
@@ -549,7 +559,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:loadCoupons};
+  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCoupons();loadCouponTypes();}};
   if(map[name])map[name]();
 }
 
@@ -1036,6 +1046,83 @@ async function addManualOrder(){
       showMsg('mo-msg','❌ 儲存失敗：'+(d.msg||''),'err');
     }
   }catch(e){showMsg('mo-msg','❌ 網路錯誤：'+e.message,'err');}
+}
+
+// ════ 折扣券類型管理 ════
+let _couponTypes = [];
+
+async function loadCouponTypes(){
+  document.getElementById('ct-list').innerHTML='<div style="padding:8px;font-size:.78rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;">載入中…</div>';
+  try{
+    const r = await fetch(GAS_SHOP+'?action=getCouponTypes&t='+Date.now());
+    const d = await r.json();
+    _couponTypes = d.types || [];
+    renderCouponTypeList();
+    populateCouponTypeSelect();
+  }catch(e){document.getElementById('ct-list').innerHTML='<div style="color:#c00;font-size:.78rem;">載入失敗</div>';}
+}
+
+function renderCouponTypeList(){
+  const el = document.getElementById('ct-list');
+  if(!_couponTypes.length){
+    el.innerHTML='<div style="padding:8px;font-size:.78rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;">尚無類型，請新增</div>';
+    return;
+  }
+  el.innerHTML = _couponTypes.map(t=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
+      <input type="text" value="${t.name}" id="ct-name-${t.row}" style="flex:1;padding:6px 8px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
+      <button class="btn btn-dark btn-sm" onclick="saveCouponType(${t.row})">儲存</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCouponType(${t.row},'${t.name}')">刪除</button>
+    </div>`).join('');
+}
+
+function populateCouponTypeSelect(){
+  const sel = document.getElementById('cp-type');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = _couponTypes.length
+    ? _couponTypes.map(t=>`<option value="${t.name}">${t.name}</option>`).join('')
+    : '<option value="">（無類型，請先新增）</option>';
+  if(cur) sel.value = cur;
+}
+
+async function addCouponType(){
+  const name = document.getElementById('ct-new-name').value.trim();
+  if(!name){showMsg('ct-msg','請輸入類型名稱','err');return;}
+  showMsg('ct-msg','新增中…','loading');
+  try{
+    const p = new URLSearchParams({action:'saveCouponType', name, enabled:'true'});
+    const r = await fetch(GAS_SHOP+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('ct-msg','✅ 已新增','ok');
+      document.getElementById('ct-new-name').value='';
+      loadCouponTypes();
+    }else showMsg('ct-msg','❌ '+(d.msg||'失敗'),'err');
+  }catch(e){showMsg('ct-msg','❌ 網路錯誤','err');}
+}
+
+async function saveCouponType(row){
+  const name = document.getElementById('ct-name-'+row).value.trim();
+  if(!name){showMsg('ct-msg','類型名稱不能空白','err');return;}
+  try{
+    const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:'true'});
+    const r = await fetch(GAS_SHOP+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){showToast('✅ 已儲存');loadCouponTypes();}
+    else showToast('❌ '+(d.msg||'失敗'));
+  }catch(e){showToast('❌ 網路錯誤');}
+}
+
+async function deleteCouponType(row, name){
+  if(!confirm('確定刪除類型「'+name+'」？'))return;
+  try{
+    const p = new URLSearchParams({action:'deleteCouponType', row});
+    const r = await fetch(GAS_SHOP+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){showToast('✅ 已刪除');loadCouponTypes();}
+    else showToast('❌ '+(d.msg||'失敗'));
+  }catch(e){showToast('❌ 網路錯誤');}
 }
 
 // ════ 折扣券（呼叫購物系統GAS）════
