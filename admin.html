@@ -350,6 +350,18 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <!-- 💳 儲值紀錄 -->
   <div class="tab-pane" id="pane-credit">
     <div class="pane-inner">
+
+      <!-- 系統說明 -->
+      <div style="background:linear-gradient(135deg,#3d2b1f,#5c3d2e);border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:1.4rem;">💳</span>
+        <div>
+          <div style="color:#e8d0b0;font-family:'Playfair Display',serif;font-size:.95rem;font-weight:500;">一般客養護金管理（主系統）</div>
+          <div style="color:rgba(255,255,255,.6);font-size:.68rem;font-family:'Noto Sans TC',sans-serif;margin-top:3px;">此頁管理的是一般顧客的養護金（儲值/扣款）｜⚠️ 尊爵VIP儲值請至
+            <a href="https://san555483-hub.github.io/vip-admin.html" target="_blank" style="color:#c9897a;text-decoration:underline;">尊爵後台</a>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-head"><h3>💳 新增養護金儲值</h3></div>
         <div class="card-body">
@@ -369,6 +381,21 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <div id="cr-add-msg" class="msg-box"></div>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-head"><h3>➖ 現場消費折抵（扣款）</h3></div>
+        <div class="card-body">
+          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;">顧客到店消費時手動折抵養護金，系統自動寫入負值扣款紀錄。</p>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">電話 *</label><input class="form-input" type="tel" id="cr-deduct-phone" placeholder="0912345678"></div>
+            <div class="form-group"><label class="form-label">扣款金額 *</label><input class="form-input" type="number" id="cr-deduct-amount" placeholder="例：500"></div>
+          </div>
+          <div class="form-group"><label class="form-label">備註</label><input class="form-input" type="text" id="cr-deduct-note" placeholder="例：剪髮折抵"></div>
+          <button class="btn btn-gold" onclick="deductCredit()">➖ 確認扣款</button>
+          <div id="cr-deduct-msg" class="msg-box"></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-head"><h3>🔍 查詢養護金餘額</h3></div>
         <div class="card-body">
@@ -379,13 +406,15 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <div id="cr-query-result"></div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-head"><h3>💳 所有儲值紀錄</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCredits()">🔄 重新載入</button></div>
         <div class="card-body">
-          <div class="table-wrap"><table><thead><tr><th>姓名</th><th>電話</th><th>金額</th><th>贈送</th><th>餘額</th><th>支付</th><th>建立時間</th><th>備註</th></tr></thead><tbody id="cr-tbody"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>姓名</th><th>電話</th><th>金額</th><th>贈送</th><th>餘額</th><th>支付</th><th>建立時間</th><th>備註</th><th>操作</th></tr></thead><tbody id="cr-tbody"></tbody></table></div>
           <div id="cr-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -910,9 +939,44 @@ async function loadCredits(){
     const rows=(d.data||[]).reverse();
     document.getElementById('cr-tbody').innerHTML=rows.map(row=>{
       const amt=Number(row['儲值金額']||0),bal=Number(row['餘額']||0);
-      return`<tr><td>${row['姓名']||''}</td><td>${row['電話']||''}</td><td class="${amt>=0?'credit-pos':'credit-neg'}">${amt>=0?'+':''}${amt.toLocaleString()}</td><td>${Number(row['贈送金額']||0).toLocaleString()}</td><td><strong>${bal.toLocaleString()}</strong></td><td style="font-size:.7rem;">${row['支付方式']||''}</td><td style="font-size:.65rem;color:#aaa;">${row['建立時間']||''}</td><td style="font-size:.7rem;">${row['備註']||''}</td></tr>`;
-    }).join('')||'<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">無儲值紀錄</td></tr>';
+      return`<tr>
+        <td>${row['姓名']||''}</td>
+        <td>${row['電話']||''}</td>
+        <td class="${amt>=0?'credit-pos':'credit-neg'}">${amt>=0?'+':''}${amt.toLocaleString()}</td>
+        <td>${Number(row['贈送金額']||0).toLocaleString()}</td>
+        <td><strong>${bal.toLocaleString()}</strong></td>
+        <td style="font-size:.7rem;">${row['支付方式']||''}</td>
+        <td style="font-size:.65rem;color:#aaa;">${row['建立時間']||''}</td>
+        <td style="font-size:.7rem;">${row['備註']||''}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCredit(${row._row},'${row['姓名']||''}','${row['電話']||''}')">刪除</button></td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無儲值紀錄</td></tr>';
   }catch(e){hide('cr-loading');showToast('載入失敗');}
+}
+async function deleteCredit(row,name,phone){
+  if(!confirm(`確定刪除這筆紀錄？\n姓名：${name||'未知'} 電話：${phone||''}\n⚠️ 此動作無法復原`))return;
+  try{
+    const r=await fetch(GAS+'?action=deleteCredit&row='+row);
+    const d=await r.json();
+    if(d.ok){showToast('✅ 已刪除');loadCredits();}
+    else showToast('❌ 刪除失敗：'+(d.msg||''));
+  }catch(e){showToast('❌ 網路錯誤');}
+}
+async function deductCredit(){
+  const phone=document.getElementById('cr-deduct-phone').value.trim();
+  const amount=document.getElementById('cr-deduct-amount').value.trim();
+  if(!phone||!amount){showMsg('cr-deduct-msg','請填寫電話和扣款金額','err');return;}
+  if(!confirm(`確定從 ${phone} 扣款 NT$${Number(amount).toLocaleString()}？`))return;
+  showMsg('cr-deduct-msg','扣款中…','loading');
+  try{
+    const p=new URLSearchParams({action:'deductCredit',phone,amount,note:document.getElementById('cr-deduct-note').value.trim()||'現場消費折抵'});
+    const r=await fetch(GAS+'?'+p.toString());const d=await r.json();
+    if(d.ok){
+      showMsg('cr-deduct-msg',`✅ 扣款成功！剩餘餘額：NT$${d.remainBalance.toLocaleString()}`,'ok');
+      loadCredits();
+      ['cr-deduct-phone','cr-deduct-amount','cr-deduct-note'].forEach(i=>document.getElementById(i).value='');
+    }else showMsg('cr-deduct-msg','❌ '+(d.msg||'失敗'),'err');
+  }catch(e){showMsg('cr-deduct-msg','❌ 網路錯誤','err');}
 }
 
 // ════ 跑馬燈 ════
