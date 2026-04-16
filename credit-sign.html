@@ -698,7 +698,8 @@ async function submitSign() {
       bonus:     PLAN_BONUS,
       payMethod: selectedPay,
       signUrl:   signDataUrl.substring(0, 500), // 截斷，完整版可改存 Firebase Storage
-      note:      document.getElementById('noteInput').value
+   note:      document.getElementById('noteInput').value,
+      source:    '線上儲值'
     });
 
     const res = await fetch(GAS_URL, {
