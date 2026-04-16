@@ -410,7 +410,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <div class="card">
         <div class="card-head"><h3>💳 所有儲值紀錄</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCredits()">🔄 重新載入</button></div>
         <div class="card-body">
-          <div class="table-wrap"><table><thead><tr><th>姓名</th><th>電話</th><th>金額</th><th>贈送</th><th>餘額</th><th>支付</th><th>建立時間</th><th>備註</th><th>操作</th></tr></thead><tbody id="cr-tbody"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>姓名</th><th>電話</th><th>金額</th><th>贈送</th><th>本筆餘額</th><th>累計餘額</th><th>支付</th><th>建立時間</th><th>備註來源</th><th>操作</th></tr></thead><tbody id="cr-tbody"></tbody></table></div>
           <div id="cr-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
         </div>
       </div>
@@ -939,18 +939,29 @@ async function loadCredits(){
     const rows=(d.data||[]).reverse();
     document.getElementById('cr-tbody').innerHTML=rows.map(row=>{
       const amt=Number(row['儲值金額']||0),bal=Number(row['餘額']||0);
-      return`<tr>
-        <td>${row['姓名']||''}</td>
-        <td>${row['電話']||''}</td>
-        <td class="${amt>=0?'credit-pos':'credit-neg'}">${amt>=0?'+':''}${amt.toLocaleString()}</td>
-        <td>${Number(row['贈送金額']||0).toLocaleString()}</td>
-        <td><strong>${bal.toLocaleString()}</strong></td>
-        <td style="font-size:.7rem;">${row['支付方式']||''}</td>
-        <td style="font-size:.65rem;color:#aaa;">${row['建立時間']||''}</td>
-        <td style="font-size:.7rem;">${row['備註']||''}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteCredit(${row._row},'${row['姓名']||''}','${row['電話']||''}')">刪除</button></td>
-      </tr>`;
-    }).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無儲值紀錄</td></tr>';
+      const running=Number(row._runningBalance||0);
+      // 電話補回開頭0
+      const phone=String(row['電話']||'').replace(/\D/g,'');
+      const displayPhone=phone.length===9?'0'+phone:phone;
+      // 備註來源顏色
+      const note=String(row['備註']||'');
+      const noteColor=note.includes('線上儲值')?'#0066cc':note.includes('消費折抵')?'#c0392b':note.includes('退費')?'#e67e22':'#2d7a4f';
+      // 建立時間格式化（去掉T和Z）
+      const timeRaw=String(row['建立時間']||'');
+      const timeDisplay=timeRaw.replace('T',' ').replace('.000Z','').substring(0,16);
+      return\`<tr>
+        <td>\${row['姓名']||''}</td>
+        <td>\${displayPhone}</td>
+        <td class="\${amt>=0?'credit-pos':'credit-neg'}">\${amt>=0?'+':''}\${amt.toLocaleString()}</td>
+        <td style="font-size:.75rem;">\${Number(row['贈送金額']||0)>0?'+'+Number(row['贈送金額']||0).toLocaleString():'—'}</td>
+        <td style="font-size:.75rem;color:#888;">\${bal.toLocaleString()}</td>
+        <td><strong style="color:\${running>=0?'var(--moss)':'var(--rose)'}">\${running.toLocaleString()}</strong></td>
+        <td style="font-size:.7rem;">\${row['支付方式']||''}</td>
+        <td style="font-size:.65rem;color:#aaa;">\${timeDisplay}</td>
+        <td style="font-size:.72rem;color:\${noteColor};">\${note||'—'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCredit(\${row._row},'\${row['姓名']||''}','\${displayPhone}')">刪除</button></td>
+      </tr>\`;
+    }).join('')||'<tr><td colspan="10" style="text-align:center;color:#aaa;padding:24px;">無儲值紀錄</td></tr>';
   }catch(e){hide('cr-loading');showToast('載入失敗');}
 }
 async function deleteCredit(row,name,phone){
