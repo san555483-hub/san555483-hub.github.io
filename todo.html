@@ -327,6 +327,58 @@ body {
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .toast.show { opacity: 1; }
+
+/* 匯入工具按鈕（在 header 右上角） */
+.tool-btn {
+  position: absolute;
+  top: 20px; right: 16px;
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.tool-btn:active { transform: scale(0.9); }
+.tool-btn:hover { background: rgba(255,255,255,0.2); }
+
+/* 匯入彈窗的 textarea */
+.import-textarea {
+  width: 100%;
+  min-height: 200px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  background: #f8f5f0;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  line-height: 1.5;
+}
+.import-textarea:focus { border-color: var(--gold); }
+.import-hint {
+  font-size: 11px;
+  color: var(--muted);
+  background: #fdf8f0;
+  border: 1px solid #e8d5b0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+.import-progress {
+  font-size: 12px;
+  color: var(--gold-dark);
+  margin-top: 8px;
+  display: none;
+}
 </style>
 </head>
 <body>
@@ -334,6 +386,7 @@ body {
 <div class="header">
   <div class="header-logo">📋 UNI 進度追蹤</div>
   <div class="header-sub">TASK MANAGER</div>
+  <button class="tool-btn" onclick="openImportModal()" title="批次匯入">📥</button>
 </div>
 
 <div class="container" id="mainContainer">
@@ -399,6 +452,30 @@ body {
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">取消</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveTodo()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 批次匯入彈窗 -->
+<div class="modal-overlay" id="importModalOverlay">
+  <div class="modal">
+    <div class="modal-title">📥 批次匯入任務</div>
+    <div class="import-hint">
+      💡 貼上 Claude 給的 JSON 清單 → 點匯入<br>
+      ✨ 支援 status="done" / pinned=true 等欄位
+    </div>
+    <textarea class="import-textarea" id="importText" placeholder='[
+  {
+    "title": "任務標題",
+    "tag": "🔴 主系統",
+    "note": "備註",
+    "status": "done"
+  }
+]'></textarea>
+    <div class="import-progress" id="importProgress"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+      <button class="btn btn-primary" id="importBtn" onclick="doImport()">匯入</button>
     </div>
   </div>
 </div>
@@ -617,6 +694,88 @@ function showToast(msg) {
 document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'modalOverlay') closeModal();
 });
+document.getElementById('importModalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'importModalOverlay') closeImportModal();
+});
+
+// ==================== 批次匯入 ====================
+function openImportModal() {
+  document.getElementById('importText').value = '';
+  document.getElementById('importProgress').style.display = 'none';
+  document.getElementById('importProgress').textContent = '';
+  document.getElementById('importModalOverlay').classList.add('active');
+}
+
+function closeImportModal() {
+  document.getElementById('importModalOverlay').classList.remove('active');
+}
+
+async function doImport() {
+  const raw = document.getElementById('importText').value.trim();
+  if (!raw) { showToast('請貼上 JSON 內容'); return; }
+
+  let items;
+  try {
+    items = JSON.parse(raw);
+    if (!Array.isArray(items)) throw new Error('JSON 必須是陣列 []');
+  } catch (err) {
+    showToast('JSON 格式錯誤：' + err.message);
+    return;
+  }
+
+  const btn = document.getElementById('importBtn');
+  const progress = document.getElementById('importProgress');
+  btn.disabled = true;
+  btn.textContent = '匯入中...';
+  progress.style.display = 'block';
+
+  let success = 0;
+  let failed = 0;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    progress.textContent = `進度 ${i + 1} / ${items.length}：${item.title || '(無標題)'}`;
+    try {
+      // 第一步：新增任務
+      const addParams = new URLSearchParams({
+        action: 'addTodo',
+        title: item.title || '(未命名)',
+        tag: item.tag || '',
+        note: item.note || '',
+        pinned: item.pinned === true ? 'true' : 'false',
+      });
+      const addRes = await fetch(GAS_URL + '?' + addParams.toString(), { cache: 'no-store' });
+      const addData = await addRes.json();
+      if (!addData.ok) throw new Error(addData.msg || '新增失敗');
+
+      // 第二步：如果 status=done，立刻標記完成
+      if (item.status === 'done' && addData.id) {
+        const updParams = new URLSearchParams({
+          action: 'updateTodo',
+          id: addData.id,
+          status: 'done',
+        });
+        await fetch(GAS_URL + '?' + updParams.toString(), { cache: 'no-store' });
+      }
+      success++;
+    } catch (err) {
+      failed++;
+      console.error('匯入失敗:', item.title, err);
+    }
+  }
+
+  progress.textContent = `✅ 完成！成功 ${success} 筆，失敗 ${failed} 筆`;
+  showToast(`🎉 匯入 ${success} 筆${failed ? '，失敗 ' + failed : ''}`);
+
+  btn.disabled = false;
+  btn.textContent = '匯入';
+
+  // 重新載入清單
+  setTimeout(async () => {
+    await loadTodos();
+    closeImportModal();
+  }, 1500);
+}
 </script>
 </body>
 </html>
