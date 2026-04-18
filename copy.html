@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📋 複製回覆</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --surface: #ffffff;
+  --border: #e8e0d5;
+  --gold: #c4a882;
+  --gold-dark: #a08660;
+  --text: #2a2420;
+  --muted: #8a7d72;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.container {
+  max-width: 480px;
+  width: 100%;
+}
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.header h1 {
+  font-size: 20px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.header p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.text-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 16px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+}
+.btn-primary {
+  background: var(--text);
+  color: white;
+}
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.btn:active { transform: scale(0.97); }
+.status {
+  text-align: center;
+  font-size: 13px;
+  color: var(--gold-dark);
+  margin-top: 12px;
+  min-height: 20px;
+}
+.hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 16px;
+  line-height: 1.7;
+  padding: 12px;
+  background: #fdf8f0;
+  border-radius: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>📋 評論回覆</h1>
+    <p>點「複製」後去 Google 商家後台貼上</p>
+  </div>
+  <div class="text-box" id="textBox">載入中...</div>
+  <button class="btn btn-primary" onclick="copyText()">📋 複製到剪貼簿</button>
+  <a href="https://business.google.com" target="_blank" style="text-decoration:none;">
+    <button class="btn btn-secondary">🌐 前往 Google 商家</button>
+  </a>
+  <div class="status" id="status"></div>
+  <div class="hint">
+    💡 操作流程：<br>
+    1. 點「複製」→ 2. 開 Google 商家 App/網頁 → 3. 長按貼上 → 4. 送出回覆
+  </div>
+</div>
+
+<script>
+// 取得 URL 參數中的文字
+const urlParams = new URLSearchParams(window.location.search);
+const text = urlParams.get('text') || '';
+document.getElementById('textBox').textContent = text || '（沒有內容）';
+
+async function copyText() {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    const status = document.getElementById('status');
+    status.textContent = '✅ 已複製！可以去 Google 商家貼上了';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (err) {
+    // 備用：選取文字
+    const range = document.createRange();
+    range.selectNode(document.getElementById('textBox'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    document.getElementById('status').textContent = '✅ 已複製！';
+  }
+}
+</script>
+</body>
+</html>
