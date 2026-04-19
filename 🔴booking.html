@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>UNI Hair Shop — 線上預約</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf8f5; --surface: #ffffff; --border: #e8e0d5;
+  --gold: #c4a882; --gold-dark: #a08660; --text: #2a2420;
+  --muted: #8a7d72; --light: #f0ebe4; --red: #c0392b; --disabled: #d5cdc5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; min-height: 100vh; padding-bottom: 60px; }
+.header { background: var(--text); color: white; text-align: center; padding: 28px 20px 24px; }
+.header-logo { font-family: 'Noto Serif TC', serif; font-size: 22px; font-weight: 500; letter-spacing: 4px; margin-bottom: 4px; }
+.header-sub { font-size: 11px; letter-spacing: 3px; opacity: 0.6; text-transform: uppercase; }
+
+/* ══ 廣播跑馬燈 ══ */
+.marquee-bar {
+  background: #3d2b1f;
+  border-bottom: 2px solid #b8895a;
+  padding: 10px 0;
+  overflow: hidden;
+  display: none;
+}
+.marquee-bar.has-content { display: block; }
+.marquee-track {
+  white-space: nowrap;
+  display: inline-block;
+  animation: mqRoll 30s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+@keyframes mqRoll {
+  0%  { transform: translateX(100vw); }
+  100%{ transform: translateX(-100%); }
+}
+.marquee-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .06em;
+  padding: 0 32px;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.marquee-sep { color: #e8d0b0; font-size: 13px; padding: 0 6px; opacity: .7; }
+@media(max-width:480px){ .marquee-text{ font-size:14px; padding:0 24px; } }
+/* ══════════════ */
+
+.progress { display: flex; justify-content: center; align-items: center; padding: 20px 20px 0; max-width: 420px; margin: 0 auto; }
+.step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; position: relative; }
+.step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: 50%; width: 100%; height: 1px; background: var(--border); z-index: 0; }
+.step.done::after { background: var(--gold); }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--muted); z-index: 1; transition: all 0.3s; }
+.step.active .step-dot, .step.done .step-dot { border-color: var(--gold); background: var(--gold); color: white; }
+.step-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; white-space: nowrap; }
+.step.active .step-label { color: var(--gold-dark); font-weight: 500; }
+.container { max-width: 420px; margin: 0 auto; padding: 24px 16px 0; }
+.section { display: none; }
+.section.active { display: block; }
+.section-title { font-family: 'Noto Serif TC', serif; font-size: 18px; font-weight: 500; margin-bottom: 6px; }
+.section-desc { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+.category-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; padding: 4px 0 8px; margin-top: 16px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+.category-label:first-child { margin-top: 0; }
+.service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.service-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 12px; cursor: pointer; transition: all 0.2s; background: var(--surface); position: relative; }
+.service-card:active { transform: scale(0.98); }
+.service-card.selected { border-color: var(--gold); background: #fdf6ee; }
+.service-card.selected::after { content: '✓'; position: absolute; top: 8px; right: 10px; color: var(--gold); font-size: 12px; font-weight: 700; }
+.service-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
+.service-price { font-size: 11px; color: var(--gold-dark); font-weight: 500; }
+.service-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.service-note { font-size: 10px; color: #c08040; margin-top: 3px; }
+.selected-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.selected-tag { background: #fdf6ee; border: 1.5px solid var(--gold); border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 12px; color: var(--gold-dark); display: flex; align-items: center; gap: 6px; }
+.selected-tag-remove { cursor: pointer; font-size: 16px; color: var(--gold); line-height: 1; }
+.date-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; margin-bottom: 20px; }
+.date-scroll::-webkit-scrollbar { display: none; }
+.date-item { flex-shrink: 0; width: 56px; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; background: var(--surface); transition: all 0.2s; }
+.date-item.selected { border-color: var(--gold); background: #fdf6ee; }
+.date-item.closed { opacity: 0.4; cursor: not-allowed; background: var(--light); }
+.date-day { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+.date-num { font-size: 18px; font-weight: 500; line-height: 1; }
+.date-month { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.date-closed-label { font-size: 8px; color: var(--red); margin-top: 2px; }
+.time-section-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; margin-top: 16px; }
+.time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+.time-slot { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 4px; text-align: center; cursor: pointer; font-size: 13px; background: var(--surface); transition: all 0.2s; }
+.time-slot.selected { border-color: var(--gold); background: #fdf6ee; color: var(--gold-dark); font-weight: 500; }
+.time-slot.booked { background: var(--light); color: var(--disabled); cursor: not-allowed; text-decoration: line-through; font-size: 11px; }
+.time-slot.locked-notice { background: #fff8e8; border-color: #e8c870; color: #8a6a20; cursor: not-allowed; font-size: 10px; line-height: 1.3; padding: 6px 4px; }
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+.form-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s; }
+.form-input:focus { border-color: var(--gold); }
+textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
+.priority-box { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); margin-bottom: 16px; cursor: pointer; }
+.priority-header { display: flex; align-items: flex-start; gap: 10px; }
+.priority-checkbox { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 1px; }
+.priority-checkbox.checked { background: var(--gold); border-color: var(--gold); color: white; }
+.priority-title { font-size: 13px; font-weight: 500; line-height: 1.4; }
+.priority-price { font-size: 12px; color: var(--gold-dark); margin-top: 2px; }
+.priority-desc { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.notice-box { background: #fdf8f0; border: 1px solid #e8d5b0; border-radius: 10px; padding: 14px; margin-bottom: 20px; }
+.notice-title { font-size: 12px; font-weight: 500; color: var(--gold-dark); margin-bottom: 6px; }
+.notice-text { font-size: 11px; color: #7a6a55; line-height: 1.8; }
+.reminder-box { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 10px; padding: 14px; margin-bottom: 20px; text-align: center; }
+.reminder-text { font-size: 12px; color: #e65100; line-height: 1.8; font-weight: 500; }
+.payment-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.payment-tag { background: var(--light); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: var(--muted); }
+.summary-card { border: 1.5px solid var(--gold); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.summary-header { background: var(--gold); color: white; padding: 12px 16px; font-size: 13px; font-weight: 500; letter-spacing: 1px; }
+.summary-body { padding: 16px; }
+.summary-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.summary-row:last-child { border-bottom: none; }
+.summary-label { color: var(--muted); flex-shrink: 0; margin-right: 12px; }
+.summary-value { text-align: right; font-weight: 500; }
+.btn { width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 15px; font-family: 'Noto Sans TC', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+.btn-primary { background: var(--text); color: white; }
+.btn-secondary { background: transparent; color: var(--muted); border: 1.5px solid var(--border); margin-top: 10px; }
+.btn:disabled { background: var(--disabled); cursor: not-allowed; }
+.success-screen { text-align: center; padding: 40px 20px; }
+.success-icon { font-size: 56px; margin-bottom: 16px; }
+.success-title { font-family: 'Noto Serif TC', serif; font-size: 22px; font-weight: 500; margin-bottom: 8px; }
+.success-desc { font-size: 13px; color: var(--muted); line-height: 1.8; }
+.loading-screen { text-align: center; padding: 60px 20px; color: var(--muted); }
+.spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+.spinner-sm { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-inline { display: none; text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+
+/* ══ 【2026-04-19 新增】LINE 登入樣式 ══ */
+.line-login-box {
+  background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
+  border: 1.5px solid #06c755;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 16px 0 20px;
+  text-align: center;
+}
+.line-login-title {
+  font-size: 13px;
+  color: #2a4d33;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.line-login-desc {
+  font-size: 11px;
+  color: #607868;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.btn-line-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #06c755;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-line-login:hover { background: #05a847; }
+.btn-line-login:disabled { background: #aaa; cursor: not-allowed; }
+.line-logged-in {
+  background: #f0f9f0;
+  border: 1.5px solid #06c755;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 16px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #2a4d33;
+}
+.line-logged-in-icon {
+  width: 32px;
+  height: 32px;
+  background: #06c755;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.line-logged-in-content { flex: 1; line-height: 1.5; }
+.line-logged-in-name { font-weight: 500; }
+.line-logged-in-hint { font-size: 11px; color: #607868; margin-top: 2px; }
+.error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-logo">UNI HAIR SHOP</div>
+  <div class="header-sub">一對一訂製髮型設計</div>
+</div>
+
+<!-- 📢 廣播跑馬燈 -->
+<div class="marquee-bar" id="marqueeBar">
+  <div class="marquee-track" id="marqueeTrack"></div>
+</div>
+
+<div class="progress">
+  <div class="step active" id="step1"><div class="step-dot">1</div><div class="step-label">服務</div></div>
+  <div class="step" id="step2"><div class="step-dot">2</div><div class="step-label">時段</div></div>
+  <div class="step" id="step3"><div class="step-dot">3</div><div class="step-label">資料</div></div>
+  <div class="step" id="step4"><div class="step-dot">4</div><div class="step-label">確認</div></div>
+</div>
+<div class="container">
+  <div class="section active" id="sectionLoading">
+    <div class="loading-screen"><div class="spinner"></div><div>載入服務資料中...</div></div>
+  </div>
+  <div class="section" id="section1">
+    <div class="section-title">選擇服務項目</div>
+    <div class="section-desc">可複選多項,選完後點下一步</div>
+
+    <!-- 【2026-04-19 新增】LINE 快速登入區塊 -->
+    <div id="lineLoginArea">
+      <div class="line-login-box" id="lineLoginBox">
+        <div class="line-login-title">🎁 老顧客福利!</div>
+        <div class="line-login-desc">LINE 快速登入,自動帶入姓名電話<br>省去重複輸入,預約更快速 ✨</div>
+        <button type="button" class="btn-line-login" onclick="startLineLogin()">
+          <span style="font-size:18px;">📱</span>
+          使用 LINE 快速登入
+        </button>
+      </div>
+      <div class="line-logged-in" id="lineLoggedInBox" style="display:none">
+        <div class="line-logged-in-icon">✓</div>
+        <div class="line-logged-in-content">
+          <div class="line-logged-in-name">已登入 LINE:<span id="loggedInName"></span></div>
+          <div class="line-logged-in-hint">預約資料將自動帶入</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="selectedTagsArea" class="selected-tags"></div>
+    <div id="serviceList"></div>
+    <div class="notice-box" style="margin-top:16px">
+      <div class="notice-title">⏱ 關於服務時長</div>
+      <div class="notice-text">每位顧客需求狀況不同，以上時間為預估時間。若有異動，Elsa 會主動通知您。<br><br>若不想等候，可於下一步勾選「加價指定時段全程服務」。<br>會員 $250 ／ 非會員 $350</div>
+    </div>
+    <button class="btn btn-primary" id="btn1" onclick="goStep(2)" disabled>下一步</button>
+  </div>
+  <div class="section" id="section2">
+    <div class="section-title">選擇預約時段</div>
+    <div class="section-desc">請選擇方便的日期與時間</div>
+    <div class="date-scroll" id="dateScroll"></div>
+    <div id="timeSlotArea"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">請先選擇日期</div></div>
+    <div class="loading-inline" id="loadingSlots"><div class="spinner-sm"></div>載入時段中...</div>
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" id="btn2" onclick="goStep(3)" disabled>下一步</button>
+      <button class="btn btn-secondary" onclick="goStep(1)">上一步</button>
+    </div>
+  </div>
+  <div class="section" id="section3">
+    <div class="section-title">填寫預約資料</div>
+    <div class="section-desc">請留下您的聯絡資訊</div>
+    <div class="form-group">
+      <label class="form-label">姓名 *</label>
+      <input type="text" class="form-input" id="inputName" placeholder="請輸入您的姓名">
+    </div>
+    <div class="form-group">
+      <label class="form-label">手機號碼 *</label>
+      <input type="tel" class="form-input" id="inputPhone" placeholder="09xxxxxxxx">
+    </div>
+    <div class="form-group">
+      <label class="form-label">備註（可填諮詢需求、髮況說明等）</label>
+      <textarea class="form-input" id="inputNote" placeholder="例如：想諮詢漂髮、頭髮有受損、小朋友容易坐不住..."></textarea>
+    </div>
+    <div class="priority-box" onclick="togglePriority()">
+      <div class="priority-header">
+        <div class="priority-checkbox" id="priorityCheck"></div>
+        <div>
+          <div class="priority-title">加價指定時段全程服務</div>
+          <div class="priority-price" id="priorityPriceLabel">會員 $250 ／ 非會員 $350</div>
+        </div>
+      </div>
+      <div class="priority-desc">Elsa 將為您安排專屬時段，全程服務不受排程影響。此費用用以平衡排程與人力負擔，敬請見諒與理解 🙏</div>
+    </div>
+    <div id="memberTypeArea" style="display:none;margin-bottom:16px">
+      <label class="form-label">您是否為會員？</label>
+      <div style="display:flex;gap:10px">
+        <div class="member-btn" id="btnMember" onclick="selectMember('member')" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px">
+          會員<br><span style="font-size:11px;color:var(--gold-dark)" id="memberFeeLabel">$250</span>
+        </div>
+        <div class="member-btn" id="btnNonMember" onclick="selectMember('nonmember')" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:13px">
+          非會員<br><span style="font-size:11px;color:var(--gold-dark)" id="nonMemberFeeLabel">$350</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">付款方式</label>
+      <div class="payment-list" id="paymentList">
+        <span class="payment-tag">💳 街口支付</span>
+        <span class="payment-tag">💳 iPASS Money</span>
+        <span class="payment-tag">🏦 轉帳</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">使用官方LINE自助預約即送回饋金 🎁</div>
+
+      <!-- 【2026-04-18 新增】家人代付貼心話術 -->
+      <div style="margin-top:12px;padding:12px 14px;background:#fdf8f0;border:1px solid #e8d5b0;border-radius:10px;">
+        <div style="font-size:12px;font-weight:500;color:var(--gold-dark);margin-bottom:6px;">🌸 貼心小提醒</div>
+        <div style="font-size:11px;color:#7a6a55;line-height:1.8;">
+          家人在家也能為您付款～<br>
+          爸爸帶孩子剪髮、媽媽遠端付款也 OK 💕<br>
+          點選街口 / iPASS，傳連結即可輕鬆完成
+        </div>
+      </div>
+    </div>
+    <div id="errorMsg3" class="error-msg">請填寫姓名和手機號碼</div>
+    <button class="btn btn-primary" onclick="goStep(4)">下一步</button>
+    <button class="btn btn-secondary" onclick="goStep(2)">上一步</button>
+  </div>
+  <div class="section" id="section4">
+    <div class="section-title">確認預約內容</div>
+    <div class="section-desc">請確認以下資訊後送出</div>
+    <div class="summary-card">
+      <div class="summary-header">預約明細</div>
+      <div class="summary-body" id="summaryBody"></div>
+    </div>
+    <div class="reminder-box">
+      <div class="reminder-text">📌 以上預約皆為登記<br>請稍後待 Elsa 與您確認預約<br>避免白跑一趟 🙏</div>
+    </div>
+    <div class="notice-box">
+      <div class="notice-title">📌 預約須知</div>
+      <div class="notice-text">
+        • 每位顧客需求狀況不同，服務時間為預估時間<br>
+        • 若時間有異動，Elsa 會主動通知您<br>
+        • 長時間服務（燙染護）歡迎自備筆電<br>
+        • 小朋友建議先吃飽睡足再來 🍱<br>
+        • 無固定公休，如遇特殊狀況會提前通知
+      </div>
+    </div>
+    <div class="loading-inline" id="loadingSubmit"><div class="spinner-sm"></div>送出預約中...</div>
+    <div id="errorMsg4" class="error-msg">送出失敗，請稍後再試</div>
+    <button class="btn btn-primary" id="btnSubmit" onclick="submitBooking()">確認送出預約</button>
+    <button class="btn btn-secondary" onclick="goStep(3)">上一步</button>
+  </div>
+  <div class="section" id="sectionSuccess">
+    <div class="success-screen">
+      <div class="success-icon">✨</div>
+      <div class="success-title">預約登記完成！</div>
+      <div class="success-desc" id="successDesc"></div>
+    </div>
+  </div>
+</div>
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+const BUSINESS_HOURS = {
+  0: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+  1: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+  2: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+  3: ['09:00','09:30','10:00','10:30','11:00','11:30','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+  4: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+  5: ['09:00','09:30','10:00','10:30','11:00','11:30','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+  6: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
+};
+const DAY_NAMES   = ['日','一','二','三','四','五','六'];
+const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+let allServices = [], schedule = [], lockedInfoMap = {};
+let state = { services: [], date: null, time: null, name: '', phone: '', note: '', priority: false, memberType: '', priorityFee: 0, uid: '', displayName: '', lineLoggedIn: false };
+let siteSettings = { priority_member_fee: 250, priority_nonmember_fee: 350, payment_jkopay_url: '', payment_ipass_url: '' };
+
+function normalizeTime(input) {
+  const raw = String(input || '').trim();
+  const m = raw.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+  if (!m) return raw;
+  return String(parseInt(m[1],10)).padStart(2,'0') + ':' + String(parseInt(m[2]||'0',10)).padStart(2,'00');
+}
+
+// ══════════════════════════════════════
+// 📢 廣播跑馬燈（撈 site=booking 啟用者）
+// ══════════════════════════════════════
+async function loadMarqueeBanner() {
+  try {
+    const r = await fetch(GAS_URL + '?action=getMarquees&site=booking&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok || !d.marquees || !d.marquees.length) return;
+    const texts = d.marquees
+      .filter(m => m.content && m.content.trim())
+      .sort((a, b) => a.order - b.order)
+      .map(m => m.content.trim());
+    if (!texts.length) return;
+
+    const combined = texts.join('　　✦　　');
+    const track = document.getElementById('marqueeTrack');
+    const bar   = document.getElementById('marqueeBar');
+    if (!track || !bar) return;
+
+    track.innerHTML =
+      `<span class="marquee-text">${combined}</span>` +
+      `<span class="marquee-sep">　　✦　　</span>` +
+      `<span class="marquee-text">${combined}</span>`;
+
+    const duration = Math.min(120, Math.max(40, Math.round(combined.length * 1.8)));
+    track.style.animation = `mqRoll ${duration}s linear infinite`;
+
+    bar.classList.add('has-content');
+  } catch(e) {
+    console.warn('marquee load failed', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // 跑馬燈與主資料並行載入
+  loadMarqueeBanner();
+
+  try {
+    const t = Date.now();
+    const [svcRes, schedRes, settingsRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getServices&t=' + t, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getSettings&t=' + t, { cache: 'no-store' }),
+    ]);
+    const svcData = await svcRes.json();
+    const schedData = await schedRes.json();
+    const settingsData = await settingsRes.json();
+    (settingsData.settings || []).forEach(s => { siteSettings[s.key] = s.value; });
+    allServices = (svcData.services || []).filter(s => s.active);
+    schedule = schedData.schedule || [];
+    renderServices();
+    renderDates();
+    renderPaymentButtons();
+    document.getElementById('sectionLoading').classList.remove('active');
+    document.getElementById('section1').classList.add('active');
+  } catch (err) {
+    document.getElementById('sectionLoading').innerHTML = '<div class="loading-screen" style="color:#c0392b">載入失敗，請重新整理頁面</div>';
+  }
+});
+
+function renderServices() {
+  const categories = {};
+  allServices.forEach(s => {
+    if (!categories[s.category]) categories[s.category] = [];
+    categories[s.category].push(s);
+  });
+  document.getElementById('serviceList').innerHTML = Object.entries(categories).map(([cat, items]) =>
+    '<div class="category-label">' + cat + '</div><div class="service-grid">' +
+    items.map(s =>
+      '<div class="service-card" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' +
+      '<div class="service-name">' + s.name + '</div>' +
+      '<div class="service-price">' + s.price + '</div>' +
+      '<div class="service-time">' + (s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘') + '</div>' +
+      (s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : '') +
+      '</div>'
+    ).join('') + '</div>'
+  ).join('');
+}
+
+function toggleService(id) {
+  const idx = state.services.findIndex(s => s.id === id);
+  if (idx >= 0) {
+    state.services.splice(idx, 1);
+    document.getElementById('svc_' + id).classList.remove('selected');
+  } else {
+    const svc = allServices.find(s => s.id === id);
+    if (svc) { state.services.push(svc); document.getElementById('svc_' + id).classList.add('selected'); }
+  }
+  renderSelectedTags();
+  document.getElementById('btn1').disabled = state.services.length === 0;
+}
+
+function removeService(id) {
+  state.services = state.services.filter(s => s.id !== id);
+  const card = document.getElementById('svc_' + id);
+  if (card) card.classList.remove('selected');
+  renderSelectedTags();
+  document.getElementById('btn1').disabled = state.services.length === 0;
+}
+
+function renderSelectedTags() {
+  const area = document.getElementById('selectedTagsArea');
+  if (state.services.length === 0) { area.innerHTML = ''; return; }
+  area.innerHTML = state.services.map(s =>
+    '<div class="selected-tag">' + s.name + '<span class="selected-tag-remove" onclick="removeService(\'' + s.id + '\')">×</span></div>'
+  ).join('');
+}
+
+function renderDates() {
+  const scroll = document.getElementById('dateScroll');
+  const today = new Date();
+  const closedDates = new Set(schedule.filter(s => s.type === 'closed').map(s => s.date));
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const dateStr = formatDate(d);
+    const isClosed = closedDates.has(dateStr);
+    const el = document.createElement('div');
+    el.className = 'date-item' + (isClosed ? ' closed' : '');
+    el.innerHTML = '<div class="date-day">週' + DAY_NAMES[d.getDay()] + '</div><div class="date-num">' + d.getDate() + '</div><div class="date-month">' + MONTH_NAMES[d.getMonth()] + '</div>' + (isClosed ? '<div class="date-closed-label">公休</div>' : '');
+    if (!isClosed) el.onclick = (function(date, el){ return function(){ selectDate(date, el); }; })(d, el);
+    scroll.appendChild(el);
+  }
+}
+
+async function selectDate(date, el) {
+  state.date = date; state.time = null;
+  document.querySelectorAll('.date-item').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn2').disabled = true;
+  const area = document.getElementById('timeSlotArea');
+  const loading = document.getElementById('loadingSlots');
+  area.innerHTML = ''; loading.style.display = 'block';
+  const dateStr = formatDate(date);
+  try {
+    const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    const booked = new Set((data.slots || []).map(normalizeTime));
+    lockedInfoMap = data.lockedInfo || {};
+    loading.style.display = 'none';
+    renderTimeSlots(date, booked);
+  } catch (_) {
+    loading.style.display = 'none';
+    renderTimeSlots(date, new Set());
+  }
+}
+
+function renderTimeSlots(date, booked) {
+  const slots = BUSINESS_HOURS[date.getDay()];
+  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
+  slots.forEach(function(t) {
+    const nt = normalizeTime(t);
+    const isBooked = booked.has(nt);
+    const lockNote = lockedInfoMap[nt] || '';
+    const isNotice = isBooked && lockNote.includes('訂製化溝通');
+    if (isNotice) {
+      html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>';
+    } else if (isBooked) {
+      html += '<div class="time-slot booked">' + nt + '<br><span style="font-size:9px">已滿</span></div>';
+    } else {
+      html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
+    }
+  });
+  html += '</div>';
+  document.getElementById('timeSlotArea').innerHTML = html;
+}
+
+function selectTime(time, el) {
+  state.time = time;
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn2').disabled = false;
+}
+
+function togglePriority() {
+  state.priority = !state.priority;
+  const check = document.getElementById('priorityCheck');
+  check.classList.toggle('checked', state.priority);
+  check.textContent = state.priority ? '✓' : '';
+  document.getElementById('memberTypeArea').style.display = state.priority ? 'block' : 'none';
+  if (!state.priority) { state.memberType = ''; state.priorityFee = 0; }
+  document.getElementById('memberFeeLabel').textContent = '$' + (siteSettings.priority_member_fee || 250);
+  document.getElementById('nonMemberFeeLabel').textContent = '$' + (siteSettings.priority_nonmember_fee || 350);
+}
+
+function selectMember(type) {
+  state.memberType = type;
+  state.priorityFee = type === 'member' ? Number(siteSettings.priority_member_fee || 250) : Number(siteSettings.priority_nonmember_fee || 350);
+  document.getElementById('btnMember').style.borderColor = type === 'member' ? 'var(--gold)' : 'var(--border)';
+  document.getElementById('btnMember').style.background = type === 'member' ? '#fdf6ee' : 'var(--surface)';
+  document.getElementById('btnNonMember').style.borderColor = type === 'nonmember' ? 'var(--gold)' : 'var(--border)';
+  document.getElementById('btnNonMember').style.background = type === 'nonmember' ? '#fdf6ee' : 'var(--surface)';
+}
+
+function goStep(n) {
+  if (n === 4) {
+    const name = document.getElementById('inputName').value.trim();
+    const phone = document.getElementById('inputPhone').value.trim();
+    const err = document.getElementById('errorMsg3');
+    if (!name || !phone) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    state.name = name; state.phone = phone;
+    state.note = document.getElementById('inputNote').value.trim();
+    renderSummary();
+  }
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('step' + i).className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    const sec = document.getElementById('section' + i);
+    if (sec) sec.className = 'section' + (i === n ? ' active' : '');
+  }
+  window.scrollTo(0, 0);
+}
+
+function renderSummary() {
+  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
+  const serviceNames = state.services.map(s => s.name).join('、');
+  const priceLines = state.services.map(s => {
+    const num = parseInt(String(s.price).replace(/[^0-9]/g, ''));
+    return { name: s.name, price: s.price, num: isNaN(num) ? 0 : num };
+  });
+  const serviceTotal = priceLines.reduce((sum, p) => sum + p.num, 0);
+  const priorityFee = state.priority && state.memberType ? state.priorityFee : 0;
+  const grandTotal = serviceTotal + priorityFee;
+  const priceDetailHtml = priceLines.map(p => p.name + ' ' + p.price).join('<br>');
+  const memberLabel = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
+  document.getElementById('summaryBody').innerHTML =
+    '<div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">' + serviceNames + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value" style="font-size:12px;line-height:1.8">' + priceDetailHtml + '</span></div>' +
+    (state.priority && state.memberType ? '<div class="summary-row"><span class="summary-label">加價服務(' + memberLabel + ')</span><span class="summary-value">$' + priorityFee + '</span></div>' : '') +
+    '<div class="summary-row" style="border-top:1.5px solid var(--gold);margin-top:4px"><span class="summary-label" style="font-weight:700">合計</span><span class="summary-value" style="color:var(--gold-dark);font-weight:700">$' + grandTotal + (serviceTotal === 0 ? '+（依髮況）' : '') + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">預約日期</span><span class="summary-value">' + dateStr + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">預約時間</span><span class="summary-value">' + (state.time||'') + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">姓名</span><span class="summary-value">' + state.name + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">手機</span><span class="summary-value">' + state.phone + '</span></div>' +
+    (state.note ? '<div class="summary-row"><span class="summary-label">備註</span><span class="summary-value">' + state.note + '</span></div>' : '');
+}
+
+// 【2026-04-18 強化】防撞單送出 — 新增「正在送出中」旗標防連點
+let __isSubmitting = false;
+
+async function submitBooking() {
+  // 防連點：如果已經在送出，直接忽略
+  if (__isSubmitting) return;
+  __isSubmitting = true;
+
+  const loading = document.getElementById('loadingSubmit');
+  const errMsg = document.getElementById('errorMsg4');
+  const btn = document.getElementById('btnSubmit');
+  loading.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = '送出中，請稍候...';
+  errMsg.style.display = 'none';
+  const dateStr = state.date ? formatDate(state.date) : '';
+  const serviceStr = state.services.map(s => s.name).join('、');
+
+  // 送出前先用輕量 API 驗證時段是否還可用（更快）
+  try {
+    const checkRes = await fetch(GAS_URL + '?action=checkSlot&date=' + dateStr + '&time=' + encodeURIComponent(normalizeTime(state.time)) + '&t=' + Date.now(), { cache: 'no-store' });
+    const checkData = await checkRes.json();
+    if (checkData.ok && checkData.available === false) {
+      const reason = checkData.reason === 'booked'
+        ? '😢 很抱歉，此時段剛剛被其他客人選走了\n請返回上一步重新選擇其他時間 🙏'
+        : '此時段已被鎖定，請返回重新選擇時間';
+      errMsg.textContent = reason;
+      errMsg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '確認送出預約';
+      loading.style.display = 'none';
+      __isSubmitting = false;
+      return;
+    }
+  } catch (_) { /* 網路錯誤時不擋，讓後端 LockService 處理 */ }
+  const params = new URLSearchParams({
+    action: 'booking', name: state.name, phone: state.phone, service: serviceStr,
+    date: dateStr, time: normalizeTime(state.time || ''), note: state.note,
+    priority: state.priority ? 'yes' : 'no', memberType: state.memberType || '',
+    // 【2026-04-19 新增】夾帶 LINE 登入資料(沒登入就空字串,後端 if 判斷)
+    uid: state.uid || '',
+    displayName: state.displayName || '',
+  });
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST', cache: 'no-store',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+    const data = await res.json();
+    loading.style.display = 'none';
+    if (data.status === 'ok') {
+      showSuccess(data.bookingId);
+    } else if (data.msg === 'blacklisted') {
+      errMsg.textContent = data.blMsg || '請改由 Elsa 為您現場安排預約，謝謝您 🙏';
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    } else if (data.msg === 'slot_taken') {
+      errMsg.textContent = '😢 很抱歉，此時段剛剛被其他客人選走了\n請返回上一步重新選擇其他時間 🙏';
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    } else if (data.msg === 'missing_fields') {
+      errMsg.textContent = '資料未填完整，請重新確認';
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    } else {
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    }
+  } catch (_) {
+    loading.style.display = 'none';
+    errMsg.style.display = 'block';
+    btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+  }
+}
+
+function showSuccess(bookingId) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sectionSuccess').classList.add('active');
+  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
+  const serviceStr = state.services.map(s => s.name).join('、');
+  document.getElementById('successDesc').innerHTML =
+    '<br><strong>' + state.name + '</strong> 您好！<br><br>' +
+    '已收到您的預約登記 🙏<br><br>' +
+    '📋 ' + serviceStr + '<br>' +
+    '📅 ' + dateStr + ' ' + state.time + '<br>' +
+    '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
+    '<strong style="color:#e65100">⚠️ 以上預約皆為登記<br>請稍後待 Elsa 與您確認預約<br>避免白跑一趟 🙏</strong><br><br>' +
+    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊';
+  for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
+}
+
+function renderPaymentButtons() {
+  const list = document.getElementById('paymentList');
+  if (!list) return;
+  let html = '';
+  if (siteSettings.payment_jkopay_url) {
+    html += '<a href="' + siteSettings.payment_jkopay_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 街口支付 →</a>';
+  } else { html += '<span class="payment-tag">💳 街口支付</span>'; }
+  if (siteSettings.payment_ipass_url) {
+    html += '<a href="' + siteSettings.payment_ipass_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 iPASS Money →</a>';
+  } else { html += '<span class="payment-tag">💳 iPASS Money</span>'; }
+  html += '<span class="payment-tag">🏦 轉帳</span>';
+  list.innerHTML = html;
+}
+
+function formatDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ══════════════════════════════════════════════════════════════
+// 【2026-04-19 新增】LINE Login 整合
+// ══════════════════════════════════════════════════════════════
+// Channel ID(從 GAS 後端取得,不寫死在前端方便之後改)
+let LINE_LOGIN_CHANNEL_ID = '2009831862';
+const LINE_LOGIN_REDIRECT = 'https://san555483-hub.github.io/booking.html';
+
+// 產生 state 參數(防 CSRF)+ 存在 sessionStorage
+function _genLoginState() {
+  const s = 'st_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+  try { sessionStorage.setItem('line_login_state', s); } catch(_) {}
+  return s;
+}
+
+function _verifyLoginState(returned) {
+  try {
+    const saved = sessionStorage.getItem('line_login_state');
+    sessionStorage.removeItem('line_login_state');
+    return saved && saved === returned;
+  } catch(_) { return false; }
+}
+
+// 啟動 LINE 登入流程(使用者點按鈕時呼叫)
+function startLineLogin() {
+  const btn = document.querySelector('.btn-line-login');
+  if (btn) { btn.disabled = true; btn.innerHTML = '跳轉中...'; }
+
+  const st = _genLoginState();
+  const url = 'https://access.line.me/oauth2/v2.1/authorize?'
+    + 'response_type=code'
+    + '&client_id=' + encodeURIComponent(LINE_LOGIN_CHANNEL_ID)
+    + '&redirect_uri=' + encodeURIComponent(LINE_LOGIN_REDIRECT)
+    + '&state=' + encodeURIComponent(st)
+    + '&scope=' + encodeURIComponent('profile openid');
+  window.location.href = url;
+}
+
+// 頁面載入時檢查 URL 是否帶 code(LINE 剛回調)
+async function handleLineLoginReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const code  = params.get('code');
+  const retSt = params.get('state');
+  const err   = params.get('error');
+
+  if (err) {
+    // 使用者拒絕授權,清掉 URL 參數就好(不顯示錯誤,不打擾流程)
+    _cleanUrl();
+    return;
+  }
+  if (!code) return;  // 沒 code 就不是 LINE 回來
+
+  // 驗 state(防 CSRF)
+  if (!_verifyLoginState(retSt)) {
+    console.warn('state 驗證失敗,可能 URL 被竄改');
+    _cleanUrl();
+    return;
+  }
+
+  // 打後端換 UID + profile
+  try {
+    const r = await fetch(GAS_URL + '?action=lineLoginCallback&code=' + encodeURIComponent(code) + '&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) {
+      console.warn('LINE 登入失敗:', d.msg);
+      _cleanUrl();
+      return;
+    }
+    // ✅ 登入成功
+    state.uid = d.uid;
+    state.displayName = d.displayName || '';
+    state.lineLoggedIn = true;
+    // 顯示已登入 UI
+    document.getElementById('lineLoginBox').style.display = 'none';
+    const box = document.getElementById('lineLoggedInBox');
+    box.style.display = 'flex';
+    document.getElementById('loggedInName').textContent = state.displayName || '';
+    // 如果是老顧客,自動帶入姓名電話
+    if (d.knownCustomer) {
+      state.name  = d.knownCustomer.name || state.displayName;
+      state.phone = d.knownCustomer.phone;
+      // 之後到 step3 時會自動填入 input
+    } else if (state.displayName) {
+      state.name = state.displayName;  // 至少帶 LINE 顯示名字
+    }
+  } catch(ex) {
+    console.warn('LINE 登入 callback 失敗:', ex);
+  }
+  _cleanUrl();
+}
+
+function _cleanUrl() {
+  // 把 URL 上的 code/state/error 參數清掉,保持網址乾淨
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('code');
+    url.searchParams.delete('state');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    url.searchParams.delete('liffClientId');
+    url.searchParams.delete('liffRedirectUri');
+    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+  } catch(_) {}
+}
+
+// 擴充:進入 step3 時,如果 state 已有資料,自動填 input
+const _origGoStep = typeof goStep === 'function' ? goStep : null;
+function _fillStep3IfLoggedIn() {
+  if (state.name) {
+    const inp = document.getElementById('inputName');
+    if (inp && !inp.value) inp.value = state.name;
+  }
+  if (state.phone) {
+    const inp = document.getElementById('inputPhone');
+    if (inp && !inp.value) inp.value = state.phone;
+  }
+}
+
+// 頁面載入後立刻檢查 LINE 登入回調 + 綁定 step 切換
+document.addEventListener('DOMContentLoaded', () => {
+  handleLineLoginReturn();
+  // 延遲監聽 section3 顯示時填資料
+  const sec3 = document.getElementById('section3');
+  if (sec3) {
+    const observer = new MutationObserver(() => {
+      if (sec3.classList.contains('active')) _fillStep3IfLoggedIn();
+    });
+    observer.observe(sec3, { attributes: true, attributeFilter: ['class'] });
+  }
+});
+</script>
+</body>
+</html>
