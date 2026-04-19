@@ -883,7 +883,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
           </div>
           <div id="coupon-info" class="shop-credit-info" style="display:none;border-left-color:var(--gold);background:rgba(184,137,90,.08);color:var(--bark);"></div>
           <div class="shop-credit-deduct-row" id="coupon-deduct-row" style="display:none;">
-            <input type="number" id="coupon-deduct-amt" placeholder="輸入折抵金額" min="0" class="shop-credit-input">
+            <input type="number" id="coupon-deduct-amt" placeholder="系統自動計算" min="0" class="shop-credit-input" readonly style="background:#f5f0e8;color:var(--bark);font-weight:600;cursor:not-allowed;">
             <button class="shop-credit-apply-btn" style="background:var(--gold);" onclick="applyCoupon()">套用</button>
             <button style="padding:7px 10px;background:none;border:1.5px solid #ccc;border-radius:3px;font-size:.72rem;color:#888;cursor:pointer;" onclick="clearCoupon()">取消</button>
           </div>
@@ -2348,9 +2348,24 @@ async function checkCouponCode() {
     couponMaxuse  = d.maxuse || 0;
     // 根據訂單金額自動計算最優折抵
     const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
+    // 🎯 三層規則檢查：門檻（minAmount）未達檢查
+    if(couponRules.length){
+      const minReq = Math.min(...couponRules.map(r => r.minAmount||0).filter(m => m > 0));
+      if(isFinite(minReq) && minReq > 0 && orderTotal < minReq){
+        infoEl.style.color = 'var(--rose)';
+        infoEl.textContent = `❌ 未達消費門檻 NT$${minReq.toLocaleString()}（目前訂單 NT$${orderTotal.toLocaleString()}）`;
+        infoEl.style.display='block';
+        document.getElementById('coupon-deduct-row').style.display='none';
+        // 清除狀態避免誤用
+        couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0;
+        return;
+      }
+    }
     const autoDisc   = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
     let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
-    if(couponRules.length) infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
+    if(couponMaxuse > 0) infoTxt += `｜單次上限：NT$ ${couponMaxuse.toLocaleString()}`;
+    infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
+    infoEl.style.color = '';
     infoEl.textContent = infoTxt;
     infoEl.style.display='block';
     document.getElementById('coupon-deduct-amt').value = autoDisc;
@@ -2400,7 +2415,7 @@ function r_calcValue(rule, orderTotal) {
 }
 
 function clearCoupon() {
-  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0; couponRules=[]; couponMaxuse=0;
+  couponDeduct=0; couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0;
   document.getElementById('coupon-applied').style.display='none';
   document.getElementById('coupon-deduct-row').style.display='none';
   document.getElementById('coupon-info').style.display='none';
