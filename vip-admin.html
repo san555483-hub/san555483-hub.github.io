@@ -30,6 +30,7 @@ body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;bac
 label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;}
 input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--cream);color:var(--text);font-family:inherit;transition:all 0.2s;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);background:white;box-shadow:0 0 0 3px rgba(201,168,76,0.12);}
+input:disabled,input:read-only{background:#efe8dc;color:var(--text2);cursor:not-allowed;}
 textarea{min-height:70px;resize:vertical;}
 .btn{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.18s;letter-spacing:0.3px;}
 .btn-gold{background:linear-gradient(135deg,#C9A84C,#E8D08A,#C9A84C);color:var(--dark);}
@@ -39,6 +40,7 @@ textarea{min-height:70px;resize:vertical;}
 .btn-outline{background:transparent;border:1.5px solid var(--gold);color:var(--dark2);}
 .btn-sm{padding:6px 12px;font-size:12px;}
 .btn-full{width:100%;margin-top:10px;padding:12px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
 .tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{background:var(--dark3);color:var(--gold-light);padding:10px;text-align:left;font-size:11px;font-weight:700;letter-spacing:0.5px;white-space:nowrap;}
@@ -71,7 +73,23 @@ tr:hover td{background:var(--cream);}
 .balance-box{background:linear-gradient(135deg,var(--dark),var(--dark2));border-radius:var(--radius);padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .balance-label{font-size:12px;color:rgba(255,255,255,0.6);}
 .balance-num{font-size:28px;font-weight:900;color:var(--gold);}
-@media(max-width:480px){.form-grid{grid-template-columns:1fr;}}
+/* 📒 折扣券類型管理 — v2 半鎖 UI（尊爵風） */
+.ct-group-title{font-size:11px;color:var(--text2);font-weight:700;margin:14px 0 8px;padding-left:2px;letter-spacing:.5px;}
+.ct-group-title:first-child{margin-top:0;}
+.ct-slot{display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:6px;border:1px solid var(--cream2);border-radius:10px;background:var(--cream);flex-wrap:wrap;}
+.ct-slot.locked{background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(232,208,138,0.08));border-color:rgba(201,168,76,0.3);}
+.ct-slot.custom{background:white;}
+.ct-slot.empty{background:#faf7f0;border-style:dashed;}
+.ct-slot-num{min-width:26px;height:26px;border-radius:50%;background:var(--cream2);color:var(--dark2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.ct-slot.locked .ct-slot-num{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);}
+.ct-slot-icon{font-size:14px;flex-shrink:0;}
+.ct-slot-input{flex:1;min-width:140px;padding:8px 10px;font-size:13px;}
+.ct-toggle{display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;color:var(--dark2);font-weight:600;}
+.ct-toggle input{width:auto;margin:0;cursor:pointer;}
+.ct-badge-mini{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;}
+.ct-badge-mini.locked{background:rgba(201,168,76,0.2);color:#8c6a26;border:1px solid rgba(201,168,76,0.4);}
+.ct-badge-mini.enabled{background:rgba(74,138,74,0.15);color:var(--success);}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr;}.ct-slot{gap:6px;}.ct-slot-input{min-width:100px;}}
 </style>
 </head>
 <body>
@@ -272,22 +290,23 @@ tr:hover td{background:var(--cream);}
   </div>
 </div>
 
-<!-- ===== 折扣券 ===== -->
+<!-- ===== 🎫 折扣券 ===== -->
 <div class="section" id="sec-coupon">
-  <!-- 類型管理 -->
+  <!-- 📒 類型管理 v2 半鎖 -->
   <div class="card">
     <div class="card-header">
-      <div class="card-title"><div class="line"></div>⚙️ 折扣券類型管理</div>
+      <div class="card-title"><div class="line"></div>📒 折扣券類型管理</div>
       <button class="btn btn-outline btn-sm" onclick="loadCouponTypesVip()">🔄 重新整理</button>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">類型清單動態從 GAS 載入，空白不顯示。修改後下拉選單即時更新。</p>
-    <div id="ct-list"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <input type="text" id="ct-new-name" placeholder="輸入新類型名稱" style="flex:1;">
-      <button class="btn btn-gold" onclick="addCouponTypeVip()">＋ 新增</button>
-    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+      🔒 <strong>預設 3 槽位</strong>（購物券/現金券/生日券）鎖死，不可修改。<br>
+      ✏️ <strong>自訂 3 槽位</strong>可隨時編輯、啟用/停用、清空。<br>
+      修改後「產生折扣券」的類型下拉即時同步。
+    </p>
+    <div id="ct-list"><div class="alert alert-info"><span class="spin"></span>載入中…</div></div>
     <div id="ct-msg"></div>
   </div>
+
   <div class="card">
     <div class="card-header"><div class="card-title"><div class="line"></div>產生折扣券</div></div>
     <div class="form-grid">
@@ -296,6 +315,29 @@ tr:hover td{background:var(--cream);}
       <div><label>到期日（選填）</label><input type="date" id="cp-expiry"></div>
       <div><label>備註（顧客姓名或用途）</label><input type="text" id="cp-note" placeholder="例：劉曦璟 週年慶"></div>
     </div>
+
+    <!-- v7：三層折抵規則 -->
+    <div style="background:rgba(201,168,76,.1);border-left:3px solid var(--gold);padding:12px 14px;margin:12px 0;border-radius:0 6px 6px 0;">
+      <div style="font-size:.75rem;color:var(--gold);font-weight:700;margin-bottom:10px;">💰 折抵規則（全部留空 = 無限制，券可一次折完）</div>
+      <div class="form-grid">
+        <div>
+          <label>① 滿額門檻（元）</label>
+          <input type="number" id="cp-minspend" placeholder="空白=無門檻" min="0">
+          <div style="font-size:.65rem;color:var(--text2);margin-top:3px;">消費 ≥ 此數才能用</div>
+        </div>
+        <div>
+          <label>② 單次上限（元）</label>
+          <input type="number" id="cp-maxperuse" placeholder="空白=無上限" min="0">
+          <div style="font-size:.65rem;color:var(--text2);margin-top:3px;">每次最多折這麼多</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <label>③ 折扣比例（%）</label>
+        <input type="number" id="cp-percent" placeholder="空白=固定用面額" min="0" max="100">
+        <div style="font-size:.65rem;color:var(--text2);margin-top:3px;">填 10 = 消費金額的 10%（二擇一，留空用面額）</div>
+      </div>
+    </div>
+
     <div id="cp-add-msg"></div>
     <div style="margin-top:10px;">
       <label>顧客電話 *（用於 LINE 通知）</label>
@@ -303,6 +345,7 @@ tr:hover td{background:var(--cream);}
     </div>
     <button class="btn btn-gold btn-full" onclick="addCouponVip()" style="margin-top:10px;">🎫 產生並通知顧客</button>
   </div>
+
   <div class="card">
     <div class="card-header"><div class="card-title"><div class="line"></div>折扣券列表</div><button class="btn btn-outline btn-sm" onclick="loadCouponsVip()">🔄 重新整理</button></div>
     <div class="search-bar">
@@ -324,6 +367,7 @@ const GAS_SHOP_URL='https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWd
 async function callGAS(fn,params={}){const url=GAS_URL+'?fn='+fn+'&params='+encodeURIComponent(JSON.stringify(params))+'&t='+Date.now();const res=await fetch(url,{cache:'no-store'});return res.json();}
 function showMsg(id,msg,type='success'){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<div class="alert alert-${type}">${msg}</div>`;setTimeout(()=>{el.innerHTML='';},4000);}
 function today(){return new Date().toISOString().split('T')[0];}
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function switchTab(name){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
@@ -336,7 +380,7 @@ function switchTab(name){
   if(name==='blacklist')loadBlacklist();
   if(name==='settings')loadSettings();
   if(name==='purchase_log')loadProductsForSelect();
-  if(name==='coupon'){loadCouponsVip();loadCouponTypesVip();}
+  if(name==='coupon'){loadCouponTypesVip();loadCouponsVip();}
 }
 
 async function searchCustomer(){
@@ -508,7 +552,9 @@ async function loadSettings(){
 
 async function saveSetting(key,label){const value=document.getElementById('setting-'+key).value.trim();try{const r=await callGAS('updateSettings',{key,value,label});if(r.success){const btn=event.target,orig=btn.textContent;btn.textContent='✅';setTimeout(()=>btn.textContent=orig,1500);}else alert('失敗：'+r.message);}catch(e){alert('連線失敗');}}
 
-// ===== 🎫 折扣券類型管理 =====
+// ═══════════════════════════════════════════════════════
+// 📒 折扣券類型管理（v2 半鎖 UI）
+// ═══════════════════════════════════════════════════════
 let _vipCouponTypes = [];
 
 async function loadCouponTypesVip(){
@@ -517,76 +563,120 @@ async function loadCouponTypesVip(){
   try{
     const r = await fetch(GAS_SHOP_URL+'?action=getCouponTypes&t='+Date.now());
     const d = await r.json();
+    if(!d.ok){
+      el.innerHTML='<div class="alert alert-error">❌ 載入失敗：'+(d.msg||'')+'</div>';
+      return;
+    }
     _vipCouponTypes = d.types || [];
     renderCouponTypeListVip();
     populateCouponTypeSelectVip();
-  }catch(e){ el.innerHTML='<div class="alert alert-error">載入失敗</div>'; }
+  }catch(e){
+    el.innerHTML='<div class="alert alert-error">❌ 網路錯誤：'+e.message+'</div>';
+  }
 }
 
 function renderCouponTypeListVip(){
   const el = document.getElementById('ct-list');
   if(!_vipCouponTypes.length){
-    el.innerHTML='<div class="empty" style="padding:16px;">尚無類型，請新增</div>';
+    el.innerHTML='<div class="empty" style="padding:16px;">尚無類型資料</div>';
     return;
   }
-  el.innerHTML = _vipCouponTypes.map(t=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--cream2);">
-      <input type="text" value="${t.name}" id="ct-name-${t.row}" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--cream);">
-      <button class="btn btn-gold btn-sm" onclick="saveCouponTypeVip(${t.row})">儲存</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteCouponTypeVip(${t.row},'${t.name}')">刪除</button>
-    </div>`).join('');
+  const defaults = _vipCouponTypes.filter(t=>t.isDefault);
+  const customs  = _vipCouponTypes.filter(t=>!t.isDefault);
+
+  let html = '';
+
+  // 🔒 預設槽位
+  if(defaults.length){
+    html += `<div class="ct-group-title">🔒 預設類型（鎖死，不可修改）</div>`;
+    html += defaults.map(t=>`
+      <div class="ct-slot locked">
+        <div class="ct-slot-num">${t.order}</div>
+        <span class="ct-slot-icon">🔒</span>
+        <input type="text" class="ct-slot-input" value="${escHtml(t.name)}" disabled>
+        <span class="ct-badge-mini locked">系統預設</span>
+        <span class="ct-badge-mini enabled">啟用中</span>
+      </div>`).join('');
+  }
+
+  // ✏️ 自訂槽位
+  if(customs.length){
+    html += `<div class="ct-group-title">✏️ 自訂類型（可隨時編輯）</div>`;
+    html += customs.map(t=>{
+      const isEmpty = !t.name;
+      const slotClass = isEmpty ? 'ct-slot empty' : 'ct-slot custom';
+      return `
+      <div class="${slotClass}">
+        <div class="ct-slot-num">${t.order}</div>
+        <span class="ct-slot-icon">${isEmpty?'➕':'✏️'}</span>
+        <input type="text" class="ct-slot-input" id="ct-name-${t.row}" value="${escHtml(t.name)}" placeholder="${isEmpty?'輸入類型名稱（留空=停用）':''}">
+        <label class="ct-toggle">
+          <input type="checkbox" id="ct-en-${t.row}" ${t.enabled?'checked':''}> 啟用
+        </label>
+        <button class="btn btn-gold btn-sm" onclick="saveCouponTypeVip(${t.row})">💾 儲存</button>
+        ${t.name?`<button class="btn btn-danger btn-sm" onclick="clearCouponTypeVip(${t.row})">🗑 清空</button>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = html;
 }
 
+// 同步更新「產生折扣券」類型下拉（只顯示啟用且有名稱）
 function populateCouponTypeSelectVip(){
   const sel = document.getElementById('cp-type');
   if(!sel) return;
   const cur = sel.value;
-  sel.innerHTML = _vipCouponTypes.length
-    ? _vipCouponTypes.map(t=>`<option value="${t.name}">${t.name}</option>`).join('')
-    : '<option value="">（無類型，請先新增）</option>';
-  if(cur) sel.value = cur;
-}
-
-async function addCouponTypeVip(){
-  const name = document.getElementById('ct-new-name').value.trim();
-  if(!name){ showMsg('ct-msg','請輸入類型名稱','error'); return; }
-  showMsg('ct-msg','<span class="spin"></span>新增中…','info');
-  try{
-    const p = new URLSearchParams({action:'saveCouponType', name, enabled:'true'});
-    const r = await fetch(GAS_SHOP_URL+'?'+p.toString());
-    const d = await r.json();
-    if(d.ok){
-      showMsg('ct-msg','✅ 已新增','success');
-      document.getElementById('ct-new-name').value='';
-      loadCouponTypesVip();
-    }else showMsg('ct-msg','❌ '+(d.msg||'失敗'),'error');
-  }catch(e){ showMsg('ct-msg','連線失敗','error'); }
+  const usable = _vipCouponTypes.filter(t=>t.enabled && t.name);
+  sel.innerHTML = usable.length
+    ? usable.map(t=>`<option value="${escHtml(t.name)}">${escHtml(t.name)}</option>`).join('')
+    : '<option value="">（無可用類型，請先啟用）</option>';
+  if(cur && usable.some(t=>t.name===cur)) sel.value = cur;
 }
 
 async function saveCouponTypeVip(row){
-  const name = document.getElementById('ct-name-'+row).value.trim();
-  if(!name){ showMsg('ct-msg','類型名稱不能空白','error'); return; }
+  const nameEl = document.getElementById('ct-name-'+row);
+  const enEl   = document.getElementById('ct-en-'+row);
+  if(!nameEl) return;
+  const name    = nameEl.value.trim();
+  const enabled = enEl ? enEl.checked : true;
+  if(enabled && !name){
+    showMsg('ct-msg','❌ 啟用的類型必須填寫名稱','error');
+    return;
+  }
+  showMsg('ct-msg','<span class="spin"></span>儲存中…','info');
   try{
-    const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:'true'});
+    const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:String(enabled)});
     const r = await fetch(GAS_SHOP_URL+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){ loadCouponTypesVip(); }
-    else alert('失敗：'+d.msg);
-  }catch(e){ alert('連線失敗'); }
+    if(d.ok){
+      showMsg('ct-msg','✅ 已儲存','success');
+      loadCouponTypesVip();
+    }else{
+      showMsg('ct-msg','❌ '+(d.msg||'儲存失敗'),'error');
+    }
+  }catch(e){showMsg('ct-msg','連線失敗','error');}
 }
 
-async function deleteCouponTypeVip(row, name){
-  if(!confirm('確定刪除類型「'+name+'」？'))return;
+async function clearCouponTypeVip(row){
+  if(!confirm('確定清空此自訂類型？\n（只會清空名稱並停用，不影響已發出的折扣券）'))return;
+  showMsg('ct-msg','<span class="spin"></span>清空中…','info');
   try{
     const p = new URLSearchParams({action:'deleteCouponType', row});
     const r = await fetch(GAS_SHOP_URL+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){ loadCouponTypesVip(); }
-    else alert('失敗：'+d.msg);
-  }catch(e){ alert('連線失敗'); }
+    if(d.ok){
+      showMsg('ct-msg','✅ 已清空','success');
+      loadCouponTypesVip();
+    }else{
+      showMsg('ct-msg','❌ '+(d.msg||'清空失敗'),'error');
+    }
+  }catch(e){showMsg('ct-msg','連線失敗','error');}
 }
 
-// ===== 🎫 折扣券（呼叫購物系統GAS）=====
+// ═══════════════════════════════════════════════════════
+// 🎫 折扣券（呼叫購物系統 GAS）
+// ═══════════════════════════════════════════════════════
 let _vipCoupons=[];
 
 async function addCouponVip(){
@@ -595,30 +685,35 @@ async function addCouponVip(){
   const expiry=document.getElementById('cp-expiry').value;
   const note=document.getElementById('cp-note').value.trim();
   const phone=document.getElementById('cp-phone').value.trim();
+  // v7：三層規則
+  const minSpend  = document.getElementById('cp-minspend').value.trim()  || '0';
+  const maxPerUse = document.getElementById('cp-maxperuse').value.trim() || '0';
+  const percent   = document.getElementById('cp-percent').value.trim()   || '0';
+  if(!type){showMsg('cp-add-msg','請選擇類型','error');return;}
   if(!amount){showMsg('cp-add-msg','面額必填','error');return;}
   if(!phone){showMsg('cp-add-msg','請填寫顧客電話','error');return;}
   showMsg('cp-add-msg','<span class="spin"></span>產生中…','info');
   try{
-    // 1. 產生券碼（購物系統GAS）
-    const p=new URLSearchParams({action:'addCoupon',type,amount,expiry,note});
+    // 1. 產生券碼（購物系統 GAS v7）
+    const p=new URLSearchParams({
+      action:'addCoupon', type, amount, expiry, note,
+      minSpend, maxPerUse, percent  // v7 新增三層規則參數
+    });
     const r=await fetch(GAS_SHOP_URL+'?'+p.toString());
     const d=await r.json();
     if(!d.ok){showMsg('cp-add-msg','❌ '+(d.msg||'失敗'),'error');return;}
     const code=d.code;
-    // 2. 推送LINE通知（主系統GAS查UID）
-    showMsg('cp-add-msg','<span class="spin"></span>券碼已產生，推送LINE通知中…','info');
+    // 2. 推送 LINE 通知（主系統 GAS 查 UID）
+    showMsg('cp-add-msg','<span class="spin"></span>券碼已產生，推送 LINE 通知中…','info');
     const p2=new URLSearchParams({action:'sendCouponNotify',phone,code,type,amount,expiry,note});
     const r2=await fetch(GAS_URL+'?'+p2.toString());
     const d2=await r2.json();
     if(d2.ok){
-      showMsg('cp-add-msg',`✅ 券碼：<strong>${code}</strong>　NT$${Number(amount).toLocaleString()}　已推送LINE通知給顧客`,'success');
+      showMsg('cp-add-msg',`✅ 券碼：<strong>${code}</strong>　NT$${Number(amount).toLocaleString()}　已推送 LINE 通知給顧客`,'success');
     }else{
-      showMsg('cp-add-msg',`✅ 券碼：<strong>${code}</strong>　NT$${Number(amount).toLocaleString()}　已產生（LINE通知失敗：${d2.msg}）`,'success');
+      showMsg('cp-add-msg',`✅ 券碼：<strong>${code}</strong>　NT$${Number(amount).toLocaleString()}　已產生（LINE 通知失敗：${d2.msg||''}）`,'success');
     }
-    document.getElementById('cp-amount').value='';
-    document.getElementById('cp-note').value='';
-    document.getElementById('cp-expiry').value='';
-    document.getElementById('cp-phone').value='';
+    ['cp-amount','cp-note','cp-expiry','cp-phone','cp-minspend','cp-maxperuse','cp-percent'].forEach(i=>document.getElementById(i).value='');
     loadCouponsVip();
   }catch(e){showMsg('cp-add-msg','連線失敗','error');}
 }
@@ -650,19 +745,21 @@ function filterCouponsVip(){
     const status=String(c['狀態']||''),expiry=String(c['到期日']||'—');
     const note=String(c['備註']||''),row=Number(c['_row']||0);
     const sc=status==='有效'?'badge-success':status==='停用'?'badge-danger':'badge-info';
+    // 類型顏色分配：購物券/現金券/生日券
+    const typeClass = type.includes('購物券')?'badge-success':type.includes('現金券')?'badge-gold':type.includes('生日券')?'badge-info':'badge-gold';
     return `<tr>
-      <td style="font-family:monospace;font-weight:700;font-size:12px;">${code}</td>
-      <td><span class="badge ${type==='購物券'?'badge-success':'badge-gold'}">${type}</span></td>
+      <td style="font-family:monospace;font-weight:700;font-size:12px;">${escHtml(code)}</td>
+      <td><span class="badge ${typeClass}">${escHtml(type)}</span></td>
       <td>NT$ ${amount.toLocaleString()}</td>
       <td><strong>NT$ ${balance.toLocaleString()}</strong></td>
-      <td><span class="badge ${sc}">${status}</span></td>
-      <td style="font-size:12px;">${expiry}</td>
-      <td style="font-size:12px;">${note}</td>
+      <td><span class="badge ${sc}">${escHtml(status)}</span></td>
+      <td style="font-size:12px;">${escHtml(expiry)}</td>
+      <td style="font-size:12px;">${escHtml(note)}</td>
       <td class="td-actions">
         ${status==='有效'
           ?`<button class="btn btn-outline btn-sm" onclick="toggleCouponVip(${row},'停用')">停用</button>`
           :`<button class="btn btn-outline btn-sm" onclick="toggleCouponVip(${row},'有效')">啟用</button>`}
-        <button class="btn btn-danger btn-sm" onclick="deleteCouponVip(${row},'${code}')">刪除</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCouponVip(${row},'${escHtml(code)}')">刪除</button>
       </td></tr>`;
   }).join('');
   el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>券碼</th><th>類型</th><th>面額</th><th>餘額</th><th>狀態</th><th>到期日</th><th>備註</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;

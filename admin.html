@@ -527,6 +527,29 @@ tr:hover td{background:rgba(61,43,31,.03);}
               <input class="form-input" type="number" id="cp-amount" placeholder="例：500">
             </div>
           </div>
+
+          <!-- v7：三層折抵規則 -->
+          <div style="background:rgba(184,137,90,.06);border-left:3px solid var(--gold);padding:12px 14px;margin-bottom:12px;border-radius:0 4px 4px 0;">
+            <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:10px;font-family:'Noto Sans TC',sans-serif;">💰 折抵規則（全部留空 = 無限制，券可一次折完）</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">① 滿額門檻（元）</label>
+                <input class="form-input" type="number" id="cp-minspend" placeholder="空白=無門檻" min="0">
+                <div style="font-size:.62rem;color:var(--mid);margin-top:3px;font-family:'Noto Sans TC',sans-serif;">消費 ≥ 此數才能用</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">② 單次上限（元）</label>
+                <input class="form-input" type="number" id="cp-maxperuse" placeholder="空白=無上限" min="0">
+                <div style="font-size:.62rem;color:var(--mid);margin-top:3px;font-family:'Noto Sans TC',sans-serif;">每次最多折這麼多</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">③ 折扣比例（%）</label>
+              <input class="form-input" type="number" id="cp-percent" placeholder="空白=固定用面額" min="0" max="100">
+              <div style="font-size:.62rem;color:var(--mid);margin-top:3px;font-family:'Noto Sans TC',sans-serif;">填 10 = 消費金額的 10%（二擇一，留空用面額）</div>
+            </div>
+          </div>
+
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">到期日（選填）</label>
@@ -1340,36 +1363,40 @@ async function clearCouponType(row){
 let _coupons = [];
 
 async function addCoupon(){
-  const type   = document.getElementById('cp-type').value;
-  const amount = document.getElementById('cp-amount').value.trim();
-  const expiry = document.getElementById('cp-expiry').value;
-  const note   = document.getElementById('cp-note').value.trim();
-  const phone  = document.getElementById('cp-phone').value.trim();
+  const type      = document.getElementById('cp-type').value;
+  const amount    = document.getElementById('cp-amount').value.trim();
+  const expiry    = document.getElementById('cp-expiry').value;
+  const note      = document.getElementById('cp-note').value.trim();
+  const phone     = document.getElementById('cp-phone').value.trim();
+  // v7：三層規則
+  const minSpend  = document.getElementById('cp-minspend').value.trim()  || '0';
+  const maxPerUse = document.getElementById('cp-maxperuse').value.trim() || '0';
+  const percent   = document.getElementById('cp-percent').value.trim()   || '0';
   if(!type){showMsg('cp-add-msg','請選擇類型','err');return;}
   if(!amount){showMsg('cp-add-msg','請填寫面額','err');return;}
   if(!phone){showMsg('cp-add-msg','請填寫顧客電話','err');return;}
   showMsg('cp-add-msg','產生中…','loading');
   try{
-    // 1. 產生券碼（購物系統GAS）
-    const p = new URLSearchParams({action:'addCoupon', type, amount, expiry, note});
+    // 1. 產生券碼（購物系統 GAS v7）
+    const p = new URLSearchParams({
+      action:'addCoupon', type, amount, expiry, note,
+      minSpend, maxPerUse, percent  // v7 新增三層規則參數
+    });
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
     if(!d.ok){showMsg('cp-add-msg','❌ '+(d.msg||'失敗'),'err');return;}
     const code = d.code;
-    // 2. 推送LINE通知（主系統GAS查UID）
-    showMsg('cp-add-msg','券碼已產生，推送LINE通知中…','loading');
+    // 2. 推送 LINE 通知（主系統 GAS 查 UID）
+    showMsg('cp-add-msg','券碼已產生，推送 LINE 通知中…','loading');
     const p2 = new URLSearchParams({action:'sendCouponNotify', phone, code, type, amount, expiry, note});
     const r2 = await fetch(GAS+'?'+p2.toString());
     const d2 = await r2.json();
     if(d2.ok){
-      showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已推送LINE通知給顧客','ok');
+      showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已推送 LINE 通知給顧客','ok');
     } else {
-      showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已產生（LINE通知失敗：'+d2.msg+'）','ok');
+      showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已產生（LINE 通知失敗：'+(d2.msg||'')+'）','ok');
     }
-    document.getElementById('cp-amount').value='';
-    document.getElementById('cp-note').value='';
-    document.getElementById('cp-expiry').value='';
-    document.getElementById('cp-phone').value='';
+    ['cp-amount','cp-note','cp-expiry','cp-phone','cp-minspend','cp-maxperuse','cp-percent'].forEach(i=>document.getElementById(i).value='');
     loadCoupons();
   }catch(e){showMsg('cp-add-msg','❌ 網路錯誤','err');}
 }
