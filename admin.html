@@ -43,10 +43,12 @@ header{background:var(--bark);position:sticky;top:0;z-index:200;box-shadow:0 2px
 .btn-outline{background:none;border:1.5px solid var(--border);color:var(--mid);}.btn-outline:hover{border-color:var(--bark);color:var(--bark);}
 .btn-danger{background:none;border:1.5px solid #e05050;color:#e05050;}.btn-danger:hover{background:#e05050;color:#fff;}
 .btn-sm{padding:5px 10px;font-size:.68rem;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
 .form-group{margin-bottom:12px;}
 .form-label{display:block;font-size:.7rem;letter-spacing:.06em;color:var(--bark);font-weight:600;margin-bottom:4px;font-family:'Noto Sans TC',sans-serif;}
 .form-input,.form-select,.form-textarea{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:3px;font-family:'Noto Serif TC',serif;font-size:.8rem;color:var(--ink);background:var(--linen);transition:border-color .2s;outline:none;}
 .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--rose);background:#fff;}
+.form-input:read-only,.form-input:disabled{background:#f3ede3;color:#888;cursor:not-allowed;}
 .form-textarea{resize:vertical;min-height:70px;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:520px){.form-grid{grid-template-columns:1fr;}}
@@ -92,7 +94,26 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .ql-icon{font-size:1.3rem;flex-shrink:0;}
 .ql-title{font-size:.8rem;font-weight:600;}
 .ql-url{font-size:.6rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;}
-@media(max-width:600px){.tab-btn{padding:11px 8px;font-size:.62rem;}.form-grid{grid-template-columns:1fr;}}
+/* 📒 折扣券類型管理 — v2 半鎖 UI */
+.ct-group-title{font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-weight:600;margin:14px 0 6px;padding-left:2px;}
+.ct-group-title:first-child{margin-top:0;}
+.ct-slot{display:flex;align-items:center;gap:8px;padding:10px;margin-bottom:6px;border:1px solid var(--border);border-radius:5px;background:var(--linen);flex-wrap:wrap;}
+.ct-slot.locked{background:#f8f3ea;border-color:#e0d4bd;}
+.ct-slot.custom{background:#fff;}
+.ct-slot.empty{background:#fafafa;border-style:dashed;opacity:.75;}
+.ct-slot-num{min-width:28px;height:28px;border-radius:50%;background:var(--sand);color:var(--bark);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;font-family:'Noto Sans TC',sans-serif;}
+.ct-slot.locked .ct-slot-num{background:var(--gold);color:#fff;}
+.ct-slot-icon{font-size:1rem;flex-shrink:0;}
+.ct-slot-input{flex:1;min-width:140px;padding:6px 9px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;outline:none;background:#fff;}
+.ct-slot-input:focus{border-color:var(--rose);}
+.ct-slot-input:disabled{background:#f3ede3;color:#5c3d2e;cursor:not-allowed;}
+.ct-toggle{display:flex;align-items:center;gap:4px;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;cursor:pointer;color:var(--bark);}
+.ct-toggle input{cursor:pointer;}
+.ct-badge{font-size:.6rem;padding:2px 7px;border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-weight:600;}
+.ct-badge-locked{background:#e8d0b0;color:#8c5a2b;}
+.ct-badge-enabled{background:#e8f5ee;color:#2d7a4f;}
+.ct-badge-disabled{background:#eee;color:#999;}
+@media(max-width:600px){.tab-btn{padding:11px 8px;font-size:.62rem;}.form-grid{grid-template-columns:1fr;}.ct-slot{gap:6px;}.ct-slot-input{min-width:100px;}}
 </style>
 </head>
 <body>
@@ -472,24 +493,27 @@ tr:hover td{background:rgba(61,43,31,.03);}
       </div>
     </div>
   </div>
-</div>
 
   <!-- 🎫 折扣券 -->
   <div class="tab-pane" id="pane-coupon">
     <div class="pane-inner">
-      <!-- 折扣券類型管理 -->
+      <!-- 📒 折扣券類型管理 v2 半鎖 UI -->
       <div class="card">
-        <div class="card-head"><h3>⚙️ 折扣券類型管理</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCouponTypes()">🔄 重新載入</button></div>
+        <div class="card-head">
+          <h3>📒 折扣券類型管理</h3>
+          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCouponTypes()">🔄 重新載入</button>
+        </div>
         <div class="card-body">
-          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">類型清單從 GAS 動態載入，空白槽位不顯示。修改後「產生折扣券」的下拉選單即時更新。</p>
-          <div id="ct-list"></div>
-          <div style="display:flex;gap:8px;margin-top:12px;">
-            <input class="form-input" type="text" id="ct-new-name" placeholder="輸入新類型名稱" style="flex:1;">
-            <button class="btn btn-gold" onclick="addCouponType()">＋ 新增</button>
-          </div>
+          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
+            🔒 <strong>預設 3 槽位</strong>（購物券/現金券/生日券）名稱鎖死，不可修改、不可停用、不可刪除。<br>
+            ✏️ <strong>自訂 3 槽位</strong>可隨時編輯名稱、啟用/停用、清空。<br>
+            修改後「產生折扣券」的類型下拉即時更新。
+          </p>
+          <div id="ct-list"><div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div></div>
           <div id="ct-msg" class="msg-box"></div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-head"><h3>🎫 新增折扣券</h3></div>
         <div class="card-body">
@@ -514,13 +538,14 @@ tr:hover td{background:rgba(61,43,31,.03);}
             </div>
           </div>
           <div class="form-group">
-              <label class="form-label">顧客電話 *（用於 LINE 通知）</label>
-              <input class="form-input" type="tel" id="cp-phone" placeholder="0912345678">
-            </div>
+            <label class="form-label">顧客電話 *（用於 LINE 通知）</label>
+            <input class="form-input" type="tel" id="cp-phone" placeholder="0912345678">
+          </div>
           <button class="btn btn-gold" onclick="addCoupon()">🎫 產生並通知顧客</button>
           <div id="cp-add-msg" class="msg-box"></div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-head">
           <h3>🎫 折扣券列表</h3>
@@ -547,8 +572,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
       </div>
     </div>
   </div>
-</div>
-
 
   <!-- 💬 快速選單 -->
   <div class="tab-pane" id="pane-quickmenu">
@@ -609,6 +632,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
+</div><!-- /admin-wrap -->
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -636,11 +661,14 @@ window.adminLogout=async()=>{
 
 <script>
 const GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+// 購物系統GAS endpoint（商品清單/折扣券來源）
+const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 function showMsg(id,msg,type){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className='msg-box msg-'+(type==='ok'?'ok':type==='err'?'err':'loading');el.style.display='block';if(type!=='loading')setTimeout(()=>el.style.display='none',3500);}
 function hide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
 function show(id,t){const el=document.getElementById(id);if(el)el.style.display=t||'block';}
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function switchTab(name){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -649,7 +677,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCoupons();loadCouponTypes();},quickmenu:loadQuickMenu};
+  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
   if(map[name])map[name]();
 }
 
@@ -950,16 +978,16 @@ async function loadCredits(){
       const timeRaw=String(row['建立時間']||'');
       const timeDisplay=timeRaw.replace('T',' ').replace('.000Z','').substring(0,16);
       return`<tr>
-        <td>\${row['姓名']||''}</td>
-        <td>\${displayPhone}</td>
-        <td class="\${amt>=0?'credit-pos':'credit-neg'}">\${amt>=0?'+':''}\${amt.toLocaleString()}</td>
-        <td style="font-size:.75rem;">\${Number(row['贈送金額']||0)>0?'+'+Number(row['贈送金額']||0).toLocaleString():'—'}</td>
-        <td style="font-size:.75rem;color:#888;">\${bal.toLocaleString()}</td>
-        <td><strong style="color:\${running>=0?'var(--moss)':'var(--rose)'}">\${running.toLocaleString()}</strong></td>
-        <td style="font-size:.7rem;">\${row['支付方式']||''}</td>
-        <td style="font-size:.65rem;color:#aaa;">\${timeDisplay}</td>
-        <td style="font-size:.72rem;color:\${noteColor};">\${note||'—'}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteCredit(\${row._row},'\${row['姓名']||''}','\${displayPhone}')">刪除</button></td>
+        <td>${row['姓名']||''}</td>
+        <td>${displayPhone}</td>
+        <td class="${amt>=0?'credit-pos':'credit-neg'}">${amt>=0?'+':''}${amt.toLocaleString()}</td>
+        <td style="font-size:.75rem;">${Number(row['贈送金額']||0)>0?'+'+Number(row['贈送金額']||0).toLocaleString():'—'}</td>
+        <td style="font-size:.75rem;color:#888;">${bal.toLocaleString()}</td>
+        <td><strong style="color:${running>=0?'var(--moss)':'var(--rose)'}">${running.toLocaleString()}</strong></td>
+        <td style="font-size:.7rem;">${row['支付方式']||''}</td>
+        <td style="font-size:.65rem;color:#aaa;">${timeDisplay}</td>
+        <td style="font-size:.72rem;color:${noteColor};">${note||'—'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteCredit(${row._row},'${row['姓名']||''}','${displayPhone}')">刪除</button></td>
       </tr>`;
     }).join('')||'<tr><td colspan="10" style="text-align:center;color:#aaa;padding:24px;">無儲值紀錄</td></tr>';
   }catch(e){hide('cr-loading');showToast('載入失敗');}
@@ -1062,10 +1090,7 @@ function filterOrderTable(){
   </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無訂單資料</td></tr>';
 }
 
-// 購物系統GAS endpoint（商品清單來源）
-const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
-
-// 商品清單快取
+// ════ 手動新增訂單 — 商品快取 ════
 let _moProductList = [];
 
 async function loadMoProducts(){
@@ -1184,84 +1209,134 @@ async function addManualOrder(){
   }catch(e){showMsg('mo-msg','❌ 網路錯誤：'+e.message,'err');}
 }
 
-// ════ 折扣券類型管理 ════
+// ═══════════════════════════════════════════════════════
+// 📒 折扣券類型管理（v2 半鎖 UI）
+// ═══════════════════════════════════════════════════════
 let _couponTypes = [];
 
 async function loadCouponTypes(){
-  document.getElementById('ct-list').innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;">載入中…</div>`;
+  const el = document.getElementById('ct-list');
+  el.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>';
   try{
     const r = await fetch(GAS_SHOP+'?action=getCouponTypes&t='+Date.now());
     const d = await r.json();
+    if(!d.ok){
+      el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 載入失敗：'+(d.msg||'')+'</div>';
+      return;
+    }
     _couponTypes = d.types || [];
     renderCouponTypeList();
     populateCouponTypeSelect();
-  }catch(e){document.getElementById('ct-list').innerHTML='<div style="color:#c00;font-size:.78rem;">載入失敗</div>';}
+  }catch(e){
+    el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 網路錯誤：'+e.message+'</div>';
+  }
 }
 
 function renderCouponTypeList(){
   const el = document.getElementById('ct-list');
   if(!_couponTypes.length){
-    el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;">尚無類型，請新增</div>`;
+    el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料</div>`;
     return;
   }
-  el.innerHTML = _couponTypes.map(t=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
-      <input type="text" value="${t.name}" id="ct-name-${t.row}" style="flex:1;padding:6px 8px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
-      <button class="btn btn-dark btn-sm" onclick="saveCouponType(${t.row})">儲存</button>
-      <button class="btn btn-danger btn-sm" onclick="deleteCouponType(${t.row},'${t.name}')">刪除</button>
-    </div>`).join('');
+  // 分組：預設 / 自訂
+  const defaults = _couponTypes.filter(t=>t.isDefault);
+  const customs  = _couponTypes.filter(t=>!t.isDefault);
+
+  let html = '';
+
+  // 🔒 預設槽位
+  if(defaults.length){
+    html += `<div class="ct-group-title">🔒 預設類型（鎖死，不可修改）</div>`;
+    html += defaults.map(t=>`
+      <div class="ct-slot locked">
+        <div class="ct-slot-num">${t.order}</div>
+        <span class="ct-slot-icon">🔒</span>
+        <input type="text" class="ct-slot-input" value="${escHtml(t.name)}" disabled>
+        <span class="ct-badge ct-badge-locked">系統預設</span>
+        <span class="ct-badge ct-badge-enabled">啟用中</span>
+      </div>`).join('');
+  }
+
+  // ✏️ 自訂槽位
+  if(customs.length){
+    html += `<div class="ct-group-title">✏️ 自訂類型（可隨時編輯）</div>`;
+    html += customs.map(t=>{
+      const isEmpty = !t.name;
+      const slotClass = isEmpty ? 'ct-slot empty' : 'ct-slot custom';
+      return `
+      <div class="${slotClass}">
+        <div class="ct-slot-num">${t.order}</div>
+        <span class="ct-slot-icon">${isEmpty?'➕':'✏️'}</span>
+        <input type="text" class="ct-slot-input" id="ct-name-${t.row}" value="${escHtml(t.name)}" placeholder="${isEmpty?'輸入類型名稱（留空=停用）':''}">
+        <label class="ct-toggle">
+          <input type="checkbox" id="ct-en-${t.row}" ${t.enabled?'checked':''}> 啟用
+        </label>
+        <button class="btn btn-dark btn-sm" onclick="saveCouponType(${t.row})">💾 儲存</button>
+        ${t.name?`<button class="btn btn-danger btn-sm" onclick="clearCouponType(${t.row})">🗑 清空</button>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = html;
 }
 
+// 同步更新「新增折扣券」類型下拉
 function populateCouponTypeSelect(){
   const sel = document.getElementById('cp-type');
   if(!sel) return;
   const cur = sel.value;
-  sel.innerHTML = _couponTypes.length
-    ? _couponTypes.map(t=>`<option value="${t.name}">${t.name}</option>`).join('')
-    : '<option value="">（無類型，請先新增）</option>';
-  if(cur) sel.value = cur;
-}
-
-async function addCouponType(){
-  const name = document.getElementById('ct-new-name').value.trim();
-  if(!name){showMsg('ct-msg','請輸入類型名稱','err');return;}
-  showMsg('ct-msg','新增中…','loading');
-  try{
-    const p = new URLSearchParams({action:'saveCouponType', name, enabled:'true'});
-    const r = await fetch(GAS_SHOP+'?'+p.toString());
-    const d = await r.json();
-    if(d.ok){
-      showMsg('ct-msg','✅ 已新增','ok');
-      document.getElementById('ct-new-name').value='';
-      loadCouponTypes();
-    }else showMsg('ct-msg','❌ '+(d.msg||'失敗'),'err');
-  }catch(e){showMsg('ct-msg','❌ 網路錯誤','err');}
+  // 只顯示啟用且有名稱的類型
+  const usable = _couponTypes.filter(t=>t.enabled && t.name);
+  sel.innerHTML = usable.length
+    ? usable.map(t=>`<option value="${escHtml(t.name)}">${escHtml(t.name)}</option>`).join('')
+    : '<option value="">（無可用類型，請先啟用）</option>';
+  if(cur && usable.some(t=>t.name===cur)) sel.value = cur;
 }
 
 async function saveCouponType(row){
-  const name = document.getElementById('ct-name-'+row).value.trim();
-  if(!name){showMsg('ct-msg','類型名稱不能空白','err');return;}
+  const nameEl = document.getElementById('ct-name-'+row);
+  const enEl   = document.getElementById('ct-en-'+row);
+  if(!nameEl) return;
+  const name    = nameEl.value.trim();
+  const enabled = enEl ? enEl.checked : true;
+  // 如果啟用但沒填名稱 → 擋下來
+  if(enabled && !name){
+    showMsg('ct-msg','❌ 啟用的類型必須填寫名稱','err');
+    return;
+  }
+  showMsg('ct-msg','儲存中…','loading');
   try{
-    const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:'true'});
+    const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:String(enabled)});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){showToast('✅ 已儲存');loadCouponTypes();}
-    else showToast('❌ '+(d.msg||'失敗'));
-  }catch(e){showToast('❌ 網路錯誤');}
+    if(d.ok){
+      showMsg('ct-msg','✅ 已儲存','ok');
+      loadCouponTypes();
+    }else{
+      showMsg('ct-msg','❌ '+(d.msg||'儲存失敗'),'err');
+    }
+  }catch(e){showMsg('ct-msg','❌ 網路錯誤','err');}
 }
 
-async function deleteCouponType(row, name){
-  if(!confirm('確定刪除類型「'+name+'」？'))return;
+async function clearCouponType(row){
+  if(!confirm('確定清空此自訂類型？\n（只會清空名稱並停用，不影響已發出的折扣券）'))return;
+  showMsg('ct-msg','清空中…','loading');
   try{
     const p = new URLSearchParams({action:'deleteCouponType', row});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){showToast('✅ 已刪除');loadCouponTypes();}
-    else showToast('❌ '+(d.msg||'失敗'));
-  }catch(e){showToast('❌ 網路錯誤');}
+    if(d.ok){
+      showMsg('ct-msg','✅ 已清空','ok');
+      loadCouponTypes();
+    }else{
+      showMsg('ct-msg','❌ '+(d.msg||'清空失敗'),'err');
+    }
+  }catch(e){showMsg('ct-msg','❌ 網路錯誤','err');}
 }
 
-// ════ 折扣券（呼叫購物系統GAS）════
+// ═══════════════════════════════════════════════════════
+// 🎫 折扣券（呼叫購物系統GAS）
+// ═══════════════════════════════════════════════════════
 let _coupons = [];
 
 async function addCoupon(){
@@ -1270,6 +1345,7 @@ async function addCoupon(){
   const expiry = document.getElementById('cp-expiry').value;
   const note   = document.getElementById('cp-note').value.trim();
   const phone  = document.getElementById('cp-phone').value.trim();
+  if(!type){showMsg('cp-add-msg','請選擇類型','err');return;}
   if(!amount){showMsg('cp-add-msg','請填寫面額','err');return;}
   if(!phone){showMsg('cp-add-msg','請填寫顧客電話','err');return;}
   showMsg('cp-add-msg','產生中…','loading');
@@ -1329,17 +1405,26 @@ function filterCouponTable(){
     const expiry  = String(c['到期日']||'—');
     const note    = String(c['備註']||'');
     const row     = Number(c['_row']||0);
+    // 類型顏色：購物券/現金券/生日券 分別不同色
+    const typeColorMap = {
+      '購物券':['#e8f5ee','#2d7a4f'],
+      '現金券':['#fff3cd','#856404'],
+      '生日券':['#f5e8e4','#c9897a']
+    };
+    const tc = Object.entries(typeColorMap).find(([k])=>type.includes(k));
+    const typeBg = tc ? typeColorMap[tc[0]][0] : '#eee';
+    const typeFg = tc ? typeColorMap[tc[0]][1] : '#666';
     return `<tr>
-      <td style="font-family:monospace;font-size:.75rem;font-weight:700;color:var(--bark);">${code}</td>
-      <td><span style="padding:2px 7px;border-radius:10px;font-size:.62rem;background:${type==='購物券'?'#e8f5ee':'#fff3cd'};color:${type==='購物券'?'#2d7a4f':'#856404'}">${type}</span></td>
+      <td style="font-family:monospace;font-size:.75rem;font-weight:700;color:var(--bark);">${escHtml(code)}</td>
+      <td><span style="padding:2px 7px;border-radius:10px;font-size:.62rem;background:${typeBg};color:${typeFg};white-space:nowrap;">${escHtml(type)}</span></td>
       <td>NT$ ${amount.toLocaleString()}</td>
       <td><strong>NT$ ${balance.toLocaleString()}</strong></td>
-      <td><span class="status-badge ${statusColor[status]||''}">${status}</span></td>
-      <td style="font-size:.7rem;">${expiry}</td>
-      <td style="font-size:.7rem;max-width:120px;">${note}</td>
+      <td><span class="status-badge ${statusColor[status]||''}">${escHtml(status)}</span></td>
+      <td style="font-size:.7rem;">${escHtml(expiry)}</td>
+      <td style="font-size:.7rem;max-width:120px;">${escHtml(note)}</td>
       <td style="white-space:nowrap;">
         ${status==='有效'?`<button class="btn btn-outline btn-sm" onclick="toggleCouponStatus(${row},'停用')">停用</button>`:`<button class="btn btn-outline btn-sm" onclick="toggleCouponStatus(${row},'有效')">啟用</button>`}
-        <button class="btn btn-danger btn-sm" onclick="deleteCoupon(${row},'${code}')">刪除</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCoupon(${row},'${escHtml(code)}')">刪除</button>
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">無折扣券資料</td></tr>';
@@ -1395,12 +1480,12 @@ function renderQuickMenu(){
         ${pages[p].length ? pages[p].sort((a,b)=>a.order-b.order).map(item=>`
           <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
             <span style="min-width:24px;text-align:center;font-weight:700;color:var(--bark);">${item.order}</span>
-            <input type="text" value="${item.label}" id="qm-lbl-${item.row}" style="flex:1;min-width:100px;padding:5px 7px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
-            <input type="text" value="${item.action}" id="qm-act-${item.row}" style="flex:2;min-width:140px;padding:5px 7px;border:1.5px solid var(--border);border-radius:3px;font-size:.75rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
+            <input type="text" value="${escHtml(item.label)}" id="qm-lbl-${item.row}" style="flex:1;min-width:100px;padding:5px 7px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
+            <input type="text" value="${escHtml(item.action)}" id="qm-act-${item.row}" style="flex:2;min-width:140px;padding:5px 7px;border:1.5px solid var(--border);border-radius:3px;font-size:.75rem;font-family:'Noto Sans TC',sans-serif;outline:none;">
             <span style="font-size:.62rem;padding:2px 7px;border-radius:8px;background:${item.type==='uri'?'#e8f5ee':'#fff3cd'};color:${item.type==='uri'?'#2d7a4f':'#856404'}">${item.type}</span>
             <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;"><input type="checkbox" id="qm-en-${item.row}" ${item.enabled?'checked':''}> 啟用</label>
             <button class="btn btn-dark btn-sm" onclick="saveQuickMenuItem(${item.row},${item.page},${item.order},'${item.type}')">儲存</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteQuickMenuItem(${item.row},'${item.label}')">刪除</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteQuickMenuItem(${item.row},'${escHtml(item.label)}')">刪除</button>
           </div>`).join('')
         : '<p style="color:#aaa;font-size:.78rem;padding:8px 0;">此頁尚無按鈕</p>'}
       </div>
