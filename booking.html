@@ -129,6 +129,75 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .spinner-sm { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 8px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-inline { display: none; text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+
+/* ══ 【2026-04-19 新增】LINE 登入樣式 ══ */
+.line-login-box {
+  background: linear-gradient(135deg, #f0f9f0 0%, #ffffff 100%);
+  border: 1.5px solid #06c755;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 16px 0 20px;
+  text-align: center;
+}
+.line-login-title {
+  font-size: 13px;
+  color: #2a4d33;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.line-login-desc {
+  font-size: 11px;
+  color: #607868;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.btn-line-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #06c755;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-line-login:hover { background: #05a847; }
+.btn-line-login:disabled { background: #aaa; cursor: not-allowed; }
+.line-logged-in {
+  background: #f0f9f0;
+  border: 1.5px solid #06c755;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 16px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #2a4d33;
+}
+.line-logged-in-icon {
+  width: 32px;
+  height: 32px;
+  background: #06c755;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.line-logged-in-content { flex: 1; line-height: 1.5; }
+.line-logged-in-name { font-weight: 500; }
+.line-logged-in-hint { font-size: 11px; color: #607868; margin-top: 2px; }
 .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
 </style>
 </head>
@@ -155,7 +224,27 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
   </div>
   <div class="section" id="section1">
     <div class="section-title">選擇服務項目</div>
-    <div class="section-desc">可複選多項，選完後點下一步</div>
+    <div class="section-desc">可複選多項,選完後點下一步</div>
+
+    <!-- 【2026-04-19 新增】LINE 快速登入區塊 -->
+    <div id="lineLoginArea">
+      <div class="line-login-box" id="lineLoginBox">
+        <div class="line-login-title">🎁 老顧客福利!</div>
+        <div class="line-login-desc">LINE 快速登入,自動帶入姓名電話<br>省去重複輸入,預約更快速 ✨</div>
+        <button type="button" class="btn-line-login" onclick="startLineLogin()">
+          <span style="font-size:18px;">📱</span>
+          使用 LINE 快速登入
+        </button>
+      </div>
+      <div class="line-logged-in" id="lineLoggedInBox" style="display:none">
+        <div class="line-logged-in-icon">✓</div>
+        <div class="line-logged-in-content">
+          <div class="line-logged-in-name">已登入 LINE:<span id="loggedInName"></span></div>
+          <div class="line-logged-in-hint">預約資料將自動帶入</div>
+        </div>
+      </div>
+    </div>
+
     <div id="selectedTagsArea" class="selected-tags"></div>
     <div id="serviceList"></div>
     <div class="notice-box" style="margin-top:16px">
@@ -281,7 +370,7 @@ const BUSINESS_HOURS = {
 const DAY_NAMES   = ['日','一','二','三','四','五','六'];
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 let allServices = [], schedule = [], lockedInfoMap = {};
-let state = { services: [], date: null, time: null, name: '', phone: '', note: '', priority: false, memberType: '', priorityFee: 0 };
+let state = { services: [], date: null, time: null, name: '', phone: '', note: '', priority: false, memberType: '', priorityFee: 0, uid: '', displayName: '', lineLoggedIn: false };
 let siteSettings = { priority_member_fee: 250, priority_nonmember_fee: 350, payment_jkopay_url: '', payment_ipass_url: '' };
 
 function normalizeTime(input) {
@@ -567,6 +656,9 @@ async function submitBooking() {
     action: 'booking', name: state.name, phone: state.phone, service: serviceStr,
     date: dateStr, time: normalizeTime(state.time || ''), note: state.note,
     priority: state.priority ? 'yes' : 'no', memberType: state.memberType || '',
+    // 【2026-04-19 新增】夾帶 LINE 登入資料(沒登入就空字串,後端 if 判斷)
+    uid: state.uid || '',
+    displayName: state.displayName || '',
   });
   try {
     const res = await fetch(GAS_URL, {
@@ -634,6 +726,136 @@ function renderPaymentButtons() {
 function formatDate(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+
+// ══════════════════════════════════════════════════════════════
+// 【2026-04-19 新增】LINE Login 整合
+// ══════════════════════════════════════════════════════════════
+// Channel ID(從 GAS 後端取得,不寫死在前端方便之後改)
+let LINE_LOGIN_CHANNEL_ID = '2009831862';
+const LINE_LOGIN_REDIRECT = 'https://san555483-hub.github.io/booking.html';
+
+// 產生 state 參數(防 CSRF)+ 存在 sessionStorage
+function _genLoginState() {
+  const s = 'st_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+  try { sessionStorage.setItem('line_login_state', s); } catch(_) {}
+  return s;
+}
+
+function _verifyLoginState(returned) {
+  try {
+    const saved = sessionStorage.getItem('line_login_state');
+    sessionStorage.removeItem('line_login_state');
+    return saved && saved === returned;
+  } catch(_) { return false; }
+}
+
+// 啟動 LINE 登入流程(使用者點按鈕時呼叫)
+function startLineLogin() {
+  const btn = document.querySelector('.btn-line-login');
+  if (btn) { btn.disabled = true; btn.innerHTML = '跳轉中...'; }
+
+  const st = _genLoginState();
+  const url = 'https://access.line.me/oauth2/v2.1/authorize?'
+    + 'response_type=code'
+    + '&client_id=' + encodeURIComponent(LINE_LOGIN_CHANNEL_ID)
+    + '&redirect_uri=' + encodeURIComponent(LINE_LOGIN_REDIRECT)
+    + '&state=' + encodeURIComponent(st)
+    + '&scope=' + encodeURIComponent('profile openid');
+  window.location.href = url;
+}
+
+// 頁面載入時檢查 URL 是否帶 code(LINE 剛回調)
+async function handleLineLoginReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const code  = params.get('code');
+  const retSt = params.get('state');
+  const err   = params.get('error');
+
+  if (err) {
+    // 使用者拒絕授權,清掉 URL 參數就好(不顯示錯誤,不打擾流程)
+    _cleanUrl();
+    return;
+  }
+  if (!code) return;  // 沒 code 就不是 LINE 回來
+
+  // 驗 state(防 CSRF)
+  if (!_verifyLoginState(retSt)) {
+    console.warn('state 驗證失敗,可能 URL 被竄改');
+    _cleanUrl();
+    return;
+  }
+
+  // 打後端換 UID + profile
+  try {
+    const r = await fetch(GAS_URL + '?action=lineLoginCallback&code=' + encodeURIComponent(code) + '&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) {
+      console.warn('LINE 登入失敗:', d.msg);
+      _cleanUrl();
+      return;
+    }
+    // ✅ 登入成功
+    state.uid = d.uid;
+    state.displayName = d.displayName || '';
+    state.lineLoggedIn = true;
+    // 顯示已登入 UI
+    document.getElementById('lineLoginBox').style.display = 'none';
+    const box = document.getElementById('lineLoggedInBox');
+    box.style.display = 'flex';
+    document.getElementById('loggedInName').textContent = state.displayName || '';
+    // 如果是老顧客,自動帶入姓名電話
+    if (d.knownCustomer) {
+      state.name  = d.knownCustomer.name || state.displayName;
+      state.phone = d.knownCustomer.phone;
+      // 之後到 step3 時會自動填入 input
+    } else if (state.displayName) {
+      state.name = state.displayName;  // 至少帶 LINE 顯示名字
+    }
+  } catch(ex) {
+    console.warn('LINE 登入 callback 失敗:', ex);
+  }
+  _cleanUrl();
+}
+
+function _cleanUrl() {
+  // 把 URL 上的 code/state/error 參數清掉,保持網址乾淨
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('code');
+    url.searchParams.delete('state');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    url.searchParams.delete('liffClientId');
+    url.searchParams.delete('liffRedirectUri');
+    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+  } catch(_) {}
+}
+
+// 擴充:進入 step3 時,如果 state 已有資料,自動填 input
+const _origGoStep = typeof goStep === 'function' ? goStep : null;
+function _fillStep3IfLoggedIn() {
+  if (state.name) {
+    const inp = document.getElementById('inputName');
+    if (inp && !inp.value) inp.value = state.name;
+  }
+  if (state.phone) {
+    const inp = document.getElementById('inputPhone');
+    if (inp && !inp.value) inp.value = state.phone;
+  }
+}
+
+// 頁面載入後立刻檢查 LINE 登入回調 + 綁定 step 切換
+document.addEventListener('DOMContentLoaded', () => {
+  handleLineLoginReturn();
+  // 延遲監聽 section3 顯示時填資料
+  const sec3 = document.getElementById('section3');
+  if (sec3) {
+    const observer = new MutationObserver(() => {
+      if (sec3.classList.contains('active')) _fillStep3IfLoggedIn();
+    });
+    observer.observe(sec3, { attributes: true, attributeFilter: ['class'] });
+  }
+});
 </script>
 </body>
 </html>
