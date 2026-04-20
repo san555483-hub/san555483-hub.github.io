@@ -699,8 +699,17 @@ async function submitBooking() {
 
   // 送出前先用輕量 API 驗證時段是否還可用（更快）
   try {
-    const checkRes = await fetch(GAS_URL + '?action=checkSlot&date=' + dateStr + '&time=' + encodeURIComponent(normalizeTime(state.time)) + '&t=' + Date.now(), { cache: 'no-store' });
-    const checkData = await checkRes.json();
+    const checkUrl = GAS_URL + '?action=checkSlot&date=' + dateStr + '&time=' + encodeURIComponent(normalizeTime(state.time)) + '&t=' + Date.now();
+    console.log('[DIAG] checkSlot URL:', checkUrl);
+    const checkRes = await fetch(checkUrl, { cache: 'no-store' });
+    const checkText = await checkRes.text();
+    console.log('[DIAG] checkSlot 原始回應:', checkText);
+    let checkData;
+    try { checkData = JSON.parse(checkText); } catch(e) {
+      console.error('[DIAG] checkSlot JSON 解析失敗:', e.message);
+      checkData = {};
+    }
+    console.log('[DIAG] checkSlot 解析後:', checkData);
     if (checkData.ok && checkData.available === false) {
       const reason = checkData.reason === 'booked'
         ? '很抱歉,此時段已有人預約,請待 Elsa 稍後回覆您。\n因一人服務,可能無法即時回覆,建議提早預約或選其他時段,謝謝您 🙏'
@@ -713,7 +722,10 @@ async function submitBooking() {
       __isSubmitting = false;
       return;
     }
-  } catch (_) { /* 網路錯誤時不擋，讓後端 LockService 處理 */ }
+  } catch (err) {
+    console.error('[DIAG] checkSlot 錯誤:', err);
+    /* 網路錯誤時不擋，讓後端 LockService 處理 */
+  }
   const params = new URLSearchParams({
     action: 'booking', name: state.name, phone: state.phone, service: serviceStr,
     date: dateStr, time: normalizeTime(state.time || ''), note: state.note,
@@ -723,12 +735,20 @@ async function submitBooking() {
     displayName: state.displayName || '',
   });
   try {
+    console.log('[DIAG] 送出 booking params:', params.toString());
     const res = await fetch(GAS_URL, {
       method: 'POST', cache: 'no-store',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
     });
-    const data = await res.json();
+    const rawText = await res.text();
+    console.log('[DIAG] booking 原始回應:', rawText);
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) {
+      console.error('[DIAG] booking JSON 解析失敗:', e.message);
+      data = {};
+    }
+    console.log('[DIAG] booking 解析後:', data);
     loading.style.display = 'none';
     if (data.status === 'ok') {
       showSuccess(data.bookingId);
@@ -745,10 +765,13 @@ async function submitBooking() {
       errMsg.style.display = 'block';
       btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
     } else {
+      console.warn('[DIAG] 無法識別的回應:', data);
+      errMsg.textContent = '系統忙碌中，請稍後再試或查看 console';
       errMsg.style.display = 'block';
       btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
     }
-  } catch (_) {
+  } catch (err) {
+    console.error('[DIAG] booking 錯誤:', err);
     loading.style.display = 'none';
     errMsg.style.display = 'block';
     btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
