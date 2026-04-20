@@ -620,9 +620,45 @@ function renderSummary() {
 // 【2026-04-18 強化】防撞單送出 — 新增「正在送出中」旗標防連點
 let __isSubmitting = false;
 
+// 【2026-04-20 新增】前端驗證：擋掉 123/636 這種垃圾輸入
+function validateBookingForm() {
+  const name = String(state.name || '').trim();
+  const phone = String(state.phone || '').trim();
+
+  // 1. 姓名檢查：至少 2 字、不可純數字
+  if (name.length < 2) {
+    return '請輸入真實姓名（至少 2 個字）';
+  }
+  if (/^\d+$/.test(name)) {
+    return '姓名不可為純數字，請輸入真實姓名';
+  }
+
+  // 2. 電話檢查：必須為台灣手機格式 09 開頭 10 碼
+  if (!/^09\d{8}$/.test(phone)) {
+    return '請輸入正確手機號碼（09 開頭共 10 碼）';
+  }
+
+  // 3. 擋明顯假資料：連號或同一數字重複
+  if (/^(\d)\1{9}$/.test(phone)) {
+    return '請輸入正確手機號碼';
+  }
+
+  return ''; // 通過
+}
+
 async function submitBooking() {
   // 防連點：如果已經在送出，直接忽略
   if (__isSubmitting) return;
+
+  // 【2026-04-20 新增】送出前前端驗證
+  const validateMsg = validateBookingForm();
+  if (validateMsg) {
+    const errMsg0 = document.getElementById('errorMsg4');
+    errMsg0.textContent = validateMsg;
+    errMsg0.style.display = 'block';
+    return;
+  }
+
   __isSubmitting = true;
 
   const loading = document.getElementById('loadingSubmit');
