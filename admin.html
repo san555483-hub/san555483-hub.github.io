@@ -114,6 +114,97 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .ct-badge-enabled{background:#e8f5ee;color:#2d7a4f;}
 .ct-badge-disabled{background:#eee;color:#999;}
 @media(max-width:600px){.tab-btn{padding:11px 8px;font-size:.62rem;}.form-grid{grid-template-columns:1fr;}.ct-slot{gap:6px;}.ct-slot-input{min-width:100px;}}
+
+/* ═══════════════════════════════════════════════
+   📊 階段3B｜當日總控臺（獨立模組，不影響既有tab）
+   出事回滾：刪除本段CSS + 刪除tab按鈕 + 刪除pane + 刪除script
+═══════════════════════════════════════════════ */
+:root{--src-main:#5c3d2e;--src-main-bg:#f5ece0;--src-vip:#b8895a;--src-vip-bg:#faf0de;--src-lock:#7a6a60;--src-lock-bg:#ede9e4;}
+.dash-toolbar{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.dash-toolbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dash-date-btn{padding:7px 11px;border:1.5px solid var(--border);background:#fff;border-radius:3px;cursor:pointer;font-size:.75rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;transition:all .2s;}
+.dash-date-btn:hover{border-color:var(--bark);color:var(--bark);}
+.dash-date-input{padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;background:var(--linen);outline:none;}
+.dash-date-input:focus{border-color:var(--rose);background:#fff;}
+.dash-date-today{padding:7px 12px;background:var(--bark);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;}
+.dash-toolbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;color:var(--mid);}
+.dash-legend{display:flex;align-items:center;gap:4px;}
+.dash-legend-dot{width:10px;height:10px;border-radius:2px;}
+.dash-legend-main{background:var(--src-main);}
+.dash-legend-vip{background:var(--src-vip);}
+.dash-legend-lock{background:var(--src-lock);}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;}
+.dash-stat-card{background:#fff;border:1px solid var(--border);border-radius:7px;padding:12px 14px;text-align:center;}
+.dash-stat-card.main-src{border-top:3px solid var(--src-main);}
+.dash-stat-card.vip-src{border-top:3px solid var(--src-vip);}
+.dash-stat-num{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--bark);line-height:1;}
+.dash-stat-label{font-size:.62rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-top:3px;}
+.dash-timeline-card{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.dash-timeline-head{background:linear-gradient(135deg,var(--bark),var(--bark2));padding:12px 18px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.dash-timeline-head h3{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:400;}
+.dash-date-display{font-size:.72rem;color:var(--gold-lt);font-family:'Noto Sans TC',sans-serif;}
+.dash-time-row{display:grid;grid-template-columns:80px 1fr;border-bottom:1px solid #f0e8dc;min-height:52px;transition:background .15s;}
+.dash-time-row:last-child{border-bottom:none;}
+.dash-time-row:hover{background:#fdfbf7;}
+.dash-time-row.hour-mark{border-bottom:1px solid var(--border);}
+.dash-time-label{padding:12px 10px 12px 18px;font-family:'Noto Sans TC',sans-serif;font-size:.78rem;font-weight:500;color:var(--mid);border-right:2px solid var(--sand);display:flex;align-items:flex-start;}
+.dash-time-row.hour-mark .dash-time-label{color:var(--bark);font-weight:700;}
+.dash-time-row.half .dash-time-label{color:#b8a99c;font-weight:400;font-size:.72rem;}
+.dash-slot-content{padding:6px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.dash-slot-empty{color:#c9bfb0;font-size:.68rem;font-family:'Noto Sans TC',sans-serif;font-style:italic;padding:10px 6px;}
+.dash-b-card{flex:1;min-width:0;padding:10px 12px;border-radius:5px;border-left:4px solid;cursor:pointer;transition:all .2s;position:relative;display:flex;align-items:center;gap:12px;}
+.dash-b-card:hover{transform:translateX(2px);box-shadow:0 3px 10px rgba(61,43,31,.12);}
+.dash-b-card.src-main{background:var(--src-main-bg);border-left-color:var(--src-main);}
+.dash-b-card.src-vip{background:var(--src-vip-bg);border-left-color:var(--src-vip);}
+.dash-b-card.src-lock{background:var(--src-lock-bg);border-left-color:var(--src-lock);cursor:default;}
+.dash-b-card.cancelled{opacity:.45;background:#f5f2ed !important;border-left-color:#bbb !important;}
+.dash-b-card.cancelled .dash-b-name{text-decoration:line-through;}
+.dash-b-main{flex:1;min-width:0;}
+.dash-b-line1{display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap;}
+.dash-b-name{font-weight:600;color:var(--ink);font-size:.88rem;font-family:'Noto Serif TC',serif;}
+.dash-b-badge{font-size:.58rem;font-family:'Noto Sans TC',sans-serif;padding:2px 7px;border-radius:8px;font-weight:600;letter-spacing:.03em;}
+.dash-b-badge.main{background:var(--src-main);color:#fff;}
+.dash-b-badge.vip{background:var(--src-vip);color:#fff;}
+.dash-b-badge.lock{background:var(--src-lock);color:#fff;}
+.dash-b-service{font-size:.74rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+.dash-b-note{font-size:.66rem;color:#a08d7d;margin-top:2px;font-family:'Noto Sans TC',sans-serif;font-style:italic;}
+.dash-b-status{padding:3px 9px;border-radius:10px;font-size:.62rem;font-weight:600;font-family:'Noto Sans TC',sans-serif;flex-shrink:0;white-space:nowrap;}
+.dash-b-status.pending{background:#fff3cd;color:#856404;}
+.dash-b-status.confirmed{background:#d1ecf1;color:#0c5460;}
+.dash-b-status.done{background:#d4edda;color:#155724;}
+.dash-b-status.cancelled{background:#f8d7da;color:#721c24;}
+.dash-b-actions{display:flex;gap:6px;flex-shrink:0;opacity:0;transition:opacity .2s;}
+.dash-b-card:hover .dash-b-actions{opacity:1;}
+.dash-b-action-btn{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--bark);font-size:.85rem;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.1);transition:all .15s;text-decoration:none;}
+.dash-b-action-btn:hover{transform:scale(1.1);background:var(--bark);color:#fff;}
+.dash-b-action-btn.call:hover{background:var(--moss);}
+.dash-slot-content.multi{gap:8px;}
+.dash-slot-content.multi .dash-b-card{flex:1 1 calc(50% - 4px);}
+.dash-modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.dash-modal-mask.show{display:flex;}
+.dash-modal-box{background:#fff;border-radius:8px;max-width:380px;width:100%;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+.dash-modal-box h4{font-family:'Playfair Display',serif;font-size:1rem;color:var(--bark);margin-bottom:4px;}
+.dash-modal-sub{font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:16px;}
+.dash-status-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.dash-status-btn{padding:11px 8px;border:1.5px solid var(--border);background:#fff;border-radius:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:.78rem;transition:all .15s;color:var(--ink);}
+.dash-status-btn:hover{border-color:var(--bark);background:var(--linen);}
+.dash-modal-close{width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:.75rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+.dash-modal-close:hover{border-color:var(--bark);color:var(--bark);}
+.dash-now-indicator{position:relative;height:0;z-index:10;}
+.dash-now-indicator::before{content:'';position:absolute;left:80px;right:0;top:0;height:2px;background:var(--rose);box-shadow:0 0 6px rgba(201,137,122,.5);}
+.dash-now-indicator::after{content:'⬤ 現在';position:absolute;left:10px;top:-8px;font-size:.58rem;color:var(--rose);font-weight:700;font-family:'Noto Sans TC',sans-serif;background:#fff;padding:2px 4px;}
+.dash-vip-placeholder{background:#faf0de;border:1px dashed var(--gold);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:.72rem;color:var(--bark);font-family:'Noto Sans TC',sans-serif;line-height:1.6;}
+@media(max-width:640px){
+  .dash-time-row{grid-template-columns:62px 1fr;}
+  .dash-time-label{padding:10px 6px 10px 12px;font-size:.7rem;}
+  .dash-slot-content{padding:5px 8px;}
+  .dash-b-card{padding:8px 10px;gap:8px;}
+  .dash-b-name{font-size:.82rem;}
+  .dash-b-actions{opacity:1;}
+  .dash-toolbar-right{width:100%;margin-left:0;justify-content:space-around;}
+  .dash-now-indicator::before{left:62px;}
+}
+/* 階段3B CSS 結束 */
 </style>
 </head>
 <body>
@@ -143,7 +234,9 @@ tr:hover td{background:rgba(61,43,31,.03);}
 <div id="admin-wrap">
   <div class="tab-nav">
     <div class="tab-inner">
-      <button class="tab-btn active" onclick="switchTab('booking')">📅 預約紀錄</button>
+      <!-- 📊 階段3B：當日總控臺（放最前面，最常用）-->
+      <button class="tab-btn active" onclick="switchTab('dashboard')">📊 當日總控臺</button>
+      <button class="tab-btn" onclick="switchTab('booking')">📅 預約紀錄</button>
       <button class="tab-btn" onclick="switchTab('customer')">👥 顧客管理</button>
       <button class="tab-btn" onclick="switchTab('blacklist')">🚫 黑名單</button>
       <button class="tab-btn" onclick="switchTab('settings')">⚙️ 系統設定</button>
@@ -158,8 +251,48 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
+  <!-- 📊 階段3B：當日總控臺 pane -->
+  <div class="tab-pane active" id="pane-dashboard">
+    <div class="pane-inner">
+      <!-- 工具列 -->
+      <div class="dash-toolbar">
+        <div class="dash-toolbar-left">
+          <button class="dash-date-btn" onclick="Dashboard.changeDate(-1)">◀ 前一天</button>
+          <input type="date" class="dash-date-input" id="dash-date">
+          <button class="dash-date-btn" onclick="Dashboard.changeDate(1)">後一天 ▶</button>
+          <button class="dash-date-today" onclick="Dashboard.jumpToday()">📍 回今日</button>
+          <button class="dash-date-btn" onclick="Dashboard.load()" title="重新載入">🔄</button>
+        </div>
+        <div class="dash-toolbar-right">
+          <div class="dash-legend"><span class="dash-legend-dot dash-legend-main"></span>主系統</div>
+          <div class="dash-legend"><span class="dash-legend-dot dash-legend-vip"></span>尊爵 VIP</div>
+          <div class="dash-legend"><span class="dash-legend-dot dash-legend-lock"></span>手動鎖定</div>
+        </div>
+      </div>
+
+      <!-- 統計 -->
+      <div class="dash-stats" id="dash-stats"></div>
+
+      <!-- 尊爵提示（3B 階段尚未整合） -->
+      <div class="dash-vip-placeholder">
+        💡 <strong>階段 3B 提示</strong>：目前只顯示 🔴 主系統的預約。尊爵 VIP 預約將在階段 3C 整合進來。手動鎖定時段可點「🔒 鎖定時段」tab 設定，階段 3C 也會一起拉到這裡。
+      </div>
+
+      <!-- 時間軸 -->
+      <div class="dash-timeline-card">
+        <div class="dash-timeline-head">
+          <h3>📆 一日時間軸</h3>
+          <div class="dash-date-display" id="dash-date-display">載入中…</div>
+        </div>
+        <div id="dash-timeline">
+          <div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 📅 預約紀錄 -->
-  <div class="tab-pane active" id="pane-booking">
+  <div class="tab-pane" id="pane-booking">
     <div class="pane-inner">
       <div class="card">
         <div class="card-head">
@@ -372,7 +505,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <div class="tab-pane" id="pane-credit">
     <div class="pane-inner">
 
-      <!-- 系統說明 -->
       <div style="background:linear-gradient(135deg,#3d2b1f,#5c3d2e);border-radius:8px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
         <span style="font-size:1.4rem;">💳</span>
         <div>
@@ -497,7 +629,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <!-- 🎫 折扣券 -->
   <div class="tab-pane" id="pane-coupon">
     <div class="pane-inner">
-      <!-- 📒 折扣券類型管理 v2 半鎖 UI -->
       <div class="card">
         <div class="card-head">
           <h3>📒 折扣券類型管理</h3>
@@ -528,7 +659,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
             </div>
           </div>
 
-          <!-- v7：三層折抵規則 -->
           <div style="background:rgba(184,137,90,.06);border-left:3px solid var(--gold);padding:12px 14px;margin-bottom:12px;border-radius:0 4px 4px 0;">
             <div style="font-size:.72rem;color:var(--gold);font-weight:700;margin-bottom:10px;font-family:'Noto Sans TC',sans-serif;">💰 折抵規則（全部留空 = 無限制，券可一次折完）</div>
             <div class="form-grid">
@@ -608,7 +738,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
             顧客在圖文選單點「服務選單」後，Bot 會推送以下輪播卡片。共 3 頁，每頁最多 5 個按鈕。儲存後即時生效。
           </p>
-          <!-- 新增按鈕 -->
           <div class="card" style="margin-bottom:16px;">
             <div class="card-head"><h3>➕ 新增按鈕</h3></div>
             <div class="card-body">
@@ -647,7 +776,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
               <div id="qm-add-msg" class="msg-box"></div>
             </div>
           </div>
-          <!-- 列表 -->
           <div id="qm-pages"></div>
           <div id="qm-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
         </div>
@@ -656,6 +784,21 @@ tr:hover td{background:rgba(61,43,31,.03);}
   </div>
 
 </div><!-- /admin-wrap -->
+
+<!-- 📊 階段3B：狀態改動彈窗 -->
+<div class="dash-modal-mask" id="dash-modal">
+  <div class="dash-modal-box">
+    <h4 id="dash-modal-title">改預約狀態</h4>
+    <div class="dash-modal-sub" id="dash-modal-sub">—</div>
+    <div class="dash-status-grid">
+      <button class="dash-status-btn" onclick="Dashboard.updateStatus('待確認')" style="background:#fff3cd;color:#856404;">🟡 待確認</button>
+      <button class="dash-status-btn" onclick="Dashboard.updateStatus('已確認')" style="background:#d1ecf1;color:#0c5460;">🔵 已確認</button>
+      <button class="dash-status-btn" onclick="Dashboard.updateStatus('已完成')" style="background:#d4edda;color:#155724;">🟢 已完成</button>
+      <button class="dash-status-btn" onclick="Dashboard.updateStatus('已取消')" style="background:#f8d7da;color:#721c24;">🔴 已取消</button>
+    </div>
+    <button class="dash-modal-close" onclick="Dashboard.closeModal()">關閉</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -684,7 +827,6 @@ window.adminLogout=async()=>{
 
 <script>
 const GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
-// 購物系統GAS endpoint（商品清單/折扣券來源）
 const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
@@ -700,11 +842,13 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
+  // 📊 階段3B：新增 dashboard 路由
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
   if(map[name])map[name]();
 }
 
-function initAdmin(){loadBookings();initLockTimes();}
+// 📊 階段3B：initAdmin 開啟後預設載入當日總控臺
+function initAdmin(){Dashboard.init();initLockTimes();}
 
 // ════ 預約紀錄 ════
 let _bookings=[];
@@ -744,17 +888,13 @@ function filterBookingTable(){
   </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無資料</td></tr>';
 }
 
-// 日期格式修正（處理 Google Sheet 傳回的各種格式）
 function fmtDate(val){
   if(!val) return '';
   const s = String(val);
-  // 已是 yyyy-MM-dd 格式
   if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // JS Date 字串格式
   try{
     const d = new Date(s);
     if(!isNaN(d.getTime())){
-      // 1899 年是 Sheet 的 0 日期，代表資料有問題
       if(d.getFullYear() < 1970) return s;
       return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     }
@@ -991,13 +1131,10 @@ async function loadCredits(){
     document.getElementById('cr-tbody').innerHTML=rows.map(row=>{
       const amt=Number(row['儲值金額']||0),bal=Number(row['餘額']||0);
       const running=Number(row._runningBalance||0);
-      // 電話補回開頭0
       const phone=String(row['電話']||'').replace(/\D/g,'');
       const displayPhone=phone.length===9?'0'+phone:phone;
-      // 備註來源顏色
       const note=String(row['備註']||'');
       const noteColor=note.includes('線上儲值')?'#0066cc':note.includes('消費折抵')?'#c0392b':note.includes('退費')?'#e67e22':'#2d7a4f';
-      // 建立時間格式化（去掉T和Z）
       const timeRaw=String(row['建立時間']||'');
       const timeDisplay=timeRaw.replace('T',' ').replace('.000Z','').substring(0,16);
       return`<tr>
@@ -1233,7 +1370,7 @@ async function addManualOrder(){
 }
 
 // ═══════════════════════════════════════════════════════
-// 📒 折扣券類型管理（v2 半鎖 UI）
+// 📒 折扣券類型管理
 // ═══════════════════════════════════════════════════════
 let _couponTypes = [];
 
@@ -1261,13 +1398,11 @@ function renderCouponTypeList(){
     el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料</div>`;
     return;
   }
-  // 分組：預設 / 自訂
   const defaults = _couponTypes.filter(t=>t.isDefault);
   const customs  = _couponTypes.filter(t=>!t.isDefault);
 
   let html = '';
 
-  // 🔒 預設槽位
   if(defaults.length){
     html += `<div class="ct-group-title">🔒 預設類型（鎖死，不可修改）</div>`;
     html += defaults.map(t=>`
@@ -1280,7 +1415,6 @@ function renderCouponTypeList(){
       </div>`).join('');
   }
 
-  // ✏️ 自訂槽位
   if(customs.length){
     html += `<div class="ct-group-title">✏️ 自訂類型（可隨時編輯）</div>`;
     html += customs.map(t=>{
@@ -1303,12 +1437,10 @@ function renderCouponTypeList(){
   el.innerHTML = html;
 }
 
-// 同步更新「新增折扣券」類型下拉
 function populateCouponTypeSelect(){
   const sel = document.getElementById('cp-type');
   if(!sel) return;
   const cur = sel.value;
-  // 只顯示啟用且有名稱的類型
   const usable = _couponTypes.filter(t=>t.enabled && t.name);
   sel.innerHTML = usable.length
     ? usable.map(t=>`<option value="${escHtml(t.name)}">${escHtml(t.name)}</option>`).join('')
@@ -1322,7 +1454,6 @@ async function saveCouponType(row){
   if(!nameEl) return;
   const name    = nameEl.value.trim();
   const enabled = enEl ? enEl.checked : true;
-  // 如果啟用但沒填名稱 → 擋下來
   if(enabled && !name){
     showMsg('ct-msg','❌ 啟用的類型必須填寫名稱','err');
     return;
@@ -1358,7 +1489,7 @@ async function clearCouponType(row){
 }
 
 // ═══════════════════════════════════════════════════════
-// 🎫 折扣券（呼叫購物系統GAS）
+// 🎫 折扣券
 // ═══════════════════════════════════════════════════════
 let _coupons = [];
 
@@ -1368,7 +1499,6 @@ async function addCoupon(){
   const expiry    = document.getElementById('cp-expiry').value;
   const note      = document.getElementById('cp-note').value.trim();
   const phone     = document.getElementById('cp-phone').value.trim();
-  // v7：三層規則
   const minSpend  = document.getElementById('cp-minspend').value.trim()  || '0';
   const maxPerUse = document.getElementById('cp-maxperuse').value.trim() || '0';
   const percent   = document.getElementById('cp-percent').value.trim()   || '0';
@@ -1377,16 +1507,14 @@ async function addCoupon(){
   if(!phone){showMsg('cp-add-msg','請填寫顧客電話','err');return;}
   showMsg('cp-add-msg','產生中…','loading');
   try{
-    // 1. 產生券碼（購物系統 GAS v7）
     const p = new URLSearchParams({
       action:'addCoupon', type, amount, expiry, note,
-      minSpend, maxPerUse, percent  // v7 新增三層規則參數
+      minSpend, maxPerUse, percent
     });
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
     if(!d.ok){showMsg('cp-add-msg','❌ '+(d.msg||'失敗'),'err');return;}
     const code = d.code;
-    // 2. 推送 LINE 通知（主系統 GAS 查 UID）
     showMsg('cp-add-msg','券碼已產生，推送 LINE 通知中…','loading');
     const p2 = new URLSearchParams({action:'sendCouponNotify', phone, code, type, amount, expiry, note});
     const r2 = await fetch(GAS+'?'+p2.toString());
@@ -1432,7 +1560,6 @@ function filterCouponTable(){
     const expiry  = String(c['到期日']||'—');
     const note    = String(c['備註']||'');
     const row     = Number(c['_row']||0);
-    // 類型顏色：購物券/現金券/生日券 分別不同色
     const typeColorMap = {
       '購物券':['#e8f5ee','#2d7a4f'],
       '現金券':['#fff3cd','#856404'],
@@ -1564,6 +1691,279 @@ async function deleteQuickMenuItem(row,label){
   }catch(e){showToast('❌ 網路錯誤');}
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// 📊 階段 3B｜當日總控臺模組（完全獨立命名空間）
+// 出事回滾：
+//   方案A(10秒): F12 console 打 window.DASHBOARD_ENABLED=false，重切tab停用
+//   方案B(30秒): 把 admin-wrap 內 <button onclick="switchTab('dashboard')"> 這行註解掉
+//   方案C(3分): 上傳備份檔 admin_BEFORE_階段3B.html 蓋回
+// ═══════════════════════════════════════════════════════════════════════
+window.DASHBOARD_ENABLED = true;
+
+const Dashboard = {
+  _data: [],         // 當日預約（主系統）
+  _selectedDate: '', // yyyy-MM-dd
+  _currentBooking: null, // 目前選中的預約（彈窗用）
+
+  init(){
+    // 預設日期 = 今天
+    const today = Dashboard._todayStr();
+    Dashboard._selectedDate = today;
+    const dateInput = document.getElementById('dash-date');
+    if(dateInput){
+      dateInput.value = today;
+      dateInput.addEventListener('change', ()=>{
+        Dashboard._selectedDate = dateInput.value;
+        Dashboard.load();
+      });
+    }
+    Dashboard.load();
+  },
+
+  _todayStr(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  },
+
+  changeDate(delta){
+    if(!window.DASHBOARD_ENABLED) return;
+    const d = new Date(Dashboard._selectedDate);
+    d.setDate(d.getDate()+delta);
+    Dashboard._selectedDate = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    document.getElementById('dash-date').value = Dashboard._selectedDate;
+    Dashboard.load();
+  },
+
+  jumpToday(){
+    if(!window.DASHBOARD_ENABLED) return;
+    Dashboard._selectedDate = Dashboard._todayStr();
+    document.getElementById('dash-date').value = Dashboard._selectedDate;
+    Dashboard.load();
+  },
+
+  async load(){
+    if(!window.DASHBOARD_ENABLED){
+      document.getElementById('dash-timeline').innerHTML='<div class="loading-wrap">已停用（DASHBOARD_ENABLED=false）</div>';
+      return;
+    }
+    Dashboard._updateDateDisplay();
+    const tl = document.getElementById('dash-timeline');
+    tl.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>';
+    document.getElementById('dash-stats').innerHTML='';
+    try{
+      const r = await fetch(GAS+'?action=getBookings&date='+encodeURIComponent(Dashboard._selectedDate)+'&t='+Date.now());
+      const d = await r.json();
+      const list = d.bookings || [];
+      // 主系統資料標記 source
+      Dashboard._data = list.map(b=>({...b, source:'main', _timeStr:Dashboard._normTime(b.time)}));
+      Dashboard._renderStats();
+      Dashboard._renderTimeline();
+    }catch(e){
+      tl.innerHTML='<div class="loading-wrap" style="color:#c00;">❌ 載入失敗：'+e.message+'</div>';
+    }
+  },
+
+  _normTime(t){
+    // 統一時間為 "HH:MM" 字串（Sheet 可能存成 Date 物件字串）
+    if(!t) return '';
+    const s = String(t);
+    // 已是 HH:MM
+    if(/^\d{1,2}:\d{2}$/.test(s)){
+      const [h,m] = s.split(':');
+      return h.padStart(2,'0')+':'+m;
+    }
+    // 嘗試從 Date 字串抓時間
+    try{
+      const d = new Date(s);
+      if(!isNaN(d.getTime())){
+        return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      }
+    }catch(_){}
+    // 從字串中找 HH:MM pattern
+    const m = s.match(/(\d{1,2}):(\d{2})/);
+    if(m) return m[1].padStart(2,'0')+':'+m[2];
+    return s;
+  },
+
+  _updateDateDisplay(){
+    const d = new Date(Dashboard._selectedDate);
+    const weekdays = ['週日','週一','週二','週三','週四','週五','週六'];
+    const wd = weekdays[d.getDay()];
+    const isToday = Dashboard._selectedDate === Dashboard._todayStr();
+    const prefix = isToday ? '📍 今日' : '';
+    document.getElementById('dash-date-display').textContent =
+      `${prefix} ${d.getFullYear()}年${String(d.getMonth()+1).padStart(2,'0')}月${String(d.getDate()).padStart(2,'0')}日（${wd}）｜09:00 - 21:00`;
+  },
+
+  _renderStats(){
+    const all = Dashboard._data;
+    const main = all.filter(b=>b.source==='main');
+    const pending = all.filter(b=>b.status==='待確認').length;
+    // 計算空檔（共 24 個 30 分鐘格：09:00~21:00，最後一格是 20:30）
+    // 09:00,09:30,...,20:30 = 24 slots
+    const usedSlots = new Set();
+    all.forEach(b=>{
+      if(b.status === '已取消') return; // 取消的不佔格
+      if(b._timeStr) usedSlots.add(b._timeStr);
+    });
+    const totalSlots = 24;
+    const emptySlots = totalSlots - usedSlots.size;
+
+    document.getElementById('dash-stats').innerHTML = `
+      <div class="dash-stat-card"><div class="dash-stat-num">${all.length}</div><div class="dash-stat-label">今日總預約</div></div>
+      <div class="dash-stat-card main-src"><div class="dash-stat-num" style="color:var(--src-main)">${main.length}</div><div class="dash-stat-label">主系統</div></div>
+      <div class="dash-stat-card vip-src"><div class="dash-stat-num" style="color:#ccc">—</div><div class="dash-stat-label">尊爵 VIP（3C）</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" style="color:var(--rose)">${pending}</div><div class="dash-stat-label">待確認</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num" style="color:var(--moss)">${emptySlots}</div><div class="dash-stat-label">剩餘空檔</div></div>
+    `;
+  },
+
+  _renderTimeline(){
+    const tl = document.getElementById('dash-timeline');
+    const slots = [];
+    for(let h=9; h<=20; h++){
+      slots.push(String(h).padStart(2,'0')+':00');
+      slots.push(String(h).padStart(2,'0')+':30');
+    }
+    slots.push('21:00'); // 最後整點
+
+    // 分組資料
+    const map = {};
+    Dashboard._data.forEach(b=>{
+      const t = b._timeStr;
+      if(!t) return;
+      if(!map[t]) map[t]=[];
+      map[t].push(b);
+    });
+
+    const isToday = Dashboard._selectedDate === Dashboard._todayStr();
+    const now = new Date();
+    const nowStr = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+
+    let html = '';
+    let nowInserted = false;
+
+    slots.forEach(slot=>{
+      const isHour = slot.endsWith(':00');
+      const isHalf = slot.endsWith(':30');
+      const bks = map[slot] || [];
+
+      if(isToday && !nowInserted && slot >= nowStr){
+        html += '<div class="dash-now-indicator"></div>';
+        nowInserted = true;
+      }
+
+      html += `<div class="dash-time-row ${isHour?'hour-mark':''} ${isHalf?'half':''}">
+        <div class="dash-time-label">${slot}</div>
+        <div class="dash-slot-content ${bks.length>1?'multi':''}">`;
+      if(!bks.length){
+        html += `<div class="dash-slot-empty">— 空檔 —</div>`;
+      } else {
+        bks.forEach(b=>{ html += Dashboard._renderCard(b); });
+      }
+      html += `</div></div>`;
+    });
+
+    tl.innerHTML = html;
+  },
+
+  _renderCard(b){
+    const srcClass = 'src-'+b.source;
+    const cancelled = b.status==='已取消' ? 'cancelled' : '';
+    const badgeText = b.source==='main'?'主':b.source==='vip'?'尊爵':'鎖定';
+    const badgeClass = b.source==='main'?'main':b.source==='vip'?'vip':'lock';
+    const statusMap = {'待確認':'pending','已確認':'confirmed','已完成':'done','已取消':'cancelled'};
+    const statusClass = statusMap[b.status] || 'pending';
+
+    const phone = String(b.phone||'').trim();
+    const phoneAction = phone
+      ? `<a href="tel:${escHtml(phone)}" class="dash-b-action-btn call" onclick="event.stopPropagation()" title="打電話">📞</a>`
+      : '';
+
+    const note = String(b.note||'').trim();
+    const payload = JSON.stringify({id:b.id, name:b.name, service:b.service, phone:b.phone, source:b.source, status:b.status}).replace(/"/g,'&quot;');
+
+    return `<div class="dash-b-card ${srcClass} ${cancelled}" onclick="Dashboard.openModal(&quot;${escHtml(b.id)}&quot;)">
+      <div class="dash-b-main">
+        <div class="dash-b-line1">
+          <span class="dash-b-name">${escHtml(b.name||'未命名')}</span>
+          <span class="dash-b-badge ${badgeClass}">${badgeText}</span>
+          <span class="dash-b-status ${statusClass}">${escHtml(b.status||'—')}</span>
+        </div>
+        <div class="dash-b-service">${escHtml(b.service||'')}</div>
+        ${note?`<div class="dash-b-note">💬 ${escHtml(note)}</div>`:''}
+      </div>
+      <div class="dash-b-actions">
+        ${phoneAction}
+        <button class="dash-b-action-btn" title="改狀態">✏️</button>
+      </div>
+    </div>`;
+  },
+
+  openModal(id){
+    if(!window.DASHBOARD_ENABLED) return;
+    const b = Dashboard._data.find(x=>String(x.id)===String(id));
+    if(!b) return;
+    Dashboard._currentBooking = b;
+    const sourceText = b.source==='main'?'主系統':b.source==='vip'?'尊爵 VIP':'手動鎖定';
+    document.getElementById('dash-modal-sub').textContent =
+      `${b.name||'—'} · ${b.service||'—'} · ${sourceText} · 目前：${b.status||'—'}`;
+    document.getElementById('dash-modal').classList.add('show');
+  },
+
+  closeModal(){
+    document.getElementById('dash-modal').classList.remove('show');
+    Dashboard._currentBooking = null;
+  },
+
+  async updateStatus(newStatus){
+    const b = Dashboard._currentBooking;
+    if(!b) return;
+    if(b.status === newStatus){
+      showToast('狀態相同，未變更');
+      Dashboard.closeModal();
+      return;
+    }
+    if(!confirm(`確定將「${b.name}」的狀態從 [${b.status}] 改為 [${newStatus}]？`)){
+      return;
+    }
+    Dashboard.closeModal();
+    try{
+      // 主系統：用既有的 updateBooking API
+      if(b.source === 'main'){
+        const r = await fetch(GAS+'?action=updateBooking&id='+encodeURIComponent(b.id)+'&status='+encodeURIComponent(newStatus));
+        const d = await r.json();
+        if(d.status === 'ok' || d.ok){
+          showToast('✓ 已更新為 '+newStatus);
+          Dashboard.load();
+        } else {
+          showToast('❌ 更新失敗：'+(d.msg||''));
+        }
+      } else if(b.source === 'vip'){
+        // 3C 階段才會實作
+        showToast('尊爵狀態更新將於階段3C提供');
+      }
+    }catch(e){
+      showToast('❌ 網路錯誤：'+e.message);
+    }
+  }
+};
+
+// 點遮罩關閉彈窗
+document.addEventListener('DOMContentLoaded', ()=>{
+  const modal = document.getElementById('dash-modal');
+  if(modal){
+    modal.addEventListener('click', e=>{
+      if(e.target.id==='dash-modal') Dashboard.closeModal();
+    });
+  }
+});
+
+// 確保登入後 init 會執行到 Dashboard.init（某些情況 DOMContentLoaded 晚於 initAdmin）
+if(document.readyState==='complete' || document.readyState==='interactive'){
+  // 已載入完成，由 initAdmin 控制時機
+}
+// 📊 階段3B 模組結束
 </script>
 </body>
 </html>
