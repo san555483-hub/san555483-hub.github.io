@@ -231,8 +231,8 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <!-- 【2026-04-20 修正】改為強制登入：未登入無法預約 -->
     <div id="lineLoginArea">
       <div class="line-login-box" id="lineLoginBox">
-        <div class="line-login-title">⚠️ 請先使用 LINE 登入</div>
-        <div class="line-login-desc">為確保預約品質及防止惡意預約<br>預約前請先 LINE 登入 🙏</div>
+        <div class="line-login-title">您好 歡迎來到UNI髮型</div>
+        <div class="line-login-desc">一對一訂製 親子美髮<br>請先預約您理想的時段 為您服務 謝謝您</div>
         <button type="button" class="btn-line-login" onclick="startLineLogin()">
           <span style="font-size:18px;">📱</span>
           使用 LINE 快速登入
@@ -333,7 +333,7 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
       <div class="summary-body" id="summaryBody"></div>
     </div>
     <div class="reminder-box">
-      <div class="reminder-text">📌 以上預約皆為登記<br>請稍後待 Elsa 與您確認預約<br>避免白跑一趟 🙏</div>
+      <div class="reminder-text">📌 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</div>
     </div>
     <div class="notice-box">
       <div class="notice-title">📌 預約須知</div>
@@ -766,7 +766,7 @@ function showSuccess(bookingId) {
     '📋 ' + serviceStr + '<br>' +
     '📅 ' + dateStr + ' ' + state.time + '<br>' +
     '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
-    '<strong style="color:#e65100">⚠️ 以上預約皆為登記<br>請稍後待 Elsa 與您確認預約<br>避免白跑一趟 🙏</strong><br><br>' +
+    '<strong style="color:#e65100">✨ 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</strong><br><br>' +
     'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊';
   for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
 }
