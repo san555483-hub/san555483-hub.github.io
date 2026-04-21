@@ -1831,11 +1831,18 @@ async function addQuickMenuItem(){
   const order  = document.getElementById('qm-order').value;
   const label  = document.getElementById('qm-label').value.trim();
   const type   = document.getElementById('qm-type').value;
-  const action = document.getElementById('qm-action').value.trim();
-  if(!label||!action){showMsg('qm-add-msg','名稱和連結/訊息必填','err');return;}
+  const actionVal = document.getElementById('qm-action').value.trim();
+  if(!label||!actionVal){showMsg('qm-add-msg','名稱和連結/訊息必填','err');return;}
   showMsg('qm-add-msg','新增中…','loading');
   try{
-    const p = new URLSearchParams({action:'saveQuickMenu',page,order,label,type,action,enabled:'true'});
+    const p = new URLSearchParams();
+    p.append('action','saveQuickMenu');
+    p.append('page',page);
+    p.append('order',order);
+    p.append('label',label);
+    p.append('type',type);
+    p.append('actionVal',actionVal);
+    p.append('enabled','true');
     const r = await fetch(GAS+'?'+p.toString());
     const d = await r.json();
     if(d.ok){
@@ -1848,11 +1855,19 @@ async function addQuickMenuItem(){
 
 async function saveQuickMenuItem(row,page,order,type){
   const label   = document.getElementById('qm-lbl-'+row).value.trim();
-  const action  = document.getElementById('qm-act-'+row).value.trim();
+  const actionVal = document.getElementById('qm-act-'+row).value.trim();
   const enabled = document.getElementById('qm-en-'+row).checked;
-  if(!label||!action){showToast('名稱和連結不能空白');return;}
+  if(!label||!actionVal){showToast('名稱和連結不能空白');return;}
   try{
-    const p = new URLSearchParams({action:'saveQuickMenu',row,page,order,label,type,action:action,enabled:String(enabled)});
+    const p = new URLSearchParams();
+    p.append('action','saveQuickMenu');
+    p.append('row',row);
+    p.append('page',page);
+    p.append('order',order);
+    p.append('label',label);
+    p.append('type',type);
+    p.append('actionVal',actionVal);
+    p.append('enabled',String(enabled));
     const r = await fetch(GAS+'?'+p.toString());
     const d = await r.json();
     if(d.ok){showToast('✅ 已儲存');loadQuickMenu();}
