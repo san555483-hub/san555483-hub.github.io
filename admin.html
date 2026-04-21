@@ -273,11 +273,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <!-- 統計 -->
       <div class="dash-stats" id="dash-stats"></div>
 
-      <!-- 尊爵提示（3B 階段尚未整合） -->
-      <div class="dash-vip-placeholder">
-        💡 <strong>階段 3B 提示</strong>：目前只顯示 🔴 主系統的預約。尊爵 VIP 預約將在階段 3C 整合進來。手動鎖定時段可點「🔒 鎖定時段」tab 設定，階段 3C 也會一起拉到這裡。
-      </div>
-
       <!-- 時間軸 -->
       <div class="dash-timeline-card">
         <div class="dash-timeline-head">
@@ -853,6 +848,11 @@ window.adminLogout=async()=>{
 <script>
 const GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
 const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
+// 🟣 尊爵 GAS（階段 3C 新增）
+const GAS_VIP  = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
+// 📊 階段 3C flag（出事改 false 可立刻停用尊爵/鎖定顯示，回到 3B 狀態）
+window.FETCH_VIP_BOOKINGS  = true;   // 是否抓尊爵預約
+window.FETCH_LOCKED_SLOTS  = true;   // 是否顯示手動鎖定時段
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 function showMsg(id,msg,type){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className='msg-box msg-'+(type==='ok'?'ok':type==='err'?'err':'loading');el.style.display='block';if(type!=='loading')setTimeout(()=>el.style.display='none',3500);}
@@ -1943,14 +1943,47 @@ const Dashboard = {
     }
     Dashboard._updateDateDisplay();
     const tl = document.getElementById('dash-timeline');
-    tl.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>';
+    tl.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中（主系統 + 尊爵 + 鎖定）…</div>';
     document.getElementById('dash-stats').innerHTML='';
     try{
-      const r = await fetch(GAS+'?action=getBookings&date='+encodeURIComponent(Dashboard._selectedDate)+'&t='+Date.now());
-      const d = await r.json();
-      const list = d.bookings || [];
-      // 主系統資料標記 source
-      Dashboard._data = list.map(b=>({...b, source:'main', _timeStr:Dashboard._normTime(b.time)}));
+      // 📊 階段 3C：並行抓 3 個來源
+      const date = Dashboard._selectedDate;
+      const fetches = [
+        // 🔴 主系統預約
+        fetch(GAS+'?action=getBookings&date='+encodeURIComponent(date)+'&t='+Date.now())
+          .then(r=>r.json()).catch(()=>({bookings:[]})),
+        // 🟣 尊爵預約（可停用）
+        window.FETCH_VIP_BOOKINGS
+          ? fetch(GAS_VIP+'?fn=getBookingsByDate&params='+encodeURIComponent(JSON.stringify({date:date}))+'&t='+Date.now())
+              .then(r=>r.json()).catch(()=>({bookings:[]}))
+          : Promise.resolve({bookings:[]}),
+        // 🔒 手動鎖定時段（可停用）
+        window.FETCH_LOCKED_SLOTS
+          ? fetch(GAS+'?action=getLockedSlots&t='+Date.now())
+              .then(r=>r.json()).catch(()=>({slots:[]}))
+          : Promise.resolve({slots:[]})
+      ];
+      const [mainResp, vipResp, lockResp] = await Promise.all(fetches);
+      // 🔴 主系統
+      const mainData = (mainResp.bookings || []).map(b=>({
+        ...b, source:'main', _timeStr:Dashboard._normTime(b.time)
+      }));
+      // 🟣 尊爵：欄位 mapping
+      const vipData = (vipResp.bookings || []).map(b=>({
+        id:b.id, name:b.name, phone:b.phone, date:b.date, time:b.time,
+        service:b.service, note:b.note,
+        status: b.status === '確認中' ? '待確認' : b.status,
+        source:'vip', _timeStr:Dashboard._normTime(b.time)
+      }));
+      // 🔒 鎖定時段（只取當日）
+      const lockData = (lockResp.slots || [])
+        .filter(s => s.date === date)
+        .map((s, i) => ({
+          id:'LOCK-'+i, name:'🔒 鎖定時段', phone:'', date:s.date, time:s.time,
+          service:s.note || '手動鎖定', note:'', status:'已確認',
+          source:'lock', _timeStr:Dashboard._normTime(s.time)
+        }));
+      Dashboard._data = [...mainData, ...vipData, ...lockData];
       Dashboard._renderStats();
       Dashboard._renderTimeline();
     }catch(e){
@@ -2099,6 +2132,11 @@ const Dashboard = {
     if(!window.DASHBOARD_ENABLED) return;
     const b = Dashboard._data.find(x=>String(x.id)===String(id));
     if(!b) return;
+    // 🔒 階段 3C：手動鎖定時段不是真預約，點了只提示
+    if(b.source === 'lock'){
+      showToast('💡 鎖定時段請至「🔒 鎖定時段」tab 管理');
+      return;
+    }
     Dashboard._currentBooking = b;
     const sourceText = b.source==='main'?'主系統':b.source==='vip'?'尊爵 VIP':'手動鎖定';
     document.getElementById('dash-modal-sub').textContent =
@@ -2135,8 +2173,8 @@ const Dashboard = {
           showToast('❌ 更新失敗：'+(d.msg||''));
         }
       } else if(b.source === 'vip'){
-        // 3C 階段才會實作
-        showToast('尊爵狀態更新將於階段3C提供');
+        // 階段 3C：尊爵狀態更新請至尊爵 Sheet 處理
+        showToast('💡 請至尊爵 Sheet「預約紀錄」分頁改狀態');
       }
     }catch(e){
       showToast('❌ 網路錯誤：'+e.message);
