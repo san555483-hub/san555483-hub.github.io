@@ -475,12 +475,36 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <!-- 📆 排程設定 -->
   <div class="tab-pane" id="pane-schedule">
     <div class="pane-inner">
+
+      <!-- 📒 排程類型管理 -->
       <div class="card">
-        <div class="card-head"><h3>📆 新增排程（公休/休息）</h3></div>
+        <div class="card-head">
+          <h3>📒 排程類型管理</h3>
+          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadScheduleTypes()">🔄 重新載入</button>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
+            🔒 <strong>預設 2 槽位</strong>（公休/休息時段）名稱鎖死，不可修改、不可停用、不可刪除。<br>
+            ✏️ <strong>自訂 4 槽位</strong>可隨時編輯名稱、設定「全天禁約/部分時段」、啟用或停用。<br>
+            範例：外送中、外出受訓、接小孩、午休⋯⋯ 修改後下方「新增排程」的類型下拉即時更新。
+          </p>
+          <div id="st-list"><div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div></div>
+          <div id="st-msg" class="msg-box"></div>
+        </div>
+      </div>
+
+      <!-- ➕ 新增排程 -->
+      <div class="card">
+        <div class="card-head"><h3>📆 新增排程</h3></div>
         <div class="card-body">
           <div class="form-grid">
             <div class="form-group"><label class="form-label">日期 *</label><input class="form-input" type="date" id="sched-date"></div>
-            <div class="form-group"><label class="form-label">類型 *</label><select class="form-select" id="sched-type" onchange="document.getElementById('sched-time-wrap').style.display=this.value==='rest'?'block':'none'"><option value="closed">公休（整天不開放）</option><option value="rest">休息時段（指定時間）</option></select></div>
+            <div class="form-group">
+              <label class="form-label">類型 *</label>
+              <select class="form-select" id="sched-type" onchange="onSchedTypeChange()">
+                <option value="">載入中…</option>
+              </select>
+            </div>
           </div>
           <div class="form-group" id="sched-time-wrap" style="display:none;">
             <label class="form-label">休息時段（格式：09:00-12:00）</label>
@@ -491,6 +515,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <div id="sched-msg" class="msg-box"></div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-head"><h3>📆 已設定排程</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadSchedule()">🔄 重新載入</button></div>
         <div class="card-body">
@@ -843,7 +868,7 @@ function switchTab(name){
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
   // 📊 階段3B：新增 dashboard 路由
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:loadSchedule,credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
   if(map[name])map[name]();
 }
 
@@ -1070,10 +1095,21 @@ async function addService(){
 // ════ 排程設定 ════
 async function addSchedule(){
   const date=document.getElementById('sched-date').value;
+  const typeName=document.getElementById('sched-type').value;
   if(!date){showMsg('sched-msg','請選擇日期','err');return;}
+  if(!typeName){showMsg('sched-msg','請選擇類型','err');return;}
+  // 找到對應類型，檢查是否需要時段
+  const typeObj=_scheduleTypes.find(t=>t.name===typeName);
+  const allDay=typeObj?typeObj.allDay:false;
+  const timeVal=document.getElementById('sched-time').value.trim();
+  if(!allDay && !timeVal){showMsg('sched-msg','此類型為部分時段，請填寫時段（例：12:00-14:00）','err');return;}
+  // 存入 GAS：舊邏輯用 type='closed'/'rest'，為相容舊 API，前 2 格預設類型仍傳舊 code
+  let typeCode=typeName;
+  if(typeName==='公休') typeCode='closed';
+  else if(typeName==='休息時段') typeCode='rest';
   showMsg('sched-msg','新增中…','loading');
   try{
-    const p=new URLSearchParams({action:'updateSchedule',date,type:document.getElementById('sched-type').value,time:document.getElementById('sched-time').value.trim(),note:document.getElementById('sched-note').value.trim()});
+    const p=new URLSearchParams({action:'updateSchedule',date,type:typeCode,time:allDay?'':timeVal,note:document.getElementById('sched-note').value.trim()});
     const r=await fetch(GAS+'?'+p.toString());const d=await r.json();
     if(d.status==='ok'){showMsg('sched-msg','✓ 排程已新增','ok');loadSchedule();}
     else showMsg('sched-msg','❌ '+(d.msg||'失敗'),'err');
@@ -1084,13 +1120,20 @@ async function loadSchedule(){
   try{
     const r=await fetch(GAS+'?action=getSchedule&t='+Date.now());const d=await r.json();
     hide('sched-loading');
-    document.getElementById('sched-tbody').innerHTML=(d.schedule||[]).sort((a,b)=>a.date.localeCompare(b.date)).map(s=>`<tr>
-      <td>${s.date}</td>
-      <td><span style="padding:2px 8px;border-radius:10px;font-size:.62rem;background:${s.type==='closed'?'#f8d7da':'#fff3cd'};color:${s.type==='closed'?'#721c24':'#856404'}">${s.type==='closed'?'公休':'休息時段'}</span></td>
-      <td>${s.time||'—'}</td>
-      <td style="font-size:.72rem;">${s.note||''}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="removeSchedule('${s.date}','${s.type}')">刪除</button></td>
-    </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px;">無排程資料</td></tr>';
+    document.getElementById('sched-tbody').innerHTML=(d.schedule||[]).sort((a,b)=>a.date.localeCompare(b.date)).map(s=>{
+      // 類型顯示名稱：closed→公休 / rest→休息時段 / 其他照字串顯示
+      const displayName = s.type==='closed' ? '公休' : s.type==='rest' ? '休息時段' : s.type;
+      // 顏色：公休→紅、休息時段→黃、自訂類型→金色
+      const bg = s.type==='closed' ? '#f8d7da' : s.type==='rest' ? '#fff3cd' : '#e8d0b0';
+      const fg = s.type==='closed' ? '#721c24' : s.type==='rest' ? '#856404' : '#8c5a2b';
+      return `<tr>
+        <td>${s.date}</td>
+        <td><span style="padding:2px 8px;border-radius:10px;font-size:.62rem;background:${bg};color:${fg}">${escHtml(displayName)}</span></td>
+        <td>${s.time||'—'}</td>
+        <td style="font-size:.72rem;">${escHtml(s.note||'')}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeSchedule('${s.date}','${s.type}')">刪除</button></td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px;">無排程資料</td></tr>';
   }catch(e){hide('sched-loading');showToast('載入失敗');}
 }
 async function removeSchedule(date,type){
@@ -1098,6 +1141,143 @@ async function removeSchedule(date,type){
   try{const r=await fetch(GAS+'?action=updateSchedule&date='+encodeURIComponent(date)+'&type='+encodeURIComponent(type)+'&remove=true');const d=await r.json();if(d.status==='ok'){showToast('✓ 已刪除');loadSchedule();}else showToast('❌ 刪除失敗');}
   catch(e){showToast('❌ 網路錯誤');}
 }
+
+// ═══════════════════════════════════════════════════════
+// 📒 排程類型管理（2026/04/20 新增）
+// 出事回滾：把此區塊整段刪除，並還原 pane-schedule 的 HTML + switchTab 的 schedule 路由
+// ═══════════════════════════════════════════════════════
+let _scheduleTypes = [];
+
+async function loadScheduleTypes(){
+  const el = document.getElementById('st-list');
+  if(!el) return;
+  el.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>';
+  try{
+    const r = await fetch(GAS+'?action=getScheduleTypes&t='+Date.now());
+    const d = await r.json();
+    if(!d.ok){
+      el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 載入失敗：'+(d.msg||'')+'<br>⚠️ 請先在 GAS 編輯器執行 initScheduleTypesSheet() 初始化</div>';
+      return;
+    }
+    _scheduleTypes = d.types || [];
+    renderScheduleTypeList();
+    populateSchedTypeSelect();
+  }catch(e){
+    el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 網路錯誤：'+e.message+'<br>⚠️ 請確認 GAS 已部署包含 getScheduleTypes 的新版本</div>';
+  }
+}
+
+function renderScheduleTypeList(){
+  const el = document.getElementById('st-list');
+  if(!el) return;
+  if(!_scheduleTypes.length){
+    el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料，請在 GAS 執行 initScheduleTypesSheet()</div>`;
+    return;
+  }
+  const defaults = _scheduleTypes.filter(t=>t.isDefault);
+  const customs  = _scheduleTypes.filter(t=>!t.isDefault);
+  let html = '';
+
+  if(defaults.length){
+    html += `<div class="ct-group-title">🔒 預設類型（鎖死，不可修改）</div>`;
+    html += defaults.map(t=>`
+      <div class="ct-slot locked">
+        <div class="ct-slot-num">${t.order}</div>
+        <span class="ct-slot-icon">${t.allDay?'🏖️':'☕'}</span>
+        <input type="text" class="ct-slot-input" value="${escHtml(t.name)}" disabled>
+        <span class="ct-badge ct-badge-locked">${t.allDay?'全天':'時段'}</span>
+        <span class="ct-badge ct-badge-enabled">啟用中</span>
+      </div>`).join('');
+  }
+
+  if(customs.length){
+    html += `<div class="ct-group-title">✏️ 自訂類型（可隨時編輯）</div>`;
+    html += customs.map(t=>{
+      const isEmpty = !t.name;
+      const slotClass = isEmpty ? 'ct-slot empty' : 'ct-slot custom';
+      return `
+      <div class="${slotClass}">
+        <div class="ct-slot-num">${t.order}</div>
+        <span class="ct-slot-icon">${isEmpty?'➕':(t.allDay?'🏖️':'☕')}</span>
+        <input type="text" class="ct-slot-input" id="st-name-${t.row}" value="${escHtml(t.name)}" placeholder="${isEmpty?'輸入類型名稱（例：外送中）':''}">
+        <label class="ct-toggle" title="全天禁約=整天不能預約；時段=填寫指定時段">
+          <input type="checkbox" id="st-allday-${t.row}" ${t.allDay?'checked':''}> 全天
+        </label>
+        <label class="ct-toggle">
+          <input type="checkbox" id="st-en-${t.row}" ${t.enabled?'checked':''}> 啟用
+        </label>
+        <button class="btn btn-dark btn-sm" onclick="saveScheduleType(${t.row})">💾 儲存</button>
+        ${t.name?`<button class="btn btn-danger btn-sm" onclick="clearScheduleType(${t.row})">🗑 清空</button>`:''}
+      </div>`;
+    }).join('');
+  }
+  el.innerHTML = html;
+}
+
+function populateSchedTypeSelect(){
+  const sel = document.getElementById('sched-type');
+  if(!sel) return;
+  const cur = sel.value;
+  const usable = _scheduleTypes.filter(t=>t.enabled && t.name);
+  if(!usable.length){
+    sel.innerHTML = '<option value="">（無可用類型，請先啟用）</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— 請選擇 —</option>' + usable.map(t=>{
+    const icon = t.allDay?'🏖️':'☕';
+    const suffix = t.allDay?'（全天）':'（時段）';
+    return `<option value="${escHtml(t.name)}" data-allday="${t.allDay}">${icon} ${escHtml(t.name)}${suffix}</option>`;
+  }).join('');
+  if(cur && usable.some(t=>t.name===cur)) sel.value = cur;
+  onSchedTypeChange(); // 更新時段欄位顯示
+}
+
+function onSchedTypeChange(){
+  const sel = document.getElementById('sched-type');
+  const wrap = document.getElementById('sched-time-wrap');
+  if(!sel || !wrap) return;
+  const opt = sel.selectedOptions[0];
+  const allDay = opt && opt.dataset.allday === 'true';
+  // 全天 → 不顯示時段欄位；部分時段 → 顯示
+  wrap.style.display = (sel.value && !allDay) ? 'block' : 'none';
+}
+
+async function saveScheduleType(row){
+  const nameEl = document.getElementById('st-name-'+row);
+  const enEl   = document.getElementById('st-en-'+row);
+  const adEl   = document.getElementById('st-allday-'+row);
+  if(!nameEl) return;
+  const name    = nameEl.value.trim();
+  const enabled = enEl ? enEl.checked : true;
+  const allDay  = adEl ? adEl.checked : false;
+  if(enabled && !name){showMsg('st-msg','❌ 啟用的類型必須填寫名稱','err');return;}
+  // 檢查名稱不能跟預設重複
+  if(name==='公休' || name==='休息時段'){
+    showMsg('st-msg','❌ 名稱不可與預設類型相同（公休/休息時段）','err');
+    return;
+  }
+  showMsg('st-msg','儲存中…','loading');
+  try{
+    const p = new URLSearchParams({action:'saveScheduleType', row, name, enabled:String(enabled), allDay:String(allDay)});
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){showMsg('st-msg','✅ 已儲存','ok');loadScheduleTypes();}
+    else showMsg('st-msg','❌ '+(d.msg||'儲存失敗'),'err');
+  }catch(e){showMsg('st-msg','❌ 網路錯誤','err');}
+}
+
+async function clearScheduleType(row){
+  if(!confirm('確定清空此自訂類型？\n（只會清空名稱並停用，不影響已存在的排程資料）'))return;
+  showMsg('st-msg','清空中…','loading');
+  try{
+    const p = new URLSearchParams({action:'deleteScheduleType', row});
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){showMsg('st-msg','✅ 已清空','ok');loadScheduleTypes();}
+    else showMsg('st-msg','❌ '+(d.msg||'清空失敗'),'err');
+  }catch(e){showMsg('st-msg','❌ 網路錯誤','err');}
+}
+// 📒 排程類型管理 結束
 
 // ════ 儲值紀錄 ════
 async function addCredit(){
