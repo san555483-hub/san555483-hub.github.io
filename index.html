@@ -852,7 +852,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 
     <!-- 購物金抵扣 -->
     <div class="checkout-card" id="shop-credit-card">
-      <div class="cc-head"><h3>🛍️ 購物金折抵</h3></div>
+      <div class="cc-head"><h3>🛍️ 儲值的購物金折抵</h3></div>
       <div class="cc-body">
         <div class="shop-credit-section">
           <div class="shop-credit-title">💳 輸入電話查詢購物金餘額</div>
@@ -873,10 +873,10 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 
     <!-- 折扣碼 -->
     <div class="checkout-card">
-      <div class="cc-head"><h3>🎫 折扣碼</h3></div>
+      <div class="cc-head"><h3>🎫 購物網站的折扣碼</h3></div>
       <div class="cc-body">
         <div class="shop-credit-section" style="border-color:rgba(184,137,90,.3);background:rgba(184,137,90,.04);">
-          <div class="shop-credit-title" style="color:var(--gold);">🎫 輸入折扣碼（購物券 / 現金券）</div>
+          <div class="shop-credit-title" style="color:var(--gold);">🎫 輸入購物網站的折扣碼（購物券 / 現金券 / 生日券）</div>
           <div class="shop-credit-row">
             <input class="shop-credit-input" type="text" id="coupon-code-input" placeholder="例：UNI-SHOP-ABC123" style="text-transform:uppercase;letter-spacing:1px;">
             <button class="shop-credit-btn" style="background:var(--gold);" onclick="checkCouponCode()">驗證</button>
@@ -2327,50 +2327,7 @@ function updateShopCreditDisplay(){
 }
 
 // ── 折扣碼功能 ──
-async function checkCouponCode() {
-  const code = document.getElementById('coupon-code-input').value.trim().toUpperCase();
-  if(!code) { showToast('請輸入折扣碼'); return; }
-  showToast('驗證中…');
-  try {
-    const r = await fetch(GAS_URL+'?action=checkCoupon&code='+encodeURIComponent(code)+'&context=shop&t='+Date.now());
-    const d = await r.json();
-    const infoEl = document.getElementById('coupon-info');
-    if(!d.ok) {
-      infoEl.textContent = '❌ '+d.msg;
-      infoEl.style.display='block';
-      document.getElementById('coupon-deduct-row').style.display='none';
-      return;
-    }
-    couponBalance = d.balance;
-    couponCode    = d.code;
-    couponType    = d.type;
-    couponRules   = d.rules || [];
-    couponMaxuse  = d.maxuse || 0;
-    // 根據訂單金額自動計算最優折抵
-    const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
-    // 🎯 三層規則檢查：門檻（minAmount）未達檢查
-    if(couponRules.length){
-      const minReq = Math.min(...couponRules.map(r => r.minAmount||0).filter(m => m > 0));
-      if(isFinite(minReq) && minReq > 0 && orderTotal < minReq){
-        infoEl.style.color = 'var(--rose)';
-        infoEl.textContent = `❌ 未達消費門檻 NT$${minReq.toLocaleString()}（目前訂單 NT$${orderTotal.toLocaleString()}）`;
-        infoEl.style.display='block';
-        document.getElementById('coupon-deduct-row').style.display='none';
-        // 清除狀態避免誤用
-        couponCode=''; couponBalance=0; couponType=''; couponRules=[]; couponMaxuse=0;
-        return;
-      }
-    }
-    const autoDisc   = calcCouponDiscount(orderTotal, couponRules, couponMaxuse, couponBalance);
-    let infoTxt = `✅ ${d.type}驗證成功｜餘額：NT$ ${d.balance.toLocaleString()}`;
-    if(couponMaxuse > 0) infoTxt += `｜單次上限：NT$ ${couponMaxuse.toLocaleString()}`;
-    infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
-    infoEl.style.color = '';
-    infoEl.textContent = infoTxt;
-    infoEl.style.display='block';
-    document.getElementById('coupon-deduct-amt').value = autoDisc;
-    document.getElementById('coupon-deduct-row').style.display='flex';
-  } catch(e) { showToast('驗證失敗：'+e.message); }
+
 }
 
 function applyCoupon() {
@@ -2383,7 +2340,52 @@ function applyCoupon() {
   updateCouponDisplay();
   showToast('✓ 折扣碼折抵 NT$'+amt+' 已套用');
 }
-
+async function checkCouponCode() {
+  const code = document.getElementById('coupon-code-input').value.trim().toUpperCase();
+  if(!code) { showToast('請輸入折扣碼'); return; }
+  // 🛡️ v7修復：把當前訂單金額傳給GAS，讓伺服器端驗證門檻+試算可折抵（門檻/上限/比例/餘額四重防呆）
+  const orderTotal = getCurrentOrderTotal() - shopCreditDeduct;
+  showToast('驗證中…');
+  try {
+    const r = await fetch(GAS_URL+'?action=checkCoupon&code='+encodeURIComponent(code)+'&spend='+orderTotal+'&t='+Date.now());
+    const d = await r.json();
+    const infoEl = document.getElementById('coupon-info');
+    if(!d.ok) {
+      // GAS 已擋下：未達門檻 / 過期 / 無效 / 餘額用完 等
+      infoEl.style.color = 'var(--rose)';
+      infoEl.textContent = '❌ '+d.msg;
+      infoEl.style.display='block';
+      document.getElementById('coupon-deduct-row').style.display='none';
+      couponCode=''; couponBalance=0; couponType=''; couponDeduct=0;
+      return;
+    }
+    // GAS 驗證通過，保存狀態
+    couponBalance = d.balance;
+    couponCode    = d.code;
+    couponType    = d.type;
+    // 🛡️ v7修復：直接用 GAS 算好的 preview（伺服器端已處理 門檻/上限/比例/餘額 四重取最小值）
+    const autoDisc = Number(d.preview || 0);
+    const rules    = d.rules || {};
+    const maxuse   = Number(d.maxuse || 0);
+    // 組顯示文字：餘額、規則、可折
+    let infoTxt = `✅ ${d.type} 驗證成功｜餘額：NT$ ${Number(d.balance).toLocaleString()}`;
+    if(rules.minSpend > 0) infoTxt += `｜滿額門檻：NT$ ${Number(rules.minSpend).toLocaleString()}`;
+    if(maxuse > 0)         infoTxt += `｜單次上限：NT$ ${maxuse.toLocaleString()}`;
+    if(rules.percent > 0)  infoTxt += `｜折扣比例：${rules.percent}%`;
+    infoTxt += `｜本次可折：NT$ ${autoDisc.toLocaleString()}`;
+    infoEl.style.color = '';
+    infoEl.textContent = infoTxt;
+    infoEl.style.display='block';
+    if(autoDisc <= 0) {
+      // 保險：理論上 GAS 已擋
+      document.getElementById('coupon-deduct-row').style.display='none';
+      couponCode=''; couponBalance=0; couponType=''; couponDeduct=0;
+      return;
+    }
+    document.getElementById('coupon-deduct-amt').value = autoDisc;
+    document.getElementById('coupon-deduct-row').style.display='flex';
+  } catch(e) { showToast('驗證失敗：'+e.message); }
+}
 // 自動計算最優折抵金額
 function calcCouponDiscount(orderTotal, rules, maxuse, balance) {
   let disc = 0;
