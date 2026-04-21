@@ -2327,9 +2327,6 @@ function updateShopCreditDisplay(){
 }
 
 // ── 折扣碼功能 ──
-
-}
-
 function applyCoupon() {
   const amt = parseInt(document.getElementById('coupon-deduct-amt').value)||0;
   if(amt<=0) { showToast('請輸入折抵金額'); return; }
