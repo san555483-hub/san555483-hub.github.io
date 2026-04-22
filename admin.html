@@ -94,7 +94,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .ql-icon{font-size:1.3rem;flex-shrink:0;}
 .ql-title{font-size:.8rem;font-weight:600;}
 .ql-url{font-size:.6rem;color:#aaa;font-family:'Noto Sans TC',sans-serif;}
-/* 📒 折扣券類型管理 — v2 半鎖 UI */
 .ct-group-title{font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-weight:600;margin:14px 0 6px;padding-left:2px;}
 .ct-group-title:first-child{margin-top:0;}
 .ct-slot{display:flex;align-items:center;gap:8px;padding:10px;margin-bottom:6px;border:1px solid var(--border);border-radius:5px;background:var(--linen);flex-wrap:wrap;}
@@ -116,10 +115,9 @@ tr:hover td{background:rgba(61,43,31,.03);}
 @media(max-width:600px){.tab-btn{padding:11px 8px;font-size:.62rem;}.form-grid{grid-template-columns:1fr;}.ct-slot{gap:6px;}.ct-slot-input{min-width:100px;}}
 
 /* ═══════════════════════════════════════════════
-   📊 階段3B｜當日總控臺（獨立模組，不影響既有tab）
-   出事回滾：刪除本段CSS + 刪除tab按鈕 + 刪除pane + 刪除script
+   📊 階段3B/3C/3D｜當日總控臺
 ═══════════════════════════════════════════════ */
-:root{--src-main:#5c3d2e;--src-main-bg:#f5ece0;--src-vip:#b8895a;--src-vip-bg:#faf0de;--src-lock:#7a6a60;--src-lock-bg:#ede9e4;}
+:root{--src-main:#5c3d2e;--src-main-bg:#f5ece0;--src-vip:#b8895a;--src-vip-bg:#faf0de;--src-lock:#7a6a60;--src-lock-bg:#ede9e4;--src-closed:#c0392b;--src-closed-bg:#fdecea;--src-rest:#b89039;--src-rest-bg:#fdf6e0;}
 .dash-toolbar{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .dash-toolbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .dash-date-btn{padding:7px 11px;border:1.5px solid var(--border);background:#fff;border-radius:3px;cursor:pointer;font-size:.75rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;transition:all .2s;}
@@ -127,18 +125,25 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .dash-date-input{padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;background:var(--linen);outline:none;}
 .dash-date-input:focus{border-color:var(--rose);background:#fff;}
 .dash-date-today{padding:7px 12px;background:var(--bark);color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;}
-.dash-toolbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;color:var(--mid);}
+.dash-toolbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;color:var(--mid);flex-wrap:wrap;}
 .dash-legend{display:flex;align-items:center;gap:4px;}
 .dash-legend-dot{width:10px;height:10px;border-radius:2px;}
 .dash-legend-main{background:var(--src-main);}
 .dash-legend-vip{background:var(--src-vip);}
 .dash-legend-lock{background:var(--src-lock);}
+.dash-legend-closed{background:var(--src-closed);}
+.dash-legend-rest{background:var(--src-rest);}
 .dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;}
 .dash-stat-card{background:#fff;border:1px solid var(--border);border-radius:7px;padding:12px 14px;text-align:center;}
 .dash-stat-card.main-src{border-top:3px solid var(--src-main);}
 .dash-stat-card.vip-src{border-top:3px solid var(--src-vip);}
 .dash-stat-num{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--bark);line-height:1;}
 .dash-stat-label{font-size:.62rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-top:3px;}
+.dash-schedule-banner{background:linear-gradient(135deg,#fdecea,#faf0de);border:1px solid var(--gold-lt);border-radius:7px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-family:'Noto Sans TC',sans-serif;font-size:.8rem;color:var(--bark);}
+.dash-schedule-banner.closed{background:linear-gradient(135deg,#fdecea,#fbd7d3);border-color:#e8a39e;}
+.dash-schedule-banner-icon{font-size:1.2rem;flex-shrink:0;}
+.dash-schedule-banner-text{flex:1;line-height:1.5;}
+.dash-schedule-banner-text strong{color:var(--src-closed);}
 .dash-timeline-card{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
 .dash-timeline-head{background:linear-gradient(135deg,var(--bark),var(--bark2));padding:12px 18px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
 .dash-timeline-head h3{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:400;}
@@ -157,6 +162,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .dash-b-card.src-main{background:var(--src-main-bg);border-left-color:var(--src-main);}
 .dash-b-card.src-vip{background:var(--src-vip-bg);border-left-color:var(--src-vip);}
 .dash-b-card.src-lock{background:var(--src-lock-bg);border-left-color:var(--src-lock);cursor:default;}
+.dash-b-card.src-closed{background:var(--src-closed-bg);border-left-color:var(--src-closed);cursor:default;}
+.dash-b-card.src-rest{background:var(--src-rest-bg);border-left-color:var(--src-rest);cursor:default;}
 .dash-b-card.cancelled{opacity:.45;background:#f5f2ed !important;border-left-color:#bbb !important;}
 .dash-b-card.cancelled .dash-b-name{text-decoration:line-through;}
 .dash-b-main{flex:1;min-width:0;}
@@ -166,6 +173,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .dash-b-badge.main{background:var(--src-main);color:#fff;}
 .dash-b-badge.vip{background:var(--src-vip);color:#fff;}
 .dash-b-badge.lock{background:var(--src-lock);color:#fff;}
+.dash-b-badge.closed{background:var(--src-closed);color:#fff;}
+.dash-b-badge.rest{background:var(--src-rest);color:#fff;}
 .dash-b-service{font-size:.74rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
 .dash-b-note{font-size:.66rem;color:#a08d7d;margin-top:2px;font-family:'Noto Sans TC',sans-serif;font-style:italic;}
 .dash-b-status{padding:3px 9px;border-radius:10px;font-size:.62rem;font-weight:600;font-family:'Noto Sans TC',sans-serif;flex-shrink:0;white-space:nowrap;}
@@ -193,7 +202,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .dash-now-indicator{position:relative;height:0;z-index:10;}
 .dash-now-indicator::before{content:'';position:absolute;left:80px;right:0;top:0;height:2px;background:var(--rose);box-shadow:0 0 6px rgba(201,137,122,.5);}
 .dash-now-indicator::after{content:'⬤ 現在';position:absolute;left:10px;top:-8px;font-size:.58rem;color:var(--rose);font-weight:700;font-family:'Noto Sans TC',sans-serif;background:#fff;padding:2px 4px;}
-.dash-vip-placeholder{background:#faf0de;border:1px dashed var(--gold);border-radius:6px;padding:12px 14px;margin:10px 0;font-size:.72rem;color:var(--bark);font-family:'Noto Sans TC',sans-serif;line-height:1.6;}
 @media(max-width:640px){
   .dash-time-row{grid-template-columns:62px 1fr;}
   .dash-time-label{padding:10px 6px 10px 12px;font-size:.7rem;}
@@ -204,7 +212,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
   .dash-toolbar-right{width:100%;margin-left:0;justify-content:space-around;}
   .dash-now-indicator::before{left:62px;}
 }
-/* 階段3B CSS 結束 */
 </style>
 </head>
 <body>
@@ -234,7 +241,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
 <div id="admin-wrap">
   <div class="tab-nav">
     <div class="tab-inner">
-      <!-- 📊 階段3B：當日總控臺（放最前面，最常用）-->
       <button class="tab-btn active" onclick="switchTab('dashboard')">📊 當日總控臺</button>
       <button class="tab-btn" onclick="switchTab('booking')">📅 預約紀錄</button>
       <button class="tab-btn" onclick="switchTab('customer')">👥 顧客管理</button>
@@ -251,10 +257,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 📊 階段3B：當日總控臺 pane -->
   <div class="tab-pane active" id="pane-dashboard">
     <div class="pane-inner">
-      <!-- 工具列 -->
       <div class="dash-toolbar">
         <div class="dash-toolbar-left">
           <button class="dash-date-btn" onclick="Dashboard.changeDate(-1)">◀ 前一天</button>
@@ -267,13 +271,15 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <div class="dash-legend"><span class="dash-legend-dot dash-legend-main"></span>主系統</div>
           <div class="dash-legend"><span class="dash-legend-dot dash-legend-vip"></span>尊爵 VIP</div>
           <div class="dash-legend"><span class="dash-legend-dot dash-legend-lock"></span>手動鎖定</div>
+          <div class="dash-legend"><span class="dash-legend-dot dash-legend-closed"></span>公休</div>
+          <div class="dash-legend"><span class="dash-legend-dot dash-legend-rest"></span>休息時段</div>
         </div>
       </div>
 
-      <!-- 統計 -->
+      <div id="dash-schedule-banner"></div>
+
       <div class="dash-stats" id="dash-stats"></div>
 
-      <!-- 時間軸 -->
       <div class="dash-timeline-card">
         <div class="dash-timeline-head">
           <h3>📆 一日時間軸</h3>
@@ -286,7 +292,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 📅 預約紀錄 -->
   <div class="tab-pane" id="pane-booking">
     <div class="pane-inner">
       <div class="card">
@@ -319,7 +324,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 👥 顧客管理 -->
   <div class="tab-pane" id="pane-customer">
     <div class="pane-inner">
       <div class="card">
@@ -343,7 +347,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 🚫 黑名單 -->
   <div class="tab-pane" id="pane-blacklist">
     <div class="pane-inner">
       <div class="card">
@@ -377,7 +380,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- ⚙️ 系統設定 -->
   <div class="tab-pane" id="pane-settings">
     <div class="pane-inner">
       <div class="card">
@@ -402,7 +404,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 🔒 鎖定時段 -->
   <div class="tab-pane" id="pane-lockslot">
     <div class="pane-inner">
       <div class="card">
@@ -424,7 +425,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 💰 服務價格 -->
   <div class="tab-pane" id="pane-service">
     <div class="pane-inner">
       <div class="card">
@@ -467,11 +467,9 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 📆 排程設定 -->
   <div class="tab-pane" id="pane-schedule">
     <div class="pane-inner">
 
-      <!-- 📒 排程類型管理 -->
       <div class="card">
         <div class="card-head">
           <h3>📒 排程類型管理</h3>
@@ -488,7 +486,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
         </div>
       </div>
 
-      <!-- ➕ 新增排程 -->
       <div class="card">
         <div class="card-head"><h3>📆 新增排程</h3></div>
         <div class="card-body">
@@ -521,7 +518,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 💳 儲值紀錄 -->
   <div class="tab-pane" id="pane-credit">
     <div class="pane-inner">
 
@@ -591,7 +587,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 📢 跑馬燈 -->
   <div class="tab-pane" id="pane-marquee">
     <div class="pane-inner">
       <div class="card">
@@ -605,7 +600,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 🛍️ 購物訂單 -->
   <div class="tab-pane" id="pane-orders">
     <div class="pane-inner">
       <div class="card">
@@ -646,7 +640,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 🎫 折扣券 -->
   <div class="tab-pane" id="pane-coupon">
     <div class="pane-inner">
       <div class="card">
@@ -746,7 +739,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-  <!-- 💬 快速選單 -->
   <div class="tab-pane" id="pane-quickmenu">
     <div class="pane-inner">
       <div class="card">
@@ -803,9 +795,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
-</div><!-- /admin-wrap -->
+</div>
 
-<!-- 📊 階段3B：狀態改動彈窗 -->
 <div class="dash-modal-mask" id="dash-modal">
   <div class="dash-modal-box">
     <h4 id="dash-modal-title">改預約狀態</h4>
@@ -848,11 +839,11 @@ window.adminLogout=async()=>{
 <script>
 const GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
 const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
-// 🟣 尊爵 GAS（階段 3C 新增）
 const GAS_VIP  = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
-// 📊 階段 3C flag（出事改 false 可立刻停用尊爵/鎖定顯示，回到 3B 狀態）
-window.FETCH_VIP_BOOKINGS  = true;   // 是否抓尊爵預約
-window.FETCH_LOCKED_SLOTS  = true;   // 是否顯示手動鎖定時段
+// 📊 階段 3C/3D flag（出事改 false 可立刻停用對應來源）
+window.FETCH_VIP_BOOKINGS  = true;
+window.FETCH_LOCKED_SLOTS  = true;
+window.FETCH_SCHEDULE      = true;   // 📊 階段 3D 新增：是否抓公休/休息時段
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 function showMsg(id,msg,type){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.className='msg-box msg-'+(type==='ok'?'ok':type==='err'?'err':'loading');el.style.display='block';if(type!=='loading')setTimeout(()=>el.style.display='none',3500);}
@@ -867,12 +858,10 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  // 📊 階段3B：新增 dashboard 路由
   const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
   if(map[name])map[name]();
 }
 
-// 📊 階段3B：initAdmin 開啟後預設載入當日總控臺
 function initAdmin(){Dashboard.init();initLockTimes();}
 
 // ════ 預約紀錄 ════
@@ -1098,12 +1087,10 @@ async function addSchedule(){
   const typeName=document.getElementById('sched-type').value;
   if(!date){showMsg('sched-msg','請選擇日期','err');return;}
   if(!typeName){showMsg('sched-msg','請選擇類型','err');return;}
-  // 找到對應類型，檢查是否需要時段
   const typeObj=_scheduleTypes.find(t=>t.name===typeName);
   const allDay=typeObj?typeObj.allDay:false;
   const timeVal=document.getElementById('sched-time').value.trim();
   if(!allDay && !timeVal){showMsg('sched-msg','此類型為部分時段，請填寫時段（例：12:00-14:00）','err');return;}
-  // 存入 GAS：舊邏輯用 type='closed'/'rest'，為相容舊 API，前 2 格預設類型仍傳舊 code
   let typeCode=typeName;
   if(typeName==='公休') typeCode='closed';
   else if(typeName==='休息時段') typeCode='rest';
@@ -1121,9 +1108,7 @@ async function loadSchedule(){
     const r=await fetch(GAS+'?action=getSchedule&t='+Date.now());const d=await r.json();
     hide('sched-loading');
     document.getElementById('sched-tbody').innerHTML=(d.schedule||[]).sort((a,b)=>a.date.localeCompare(b.date)).map(s=>{
-      // 類型顯示名稱：closed→公休 / rest→休息時段 / 其他照字串顯示
       const displayName = s.type==='closed' ? '公休' : s.type==='rest' ? '休息時段' : s.type;
-      // 顏色：公休→紅、休息時段→黃、自訂類型→金色
       const bg = s.type==='closed' ? '#f8d7da' : s.type==='rest' ? '#fff3cd' : '#e8d0b0';
       const fg = s.type==='closed' ? '#721c24' : s.type==='rest' ? '#856404' : '#8c5a2b';
       return `<tr>
@@ -1142,12 +1127,8 @@ async function removeSchedule(date,type){
   catch(e){showToast('❌ 網路錯誤');}
 }
 
-// ═══════════════════════════════════════════════════════
-// 📒 排程類型管理（2026/04/20 新增）
-// 出事回滾：把此區塊整段刪除，並還原 pane-schedule 的 HTML + switchTab 的 schedule 路由
-// ═══════════════════════════════════════════════════════
+// ═══ 排程類型管理 ═══
 let _scheduleTypes = [];
-
 async function loadScheduleTypes(){
   const el = document.getElementById('st-list');
   if(!el) return;
@@ -1163,21 +1144,16 @@ async function loadScheduleTypes(){
     renderScheduleTypeList();
     populateSchedTypeSelect();
   }catch(e){
-    el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 網路錯誤：'+e.message+'<br>⚠️ 請確認 GAS 已部署包含 getScheduleTypes 的新版本</div>';
+    el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 網路錯誤：'+e.message+'</div>';
   }
 }
-
 function renderScheduleTypeList(){
   const el = document.getElementById('st-list');
   if(!el) return;
-  if(!_scheduleTypes.length){
-    el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料，請在 GAS 執行 initScheduleTypesSheet()</div>`;
-    return;
-  }
+  if(!_scheduleTypes.length){el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料</div>`;return;}
   const defaults = _scheduleTypes.filter(t=>t.isDefault);
   const customs  = _scheduleTypes.filter(t=>!t.isDefault);
   let html = '';
-
   if(defaults.length){
     html += `<div class="ct-group-title">🔒 預設類型（鎖死，不可修改）</div>`;
     html += defaults.map(t=>`
@@ -1189,7 +1165,6 @@ function renderScheduleTypeList(){
         <span class="ct-badge ct-badge-enabled">啟用中</span>
       </div>`).join('');
   }
-
   if(customs.length){
     html += `<div class="ct-group-title">✏️ 自訂類型（可隨時編輯）</div>`;
     html += customs.map(t=>{
@@ -1213,35 +1188,28 @@ function renderScheduleTypeList(){
   }
   el.innerHTML = html;
 }
-
 function populateSchedTypeSelect(){
   const sel = document.getElementById('sched-type');
   if(!sel) return;
   const cur = sel.value;
   const usable = _scheduleTypes.filter(t=>t.enabled && t.name);
-  if(!usable.length){
-    sel.innerHTML = '<option value="">（無可用類型，請先啟用）</option>';
-    return;
-  }
+  if(!usable.length){sel.innerHTML = '<option value="">（無可用類型，請先啟用）</option>';return;}
   sel.innerHTML = '<option value="">— 請選擇 —</option>' + usable.map(t=>{
     const icon = t.allDay?'🏖️':'☕';
     const suffix = t.allDay?'（全天）':'（時段）';
     return `<option value="${escHtml(t.name)}" data-allday="${t.allDay}">${icon} ${escHtml(t.name)}${suffix}</option>`;
   }).join('');
   if(cur && usable.some(t=>t.name===cur)) sel.value = cur;
-  onSchedTypeChange(); // 更新時段欄位顯示
+  onSchedTypeChange();
 }
-
 function onSchedTypeChange(){
   const sel = document.getElementById('sched-type');
   const wrap = document.getElementById('sched-time-wrap');
   if(!sel || !wrap) return;
   const opt = sel.selectedOptions[0];
   const allDay = opt && opt.dataset.allday === 'true';
-  // 全天 → 不顯示時段欄位；部分時段 → 顯示
   wrap.style.display = (sel.value && !allDay) ? 'block' : 'none';
 }
-
 async function saveScheduleType(row){
   const nameEl = document.getElementById('st-name-'+row);
   const enEl   = document.getElementById('st-en-'+row);
@@ -1251,11 +1219,7 @@ async function saveScheduleType(row){
   const enabled = enEl ? enEl.checked : true;
   const allDay  = adEl ? adEl.checked : false;
   if(enabled && !name){showMsg('st-msg','❌ 啟用的類型必須填寫名稱','err');return;}
-  // 檢查名稱不能跟預設重複
-  if(name==='公休' || name==='休息時段'){
-    showMsg('st-msg','❌ 名稱不可與預設類型相同（公休/休息時段）','err');
-    return;
-  }
+  if(name==='公休' || name==='休息時段'){showMsg('st-msg','❌ 名稱不可與預設類型相同','err');return;}
   showMsg('st-msg','儲存中…','loading');
   try{
     const p = new URLSearchParams({action:'saveScheduleType', row, name, enabled:String(enabled), allDay:String(allDay)});
@@ -1265,9 +1229,8 @@ async function saveScheduleType(row){
     else showMsg('st-msg','❌ '+(d.msg||'儲存失敗'),'err');
   }catch(e){showMsg('st-msg','❌ 網路錯誤','err');}
 }
-
 async function clearScheduleType(row){
-  if(!confirm('確定清空此自訂類型？\n（只會清空名稱並停用，不影響已存在的排程資料）'))return;
+  if(!confirm('確定清空此自訂類型？'))return;
   showMsg('st-msg','清空中…','loading');
   try{
     const p = new URLSearchParams({action:'deleteScheduleType', row});
@@ -1277,7 +1240,6 @@ async function clearScheduleType(row){
     else showMsg('st-msg','❌ '+(d.msg||'清空失敗'),'err');
   }catch(e){showMsg('st-msg','❌ 網路錯誤','err');}
 }
-// 📒 排程類型管理 結束
 
 // ════ 儲值紀錄 ════
 async function addCredit(){
@@ -1412,7 +1374,7 @@ async function loadOrders(){
     _orders=d.orders||[];hide('order-loading');filterOrderTable();
   }catch(e){
     hide('order-loading');
-    document.getElementById('order-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">載入失敗，GAS 尚未部署新版本</td></tr>';
+    document.getElementById('order-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">載入失敗</td></tr>';
   }
 }
 function filterOrderTable(){
@@ -1430,9 +1392,8 @@ function filterOrderTable(){
   </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無訂單資料</td></tr>';
 }
 
-// ════ 手動新增訂單 — 商品快取 ════
+// ════ 手動新增訂單 ════
 let _moProductList = [];
-
 async function loadMoProducts(){
   if(_moProductList.length) return _moProductList;
   try{
@@ -1442,7 +1403,6 @@ async function loadMoProducts(){
   }catch(_){}
   return _moProductList;
 }
-
 async function addMoItemRow(){
   await loadMoProducts();
   const list = document.getElementById('mo-item-list');
@@ -1465,7 +1425,6 @@ async function addMoItemRow(){
   list.appendChild(row);
   calcMoTotal();
 }
-
 function updateMoRowPrice(sel){
   const row = sel.closest('div');
   const customInput = row.querySelector('.mo-custom-input');
@@ -1475,7 +1434,6 @@ function updateMoRowPrice(sel){
   }
   calcMoTotal();
 }
-
 function calcMoTotal(){
   let total = 0;
   document.querySelectorAll('#mo-item-list > div').forEach(row=>{
@@ -1491,7 +1449,6 @@ function calcMoTotal(){
   const totalEl = document.getElementById('mo-total');
   if(totalEl && total > 0) totalEl.value = total;
 }
-
 function getMoItemsText(){
   const rows = document.querySelectorAll('#mo-item-list > div');
   if(!rows.length) return '';
@@ -1511,7 +1468,6 @@ function getMoItemsText(){
   });
   return parts.join('、');
 }
-
 async function addManualOrder(){
   const name=document.getElementById('mo-name').value.trim();
   const phone=document.getElementById('mo-phone').value.trim();
@@ -1549,40 +1505,26 @@ async function addManualOrder(){
   }catch(e){showMsg('mo-msg','❌ 網路錯誤：'+e.message,'err');}
 }
 
-// ═══════════════════════════════════════════════════════
-// 📒 折扣券類型管理
-// ═══════════════════════════════════════════════════════
+// ═══ 折扣券類型管理 ═══
 let _couponTypes = [];
-
 async function loadCouponTypes(){
   const el = document.getElementById('ct-list');
   el.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>';
   try{
     const r = await fetch(GAS_SHOP+'?action=getCouponTypes&t='+Date.now());
     const d = await r.json();
-    if(!d.ok){
-      el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 載入失敗：'+(d.msg||'')+'</div>';
-      return;
-    }
+    if(!d.ok){el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 載入失敗：'+(d.msg||'')+'</div>';return;}
     _couponTypes = d.types || [];
     renderCouponTypeList();
     populateCouponTypeSelect();
-  }catch(e){
-    el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 網路錯誤：'+e.message+'</div>';
-  }
+  }catch(e){el.innerHTML='<div style="color:#c00;font-size:.78rem;">❌ 網路錯誤：'+e.message+'</div>';}
 }
-
 function renderCouponTypeList(){
   const el = document.getElementById('ct-list');
-  if(!_couponTypes.length){
-    el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料</div>`;
-    return;
-  }
+  if(!_couponTypes.length){el.innerHTML=`<div style="padding:8px;font-size:.78rem;color:#aaa;">尚無類型資料</div>`;return;}
   const defaults = _couponTypes.filter(t=>t.isDefault);
   const customs  = _couponTypes.filter(t=>!t.isDefault);
-
   let html = '';
-
   if(defaults.length){
     html += `<div class="ct-group-title">🔒 預設類型（鎖死，不可修改）</div>`;
     html += defaults.map(t=>`
@@ -1594,7 +1536,6 @@ function renderCouponTypeList(){
         <span class="ct-badge ct-badge-enabled">啟用中</span>
       </div>`).join('');
   }
-
   if(customs.length){
     html += `<div class="ct-group-title">✏️ 自訂類型（可隨時編輯）</div>`;
     html += customs.map(t=>{
@@ -1604,19 +1545,15 @@ function renderCouponTypeList(){
       <div class="${slotClass}">
         <div class="ct-slot-num">${t.order}</div>
         <span class="ct-slot-icon">${isEmpty?'➕':'✏️'}</span>
-        <input type="text" class="ct-slot-input" id="ct-name-${t.row}" value="${escHtml(t.name)}" placeholder="${isEmpty?'輸入類型名稱（留空=停用）':''}">
-        <label class="ct-toggle">
-          <input type="checkbox" id="ct-en-${t.row}" ${t.enabled?'checked':''}> 啟用
-        </label>
+        <input type="text" class="ct-slot-input" id="ct-name-${t.row}" value="${escHtml(t.name)}" placeholder="${isEmpty?'輸入類型名稱':''}">
+        <label class="ct-toggle"><input type="checkbox" id="ct-en-${t.row}" ${t.enabled?'checked':''}> 啟用</label>
         <button class="btn btn-dark btn-sm" onclick="saveCouponType(${t.row})">💾 儲存</button>
         ${t.name?`<button class="btn btn-danger btn-sm" onclick="clearCouponType(${t.row})">🗑 清空</button>`:''}
       </div>`;
     }).join('');
   }
-
   el.innerHTML = html;
 }
-
 function populateCouponTypeSelect(){
   const sel = document.getElementById('cp-type');
   if(!sel) return;
@@ -1624,55 +1561,39 @@ function populateCouponTypeSelect(){
   const usable = _couponTypes.filter(t=>t.enabled && t.name);
   sel.innerHTML = usable.length
     ? usable.map(t=>`<option value="${escHtml(t.name)}">${escHtml(t.name)}</option>`).join('')
-    : '<option value="">（無可用類型，請先啟用）</option>';
+    : '<option value="">（無可用類型）</option>';
   if(cur && usable.some(t=>t.name===cur)) sel.value = cur;
 }
-
 async function saveCouponType(row){
   const nameEl = document.getElementById('ct-name-'+row);
   const enEl   = document.getElementById('ct-en-'+row);
   if(!nameEl) return;
   const name    = nameEl.value.trim();
   const enabled = enEl ? enEl.checked : true;
-  if(enabled && !name){
-    showMsg('ct-msg','❌ 啟用的類型必須填寫名稱','err');
-    return;
-  }
+  if(enabled && !name){showMsg('ct-msg','❌ 啟用的類型必須填寫名稱','err');return;}
   showMsg('ct-msg','儲存中…','loading');
   try{
     const p = new URLSearchParams({action:'saveCouponType', row, name, enabled:String(enabled)});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){
-      showMsg('ct-msg','✅ 已儲存','ok');
-      loadCouponTypes();
-    }else{
-      showMsg('ct-msg','❌ '+(d.msg||'儲存失敗'),'err');
-    }
+    if(d.ok){showMsg('ct-msg','✅ 已儲存','ok');loadCouponTypes();}
+    else showMsg('ct-msg','❌ '+(d.msg||'儲存失敗'),'err');
   }catch(e){showMsg('ct-msg','❌ 網路錯誤','err');}
 }
-
 async function clearCouponType(row){
-  if(!confirm('確定清空此自訂類型？\n（只會清空名稱並停用，不影響已發出的折扣券）'))return;
+  if(!confirm('確定清空此自訂類型？'))return;
   showMsg('ct-msg','清空中…','loading');
   try{
     const p = new URLSearchParams({action:'deleteCouponType', row});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){
-      showMsg('ct-msg','✅ 已清空','ok');
-      loadCouponTypes();
-    }else{
-      showMsg('ct-msg','❌ '+(d.msg||'清空失敗'),'err');
-    }
+    if(d.ok){showMsg('ct-msg','✅ 已清空','ok');loadCouponTypes();}
+    else showMsg('ct-msg','❌ '+(d.msg||'清空失敗'),'err');
   }catch(e){showMsg('ct-msg','❌ 網路錯誤','err');}
 }
 
-// ═══════════════════════════════════════════════════════
-// 🎫 折扣券
-// ═══════════════════════════════════════════════════════
+// ═══ 折扣券 ═══
 let _coupons = [];
-
 async function addCoupon(){
   const type      = document.getElementById('cp-type').value;
   const amount    = document.getElementById('cp-amount').value.trim();
@@ -1687,10 +1608,7 @@ async function addCoupon(){
   if(!phone){showMsg('cp-add-msg','請填寫顧客電話','err');return;}
   showMsg('cp-add-msg','產生中…','loading');
   try{
-    const p = new URLSearchParams({
-      action:'addCoupon', type, amount, expiry, note,
-      minSpend, maxPerUse, percent
-    });
+    const p = new URLSearchParams({action:'addCoupon', type, amount, expiry, note, minSpend, maxPerUse, percent});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
     if(!d.ok){showMsg('cp-add-msg','❌ '+(d.msg||'失敗'),'err');return;}
@@ -1699,16 +1617,12 @@ async function addCoupon(){
     const p2 = new URLSearchParams({action:'sendCouponNotify', phone, code, type, amount, expiry, note});
     const r2 = await fetch(GAS+'?'+p2.toString());
     const d2 = await r2.json();
-    if(d2.ok){
-      showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已推送 LINE 通知給顧客','ok');
-    } else {
-      showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已產生（LINE 通知失敗：'+(d2.msg||'')+'）','ok');
-    }
+    if(d2.ok){showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已推送 LINE 通知','ok');}
+    else{showMsg('cp-add-msg','✅ 券碼：'+code+'　NT$'+amount+'　已產生（LINE 通知失敗：'+(d2.msg||'')+'）','ok');}
     ['cp-amount','cp-note','cp-expiry','cp-phone','cp-minspend','cp-maxperuse','cp-percent'].forEach(i=>document.getElementById(i).value='');
     loadCoupons();
   }catch(e){showMsg('cp-add-msg','❌ 網路錯誤','err');}
 }
-
 async function loadCoupons(){
   show('cp-loading');document.getElementById('cp-tbody').innerHTML='';
   try{
@@ -1719,7 +1633,6 @@ async function loadCoupons(){
     filterCouponTable();
   }catch(e){hide('cp-loading');showToast('折扣券載入失敗');}
 }
-
 function filterCouponTable(){
   const q  = document.getElementById('cp-search').value.toLowerCase();
   const sf = document.getElementById('cp-status-filter').value;
@@ -1740,11 +1653,7 @@ function filterCouponTable(){
     const expiry  = String(c['到期日']||'—');
     const note    = String(c['備註']||'');
     const row     = Number(c['_row']||0);
-    const typeColorMap = {
-      '購物券':['#e8f5ee','#2d7a4f'],
-      '現金券':['#fff3cd','#856404'],
-      '生日券':['#f5e8e4','#c9897a']
-    };
+    const typeColorMap = {'購物券':['#e8f5ee','#2d7a4f'],'現金券':['#fff3cd','#856404'],'生日券':['#f5e8e4','#c9897a']};
     const tc = Object.entries(typeColorMap).find(([k])=>type.includes(k));
     const typeBg = tc ? typeColorMap[tc[0]][0] : '#eee';
     const typeFg = tc ? typeColorMap[tc[0]][1] : '#666';
@@ -1763,31 +1672,26 @@ function filterCouponTable(){
     </tr>`;
   }).join('')||'<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px;">無折扣券資料</td></tr>';
 }
-
 async function toggleCouponStatus(row, newStatus){
   try{
     const p = new URLSearchParams({action:'editCoupon', row, status:newStatus});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){showToast('✓ 狀態已更新');loadCoupons();}
-    else showToast('❌ 更新失敗');
+    if(d.ok){showToast('✓ 狀態已更新');loadCoupons();}else showToast('❌ 更新失敗');
   }catch(e){showToast('❌ 網路錯誤');}
 }
-
 async function deleteCoupon(row, code){
-  if(!confirm('確定刪除券碼 '+code+' ？此動作無法復原'))return;
+  if(!confirm('確定刪除券碼 '+code+' ？'))return;
   try{
     const p = new URLSearchParams({action:'deleteCoupon', row});
     const r = await fetch(GAS_SHOP+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){showToast('✓ 已刪除');loadCoupons();}
-    else showToast('❌ 刪除失敗');
+    if(d.ok){showToast('✓ 已刪除');loadCoupons();}else showToast('❌ 刪除失敗');
   }catch(e){showToast('❌ 網路錯誤');}
 }
 
 // ════ 快速選單 ════
 let _qmItems = [];
-
 async function loadQuickMenu(){
   show('qm-loading');
   document.getElementById('qm-pages').innerHTML='';
@@ -1799,7 +1703,6 @@ async function loadQuickMenu(){
     renderQuickMenu();
   }catch(e){hide('qm-loading');showToast('載入失敗');}
 }
-
 function renderQuickMenu(){
   const pages = {1:[],2:[],3:[]};
   _qmItems.forEach(item=>{
@@ -1825,7 +1728,6 @@ function renderQuickMenu(){
       </div>
     </div>`).join('');
 }
-
 async function addQuickMenuItem(){
   const page   = document.getElementById('qm-page').value;
   const order  = document.getElementById('qm-order').value;
@@ -1836,13 +1738,8 @@ async function addQuickMenuItem(){
   showMsg('qm-add-msg','新增中…','loading');
   try{
     const p = new URLSearchParams();
-    p.append('action','saveQuickMenu');
-    p.append('page',page);
-    p.append('order',order);
-    p.append('label',label);
-    p.append('type',type);
-    p.append('actionVal',actionVal);
-    p.append('enabled','true');
+    p.append('action','saveQuickMenu');p.append('page',page);p.append('order',order);
+    p.append('label',label);p.append('type',type);p.append('actionVal',actionVal);p.append('enabled','true');
     const r = await fetch(GAS+'?'+p.toString());
     const d = await r.json();
     if(d.ok){
@@ -1852,7 +1749,6 @@ async function addQuickMenuItem(){
     }else showMsg('qm-add-msg','❌ '+(d.msg||'失敗'),'err');
   }catch(e){showMsg('qm-add-msg','❌ 網路錯誤','err');}
 }
-
 async function saveQuickMenuItem(row,page,order,type){
   const label   = document.getElementById('qm-lbl-'+row).value.trim();
   const actionVal = document.getElementById('qm-act-'+row).value.trim();
@@ -1860,48 +1756,36 @@ async function saveQuickMenuItem(row,page,order,type){
   if(!label||!actionVal){showToast('名稱和連結不能空白');return;}
   try{
     const p = new URLSearchParams();
-    p.append('action','saveQuickMenu');
-    p.append('row',row);
-    p.append('page',page);
-    p.append('order',order);
-    p.append('label',label);
-    p.append('type',type);
-    p.append('actionVal',actionVal);
-    p.append('enabled',String(enabled));
+    p.append('action','saveQuickMenu');p.append('row',row);p.append('page',page);p.append('order',order);
+    p.append('label',label);p.append('type',type);p.append('actionVal',actionVal);p.append('enabled',String(enabled));
     const r = await fetch(GAS+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){showToast('✅ 已儲存');loadQuickMenu();}
-    else showToast('❌ '+(d.msg||'失敗'));
+    if(d.ok){showToast('✅ 已儲存');loadQuickMenu();}else showToast('❌ '+(d.msg||'失敗'));
   }catch(e){showToast('❌ 網路錯誤');}
 }
-
 async function deleteQuickMenuItem(row,label){
   if(!confirm('確定刪除「'+label+'」？'))return;
   try{
     const p = new URLSearchParams({action:'deleteQuickMenu',row});
     const r = await fetch(GAS+'?'+p.toString());
     const d = await r.json();
-    if(d.ok){showToast('✅ 已刪除');loadQuickMenu();}
-    else showToast('❌ '+(d.msg||'失敗'));
+    if(d.ok){showToast('✅ 已刪除');loadQuickMenu();}else showToast('❌ '+(d.msg||'失敗'));
   }catch(e){showToast('❌ 網路錯誤');}
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// 📊 階段 3B｜當日總控臺模組（完全獨立命名空間）
-// 出事回滾：
-//   方案A(10秒): F12 console 打 window.DASHBOARD_ENABLED=false，重切tab停用
-//   方案B(30秒): 把 admin-wrap 內 <button onclick="switchTab('dashboard')"> 這行註解掉
-//   方案C(3分): 上傳備份檔 admin_BEFORE_階段3B.html 蓋回
+// 📊 階段 3B/3C/3D｜當日總控臺模組
+// 回滾：F12 貼 window.DASHBOARD_ENABLED=false / FETCH_VIP_BOOKINGS=false / FETCH_LOCKED_SLOTS=false / FETCH_SCHEDULE=false
 // ═══════════════════════════════════════════════════════════════════════
 window.DASHBOARD_ENABLED = true;
 
 const Dashboard = {
-  _data: [],         // 當日預約（主系統）
-  _selectedDate: '', // yyyy-MM-dd
-  _currentBooking: null, // 目前選中的預約（彈窗用）
+  _data: [],
+  _selectedDate: '',
+  _currentBooking: null,
+  _scheduleInfo: null,  // 📊 階段 3D：當日排程資訊（closed/rest）
 
   init(){
-    // 預設日期 = 今天
     const today = Dashboard._todayStr();
     Dashboard._selectedDate = today;
     const dateInput = document.getElementById('dash-date');
@@ -1943,39 +1827,46 @@ const Dashboard = {
     }
     Dashboard._updateDateDisplay();
     const tl = document.getElementById('dash-timeline');
-    tl.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中（主系統 + 尊爵 + 鎖定）…</div>';
+    tl.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中（主系統 + 尊爵 + 鎖定 + 排程）…</div>';
     document.getElementById('dash-stats').innerHTML='';
+    const banner = document.getElementById('dash-schedule-banner');
+    if(banner) banner.innerHTML = '';
     try{
-      // 📊 階段 3C：並行抓 3 個來源
       const date = Dashboard._selectedDate;
       const fetches = [
         // 🔴 主系統預約
         fetch(GAS+'?action=getBookings&date='+encodeURIComponent(date)+'&t='+Date.now())
           .then(r=>r.json()).catch(()=>({bookings:[]})),
-        // 🟣 尊爵預約（可停用）
+        // 🟣 尊爵預約
         window.FETCH_VIP_BOOKINGS
           ? fetch(GAS_VIP+'?fn=getBookingsByDate&params='+encodeURIComponent(JSON.stringify({date:date}))+'&t='+Date.now())
               .then(r=>r.json()).catch(()=>({bookings:[]}))
           : Promise.resolve({bookings:[]}),
-        // 🔒 手動鎖定時段（可停用）
+        // 🔒 手動鎖定
         window.FETCH_LOCKED_SLOTS
           ? fetch(GAS+'?action=getLockedSlots&t='+Date.now())
               .then(r=>r.json()).catch(()=>({slots:[]}))
-          : Promise.resolve({slots:[]})
+          : Promise.resolve({slots:[]}),
+        // 📆 階段 3D 新增：排程設定（公休/休息時段）
+        window.FETCH_SCHEDULE
+          ? fetch(GAS+'?action=getSchedule&t='+Date.now())
+              .then(r=>r.json()).catch(()=>({schedule:[]}))
+          : Promise.resolve({schedule:[]})
       ];
-      const [mainResp, vipResp, lockResp] = await Promise.all(fetches);
+      const [mainResp, vipResp, lockResp, schedResp] = await Promise.all(fetches);
+
       // 🔴 主系統
       const mainData = (mainResp.bookings || []).map(b=>({
         ...b, source:'main', _timeStr:Dashboard._normTime(b.time)
       }));
-      // 🟣 尊爵：欄位 mapping
+      // 🟣 尊爵
       const vipData = (vipResp.bookings || []).map(b=>({
         id:b.id, name:b.name, phone:b.phone, date:b.date, time:b.time,
         service:b.service, note:b.note,
         status: b.status === '確認中' ? '待確認' : b.status,
         source:'vip', _timeStr:Dashboard._normTime(b.time)
       }));
-      // 🔒 鎖定時段（只取當日）
+      // 🔒 鎖定
       const lockData = (lockResp.slots || [])
         .filter(s => s.date === date)
         .map((s, i) => ({
@@ -1983,7 +1874,49 @@ const Dashboard = {
           service:s.note || '手動鎖定', note:'', status:'已確認',
           source:'lock', _timeStr:Dashboard._normTime(s.time)
         }));
-      Dashboard._data = [...mainData, ...vipData, ...lockData];
+
+      // 📆 階段 3D：排程設定（closed=整天店休 / rest=部分時段休息）
+      const schedData = [];
+      Dashboard._scheduleInfo = null;
+      const todaySched = (schedResp.schedule || []).filter(s => s.date === date);
+      todaySched.forEach((s, idx) => {
+        const type = String(s.type || '').trim();
+        const note = String(s.note || '').trim();
+        const timeRange = String(s.time || '').trim();
+        if(type === 'closed'){
+          // 全天店休：展開成每個時段
+          const slots = Dashboard._allDaySlots();
+          slots.forEach((t, i) => {
+            schedData.push({
+              id:'CLOSED-'+idx+'-'+i, name:'🏖️ 店休一日', phone:'', date,
+              time:t, service: note || '公休', note:'', status:'已確認',
+              source:'closed', _timeStr:t
+            });
+          });
+          Dashboard._scheduleInfo = { type:'closed', note: note || '店休一日' };
+        } else if(type === 'rest'){
+          // 部分時段休息：展開該區段的每個時段
+          const parts = timeRange.split('-');
+          if(parts.length === 2){
+            const startMins = Dashboard._timeToMins(parts[0].trim());
+            const endMins   = Dashboard._timeToMins(parts[1].trim());
+            const slots = Dashboard._allDaySlots();
+            slots.forEach((t, i) => {
+              const tm = Dashboard._timeToMins(t);
+              if(tm >= startMins && tm < endMins){
+                schedData.push({
+                  id:'REST-'+idx+'-'+i, name:'☕ 休息時段', phone:'', date,
+                  time:t, service: note || '休息', note:'', status:'已確認',
+                  source:'rest', _timeStr:t
+                });
+              }
+            });
+          }
+        }
+      });
+
+      Dashboard._data = [...mainData, ...vipData, ...lockData, ...schedData];
+      Dashboard._renderBanner();
       Dashboard._renderStats();
       Dashboard._renderTimeline();
     }catch(e){
@@ -1991,23 +1924,33 @@ const Dashboard = {
     }
   },
 
+  _allDaySlots(){
+    const slots = [];
+    for(let h=9; h<=20; h++){
+      slots.push(String(h).padStart(2,'0')+':00');
+      slots.push(String(h).padStart(2,'0')+':30');
+    }
+    return slots;
+  },
+
+  _timeToMins(t){
+    const p = String(t).split(':');
+    return parseInt(p[0],10)*60 + parseInt(p[1]||'0',10);
+  },
+
   _normTime(t){
-    // 統一時間為 "HH:MM" 字串（Sheet 可能存成 Date 物件字串）
     if(!t) return '';
     const s = String(t);
-    // 已是 HH:MM
     if(/^\d{1,2}:\d{2}$/.test(s)){
       const [h,m] = s.split(':');
       return h.padStart(2,'0')+':'+m;
     }
-    // 嘗試從 Date 字串抓時間
     try{
       const d = new Date(s);
       if(!isNaN(d.getTime())){
         return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
       }
     }catch(_){}
-    // 從字串中找 HH:MM pattern
     const m = s.match(/(\d{1,2}):(\d{2})/);
     if(m) return m[1].padStart(2,'0')+':'+m[2];
     return s;
@@ -2023,24 +1966,45 @@ const Dashboard = {
       `${prefix} ${d.getFullYear()}年${String(d.getMonth()+1).padStart(2,'0')}月${String(d.getDate()).padStart(2,'0')}日（${wd}）｜09:00 - 21:00`;
   },
 
+  _renderBanner(){
+    // 📊 階段 3D：如果當日是公休，顯示顯眼橫幅
+    const banner = document.getElementById('dash-schedule-banner');
+    if(!banner) return;
+    if(Dashboard._scheduleInfo && Dashboard._scheduleInfo.type === 'closed'){
+      banner.innerHTML = `
+        <div class="dash-schedule-banner closed">
+          <div class="dash-schedule-banner-icon">🏖️</div>
+          <div class="dash-schedule-banner-text">
+            <strong>本日全天店休</strong>｜${escHtml(Dashboard._scheduleInfo.note)}<br>
+            <span style="font-size:.7rem;color:var(--mid);">時間軸所有時段已標記為店休，不開放預約</span>
+          </div>
+        </div>`;
+    } else {
+      banner.innerHTML = '';
+    }
+  },
+
   _renderStats(){
     const all = Dashboard._data;
     const main = all.filter(b=>b.source==='main');
-    const pending = all.filter(b=>b.status==='待確認').length;
-    // 計算空檔（共 24 個 30 分鐘格：09:00~21:00，最後一格是 20:30）
-    // 09:00,09:30,...,20:30 = 24 slots
+    const vip  = all.filter(b=>b.source==='vip');
+    const pending = all.filter(b=>b.source==='main' && b.status==='待確認').length;
+    // 計算空檔（扣除所有佔用）
     const usedSlots = new Set();
     all.forEach(b=>{
-      if(b.status === '已取消') return; // 取消的不佔格
+      if(b.status === '已取消') return;
       if(b._timeStr) usedSlots.add(b._timeStr);
     });
-    const totalSlots = 24;
-    const emptySlots = totalSlots - usedSlots.size;
+    const totalSlots = 24; // 09:00~20:30 共 24 格
+    const emptySlots = Math.max(0, totalSlots - usedSlots.size);
+
+    // 有效預約數（排除 closed/rest/lock）= 真正的人頭數
+    const realBookings = all.filter(b => b.source === 'main' || b.source === 'vip').length;
 
     document.getElementById('dash-stats').innerHTML = `
-      <div class="dash-stat-card"><div class="dash-stat-num">${all.length}</div><div class="dash-stat-label">今日總預約</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-num">${realBookings}</div><div class="dash-stat-label">今日總預約</div></div>
       <div class="dash-stat-card main-src"><div class="dash-stat-num" style="color:var(--src-main)">${main.length}</div><div class="dash-stat-label">主系統</div></div>
-      <div class="dash-stat-card vip-src"><div class="dash-stat-num" style="color:#ccc">—</div><div class="dash-stat-label">尊爵 VIP（3C）</div></div>
+      <div class="dash-stat-card vip-src"><div class="dash-stat-num" style="color:${vip.length?'var(--src-vip)':'#ccc'}">${vip.length||'—'}</div><div class="dash-stat-label">尊爵 VIP</div></div>
       <div class="dash-stat-card"><div class="dash-stat-num" style="color:var(--rose)">${pending}</div><div class="dash-stat-label">待確認</div></div>
       <div class="dash-stat-card"><div class="dash-stat-num" style="color:var(--moss)">${emptySlots}</div><div class="dash-stat-label">剩餘空檔</div></div>
     `;
@@ -2053,9 +2017,8 @@ const Dashboard = {
       slots.push(String(h).padStart(2,'0')+':00');
       slots.push(String(h).padStart(2,'0')+':30');
     }
-    slots.push('21:00'); // 最後整點
+    slots.push('21:00');
 
-    // 分組資料
     const map = {};
     Dashboard._data.forEach(b=>{
       const t = b._timeStr;
@@ -2098,24 +2061,42 @@ const Dashboard = {
   _renderCard(b){
     const srcClass = 'src-'+b.source;
     const cancelled = b.status==='已取消' ? 'cancelled' : '';
-    const badgeText = b.source==='main'?'主':b.source==='vip'?'尊爵':'鎖定';
-    const badgeClass = b.source==='main'?'main':b.source==='vip'?'vip':'lock';
+    const badgeMap = {
+      'main':{text:'主',css:'main'},
+      'vip':{text:'尊爵',css:'vip'},
+      'lock':{text:'鎖定',css:'lock'},
+      'closed':{text:'公休',css:'closed'},
+      'rest':{text:'休息',css:'rest'}
+    };
+    const badge = badgeMap[b.source] || {text:'',css:''};
     const statusMap = {'待確認':'pending','已確認':'confirmed','已完成':'done','已取消':'cancelled'};
     const statusClass = statusMap[b.status] || 'pending';
 
+    // 公休/休息/鎖定：簡化顯示，不顯示電話按鈕和狀態 badge
+    if(b.source === 'closed' || b.source === 'rest' || b.source === 'lock'){
+      return `<div class="dash-b-card ${srcClass}" onclick="Dashboard.openModal(&quot;${escHtml(b.id)}&quot;)">
+        <div class="dash-b-main">
+          <div class="dash-b-line1">
+            <span class="dash-b-name">${escHtml(b.name||'')}</span>
+            <span class="dash-b-badge ${badge.css}">${badge.text}</span>
+          </div>
+          <div class="dash-b-service">${escHtml(b.service||'')}</div>
+        </div>
+      </div>`;
+    }
+
+    // 主系統 / 尊爵：完整顯示
     const phone = String(b.phone||'').trim();
     const phoneAction = phone
       ? `<a href="tel:${escHtml(phone)}" class="dash-b-action-btn call" onclick="event.stopPropagation()" title="打電話">📞</a>`
       : '';
-
     const note = String(b.note||'').trim();
-    const payload = JSON.stringify({id:b.id, name:b.name, service:b.service, phone:b.phone, source:b.source, status:b.status}).replace(/"/g,'&quot;');
 
     return `<div class="dash-b-card ${srcClass} ${cancelled}" onclick="Dashboard.openModal(&quot;${escHtml(b.id)}&quot;)">
       <div class="dash-b-main">
         <div class="dash-b-line1">
           <span class="dash-b-name">${escHtml(b.name||'未命名')}</span>
-          <span class="dash-b-badge ${badgeClass}">${badgeText}</span>
+          <span class="dash-b-badge ${badge.css}">${badge.text}</span>
           <span class="dash-b-status ${statusClass}">${escHtml(b.status||'—')}</span>
         </div>
         <div class="dash-b-service">${escHtml(b.service||'')}</div>
@@ -2132,13 +2113,16 @@ const Dashboard = {
     if(!window.DASHBOARD_ENABLED) return;
     const b = Dashboard._data.find(x=>String(x.id)===String(id));
     if(!b) return;
-    // 🔒 階段 3C：手動鎖定時段不是真預約，點了只提示
     if(b.source === 'lock'){
       showToast('💡 鎖定時段請至「🔒 鎖定時段」tab 管理');
       return;
     }
+    if(b.source === 'closed' || b.source === 'rest'){
+      showToast('💡 公休/休息時段請至「📆 排程設定」tab 管理');
+      return;
+    }
     Dashboard._currentBooking = b;
-    const sourceText = b.source==='main'?'主系統':b.source==='vip'?'尊爵 VIP':'手動鎖定';
+    const sourceText = b.source==='main'?'主系統':b.source==='vip'?'尊爵 VIP':'其他';
     document.getElementById('dash-modal-sub').textContent =
       `${b.name||'—'} · ${b.service||'—'} · ${sourceText} · 目前：${b.status||'—'}`;
     document.getElementById('dash-modal').classList.add('show');
@@ -2162,7 +2146,6 @@ const Dashboard = {
     }
     Dashboard.closeModal();
     try{
-      // 主系統：用既有的 updateBooking API
       if(b.source === 'main'){
         const r = await fetch(GAS+'?action=updateBooking&id='+encodeURIComponent(b.id)+'&status='+encodeURIComponent(newStatus));
         const d = await r.json();
@@ -2173,7 +2156,6 @@ const Dashboard = {
           showToast('❌ 更新失敗：'+(d.msg||''));
         }
       } else if(b.source === 'vip'){
-        // 階段 3C：尊爵狀態更新請至尊爵 Sheet 處理
         showToast('💡 請至尊爵 Sheet「預約紀錄」分頁改狀態');
       }
     }catch(e){
@@ -2182,7 +2164,6 @@ const Dashboard = {
   }
 };
 
-// 點遮罩關閉彈窗
 document.addEventListener('DOMContentLoaded', ()=>{
   const modal = document.getElementById('dash-modal');
   if(modal){
@@ -2191,12 +2172,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
-
-// 確保登入後 init 會執行到 Dashboard.init（某些情況 DOMContentLoaded 晚於 initAdmin）
-if(document.readyState==='complete' || document.readyState==='interactive'){
-  // 已載入完成，由 initAdmin 控制時機
-}
-// 📊 階段3B 模組結束
 </script>
 </body>
 </html>
