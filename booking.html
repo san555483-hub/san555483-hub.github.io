@@ -88,8 +88,58 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
 .time-slot { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 4px; text-align: center; cursor: pointer; font-size: 13px; background: var(--surface); transition: all 0.2s; }
 .time-slot.selected { border-color: var(--gold); background: #fdf6ee; color: var(--gold-dark); font-weight: 500; }
+
+/* ═══ 【2026-04-22 新增】4 種已佔用時段樣式 ═══ */
+/* 通用：灰底 + 切斷線 + 不可點 */
+.time-slot.taken-base {
+  cursor: not-allowed;
+  font-size: 10px;
+  line-height: 1.3;
+  padding: 6px 4px;
+  font-weight: 500;
+  text-decoration: line-through;
+  position: relative;
+}
+/* 👤 一般客預約 / 🔒 手動鎖定 → 灰色 */
+.time-slot.taken-general {
+  background: #eeeeee;
+  border-color: #cccccc;
+  color: #999999;
+}
+/* 🟣 尊爵客預約 → 紫色 */
+.time-slot.taken-vip-deluxe {
+  background: #f0e8f5;
+  border-color: #b89ac9;
+  color: #6a4a8a;
+}
+/* ⭐ 指定加價服務 → 金色 */
+.time-slot.taken-priority {
+  background: #fdf6e8;
+  border-color: #e8c870;
+  color: #8a6a20;
+}
+/* 👑 VIP 客（儲值客）→ 深紅 */
+.time-slot.taken-vip-credit {
+  background: #fdecea;
+  border-color: #e8a9a0;
+  color: #a04030;
+}
+/* 🏖️ 公休 → 深灰 */
+.time-slot.taken-closed {
+  background: #e8e0d5;
+  border-color: #b8a99c;
+  color: #5a4a3c;
+}
+/* ☕ 休息時段 → 淡黃 */
+.time-slot.taken-rest {
+  background: #fff8e8;
+  border-color: #e8c870;
+  color: #8a6a20;
+}
+/* 舊兼容性（保留以防） */
 .time-slot.booked { background: #fdecea; border-color: #e8a9a0; color: #a04030; cursor: not-allowed; font-size: 10px; line-height: 1.3; padding: 6px 4px; font-weight: 500; }
 .time-slot.locked-notice { background: #fff8e8; border-color: #e8c870; color: #8a6a20; cursor: not-allowed; font-size: 10px; line-height: 1.3; padding: 6px 4px; }
+
 .form-group { margin-bottom: 16px; }
 .form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
 .form-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s; }
@@ -360,6 +410,16 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 </div>
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+// 🟣 尊爵 GAS（階段 4 新增：抓尊爵預約做撞單顯示）
+const GAS_VIP_URL = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
+
+// 📊 階段 4 flag（出事改 false 可立刻停用對應來源）
+window.BOOKING_MULTI_SOURCE = true;  // 多來源抓取總開關
+window.FETCH_VIP_DATA = true;        // 是否抓尊爵預約（顯示「尊爵客預約」）
+window.FETCH_LOCKED_SLOTS = true;    // 是否抓手動鎖定時段
+window.FETCH_SCHEDULE = true;        // 是否抓公休/休息時段
+window.FETCH_VIP_PHONES = true;      // 是否抓 VIP 客儲值電話 hash（判斷「VIP客預約」）
+
 const BUSINESS_HOURS = {
   0: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
   1: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
@@ -375,6 +435,9 @@ let allServices = [], schedule = [], lockedInfoMap = {};
 let state = { services: [], date: null, time: null, name: '', phone: '', note: '', priority: false, memberType: '', priorityFee: 0, uid: '', displayName: '', lineLoggedIn: false };
 let siteSettings = { priority_member_fee: 250, priority_nonmember_fee: 350, payment_jkopay_url: '', payment_ipass_url: '' };
 
+// 階段 4 新增：VIP 電話 hash 快取（整場只抓 1 次，省 API 流量）
+let _vipPhoneHashSet = null;
+
 function normalizeTime(input) {
   const raw = String(input || '').trim();
   const m = raw.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
@@ -382,8 +445,23 @@ function normalizeTime(input) {
   return String(parseInt(m[1],10)).padStart(2,'0') + ':' + String(parseInt(m[2]||'0',10)).padStart(2,'00');
 }
 
+// 階段 4 新增：SHA-256 hash（Web Crypto API，瀏覽器內建）
+async function sha256(text) {
+  const msgBuffer = new TextEncoder().encode(String(text));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 階段 4 新增：正規化電話（跟 GAS 一致：9 碼補 0）
+function normalizePhoneForHash(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits || digits.length < 9) return '';
+  return digits.length === 9 ? '0' + digits : digits;
+}
+
 // ══════════════════════════════════════
-// 📢 廣播跑馬燈（撈 site=booking 啟用者）
+// 📢 廣播跑馬燈（撤 site=booking 啟用者）
 // ══════════════════════════════════════
 async function loadMarqueeBanner() {
   try {
@@ -526,6 +604,11 @@ function renderDates() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 【2026-04-22 階段 4】selectDate 全面改版：並行抓 5 個來源 + 4 類顯示
+// 原本只抓 getBookedSlots，現在同時抓：主系統、尊爵、手動鎖定、公休/休息、VIP 電話
+// 回滾：F12 Console 貼 window.BOOKING_MULTI_SOURCE = false
+// ═══════════════════════════════════════════════════════════════
 async function selectDate(date, el) {
   state.date = date; state.time = null;
   document.querySelectorAll('.date-item').forEach(d => d.classList.remove('selected'));
@@ -535,20 +618,190 @@ async function selectDate(date, el) {
   const loading = document.getElementById('loadingSlots');
   area.innerHTML = ''; loading.style.display = 'block';
   const dateStr = formatDate(date);
+
+  // 🆘 如果 flag 關閉 → 回退到舊版單 API 抓取
+  if (!window.BOOKING_MULTI_SOURCE) {
+    try {
+      const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      const booked = new Set((data.slots || []).map(normalizeTime));
+      lockedInfoMap = data.lockedInfo || {};
+      loading.style.display = 'none';
+      renderTimeSlotsLegacy(date, booked);
+    } catch (_) {
+      loading.style.display = 'none';
+      renderTimeSlotsLegacy(date, new Set());
+    }
+    return;
+  }
+
+  // 🚀 多來源並行抓取
   try {
-    const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
-    const data = await res.json();
-    const booked = new Set((data.slots || []).map(normalizeTime));
-    lockedInfoMap = data.lockedInfo || {};
+    const t = Date.now();
+    const fetches = [
+      // 🔴 主系統預約
+      fetch(GAS_URL + '?action=getBookings&date=' + encodeURIComponent(dateStr) + '&t=' + t, { cache: 'no-store' })
+        .then(r => r.json()).catch(() => ({ bookings: [] })),
+      // 🟣 尊爵預約
+      window.FETCH_VIP_DATA
+        ? fetch(GAS_VIP_URL + '?fn=getBookingsByDate&params=' + encodeURIComponent(JSON.stringify({ date: dateStr })) + '&t=' + t, { cache: 'no-store' })
+            .then(r => r.json()).catch(() => ({ bookings: [] }))
+        : Promise.resolve({ bookings: [] }),
+      // 🔒 手動鎖定
+      window.FETCH_LOCKED_SLOTS
+        ? fetch(GAS_URL + '?action=getLockedSlots&t=' + t, { cache: 'no-store' })
+            .then(r => r.json()).catch(() => ({ slots: [] }))
+        : Promise.resolve({ slots: [] }),
+      // 📆 公休 / 休息時段
+      window.FETCH_SCHEDULE
+        ? fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' })
+            .then(r => r.json()).catch(() => ({ schedule: [] }))
+        : Promise.resolve({ schedule: [] }),
+      // 💎 VIP 電話 hash（整場只抓 1 次，後續從快取讀）
+      (window.FETCH_VIP_PHONES && !_vipPhoneHashSet)
+        ? fetch(GAS_URL + '?action=getVipPhonesHashed&t=' + t, { cache: 'no-store' })
+            .then(r => r.json()).catch(() => ({ hashes: [] }))
+        : Promise.resolve({ hashes: null })  // 已有快取就不抓
+    ];
+    const [mainResp, vipResp, lockResp, schedResp, vipPhoneResp] = await Promise.all(fetches);
+
+    // 建立 VIP 電話 hash 快取（如果這次有抓到）
+    if (vipPhoneResp && Array.isArray(vipPhoneResp.hashes)) {
+      _vipPhoneHashSet = new Set(vipPhoneResp.hashes);
+    } else if (!_vipPhoneHashSet) {
+      _vipPhoneHashSet = new Set();
+    }
+
+    // 整理各來源資料成 slotInfoMap：key=時間字串(HH:MM), value={type, label}
+    const slotInfoMap = {};
+
+    // 🔴 主系統預約（要判斷 priority 和 VIP 客）
+    const mainBookings = (mainResp.bookings || []).filter(b => {
+      const bDate = String(b.date || '').substring(0, 10);
+      return bDate === dateStr && String(b.status || '') !== '已取消';
+    });
+    for (const b of mainBookings) {
+      const timeKey = normalizeTime(b.time);
+      if (!timeKey) continue;
+      // 優先級判斷：
+      // 1. priority=true → 指定加價服務預約
+      // 2. 電話在儲值名單 → VIP客預約
+      // 3. 其他 → 已預約
+      const isPriority = String(b.priority || '').includes('✅') || String(b.priority || '').includes('加價');
+      let type = 'general', label = '已預約';
+      if (isPriority) {
+        type = 'priority'; label = '指定加價服務預約';
+      } else if (_vipPhoneHashSet && _vipPhoneHashSet.size > 0 && b.phone) {
+        const normPhone = normalizePhoneForHash(b.phone);
+        if (normPhone) {
+          const phoneHash = await sha256(normPhone);
+          if (_vipPhoneHashSet.has(phoneHash)) {
+            type = 'vip-credit'; label = 'VIP客預約';
+          }
+        }
+      }
+      slotInfoMap[timeKey] = { type, label };
+    }
+
+    // 🟣 尊爵預約（統一顯示「尊爵客預約」，不覆蓋主系統已有資料）
+    const vipBookings = (vipResp.bookings || []).filter(b => {
+      const bDate = String(b.date || '').substring(0, 10);
+      const bStatus = String(b.status || '');
+      return bDate === dateStr && bStatus !== '已取消' && bStatus !== '取消';
+    });
+    vipBookings.forEach(b => {
+      const timeKey = normalizeTime(b.time);
+      if (!timeKey) return;
+      if (!slotInfoMap[timeKey]) {
+        slotInfoMap[timeKey] = { type: 'vip-deluxe', label: '尊爵客預約' };
+      }
+    });
+
+    // 🔒 手動鎖定
+    const lockedSlots = (lockResp.slots || []).filter(s => s.date === dateStr);
+    lockedSlots.forEach(s => {
+      const timeKey = normalizeTime(s.time);
+      if (!timeKey) return;
+      if (!slotInfoMap[timeKey]) {
+        slotInfoMap[timeKey] = { type: 'general', label: '已預約' };
+      }
+    });
+
+    // 📆 公休 / 休息時段
+    const todaySched = (schedResp.schedule || []).filter(s => s.date === dateStr);
+    todaySched.forEach(s => {
+      const type = String(s.type || '').trim();
+      const timeRange = String(s.time || '').trim();
+      if (type === 'closed') {
+        // 整天店休
+        BUSINESS_HOURS[date.getDay()].forEach(t => {
+          const nt = normalizeTime(t);
+          slotInfoMap[nt] = { type: 'closed', label: '公休' };
+        });
+      } else if (type === 'rest' && timeRange) {
+        // 部分休息
+        const parts = timeRange.split('-');
+        if (parts.length === 2) {
+          const startMins = timeToMins(parts[0].trim());
+          const endMins = timeToMins(parts[1].trim());
+          BUSINESS_HOURS[date.getDay()].forEach(t => {
+            const nt = normalizeTime(t);
+            const tm = timeToMins(nt);
+            if (tm >= startMins && tm < endMins) {
+              if (!slotInfoMap[nt]) {
+                slotInfoMap[nt] = { type: 'rest', label: '休息時段' };
+              }
+            }
+          });
+        }
+      }
+    });
+
     loading.style.display = 'none';
-    renderTimeSlots(date, booked);
-  } catch (_) {
+    renderTimeSlotsMulti(date, slotInfoMap);
+  } catch (err) {
+    console.error('多來源抓取失敗:', err);
     loading.style.display = 'none';
-    renderTimeSlots(date, new Set());
+    // 失敗時回退到舊版
+    try {
+      const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      const booked = new Set((data.slots || []).map(normalizeTime));
+      renderTimeSlotsLegacy(date, booked);
+    } catch (_) {
+      renderTimeSlotsLegacy(date, new Set());
+    }
   }
 }
 
-function renderTimeSlots(date, booked) {
+// 時間字串 → 分鐘數（供區間計算）
+function timeToMins(t) {
+  const p = String(t).split(':');
+  return parseInt(p[0], 10) * 60 + parseInt(p[1] || '0', 10);
+}
+
+// 🎨 階段 4 新版渲染：根據 slotInfoMap 決定 4 種樣式
+function renderTimeSlotsMulti(date, slotInfoMap) {
+  const slots = BUSINESS_HOURS[date.getDay()];
+  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
+  slots.forEach(function(t) {
+    const nt = normalizeTime(t);
+    const info = slotInfoMap[nt];
+    if (info) {
+      // 已佔用 → 根據類型顯示
+      const cssClass = 'time-slot taken-base taken-' + info.type;
+      html += '<div class="' + cssClass + '">' + nt + '<br><span style="font-size:9px">' + info.label + '</span></div>';
+    } else {
+      // 可預約
+      html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
+    }
+  });
+  html += '</div>';
+  document.getElementById('timeSlotArea').innerHTML = html;
+}
+
+// 舊版渲染（回退用）
+function renderTimeSlotsLegacy(date, booked) {
   const slots = BUSINESS_HOURS[date.getDay()];
   let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
   slots.forEach(function(t) {
@@ -559,13 +812,18 @@ function renderTimeSlots(date, booked) {
     if (isNotice) {
       html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>';
     } else if (isBooked) {
-      html += '<div class="time-slot booked">' + nt + '<br><span style="font-size:9px">✗ 已有人預約</span></div>';
+      html += '<div class="time-slot taken-base taken-general">' + nt + '<br><span style="font-size:9px">已預約</span></div>';
     } else {
       html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
     }
   });
   html += '</div>';
   document.getElementById('timeSlotArea').innerHTML = html;
+}
+
+// 兼容舊版函式名稱（避免如果還有人呼叫）
+function renderTimeSlots(date, booked) {
+  return renderTimeSlotsLegacy(date, booked);
 }
 
 function selectTime(time, el) {
