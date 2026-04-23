@@ -2357,7 +2357,47 @@ function renderImageRow(code, customLabel){
     </div>`;
 }
 
-// 上傳圖片到 Drive（走 POST + text/plain，解決 GET URL 長度限制）
+// 上傳圖片到 Drive（走 POST + text/plain，自動壓縮，解決大圖問題）
+// 2026/04/23 v3E.2：加入 canvas 自動壓縮，iPhone/相機原圖直接丟也能傳
+async function _compressImage(file, maxWidth = 1600, quality = 0.85){
+  // 如果檔案已經很小（< 500KB）直接用原檔，不浪費運算資源
+  if(file.size < 500 * 1024){
+    return new Promise((res, rej)=>{
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+  }
+  // Canvas 壓縮：縮寬到 maxWidth，JPG 品質 0.85
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e)=>{ img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = ()=>{
+      try{
+        let w = img.width, h = img.height;
+        if(w > maxWidth){
+          h = Math.round(h * (maxWidth / w));
+          w = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; // PNG 透明區填白（避免黑底）
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        // 一律輸出 JPG（比 PNG 小 5-10 倍）
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      }catch(err){ reject(err); }
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function uploadImage(code){
   const fileInput = document.getElementById('img-file-'+code);
   if(!fileInput || !fileInput.files || !fileInput.files[0]){
@@ -2365,27 +2405,28 @@ async function uploadImage(code){
     return;
   }
   const file = fileInput.files[0];
-  if(file.size > 4 * 1024 * 1024){
-    showMsg('img-msg','❌ 圖片超過 4MB，請先壓縮','err');
+  // 放寬到 20MB（iPhone 原圖通常 3-8MB，Gemini 2500x1686 約 5-10MB）
+  if(file.size > 20 * 1024 * 1024){
+    showMsg('img-msg','❌ 圖片超過 20MB，檔案太大了，請先手動壓縮','err');
     return;
   }
-  showMsg('img-msg','上傳中…請稍候（約 5-15 秒）','loading');
+  const origKB = Math.round(file.size / 1024);
+  showMsg('img-msg','壓縮中…（原檔 '+origKB+'KB）','loading');
   try{
-    const base64 = await new Promise((res, rej)=>{
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result);
-      reader.onerror = rej;
-      reader.readAsDataURL(file);
-    });
+    // Step 1：前端自動壓縮（寬度 1600px，JPG 品質 85%）
+    const base64 = await _compressImage(file, 1600, 0.85);
     const cleanBase64 = String(base64).replace(/^data:[^;]+;base64,/,'');
+    // 壓縮後 base64 長度約等於 byte 數 * 1.33
+    const compressedKB = Math.round(cleanBase64.length * 0.75 / 1024);
+    showMsg('img-msg','上傳中…（已壓縮至 '+compressedKB+'KB，約 5-10 秒）','loading');
+    // Step 2：POST 上傳
     const bodyJson = JSON.stringify({
       action: 'uploadImageToDrive',
       code: code,
       base64: cleanBase64,
-      mimeType: file.type || 'image/jpeg',
+      mimeType: 'image/jpeg',
       filename: 'uni_'+code+'_'+Date.now()+'.jpg'
     });
-    // 關鍵：Content-Type: text/plain 避免 CORS preflight，GAS doPost 自己 parse JSON
     const r = await fetch(GAS, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2394,7 +2435,7 @@ async function uploadImage(code){
     });
     const d = await r.json();
     if(d.ok){
-      showMsg('img-msg','✅ 上傳成功','ok');
+      showMsg('img-msg','✅ 上傳成功（原 '+origKB+'KB → 壓縮後 '+compressedKB+'KB）','ok');
       await loadImageConfig();
     } else {
       showMsg('img-msg','❌ '+(d.msg||'上傳失敗'),'err');
