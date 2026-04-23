@@ -20,7 +20,228 @@
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
 body{font-family:'Noto Serif TC',serif;background:var(--linen);color:var(--ink);overflow-x:hidden;}
 
+/* ══════════════════════════════════════════════════════
+   【2026/04/23 新增】Hero V2 - 首頁精品輪播區
+   回滾：刪除此 CSS + HTML + JS 三段即可完全還原
+═══════════════════════════════════════════════════════ */
+.hero-v2{
+  display:none;
+  background:var(--linen);
+  padding:56px 20px 48px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-v2.has-content{ display:block; }
+.hero-v2-inner{
+  max-width:1100px;
+  margin:0 auto;
+}
+.hero-v2-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:56px;
+  align-items:center;
+}
 
+/* 左：輪播 */
+.hv2-carousel-wrap{
+  position:relative;
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+}
+.hv2-carousel-wrap::before{
+  content:'';
+  position:absolute;
+  top:22px; left:22px;
+  right:-16px; bottom:-16px;
+  border:1px solid var(--gold);
+  opacity:.4;
+  z-index:-1;
+  pointer-events:none;
+}
+.hv2-carousel{
+  position:relative;
+  width:100%;
+  aspect-ratio:4/5;
+  background:var(--sand);
+  overflow:hidden;
+  box-shadow:0 20px 50px -16px rgba(61,43,31,.3), 0 0 0 1px rgba(61,43,31,.04);
+}
+.hv2-slide{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transition:opacity 1.2s ease;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+.hv2-slide.active{ opacity:1; }
+.hv2-dots{
+  position:absolute;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:7px;
+  z-index:5;
+}
+.hv2-dot{
+  width:6px; height:6px;
+  border-radius:50%;
+  background:rgba(255,255,255,.4);
+  cursor:pointer;
+  transition:all .4s ease;
+  border:1px solid rgba(255,255,255,.3);
+}
+.hv2-dot.active{
+  background:#fff;
+  width:22px;
+  border-radius:3px;
+}
+.hv2-meta{
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:.72rem;
+  color:var(--mid);
+  letter-spacing:.12em;
+  margin-top:18px;
+  text-align:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.hv2-meta::before{ content:'📍'; font-size:.82rem; }
+
+/* 右：文字區（Elsa 喬好的 13 個數值） */
+.hv2-text{
+  position:relative;
+  padding:16px 0;
+  text-align:center;
+}
+.hv2-ornament{
+  position:absolute;
+  top:-20px;
+  right:6%;
+  font-family:'Playfair Display',serif;
+  font-style:italic;
+  font-size:6rem;
+  color:var(--gold);
+  opacity:.08;
+  line-height:1;
+  user-select:none;
+  pointer-events:none;
+}
+.hv2-badge{
+  display:inline-block;
+  font-family:'Playfair Display',serif;
+  font-style:italic;
+  font-size:1.25rem;
+  color:var(--gold);
+  letter-spacing:.18em;
+  margin-bottom:22px;
+  opacity:0;
+  animation:hv2FadeIn 1s ease .3s forwards;
+}
+.hv2-badge::before{
+  content:'';
+  display:inline-block;
+  width:32px; height:1px;
+  background:var(--gold);
+  vertical-align:middle;
+  margin-right:12px;
+  opacity:.6;
+}
+.hv2-title{
+  font-family:'Noto Serif TC',serif;
+  font-size:2.55rem;
+  font-weight:500;
+  color:var(--bark);
+  line-height:1.55;
+  letter-spacing:.04em;
+  margin-bottom:16px;
+  opacity:0;
+  animation:hv2GrowIn 1.2s cubic-bezier(.2,.8,.2,1) .5s forwards;
+  transform-origin:center center;
+  word-break:keep-all;
+  white-space:pre-line;
+}
+.hv2-sub{
+  font-size:1.2rem;
+  color:var(--bark2);
+  line-height:1.95;
+  font-weight:300;
+  letter-spacing:.04em;
+  margin:0 auto 28px;
+  max-width:380px;
+  opacity:0;
+  animation:hv2FadeIn 1s ease 1s forwards;
+  text-align:left;
+}
+.hv2-sub .line2{
+  display:block;
+  padding-left:1.1em;
+}
+.hv2-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:15px 28px;
+  background:#06C755;
+  color:#fff;
+  text-decoration:none;
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:0.9rem;
+  font-weight:500;
+  letter-spacing:.15em;
+  border-radius:3px;
+  transition:all .4s ease;
+  opacity:0;
+  animation:hv2FadeIn 1s ease 1.3s forwards;
+  box-shadow:0 4px 14px -4px rgba(6,199,85,.5);
+}
+.hv2-cta:hover{
+  background:#05b34b;
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px -4px rgba(6,199,85,.6);
+}
+.hv2-cta svg{
+  width:16px; height:16px;
+  fill:#fff;
+}
+
+@keyframes hv2FadeIn{
+  from{ opacity:0; transform:translateX(-24px); }
+  to  { opacity:1; transform:translateX(0); }
+}
+@keyframes hv2GrowIn{
+  from{ opacity:0; transform:scale(.9) translateX(-16px); }
+  to  { opacity:1; transform:scale(1) translateX(0); }
+}
+
+/* 平板 769~1024 */
+@media (min-width:769px) and (max-width:1024px){
+  .hero-v2{ padding:44px 24px 36px; }
+  .hero-v2-grid{ gap:36px; }
+  .hv2-carousel-wrap{ max-width:340px; }
+  .hv2-title{ font-size:2.1rem; }
+}
+
+/* 手機 <=768 */
+@media (max-width:768px){
+  .hero-v2{ padding:32px 20px 28px; }
+  .hero-v2-grid{
+    grid-template-columns:1fr;
+    gap:28px;
+  }
+  .hv2-carousel-wrap{ max-width:100%; }
+  .hv2-carousel{ aspect-ratio:4/3; }
+  .hv2-ornament{ font-size:3.5rem; top:-18px; right:4%; }
+  .hv2-title{ font-size:1.9rem; }
+  .hv2-sub{ max-width:100%; font-size:1.05rem; }
+}
+/* ══════ Hero V2 CSS END ══════ */
 /* 廣播跑馬燈 */
 .marquee-bar{
   background:var(--bark2);
@@ -670,16 +891,30 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
      Step 1 — 首頁
 ══════════════════════════════════════════════════════════ -->
 <div class="step-page active" id="step-1">
-  <div class="hero">
-    <div class="hero-eyebrow">職人精選 · 生活日常</div>
-    <h1>讓專業護理，<br>成為您最自在的<em>居家日常</em>。</h1>
-    <p class="hero-desc">從沙龍出發，為您的頭皮與受損修復，精挑細選最溫暖的對策。</p>
-    <div class="hero-tags">
-      <div class="hero-tag">職人精選髮品</div>
-      <div class="hero-tag">會員專屬體驗</div>
-      <div class="hero-tag">購買即回饋購物券</div>
+ <!-- 【2026/04/23 新增】Hero V2 精品輪播區 -->
+  <section class="hero-v2" id="hero-v2">
+    <div class="hero-v2-inner">
+      <div class="hero-v2-grid">
+        <div>
+          <div class="hv2-carousel-wrap">
+            <div class="hv2-carousel" id="hv2-carousel"></div>
+          </div>
+          <div class="hv2-meta">桃園市八德區 桃德路115號</div>
+        </div>
+        <div class="hv2-text">
+          <div class="hv2-ornament">U</div>
+          <div class="hv2-badge">UNI Selected Hair Care</div>
+          <h1 class="hv2-title" id="hv2-title">髮品也能訂製
+職人嚴選　為您而生</h1>
+          <p class="hv2-sub">從沙龍實戰嚴選，每一瓶都經過親身測試<span class="line2">讓您在家也能擁有沙龍級的柔順與修護</span></p>
+          <a href="https://lin.ee/28G2WHE" class="hv2-cta" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+            <span>職人髮品諮詢</span>
+          </a>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 
   <div class="quick-actions">
     <div class="qa-grid">
@@ -2491,7 +2726,75 @@ async function loadMarqueeBanner() {
     console.warn('marquee load failed', e);
   }
 }
+// ══ Hero V2 JS START ══
+window.SHOW_INDEX_CAROUSEL = true;
+const GAS_MAIN_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
 
+async function loadHeroV2(){
+  if(!window.SHOW_INDEX_CAROUSEL) return;
+  try{
+    const r = await fetch(GAS_MAIN_URL + '?action=getImageConfig&block=INDEX&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if(!d.ok || !d.images) return;
+
+    const carousels = d.images
+      .filter(x => /^INDEX_CAROUSEL_\d+$/.test(x.code) && x.url)
+      .sort((a,b) => a.order - b.order);
+    const titleConfig = d.images.find(x => x.code === 'INDEX_TITLE' && x.text && x.text.trim());
+
+    if(!carousels.length && !titleConfig) return;
+
+    const carEl = document.getElementById('hv2-carousel');
+    if(carEl && carousels.length){
+      carEl.innerHTML = carousels.map((img,i) =>
+        `<div class="hv2-slide${i===0?' active':''}" style="background-image:url('${img.url}')"></div>`
+      ).join('') + `<div class="hv2-dots" id="hv2-dots"></div>`;
+
+      const dotsEl = document.getElementById('hv2-dots');
+      if(dotsEl){
+        dotsEl.innerHTML = carousels.map((_,i) =>
+          `<span class="hv2-dot${i===0?' active':''}" data-idx="${i}"></span>`
+        ).join('');
+      }
+
+      if(carousels.length > 1){
+        let cur = 0;
+        const slides = carEl.querySelectorAll('.hv2-slide');
+        const dots = dotsEl ? dotsEl.querySelectorAll('.hv2-dot') : [];
+        let timer = null;
+        const goTo = (idx) => {
+          slides[cur].classList.remove('active');
+          if(dots[cur]) dots[cur].classList.remove('active');
+          cur = idx;
+          slides[cur].classList.add('active');
+          if(dots[cur]) dots[cur].classList.add('active');
+        };
+        const next = () => goTo((cur + 1) % slides.length);
+        const start = () => { timer = setInterval(next, 3500); };
+        const restart = () => { if(timer) clearInterval(timer); start(); };
+        dots.forEach((d,i) => d.addEventListener('click', () => { goTo(i); restart(); }));
+        start();
+        document.addEventListener('visibilitychange', () => {
+          if(document.hidden){ if(timer) clearInterval(timer); }
+          else { restart(); }
+        });
+      }
+    }
+
+    if(titleConfig){
+      const titleEl = document.getElementById('hv2-title');
+      if(titleEl) titleEl.textContent = titleConfig.text;
+    }
+
+    const hero = document.getElementById('hero-v2');
+    if(hero) hero.classList.add('has-content');
+  }catch(e){
+    console.warn('[hero-v2] 載入失敗', e);
+  }
+}
+
+loadHeroV2();
+// ══ Hero V2 JS END ══
 updateCart();
 renderSampleSeriesSelect();
 loadVideos();
