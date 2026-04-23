@@ -254,6 +254,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('orders')">🛍️ 購物訂單</button>
       <button class="tab-btn" onclick="switchTab('coupon')">🎫 折扣券</button>
       <button class="tab-btn" onclick="switchTab('quickmenu')">💬 快速選單</button>
+      <!-- ═══ 2026/04/23 新增圖片管理 tab（回滾：刪除這行 + 後面的 pane-image + JS 即可）═══ -->
+      <button class="tab-btn" onclick="switchTab('image')" id="tab-btn-image">📸 圖片管理</button>
     </div>
   </div>
 
@@ -795,6 +797,95 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════════════════ -->
+  <!-- 【2026/04/23 新增】📸 圖片管理 pane                          -->
+  <!-- 回滾：刪除整個 <div class="tab-pane" id="pane-image"> ... </div> -->
+  <!-- ════════════════════════════════════════════════════════ -->
+  <div class="tab-pane" id="pane-image">
+    <div class="pane-inner">
+      <div class="card">
+        <div class="card-head">
+          <h3>📸 圖片管理</h3>
+          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadImageConfig()">🔄 重新載入</button>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">
+            管理 <b>首頁（index）</b> 與 <b>預約頁（booking）</b> 的圖片與文字。圖片上傳到 Google Drive 自動產生連結。<br>
+            ⚠️ 注意：需等主系統 GAS 部署 v3 新版本 + 前台 index/booking 改版後才會顯示。
+          </p>
+
+          <!-- ═══ 區塊 A：首頁 ═══ -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-head"><h3>🏠 首頁（index.html）</h3></div>
+            <div class="card-body">
+
+              <!-- A1: 首頁標題文字 -->
+              <div style="margin-bottom:18px;padding:12px;background:#faf8f5;border:1px solid var(--border);border-radius:4px;">
+                <div style="font-size:.78rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;">
+                  📝 首頁中間標題文字（INDEX_TITLE）
+                </div>
+                <textarea id="img-text-INDEX_TITLE" rows="3" placeholder="輸入首頁中間文字（可多行）" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:3px;font-size:.8rem;font-family:'Noto Serif TC',serif;resize:vertical;"></textarea>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+                  <label style="font-size:.72rem;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">
+                    <input type="checkbox" id="img-en-INDEX_TITLE"> 啟用
+                  </label>
+                  <button class="btn btn-dark btn-sm" onclick="saveImageText('INDEX_TITLE')">💾 儲存文字</button>
+                  <span id="img-status-INDEX_TITLE" style="font-size:.65rem;color:var(--mid);margin-left:auto;"></span>
+                </div>
+              </div>
+
+              <!-- A2: 首頁輪播 5 張 -->
+              <div style="font-size:.78rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;">
+                🖼️ 首頁左邊照片輪播（最多 5 張）
+              </div>
+              <div id="index-carousel-list"></div>
+
+            </div>
+          </div>
+
+          <!-- ═══ 區塊 B：booking 自介 ═══ -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-head"><h3>👤 預約頁自介（booking.html）</h3></div>
+            <div class="card-body">
+
+              <!-- B1: 個人照 -->
+              <div id="booking-profile-wrap" style="margin-bottom:18px;"></div>
+
+              <!-- B2: 自介文字 -->
+              <div style="padding:12px;background:#faf8f5;border:1px solid var(--border);border-radius:4px;">
+                <div style="font-size:.78rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;">
+                  📝 自我介紹文字（BOOKING_INTRO）
+                </div>
+                <textarea id="img-text-BOOKING_INTRO" rows="5" placeholder="輸入自我介紹文字（可多行）" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:3px;font-size:.8rem;font-family:'Noto Serif TC',serif;resize:vertical;"></textarea>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+                  <label style="font-size:.72rem;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">
+                    <input type="checkbox" id="img-en-BOOKING_INTRO"> 啟用
+                  </label>
+                  <button class="btn btn-dark btn-sm" onclick="saveImageText('BOOKING_INTRO')">💾 儲存文字</button>
+                  <span id="img-status-BOOKING_INTRO" style="font-size:.65rem;color:var(--mid);margin-left:auto;"></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ═══ 區塊 C：booking 下方輪播 ═══ -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-head"><h3>🖼️ 預約頁下方作品輪播（最多 5 張）</h3></div>
+            <div class="card-body">
+              <div id="booking-carousel-list"></div>
+            </div>
+          </div>
+
+          <div id="img-msg" class="msg-box"></div>
+          <div id="img-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ════ 圖片管理 pane END ════ -->
+
 </div>
 
 <div class="dash-modal-mask" id="dash-modal">
@@ -858,7 +949,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig};
   if(map[name])map[name]();
 }
 
@@ -2172,6 +2263,222 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
+
+// ════════════════════════════════════════════════════════════
+// 【2026/04/23 新增】📸 圖片管理 JS（第1輪）
+// 回滾：刪除下方所有程式碼 + switchTab map 的 image 分支 即可
+// 資料流：admin → GAS uploadImageToDrive → Drive → 回傳 URL → 寫回 Sheet
+// ════════════════════════════════════════════════════════════
+let _imageConfig = [];
+const INDEX_CAROUSEL_CODES = ['INDEX_CAROUSEL_1','INDEX_CAROUSEL_2','INDEX_CAROUSEL_3','INDEX_CAROUSEL_4','INDEX_CAROUSEL_5'];
+const BOOKING_CAROUSEL_CODES = ['BOOKING_CAROUSEL_1','BOOKING_CAROUSEL_2','BOOKING_CAROUSEL_3','BOOKING_CAROUSEL_4','BOOKING_CAROUSEL_5'];
+
+async function loadImageConfig(){
+  const loading = document.getElementById('img-loading');
+  if(loading) loading.style.display = 'flex';
+  try{
+    const r = await fetch(GAS+'?action=getImageConfig&t='+Date.now());
+    const d = await r.json();
+    _imageConfig = (d.ok && d.images) ? d.images : [];
+    renderImageConfig();
+    showMsg('img-msg','✅ 已載入','ok');
+  }catch(e){
+    showMsg('img-msg','❌ 載入失敗：'+e.message,'err');
+  }finally{
+    if(loading) loading.style.display = 'none';
+  }
+}
+
+function _imgFind(code){
+  return _imageConfig.find(x => x.code === code) || { code, url:'', fileId:'', order:0, enabled:false, text:'', updatedAt:'' };
+}
+
+function renderImageConfig(){
+  // 1. 首頁標題文字
+  const titleCfg = _imgFind('INDEX_TITLE');
+  const titleTa = document.getElementById('img-text-INDEX_TITLE');
+  const titleEn = document.getElementById('img-en-INDEX_TITLE');
+  if(titleTa) titleTa.value = titleCfg.text || '';
+  if(titleEn) titleEn.checked = titleCfg.enabled;
+  const ts1 = document.getElementById('img-status-INDEX_TITLE');
+  if(ts1) ts1.textContent = titleCfg.updatedAt ? ('上次更新：'+titleCfg.updatedAt) : '';
+
+  // 2. 首頁輪播 5 張
+  const carList = document.getElementById('index-carousel-list');
+  if(carList) carList.innerHTML = INDEX_CAROUSEL_CODES.map(renderImageRow).join('');
+
+  // 3. booking 個人照
+  const profileWrap = document.getElementById('booking-profile-wrap');
+  if(profileWrap) profileWrap.innerHTML = renderImageRow('BOOKING_PROFILE','個人照');
+
+  // 4. booking 自介文字
+  const introCfg = _imgFind('BOOKING_INTRO');
+  const introTa = document.getElementById('img-text-BOOKING_INTRO');
+  const introEn = document.getElementById('img-en-BOOKING_INTRO');
+  if(introTa) introTa.value = introCfg.text || '';
+  if(introEn) introEn.checked = introCfg.enabled;
+  const ts2 = document.getElementById('img-status-BOOKING_INTRO');
+  if(ts2) ts2.textContent = introCfg.updatedAt ? ('上次更新：'+introCfg.updatedAt) : '';
+
+  // 5. booking 下方輪播 5 張
+  const bkCarList = document.getElementById('booking-carousel-list');
+  if(bkCarList) bkCarList.innerHTML = BOOKING_CAROUSEL_CODES.map(renderImageRow).join('');
+}
+
+function renderImageRow(code, customLabel){
+  const cfg = _imgFind(code);
+  const hasImg = !!cfg.url;
+  const label = customLabel || code.replace(/_/g,' ');
+  const preview = hasImg
+    ? `<img src="${cfg.url}" style="max-width:180px;max-height:120px;border:1px solid var(--border);border-radius:3px;background:#fff;object-fit:cover;" onerror="this.style.display='none'">`
+    : `<div style="width:180px;height:120px;background:#f0ebe5;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--mid);font-size:.7rem;">（尚未上傳）</div>`;
+  const statusBadge = cfg.enabled && hasImg
+    ? `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:#e8f5ee;color:#2d7a4f">啟用中</span>`
+    : `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:#eee;color:#aaa">停用</span>`;
+  return `
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:#faf8f5;border:1px solid var(--border);border-radius:4px;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="flex:0 0 180px;">
+        <div style="font-size:.7rem;font-weight:600;color:var(--bark);margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">${label}</div>
+        ${preview}
+      </div>
+      <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          ${statusBadge}
+          ${cfg.updatedAt ? `<span style="font-size:.6rem;color:var(--mid);">更新：${cfg.updatedAt}</span>` : ''}
+        </div>
+        <input type="file" id="img-file-${code}" accept="image/*" style="font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-dark btn-sm" onclick="uploadImage('${code}')">⬆️ 上傳新圖</button>
+          ${hasImg ? `<label style="font-size:.7rem;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;"><input type="checkbox" id="img-en-${code}" ${cfg.enabled?'checked':''} onchange="toggleImageEnable('${code}',this.checked)"> 啟用</label>` : ''}
+          ${hasImg ? `<button class="btn btn-outline btn-sm" onclick="deactivateImageAction('${code}')" style="color:#a07a3a;border-color:#d4b98a;">🔸 停用</button>` : ''}
+          ${hasImg ? `<button class="btn btn-danger btn-sm" onclick="deleteImageHardAction('${code}')">🔺 徹底刪</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// 上傳圖片到 Drive（走 GET base64 帶參數，與購物系統同架構）
+async function uploadImage(code){
+  const fileInput = document.getElementById('img-file-'+code);
+  if(!fileInput || !fileInput.files || !fileInput.files[0]){
+    showMsg('img-msg','❌ 請先選擇圖片','err');
+    return;
+  }
+  const file = fileInput.files[0];
+  if(file.size > 4 * 1024 * 1024){
+    showMsg('img-msg','❌ 圖片超過 4MB，請先壓縮','err');
+    return;
+  }
+  showMsg('img-msg','上傳中…請稍候（約 5-10 秒）','loading');
+  try{
+    const base64 = await new Promise((res, rej)=>{
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+    const cleanBase64 = String(base64).replace(/^data:[^;]+;base64,/,'');
+    const p = new URLSearchParams({
+      action: 'uploadImageToDrive',
+      code: code,
+      base64: cleanBase64,
+      mimeType: file.type || 'image/jpeg',
+      filename: 'uni_'+code+'_'+Date.now()+'.jpg'
+    });
+    const r = await fetch(GAS+'?'+p.toString(), { method:'GET' });
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg','✅ 上傳成功','ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg','❌ '+(d.msg||'上傳失敗'),'err');
+    }
+  }catch(e){
+    showMsg('img-msg','❌ 上傳錯誤：'+e.message,'err');
+  }
+}
+
+// 啟用/停用切換（checkbox 即時觸發）
+async function toggleImageEnable(code, enabled){
+  try{
+    const p = new URLSearchParams({ action:'saveImageConfig', code, enabled: String(enabled) });
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg', enabled ? '✅ 已啟用' : '✅ 已停用', 'ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg','❌ '+(d.msg||'失敗'),'err');
+    }
+  }catch(e){
+    showMsg('img-msg','❌ 網路錯誤','err');
+  }
+}
+
+// 停用按鈕（軟刪）
+async function deactivateImageAction(code){
+  if(!confirm('確定停用「'+code+'」？\n（Sheet 資料保留，客人看不到，之後可重新啟用）'))return;
+  try{
+    const p = new URLSearchParams({ action:'deactivateImage', code });
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg','✅ 已停用','ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg','❌ '+(d.msg||'失敗'),'err');
+    }
+  }catch(e){
+    showMsg('img-msg','❌ 網路錯誤','err');
+  }
+}
+
+// 徹底刪按鈕（硬刪 Drive + 清 Sheet URL/fileId/text）
+async function deleteImageHardAction(code){
+  if(!confirm('⚠️ 確定徹底刪除「'+code+'」？\n\n會同時：\n1. 把 Drive 圖片檔丟進垃圾桶\n2. 清空此區塊的 URL、文字、啟用狀態\n\n此動作無法復原！'))return;
+  try{
+    const p = new URLSearchParams({ action:'deleteImageHard', code });
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg','✅ 已徹底刪除','ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg','❌ '+(d.msg||'失敗'),'err');
+    }
+  }catch(e){
+    showMsg('img-msg','❌ 網路錯誤','err');
+  }
+}
+
+// 儲存文字（INDEX_TITLE / BOOKING_INTRO 共用）
+async function saveImageText(code){
+  const ta = document.getElementById('img-text-'+code);
+  const en = document.getElementById('img-en-'+code);
+  if(!ta) return;
+  const text = ta.value || '';
+  const enabled = en ? en.checked : false;
+  showMsg('img-msg','儲存中…','loading');
+  try{
+    const p = new URLSearchParams({
+      action: 'saveImageConfig',
+      code: code,
+      text: text,
+      enabled: String(enabled)
+    });
+    const r = await fetch(GAS+'?'+p.toString());
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg','✅ 已儲存','ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg','❌ '+(d.msg||'失敗'),'err');
+    }
+  }catch(e){
+    showMsg('img-msg','❌ 網路錯誤','err');
+  }
+}
+// ════ 圖片管理 JS END ════
 </script>
 </body>
 </html>
