@@ -2357,7 +2357,7 @@ function renderImageRow(code, customLabel){
     </div>`;
 }
 
-// 上傳圖片到 Drive（走 GET base64 帶參數，與購物系統同架構）
+// 上傳圖片到 Drive（走 POST + text/plain，解決 GET URL 長度限制）
 async function uploadImage(code){
   const fileInput = document.getElementById('img-file-'+code);
   if(!fileInput || !fileInput.files || !fileInput.files[0]){
@@ -2369,7 +2369,7 @@ async function uploadImage(code){
     showMsg('img-msg','❌ 圖片超過 4MB，請先壓縮','err');
     return;
   }
-  showMsg('img-msg','上傳中…請稍候（約 5-10 秒）','loading');
+  showMsg('img-msg','上傳中…請稍候（約 5-15 秒）','loading');
   try{
     const base64 = await new Promise((res, rej)=>{
       const reader = new FileReader();
@@ -2378,14 +2378,20 @@ async function uploadImage(code){
       reader.readAsDataURL(file);
     });
     const cleanBase64 = String(base64).replace(/^data:[^;]+;base64,/,'');
-    const p = new URLSearchParams({
+    const bodyJson = JSON.stringify({
       action: 'uploadImageToDrive',
       code: code,
       base64: cleanBase64,
       mimeType: file.type || 'image/jpeg',
       filename: 'uni_'+code+'_'+Date.now()+'.jpg'
     });
-    const r = await fetch(GAS+'?'+p.toString(), { method:'GET' });
+    // 關鍵：Content-Type: text/plain 避免 CORS preflight，GAS doPost 自己 parse JSON
+    const r = await fetch(GAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: bodyJson,
+      redirect: 'follow'
+    });
     const d = await r.json();
     if(d.ok){
       showMsg('img-msg','✅ 上傳成功','ok');
