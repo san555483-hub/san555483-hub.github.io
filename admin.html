@@ -851,6 +851,84 @@ tr:hover td{background:rgba(61,43,31,.03);}
               <!-- B1: 個人照 -->
               <div id="booking-profile-wrap" style="margin-bottom:18px;"></div>
 
+              <!-- ═══ 【2026/04/23 第4輪新增】B1.5: 自介區文字設定 ═══ -->
+              <!-- 回滾：刪除此整個 B1.5 區塊 + 下方 JS 的 PROFILE_TEXT_CODES 相關程式即可 -->
+              <div style="margin-bottom:18px;padding:14px;background:#fdf6ec;border:1px solid var(--gold-lt);border-radius:5px;">
+                <div style="font-size:.78rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                  📝 自介區文字設定
+                  <span style="font-size:.6rem;background:var(--gold);color:#fff;padding:2px 7px;border-radius:8px;font-weight:500;letter-spacing:.03em;">NEW · 第4輪</span>
+                </div>
+                <div style="font-size:.68rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:12px;line-height:1.6;">
+                  設定 booking.html 左側自介區的 4 個文字欄位。不啟用 = 顯示預設值。
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;" class="profile-text-grid">
+                  <!-- ① BADGE -->
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:10px 12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap;">
+                      <div>
+                        <div style="font-size:.72rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;">① 名字上方小字</div>
+                        <div style="font-size:.6rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;">預設：UNI Artisan</div>
+                      </div>
+                      <label style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-family:'Noto Sans TC',sans-serif;cursor:pointer;color:var(--bark);">
+                        <input type="checkbox" id="img-en-BOOKING_PROFILE_BADGE"> 啟用
+                      </label>
+                    </div>
+                    <input type="text" id="img-text-BOOKING_PROFILE_BADGE" placeholder="例：UNI Artisan" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-size:.8rem;font-family:'Noto Serif TC',serif;outline:none;background:var(--linen);">
+                  </div>
+
+                  <!-- ② NAME -->
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:10px 12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap;">
+                      <div>
+                        <div style="font-size:.72rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;">② 主名字</div>
+                        <div style="font-size:.6rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;">預設：Elsa</div>
+                      </div>
+                      <label style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-family:'Noto Sans TC',sans-serif;cursor:pointer;color:var(--bark);">
+                        <input type="checkbox" id="img-en-BOOKING_PROFILE_NAME"> 啟用
+                      </label>
+                    </div>
+                    <input type="text" id="img-text-BOOKING_PROFILE_NAME" placeholder="例：Elsa" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-size:.8rem;font-family:'Noto Serif TC',serif;outline:none;background:var(--linen);">
+                  </div>
+
+                  <!-- ③ SUBTITLE -->
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:10px 12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap;">
+                      <div>
+                        <div style="font-size:.72rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;">③ 名字下方職稱</div>
+                        <div style="font-size:.6rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;">預設：一對一訂製・髮型設計師</div>
+                      </div>
+                      <label style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-family:'Noto Sans TC',sans-serif;cursor:pointer;color:var(--bark);">
+                        <input type="checkbox" id="img-en-BOOKING_PROFILE_SUBTITLE"> 啟用
+                      </label>
+                    </div>
+                    <input type="text" id="img-text-BOOKING_PROFILE_SUBTITLE" placeholder="例：一對一訂製・髮型設計師" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-size:.8rem;font-family:'Noto Serif TC',serif;outline:none;background:var(--linen);">
+                  </div>
+
+                  <!-- ④ WORKS_TITLE -->
+                  <div style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:10px 12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap;">
+                      <div>
+                        <div style="font-size:.72rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;">④ 作品集標題</div>
+                        <div style="font-size:.6rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;">預設：ARTWORKS</div>
+                      </div>
+                      <label style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-family:'Noto Sans TC',sans-serif;cursor:pointer;color:var(--bark);">
+                        <input type="checkbox" id="img-en-BOOKING_WORKS_TITLE"> 啟用
+                      </label>
+                    </div>
+                    <input type="text" id="img-text-BOOKING_WORKS_TITLE" placeholder="例：ARTWORKS 或 作品集" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:3px;font-size:.8rem;font-family:'Noto Serif TC',serif;outline:none;background:var(--linen);">
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <button class="btn btn-gold" onclick="saveAllProfileTexts()">💾 一鍵儲存全部</button>
+                  <span id="profile-texts-status" style="font-size:.65rem;color:var(--mid);"></span>
+                </div>
+
+                <style>@media(max-width:640px){.profile-text-grid{grid-template-columns:1fr !important;}}</style>
+              </div>
+              <!-- ═══ B1.5 END ═══ -->
+
               <!-- B2: 自介文字 -->
               <div style="padding:12px;background:#faf8f5;border:1px solid var(--border);border-radius:4px;">
                 <div style="font-size:.78rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;">
@@ -2323,7 +2401,52 @@ function renderImageConfig(){
   // 5. booking 下方輪播 5 張
   const bkCarList = document.getElementById('booking-carousel-list');
   if(bkCarList) bkCarList.innerHTML = BOOKING_CAROUSEL_CODES.map(renderImageRow).join('');
+
+  // ═══ 【2026/04/23 第4輪新增】6. booking 自介區 4 個文字欄位 ═══
+  // 回滾：刪除此 forEach + PROFILE_TEXT_CODES 常數 + saveAllProfileTexts 函式即可
+  PROFILE_TEXT_CODES.forEach(code => {
+    const cfg = _imgFind(code);
+    const ta = document.getElementById('img-text-'+code);
+    const en = document.getElementById('img-en-'+code);
+    if(ta) ta.value = cfg.text || '';
+    if(en) en.checked = !!cfg.enabled;
+  });
 }
+
+// ═══ 【2026/04/23 第4輪新增】自介區 4 個文字欄位 code 常數 ═══
+const PROFILE_TEXT_CODES = ['BOOKING_PROFILE_BADGE','BOOKING_PROFILE_NAME','BOOKING_PROFILE_SUBTITLE','BOOKING_WORKS_TITLE'];
+
+// ═══ 【2026/04/23 第4輪新增】一鍵儲存全部自介文字 ═══
+async function saveAllProfileTexts(){
+  const statusEl = document.getElementById('profile-texts-status');
+  if(statusEl){ statusEl.textContent = '儲存中…'; statusEl.style.color = 'var(--mid)'; }
+  let ok = 0, fail = 0;
+  for(const code of PROFILE_TEXT_CODES){
+    const ta = document.getElementById('img-text-'+code);
+    const en = document.getElementById('img-en-'+code);
+    if(!ta) continue;
+    const text = ta.value || '';
+    const enabled = en ? en.checked : false;
+    try{
+      const p = new URLSearchParams({ action:'saveImageConfig', code, text, enabled:String(enabled) });
+      const r = await fetch(GAS+'?'+p.toString());
+      const d = await r.json();
+      if(d.ok) ok++; else fail++;
+    }catch(e){ fail++; }
+  }
+  if(statusEl){
+    if(fail === 0){
+      statusEl.textContent = '✅ 已儲存 '+ok+' 項';
+      statusEl.style.color = '#2d7a4f';
+    } else {
+      statusEl.textContent = '⚠️ 成功 '+ok+' 項，失敗 '+fail+' 項';
+      statusEl.style.color = '#c0392b';
+    }
+  }
+  showMsg('img-msg', fail === 0 ? '✅ 自介區 4 個文字已全部儲存' : '⚠️ 部分儲存失敗（'+ok+'成功/'+fail+'失敗）', fail === 0 ? 'ok' : 'err');
+  await loadImageConfig();
+}
+// ═══ 第4輪新增 END ═══
 
 function renderImageRow(code, customLabel){
   const cfg = _imgFind(code);
