@@ -6,8 +6,255 @@
 <title>UNI Hair Shop — 線上預約</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #faf8f5; --surface: #ffffff; --border: #e8e0d5;
+/* ═══════════════════════════════════════════════════════
+   【2026/04/23 新增】booking.html 第 3 輪 - 左側自介區
+   回滾：刪除此 CSS + HTML + JS 三段即可完全還原
+   Flag：window.SHOW_BOOKING_PROFILE = false 即時隱藏
+═══════════════════════════════════════════════════════ */
+
+/* 桌面版：左右分欄 */
+@media (min-width: 1024px) {
+  body.bkg2-enabled .bkg2-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    align-items: start;
+  }
+  body.bkg2-enabled .bkg2-profile {
+    position: sticky;
+    top: 24px;
+  }
+  body.bkg2-enabled .header {
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    color: #3d2b1f;
+    margin-bottom: 24px;
+  }
+  body.bkg2-enabled .header-logo {
+    color: #3d2b1f;
+    font-size: 26px;
+  }
+  body.bkg2-enabled .header-sub {
+    color: #8a7d72;
+  }
+  body.bkg2-enabled .marquee-bar {
+    margin-bottom: 16px;
+    border-radius: 6px;
+  }
+  body.bkg2-enabled .progress,
+  body.bkg2-enabled .container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* 自介區共用樣式 */
+.bkg2-profile {
+  display: none;
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 32px -12px rgba(61,43,31,.15);
+  border: 1px solid #e8e0d5;
+  position: relative;
+  overflow: hidden;
+}
+.bkg2-profile.has-content {
+  display: block;
+}
+.bkg2-profile::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px;
+  height: 4px;
+  background: linear-gradient(90deg, #c4a882, #d4a88a, #c4a882);
+  border-radius: 14px 14px 0 0;
+}
+.bkg2-ornament {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  font-family: 'Noto Serif TC', serif;
+  font-style: italic;
+  font-size: 5rem;
+  color: #c4a882;
+  opacity: 0.06;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  font-weight: 300;
+}
+
+/* 個人照 */
+.bkg2-photo-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 180px;
+  margin: 0 auto 20px;
+}
+.bkg2-photo-wrap::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 8px;
+  right: -8px; bottom: -8px;
+  border: 1.5px solid #c4a882;
+  border-radius: 50%;
+  opacity: 0.4;
+  z-index: 0;
+}
+.bkg2-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ede5d8, #d4c4a8);
+  box-shadow: 0 12px 32px -8px rgba(61,43,31,.3);
+  z-index: 1;
+}
+.bkg2-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 名字區 */
+.bkg2-name-block {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed #e8e0d5;
+}
+.bkg2-badge {
+  display: inline-block;
+  font-family: 'Noto Serif TC', serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  color: #c4a882;
+  letter-spacing: 0.18em;
+  margin-bottom: 8px;
+}
+.bkg2-badge::before,
+.bkg2-badge::after {
+  content: '──';
+  margin: 0 6px;
+  opacity: 0.5;
+}
+.bkg2-name {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #3d2b1f;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.bkg2-title {
+  font-size: 0.74rem;
+  color: #8a7d72;
+  letter-spacing: 0.1em;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+
+/* 自介文字 */
+.bkg2-intro {
+  font-size: 0.82rem;
+  color: #5c4a3e;
+  line-height: 1.85;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 300;
+  white-space: pre-line;
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  background: #faf8f5;
+  border-radius: 8px;
+  border-left: 3px solid #c4a882;
+}
+
+/* 作品輪播 */
+.bkg2-works-title {
+  font-size: 0.68rem;
+  color: #3d2b1f;
+  letter-spacing: 0.2em;
+  text-align: center;
+  margin-bottom: 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  position: relative;
+  font-weight: 500;
+}
+.bkg2-works-title::before,
+.bkg2-works-title::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 32px;
+  height: 1px;
+  background: #c4a882;
+  opacity: 0.5;
+}
+.bkg2-works-title::before { left: calc(50% - 75px); }
+.bkg2-works-title::after { right: calc(50% - 75px); }
+
+.bkg2-works-carousel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ede5d8;
+  box-shadow: 0 6px 20px -6px rgba(61,43,31,.2);
+}
+.bkg2-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+  background-size: cover;
+  background-position: center;
+}
+.bkg2-slide.active { opacity: 1; }
+.bkg2-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 3;
+}
+.bkg2-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.4s;
+  cursor: pointer;
+}
+.bkg2-dot.active {
+  background: #fff;
+  width: 16px;
+  border-radius: 2px;
+}
+
+/* 手機版：上下堆疊 */
+@media (max-width: 1023px) {
+  .bkg2-profile.has-content {
+    margin: 16px auto;
+    max-width: 420px;
+    padding: 20px 18px;
+  }
+  .bkg2-photo-wrap { max-width: 140px; }
+  .bkg2-name { font-size: 1.2rem; }
+  .bkg2-intro { font-size: 0.78rem; }
+}
+/* ═══ bkg2 CSS END ═══ */
+  :root {
+--bg: #faf8f5; --surface: #ffffff; --border: #e8e0d5;
   --gold: #c4a882; --gold-dark: #a08660; --text: #2a2420;
   --muted: #8a7d72; --light: #f0ebe4; --red: #c0392b; --disabled: #d5cdc5;
 }
@@ -253,6 +500,34 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 </style>
 </head>
 <body>
+  <!-- 【2026/04/23 新增】左右分欄 layout 容器（桌面版生效） -->
+<div class="bkg2-layout">
+
+<!-- 【2026/04/23 新增】左側自介區（手機版自動堆疊到最上面） -->
+<aside class="bkg2-profile" id="bkg2-profile">
+  <div class="bkg2-ornament">E</div>
+  <div class="bkg2-photo-wrap">
+    <div class="bkg2-photo" id="bkg2-photo">
+      <!-- JS 動態填入 img -->
+    </div>
+  </div>
+  <div class="bkg2-name-block">
+    <div class="bkg2-badge">UNI Artisan</div>
+    <div class="bkg2-name">Elsa</div>
+    <div class="bkg2-title">一對一訂製・髮型設計師</div>
+  </div>
+  <div class="bkg2-intro" id="bkg2-intro">
+    <!-- JS 動態填入文字 -->
+  </div>
+  <div class="bkg2-works-title">ARTWORKS</div>
+  <div class="bkg2-works-carousel" id="bkg2-works-carousel">
+    <!-- JS 動態填入 slides + dots -->
+  </div>
+</aside>
+<!-- ══ bkg2 HTML END ══ -->
+
+<!-- 【右側】原本的所有內容維持不動 -->
+<div class="bkg2-main">
 <div class="header">
   <div class="header-logo">UNI HAIR SHOP</div>
   <div class="header-sub">一對一訂製髮型設計</div>
@@ -1169,6 +1444,7 @@ function _fillStep3IfLoggedIn() {
 // 頁面載入後立刻檢查 LINE 登入回調 + 綁定 step 切換
 document.addEventListener('DOMContentLoaded', () => {
   handleLineLoginReturn();
+  loadBookingProfile();
   // 【2026-04-20 新增】初始化「下一步」按鈕狀態（顯示「請先 LINE 登入」）
   if (typeof updateBtn1State === 'function') updateBtn1State();
   // 延遲監聽 section3 顯示時填資料
@@ -1179,7 +1455,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     observer.observe(sec3, { attributes: true, attributeFilter: ['class'] });
   }
+  // ══════════════════════════════════════════════
+// 【2026/04/23 新增】booking.html 左側自介區
+// 回滾 flag：window.SHOW_BOOKING_PROFILE = false
+// ══════════════════════════════════════════════
+window.SHOW_BOOKING_PROFILE = true;
+
+async function loadBookingProfile() {
+  if (!window.SHOW_BOOKING_PROFILE) return;
+  try {
+    const r = await fetch(GAS_URL + '?action=getImageConfig&block=BOOKING&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok || !d.images) return;
+
+    const profile = d.images.find(x => x.code === 'BOOKING_PROFILE' && x.url);
+    const intro = d.images.find(x => x.code === 'BOOKING_INTRO' && x.text && x.text.trim());
+    const works = d.images
+      .filter(x => /^BOOKING_CAROUSEL_\d+$/.test(x.code) && x.url)
+      .sort((a, b) => a.order - b.order);
+
+    if (!profile && !intro && !works.length) return;
+
+    const photoEl = document.getElementById('bkg2-photo');
+    if (photoEl && profile) {
+      photoEl.innerHTML = `<img src="${profile.url}" alt="Elsa">`;
+    }
+
+    const introEl = document.getElementById('bkg2-intro');
+    if (introEl && intro) {
+      introEl.textContent = intro.text;
+    } else if (introEl) {
+      introEl.style.display = 'none';
+    }
+
+    const worksEl = document.getElementById('bkg2-works-carousel');
+    const worksTitle = document.querySelector('.bkg2-works-title');
+    if (worksEl && works.length) {
+      worksEl.innerHTML = works.map((img, i) =>
+        `<div class="bkg2-slide${i === 0 ? ' active' : ''}" style="background-image:url('${img.url}')"></div>`
+      ).join('') + `<div class="bkg2-dots" id="bkg2-dots"></div>`;
+
+      const dotsEl = document.getElementById('bkg2-dots');
+      if (dotsEl) {
+        dotsEl.innerHTML = works.map((_, i) =>
+          `<span class="bkg2-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></span>`
+        ).join('');
+      }
+
+      if (works.length > 1) {
+        let cur = 0;
+        const slides = worksEl.querySelectorAll('.bkg2-slide');
+        const dots = dotsEl ? dotsEl.querySelectorAll('.bkg2-dot') : [];
+        let timer = null;
+        const goTo = (idx) => {
+          slides[cur].classList.remove('active');
+          if (dots[cur]) dots[cur].classList.remove('active');
+          cur = idx;
+          slides[cur].classList.add('active');
+          if (dots[cur]) dots[cur].classList.add('active');
+        };
+        const next = () => goTo((cur + 1) % slides.length);
+        const start = () => { timer = setInterval(next, 3000); };
+        const restart = () => { if (timer) clearInterval(timer); start(); };
+        dots.forEach((d, i) => d.addEventListener('click', () => { goTo(i); restart(); }));
+        start();
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) { if (timer) clearInterval(timer); }
+          else { restart(); }
+        });
+      }
+    } else {
+      if (worksTitle) worksTitle.style.display = 'none';
+      if (worksEl) worksEl.style.display = 'none';
+    }
+
+    const profileEl = document.getElementById('bkg2-profile');
+    if (profileEl) profileEl.classList.add('has-content');
+    document.body.classList.add('bkg2-enabled');
+  } catch (e) {
+    console.warn('[bkg2] 載入自介失敗', e);
+  }
+}
+// ══ bkg2 JS END ══
 });
 </script>
+</div><!-- bkg2-main END -->   
+</div><!-- bkg2-layout END -->  
 </body>
 </html>
