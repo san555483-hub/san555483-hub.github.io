@@ -253,7 +253,7 @@
   .bkg2-intro { font-size: 0.78rem; }
 }
 /* ═══ bkg2 CSS END ═══ */
-  :root {
+:root {
 --bg: #faf8f5; --surface: #ffffff; --border: #e8e0d5;
   --gold: #c4a882; --gold-dark: #a08660; --text: #2a2420;
   --muted: #8a7d72; --light: #f0ebe4; --red: #c0392b; --disabled: #d5cdc5;
@@ -337,7 +337,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 .time-slot.selected { border-color: var(--gold); background: #fdf6ee; color: var(--gold-dark); font-weight: 500; }
 
 /* ═══ 【2026-04-22 新增】4 種已佔用時段樣式 ═══ */
-/* 通用：灰底 + 切斷線 + 不可點 */
 .time-slot.taken-base {
   cursor: not-allowed;
   font-size: 10px;
@@ -347,43 +346,36 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
   text-decoration: line-through;
   position: relative;
 }
-/* 👤 一般客預約 / 🔒 手動鎖定 → 灰色 */
 .time-slot.taken-general {
   background: #eeeeee;
   border-color: #cccccc;
   color: #999999;
 }
-/* 🟣 尊爵客預約 → 紫色 */
 .time-slot.taken-vip-deluxe {
   background: #f0e8f5;
   border-color: #b89ac9;
   color: #6a4a8a;
 }
-/* ⭐ 指定加價服務 → 金色 */
 .time-slot.taken-priority {
   background: #fdf6e8;
   border-color: #e8c870;
   color: #8a6a20;
 }
-/* 👑 VIP 客（儲值客）→ 深紅 */
 .time-slot.taken-vip-credit {
   background: #fdecea;
   border-color: #e8a9a0;
   color: #a04030;
 }
-/* 🏖️ 公休 → 深灰 */
 .time-slot.taken-closed {
   background: #e8e0d5;
   border-color: #b8a99c;
   color: #5a4a3c;
 }
-/* ☕ 休息時段 → 淡黃 */
 .time-slot.taken-rest {
   background: #fff8e8;
   border-color: #e8c870;
   color: #8a6a20;
 }
-/* 舊兼容性（保留以防） */
 .time-slot.booked { background: #fdecea; border-color: #e8a9a0; color: #a04030; cursor: not-allowed; font-size: 10px; line-height: 1.3; padding: 6px 4px; font-weight: 500; }
 .time-slot.locked-notice { background: #fff8e8; border-color: #e8c870; color: #8a6a20; cursor: not-allowed; font-size: 10px; line-height: 1.3; padding: 6px 4px; }
 
@@ -427,8 +419,6 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-inline { display: none; text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
 
-/* ══ 【2026-04-19 新增】LINE 登入樣式 ══ */
-/* ══ 【2026-04-20 修正】改為「強制登入」樣式（未登入紅框警示） ══ */
 .line-login-box {
   background: linear-gradient(135deg, #fff5f0 0%, #ffffff 100%);
   border: 2px solid #e74c3c;
@@ -500,33 +490,25 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 </style>
 </head>
 <body>
-  <!-- 【2026/04/23 新增】左右分欄 layout 容器（桌面版生效） -->
+<!-- 【2026/04/23 新增】左右分欄 layout 容器 -->
 <div class="bkg2-layout">
 
-<!-- 【2026/04/23 新增】左側自介區（手機版自動堆疊到最上面） -->
+<!-- 【2026/04/23 新增】左側自介區 -->
 <aside class="bkg2-profile" id="bkg2-profile">
   <div class="bkg2-ornament">E</div>
   <div class="bkg2-photo-wrap">
-    <div class="bkg2-photo" id="bkg2-photo">
-      <!-- JS 動態填入 img -->
-    </div>
+    <div class="bkg2-photo" id="bkg2-photo"></div>
   </div>
   <div class="bkg2-name-block">
     <div class="bkg2-badge">UNI Artisan</div>
     <div class="bkg2-name">Elsa</div>
     <div class="bkg2-title">一對一訂製・髮型設計師</div>
   </div>
-  <div class="bkg2-intro" id="bkg2-intro">
-    <!-- JS 動態填入文字 -->
-  </div>
+  <div class="bkg2-intro" id="bkg2-intro"></div>
   <div class="bkg2-works-title">ARTWORKS</div>
-  <div class="bkg2-works-carousel" id="bkg2-works-carousel">
-    <!-- JS 動態填入 slides + dots -->
-  </div>
+  <div class="bkg2-works-carousel" id="bkg2-works-carousel"></div>
 </aside>
-<!-- ══ bkg2 HTML END ══ -->
 
-<!-- 【右側】原本的所有內容維持不動 -->
 <div class="bkg2-main">
 <div class="header">
   <div class="header-logo">UNI HAIR SHOP</div>
@@ -551,9 +533,6 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
   <div class="section" id="section1">
     <div class="section-title">選擇服務項目</div>
     <div class="section-desc">可複選多項,選完後點下一步</div>
-
-    <!-- 【2026-04-19 新增】LINE 快速登入區塊 -->
-    <!-- 【2026-04-20 修正】改為強制登入：未登入無法預約 -->
     <div id="lineLoginArea">
       <div class="line-login-box" id="lineLoginBox">
         <div class="line-login-title">您好 歡迎來到UNI髮型</div>
@@ -571,7 +550,6 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
         </div>
       </div>
     </div>
-
     <div id="selectedTagsArea" class="selected-tags"></div>
     <div id="serviceList"></div>
     <div class="notice-box" style="margin-top:16px">
@@ -635,8 +613,6 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
         <span class="payment-tag">🏦 轉帳</span>
       </div>
       <div style="font-size:11px;color:var(--muted)">使用官方LINE自助預約即送回饋金 🎁</div>
-
-      <!-- 【2026-04-18 新增】家人代付貼心話術 -->
       <div style="margin-top:12px;padding:12px 14px;background:#fdf8f0;border:1px solid #e8d5b0;border-radius:10px;">
         <div style="font-size:12px;font-weight:500;color:var(--gold-dark);margin-bottom:6px;">🌸 貼心小提醒</div>
         <div style="font-size:11px;color:#7a6a55;line-height:1.8;">
@@ -685,15 +661,16 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 </div>
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
-// 🟣 尊爵 GAS（階段 4 新增：抓尊爵預約做撞單顯示）
 const GAS_VIP_URL = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
 
-// 📊 階段 4 flag（出事改 false 可立刻停用對應來源）
-window.BOOKING_MULTI_SOURCE = true;  // 多來源抓取總開關
-window.FETCH_VIP_DATA = true;        // 是否抓尊爵預約（顯示「尊爵客預約」）
-window.FETCH_LOCKED_SLOTS = true;    // 是否抓手動鎖定時段
-window.FETCH_SCHEDULE = true;        // 是否抓公休/休息時段
-window.FETCH_VIP_PHONES = true;      // 是否抓 VIP 客儲值電話 hash（判斷「VIP客預約」）
+window.BOOKING_MULTI_SOURCE = true;
+window.FETCH_VIP_DATA = true;
+window.FETCH_LOCKED_SLOTS = true;
+window.FETCH_SCHEDULE = true;
+window.FETCH_VIP_PHONES = true;
+
+// 【2026/04/23 新增】自介區 flag
+window.SHOW_BOOKING_PROFILE = true;
 
 const BUSINESS_HOURS = {
   0: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
@@ -709,8 +686,6 @@ const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9�
 let allServices = [], schedule = [], lockedInfoMap = {};
 let state = { services: [], date: null, time: null, name: '', phone: '', note: '', priority: false, memberType: '', priorityFee: 0, uid: '', displayName: '', lineLoggedIn: false };
 let siteSettings = { priority_member_fee: 250, priority_nonmember_fee: 350, payment_jkopay_url: '', payment_ipass_url: '' };
-
-// 階段 4 新增：VIP 電話 hash 快取（整場只抓 1 次，省 API 流量）
 let _vipPhoneHashSet = null;
 
 function normalizeTime(input) {
@@ -720,7 +695,6 @@ function normalizeTime(input) {
   return String(parseInt(m[1],10)).padStart(2,'0') + ':' + String(parseInt(m[2]||'0',10)).padStart(2,'00');
 }
 
-// 階段 4 新增：SHA-256 hash（Web Crypto API，瀏覽器內建）
 async function sha256(text) {
   const msgBuffer = new TextEncoder().encode(String(text));
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -728,739 +702,33 @@ async function sha256(text) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 階段 4 新增：正規化電話（跟 GAS 一致：9 碼補 0）
 function normalizePhoneForHash(phone) {
   const digits = String(phone || '').replace(/\D/g, '');
   if (!digits || digits.length < 9) return '';
   return digits.length === 9 ? '0' + digits : digits;
 }
 
-// ══════════════════════════════════════
-// 📢 廣播跑馬燈（撤 site=booking 啟用者）
-// ══════════════════════════════════════
 async function loadMarqueeBanner() {
   try {
     const r = await fetch(GAS_URL + '?action=getMarquees&site=booking&enabledOnly=true&t=' + Date.now());
     const d = await r.json();
     if (!d.ok || !d.marquees || !d.marquees.length) return;
-    const texts = d.marquees
-      .filter(m => m.content && m.content.trim())
-      .sort((a, b) => a.order - b.order)
-      .map(m => m.content.trim());
+    const texts = d.marquees.filter(m => m.content && m.content.trim()).sort((a, b) => a.order - b.order).map(m => m.content.trim());
     if (!texts.length) return;
-
     const combined = texts.join('　　✦　　');
     const track = document.getElementById('marqueeTrack');
     const bar   = document.getElementById('marqueeBar');
     if (!track || !bar) return;
-
-    track.innerHTML =
-      `<span class="marquee-text">${combined}</span>` +
-      `<span class="marquee-sep">　　✦　　</span>` +
-      `<span class="marquee-text">${combined}</span>`;
-
+    track.innerHTML = `<span class="marquee-text">${combined}</span><span class="marquee-sep">　　✦　　</span><span class="marquee-text">${combined}</span>`;
     const duration = Math.min(120, Math.max(40, Math.round(combined.length * 1.8)));
     track.style.animation = `mqRoll ${duration}s linear infinite`;
-
     bar.classList.add('has-content');
-  } catch(e) {
-    console.warn('marquee load failed', e);
-  }
+  } catch(e) { console.warn('marquee load failed', e); }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // 跑馬燈與主資料並行載入
-  loadMarqueeBanner();
-
-  try {
-    const t = Date.now();
-    const [svcRes, schedRes, settingsRes] = await Promise.all([
-      fetch(GAS_URL + '?action=getServices&t=' + t, { cache: 'no-store' }),
-      fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' }),
-      fetch(GAS_URL + '?action=getSettings&t=' + t, { cache: 'no-store' }),
-    ]);
-    const svcData = await svcRes.json();
-    const schedData = await schedRes.json();
-    const settingsData = await settingsRes.json();
-    (settingsData.settings || []).forEach(s => { siteSettings[s.key] = s.value; });
-    allServices = (svcData.services || []).filter(s => s.active);
-    schedule = schedData.schedule || [];
-    renderServices();
-    renderDates();
-    renderPaymentButtons();
-    document.getElementById('sectionLoading').classList.remove('active');
-    document.getElementById('section1').classList.add('active');
-  } catch (err) {
-    document.getElementById('sectionLoading').innerHTML = '<div class="loading-screen" style="color:#c0392b">載入失敗，請重新整理頁面</div>';
-  }
-});
-
-function renderServices() {
-  const categories = {};
-  allServices.forEach(s => {
-    if (!categories[s.category]) categories[s.category] = [];
-    categories[s.category].push(s);
-  });
-  document.getElementById('serviceList').innerHTML = Object.entries(categories).map(([cat, items]) =>
-    '<div class="category-label">' + cat + '</div><div class="service-grid">' +
-    items.map(s =>
-      '<div class="service-card" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' +
-      '<div class="service-name">' + s.name + '</div>' +
-      '<div class="service-price">' + s.price + '</div>' +
-      '<div class="service-time">' + (s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘') + '</div>' +
-      (s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : '') +
-      '</div>'
-    ).join('') + '</div>'
-  ).join('');
-}
-
-function toggleService(id) {
-  const idx = state.services.findIndex(s => s.id === id);
-  if (idx >= 0) {
-    state.services.splice(idx, 1);
-    document.getElementById('svc_' + id).classList.remove('selected');
-  } else {
-    const svc = allServices.find(s => s.id === id);
-    if (svc) { state.services.push(svc); document.getElementById('svc_' + id).classList.add('selected'); }
-  }
-  renderSelectedTags();
-  // 【2026-04-20 修正】需同時「選擇服務」+「已 LINE 登入」才能進下一步
-  updateBtn1State();
-}
-
-function removeService(id) {
-  state.services = state.services.filter(s => s.id !== id);
-  const card = document.getElementById('svc_' + id);
-  if (card) card.classList.remove('selected');
-  renderSelectedTags();
-  // 【2026-04-20 修正】需同時「選擇服務」+「已 LINE 登入」才能進下一步
-  updateBtn1State();
-}
-
-// 【2026-04-20 新增】Step 1「下一步」按鈕狀態：需服務+登入都齊全
-function updateBtn1State() {
-  const btn = document.getElementById('btn1');
-  if (!btn) return;
-  const hasService = state.services.length > 0;
-  const isLoggedIn = !!(state.lineLoggedIn && state.uid);
-  btn.disabled = !(hasService && isLoggedIn);
-  // 提示文字
-  if (!isLoggedIn) {
-    btn.textContent = '請先 LINE 登入';
-  } else if (!hasService) {
-    btn.textContent = '請先選擇服務';
-  } else {
-    btn.textContent = '下一步';
-  }
-}
-
-function renderSelectedTags() {
-  const area = document.getElementById('selectedTagsArea');
-  if (state.services.length === 0) { area.innerHTML = ''; return; }
-  area.innerHTML = state.services.map(s =>
-    '<div class="selected-tag">' + s.name + '<span class="selected-tag-remove" onclick="removeService(\'' + s.id + '\')">×</span></div>'
-  ).join('');
-}
-
-function renderDates() {
-  const scroll = document.getElementById('dateScroll');
-  const today = new Date();
-  const closedDates = new Set(schedule.filter(s => s.type === 'closed').map(s => s.date));
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    const dateStr = formatDate(d);
-    const isClosed = closedDates.has(dateStr);
-    const el = document.createElement('div');
-    el.className = 'date-item' + (isClosed ? ' closed' : '');
-    el.innerHTML = '<div class="date-day">週' + DAY_NAMES[d.getDay()] + '</div><div class="date-num">' + d.getDate() + '</div><div class="date-month">' + MONTH_NAMES[d.getMonth()] + '</div>' + (isClosed ? '<div class="date-closed-label">公休</div>' : '');
-    if (!isClosed) el.onclick = (function(date, el){ return function(){ selectDate(date, el); }; })(d, el);
-    scroll.appendChild(el);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 【2026-04-22 階段 4】selectDate 全面改版：並行抓 5 個來源 + 4 類顯示
-// 原本只抓 getBookedSlots，現在同時抓：主系統、尊爵、手動鎖定、公休/休息、VIP 電話
-// 回滾：F12 Console 貼 window.BOOKING_MULTI_SOURCE = false
-// ═══════════════════════════════════════════════════════════════
-async function selectDate(date, el) {
-  state.date = date; state.time = null;
-  document.querySelectorAll('.date-item').forEach(d => d.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('btn2').disabled = true;
-  const area = document.getElementById('timeSlotArea');
-  const loading = document.getElementById('loadingSlots');
-  area.innerHTML = ''; loading.style.display = 'block';
-  const dateStr = formatDate(date);
-
-  // 🆘 如果 flag 關閉 → 回退到舊版單 API 抓取
-  if (!window.BOOKING_MULTI_SOURCE) {
-    try {
-      const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
-      const data = await res.json();
-      const booked = new Set((data.slots || []).map(normalizeTime));
-      lockedInfoMap = data.lockedInfo || {};
-      loading.style.display = 'none';
-      renderTimeSlotsLegacy(date, booked);
-    } catch (_) {
-      loading.style.display = 'none';
-      renderTimeSlotsLegacy(date, new Set());
-    }
-    return;
-  }
-
-  // 🚀 多來源並行抓取
-  try {
-    const t = Date.now();
-    const fetches = [
-      // 🔴 主系統預約
-      fetch(GAS_URL + '?action=getBookings&date=' + encodeURIComponent(dateStr) + '&t=' + t, { cache: 'no-store' })
-        .then(r => r.json()).catch(() => ({ bookings: [] })),
-      // 🟣 尊爵預約
-      window.FETCH_VIP_DATA
-        ? fetch(GAS_VIP_URL + '?fn=getBookingsByDate&params=' + encodeURIComponent(JSON.stringify({ date: dateStr })) + '&t=' + t, { cache: 'no-store' })
-            .then(r => r.json()).catch(() => ({ bookings: [] }))
-        : Promise.resolve({ bookings: [] }),
-      // 🔒 手動鎖定
-      window.FETCH_LOCKED_SLOTS
-        ? fetch(GAS_URL + '?action=getLockedSlots&t=' + t, { cache: 'no-store' })
-            .then(r => r.json()).catch(() => ({ slots: [] }))
-        : Promise.resolve({ slots: [] }),
-      // 📆 公休 / 休息時段
-      window.FETCH_SCHEDULE
-        ? fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' })
-            .then(r => r.json()).catch(() => ({ schedule: [] }))
-        : Promise.resolve({ schedule: [] }),
-      // 💎 VIP 電話 hash（整場只抓 1 次，後續從快取讀）
-      (window.FETCH_VIP_PHONES && !_vipPhoneHashSet)
-        ? fetch(GAS_URL + '?action=getVipPhonesHashed&t=' + t, { cache: 'no-store' })
-            .then(r => r.json()).catch(() => ({ hashes: [] }))
-        : Promise.resolve({ hashes: null })  // 已有快取就不抓
-    ];
-    const [mainResp, vipResp, lockResp, schedResp, vipPhoneResp] = await Promise.all(fetches);
-
-    // 建立 VIP 電話 hash 快取（如果這次有抓到）
-    if (vipPhoneResp && Array.isArray(vipPhoneResp.hashes)) {
-      _vipPhoneHashSet = new Set(vipPhoneResp.hashes);
-    } else if (!_vipPhoneHashSet) {
-      _vipPhoneHashSet = new Set();
-    }
-
-    // 整理各來源資料成 slotInfoMap：key=時間字串(HH:MM), value={type, label}
-    const slotInfoMap = {};
-
-    // 🔴 主系統預約（要判斷 priority 和 VIP 客）
-    const mainBookings = (mainResp.bookings || []).filter(b => {
-      const bDate = String(b.date || '').substring(0, 10);
-      return bDate === dateStr && String(b.status || '') !== '已取消';
-    });
-    for (const b of mainBookings) {
-      const timeKey = normalizeTime(b.time);
-      if (!timeKey) continue;
-      // 優先級判斷：
-      // 1. priority=true → 指定加價服務預約
-      // 2. 電話在儲值名單 → VIP客預約
-      // 3. 其他 → 已預約
-      const isPriority = String(b.priority || '').includes('✅') || String(b.priority || '').includes('加價');
-      let type = 'general', label = '已預約';
-      if (isPriority) {
-        type = 'priority'; label = '指定加價服務預約';
-      } else if (_vipPhoneHashSet && _vipPhoneHashSet.size > 0 && b.phone) {
-        const normPhone = normalizePhoneForHash(b.phone);
-        if (normPhone) {
-          const phoneHash = await sha256(normPhone);
-          if (_vipPhoneHashSet.has(phoneHash)) {
-            type = 'vip-credit'; label = 'VIP客預約';
-          }
-        }
-      }
-      slotInfoMap[timeKey] = { type, label };
-    }
-
-    // 🟣 尊爵預約（統一顯示「尊爵客預約」，不覆蓋主系統已有資料）
-    const vipBookings = (vipResp.bookings || []).filter(b => {
-      const bDate = String(b.date || '').substring(0, 10);
-      const bStatus = String(b.status || '');
-      return bDate === dateStr && bStatus !== '已取消' && bStatus !== '取消';
-    });
-    vipBookings.forEach(b => {
-      const timeKey = normalizeTime(b.time);
-      if (!timeKey) return;
-      if (!slotInfoMap[timeKey]) {
-        slotInfoMap[timeKey] = { type: 'vip-deluxe', label: '尊爵客預約' };
-      }
-    });
-
-    // 🔒 手動鎖定
-    const lockedSlots = (lockResp.slots || []).filter(s => s.date === dateStr);
-    lockedSlots.forEach(s => {
-      const timeKey = normalizeTime(s.time);
-      if (!timeKey) return;
-      if (!slotInfoMap[timeKey]) {
-        slotInfoMap[timeKey] = { type: 'general', label: '已預約' };
-      }
-    });
-
-    // 📆 公休 / 休息時段
-    const todaySched = (schedResp.schedule || []).filter(s => s.date === dateStr);
-    todaySched.forEach(s => {
-      const type = String(s.type || '').trim();
-      const timeRange = String(s.time || '').trim();
-      if (type === 'closed') {
-        // 整天店休
-        BUSINESS_HOURS[date.getDay()].forEach(t => {
-          const nt = normalizeTime(t);
-          slotInfoMap[nt] = { type: 'closed', label: '公休' };
-        });
-      } else if (type === 'rest' && timeRange) {
-        // 部分休息
-        const parts = timeRange.split('-');
-        if (parts.length === 2) {
-          const startMins = timeToMins(parts[0].trim());
-          const endMins = timeToMins(parts[1].trim());
-          BUSINESS_HOURS[date.getDay()].forEach(t => {
-            const nt = normalizeTime(t);
-            const tm = timeToMins(nt);
-            if (tm >= startMins && tm < endMins) {
-              if (!slotInfoMap[nt]) {
-                slotInfoMap[nt] = { type: 'rest', label: '休息時段' };
-              }
-            }
-          });
-        }
-      }
-    });
-
-    loading.style.display = 'none';
-    renderTimeSlotsMulti(date, slotInfoMap);
-  } catch (err) {
-    console.error('多來源抓取失敗:', err);
-    loading.style.display = 'none';
-    // 失敗時回退到舊版
-    try {
-      const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
-      const data = await res.json();
-      const booked = new Set((data.slots || []).map(normalizeTime));
-      renderTimeSlotsLegacy(date, booked);
-    } catch (_) {
-      renderTimeSlotsLegacy(date, new Set());
-    }
-  }
-}
-
-// 時間字串 → 分鐘數（供區間計算）
-function timeToMins(t) {
-  const p = String(t).split(':');
-  return parseInt(p[0], 10) * 60 + parseInt(p[1] || '0', 10);
-}
-
-// 🎨 階段 4 新版渲染：根據 slotInfoMap 決定 4 種樣式
-function renderTimeSlotsMulti(date, slotInfoMap) {
-  const slots = BUSINESS_HOURS[date.getDay()];
-  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
-  slots.forEach(function(t) {
-    const nt = normalizeTime(t);
-    const info = slotInfoMap[nt];
-    if (info) {
-      // 已佔用 → 根據類型顯示
-      const cssClass = 'time-slot taken-base taken-' + info.type;
-      html += '<div class="' + cssClass + '">' + nt + '<br><span style="font-size:9px">' + info.label + '</span></div>';
-    } else {
-      // 可預約
-      html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
-    }
-  });
-  html += '</div>';
-  document.getElementById('timeSlotArea').innerHTML = html;
-}
-
-// 舊版渲染（回退用）
-function renderTimeSlotsLegacy(date, booked) {
-  const slots = BUSINESS_HOURS[date.getDay()];
-  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
-  slots.forEach(function(t) {
-    const nt = normalizeTime(t);
-    const isBooked = booked.has(nt);
-    const lockNote = lockedInfoMap[nt] || '';
-    const isNotice = isBooked && lockNote.includes('訂製化溝通');
-    if (isNotice) {
-      html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>';
-    } else if (isBooked) {
-      html += '<div class="time-slot taken-base taken-general">' + nt + '<br><span style="font-size:9px">已預約</span></div>';
-    } else {
-      html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
-    }
-  });
-  html += '</div>';
-  document.getElementById('timeSlotArea').innerHTML = html;
-}
-
-// 兼容舊版函式名稱（避免如果還有人呼叫）
-function renderTimeSlots(date, booked) {
-  return renderTimeSlotsLegacy(date, booked);
-}
-
-function selectTime(time, el) {
-  state.time = time;
-  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  document.getElementById('btn2').disabled = false;
-}
-
-function togglePriority() {
-  state.priority = !state.priority;
-  const check = document.getElementById('priorityCheck');
-  check.classList.toggle('checked', state.priority);
-  check.textContent = state.priority ? '✓' : '';
-  document.getElementById('memberTypeArea').style.display = state.priority ? 'block' : 'none';
-  if (!state.priority) { state.memberType = ''; state.priorityFee = 0; }
-  document.getElementById('memberFeeLabel').textContent = '$' + (siteSettings.priority_member_fee || 250);
-  document.getElementById('nonMemberFeeLabel').textContent = '$' + (siteSettings.priority_nonmember_fee || 350);
-}
-
-function selectMember(type) {
-  state.memberType = type;
-  state.priorityFee = type === 'member' ? Number(siteSettings.priority_member_fee || 250) : Number(siteSettings.priority_nonmember_fee || 350);
-  document.getElementById('btnMember').style.borderColor = type === 'member' ? 'var(--gold)' : 'var(--border)';
-  document.getElementById('btnMember').style.background = type === 'member' ? '#fdf6ee' : 'var(--surface)';
-  document.getElementById('btnNonMember').style.borderColor = type === 'nonmember' ? 'var(--gold)' : 'var(--border)';
-  document.getElementById('btnNonMember').style.background = type === 'nonmember' ? '#fdf6ee' : 'var(--surface)';
-}
-
-function goStep(n) {
-  if (n === 4) {
-    const name = document.getElementById('inputName').value.trim();
-    const phone = document.getElementById('inputPhone').value.trim();
-    const err = document.getElementById('errorMsg3');
-    if (!name || !phone) { err.style.display = 'block'; return; }
-    err.style.display = 'none';
-    state.name = name; state.phone = phone;
-    state.note = document.getElementById('inputNote').value.trim();
-    renderSummary();
-  }
-  for (let i = 1; i <= 4; i++) {
-    document.getElementById('step' + i).className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
-    const sec = document.getElementById('section' + i);
-    if (sec) sec.className = 'section' + (i === n ? ' active' : '');
-  }
-  window.scrollTo(0, 0);
-}
-
-function renderSummary() {
-  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
-  const serviceNames = state.services.map(s => s.name).join('、');
-  const priceLines = state.services.map(s => {
-    const num = parseInt(String(s.price).replace(/[^0-9]/g, ''));
-    return { name: s.name, price: s.price, num: isNaN(num) ? 0 : num };
-  });
-  const serviceTotal = priceLines.reduce((sum, p) => sum + p.num, 0);
-  const priorityFee = state.priority && state.memberType ? state.priorityFee : 0;
-  const grandTotal = serviceTotal + priorityFee;
-  const priceDetailHtml = priceLines.map(p => p.name + ' ' + p.price).join('<br>');
-  const memberLabel = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
-  document.getElementById('summaryBody').innerHTML =
-    '<div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">' + serviceNames + '</span></div>' +
-    '<div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value" style="font-size:12px;line-height:1.8">' + priceDetailHtml + '</span></div>' +
-    (state.priority && state.memberType ? '<div class="summary-row"><span class="summary-label">加價服務(' + memberLabel + ')</span><span class="summary-value">$' + priorityFee + '</span></div>' : '') +
-    '<div class="summary-row" style="border-top:1.5px solid var(--gold);margin-top:4px"><span class="summary-label" style="font-weight:700">合計</span><span class="summary-value" style="color:var(--gold-dark);font-weight:700">$' + grandTotal + (serviceTotal === 0 ? '+（依髮況）' : '') + '</span></div>' +
-    '<div class="summary-row"><span class="summary-label">預約日期</span><span class="summary-value">' + dateStr + '</span></div>' +
-    '<div class="summary-row"><span class="summary-label">預約時間</span><span class="summary-value">' + (state.time||'') + '</span></div>' +
-    '<div class="summary-row"><span class="summary-label">姓名</span><span class="summary-value">' + state.name + '</span></div>' +
-    '<div class="summary-row"><span class="summary-label">手機</span><span class="summary-value">' + state.phone + '</span></div>' +
-    (state.note ? '<div class="summary-row"><span class="summary-label">備註</span><span class="summary-value">' + state.note + '</span></div>' : '');
-}
-
-// 【2026-04-18 強化】防撞單送出 — 新增「正在送出中」旗標防連點
-let __isSubmitting = false;
-
-// 【2026-04-20 新增】前端驗證：擋掉 123/636 這種垃圾輸入
-function validateBookingForm() {
-  // 【2026-04-20 新增】0. 強制 LINE 登入檢查（最高優先）
-  if (!state.lineLoggedIn || !state.uid) {
-    return '請先使用 LINE 登入才能預約 🙏';
-  }
-
-  const name = String(state.name || '').trim();
-  const phone = String(state.phone || '').trim();
-
-  // 1. 姓名檢查：至少 2 字、不可純數字
-  if (name.length < 2) {
-    return '請輸入真實姓名（至少 2 個字）';
-  }
-  if (/^\d+$/.test(name)) {
-    return '姓名不可為純數字，請輸入真實姓名';
-  }
-
-  // 2. 電話檢查：必須為台灣手機格式 09 開頭 10 碼
-  if (!/^09\d{8}$/.test(phone)) {
-    return '請輸入正確手機號碼（09 開頭共 10 碼）';
-  }
-
-  // 3. 擋明顯假資料：連號或同一數字重複
-  if (/^(\d)\1{9}$/.test(phone)) {
-    return '請輸入正確手機號碼';
-  }
-
-  return ''; // 通過
-}
-
-async function submitBooking() {
-  // 防連點：如果已經在送出，直接忽略
-  if (__isSubmitting) return;
-
-  // 【2026-04-20 新增】送出前前端驗證
-  const validateMsg = validateBookingForm();
-  if (validateMsg) {
-    const errMsg0 = document.getElementById('errorMsg4');
-    errMsg0.textContent = validateMsg;
-    errMsg0.style.display = 'block';
-    return;
-  }
-
-  __isSubmitting = true;
-
-  const loading = document.getElementById('loadingSubmit');
-  const errMsg = document.getElementById('errorMsg4');
-  const btn = document.getElementById('btnSubmit');
-  loading.style.display = 'block';
-  btn.disabled = true;
-  btn.textContent = '送出中，請稍候...';
-  errMsg.style.display = 'none';
-  const dateStr = state.date ? formatDate(state.date) : '';
-  const serviceStr = state.services.map(s => s.name).join('、');
-
-  // 送出前先用輕量 API 驗證時段是否還可用（更快）
-  try {
-    const checkRes = await fetch(GAS_URL + '?action=checkSlot&date=' + dateStr + '&time=' + encodeURIComponent(normalizeTime(state.time)) + '&t=' + Date.now(), { cache: 'no-store' });
-    const checkData = await checkRes.json();
-    if (checkData.ok && checkData.available === false) {
-      const reason = checkData.reason === 'booked'
-        ? '很抱歉,此時段已有人預約,請待 Elsa 稍後回覆您。\n因一人服務,可能無法即時回覆,建議提早預約或選其他時段,謝謝您 🙏'
-        : '此時段已被鎖定,請返回重新選擇時間';
-      errMsg.textContent = reason;
-      errMsg.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = '確認送出預約';
-      loading.style.display = 'none';
-      __isSubmitting = false;
-      return;
-    }
-  } catch (_) { /* 網路錯誤時不擋，讓後端 LockService 處理 */ }
-  const params = new URLSearchParams({
-    action: 'booking', name: state.name, phone: state.phone, service: serviceStr,
-    date: dateStr, time: normalizeTime(state.time || ''), note: state.note,
-    priority: state.priority ? 'yes' : 'no', memberType: state.memberType || '',
-    // 【2026-04-19 新增】夾帶 LINE 登入資料(沒登入就空字串,後端 if 判斷)
-    uid: state.uid || '',
-    displayName: state.displayName || '',
-  });
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST', cache: 'no-store',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
-    const data = await res.json();
-    loading.style.display = 'none';
-    if (data.status === 'ok') {
-      showSuccess(data.bookingId);
-    } else if (data.msg === 'blacklisted') {
-      errMsg.textContent = data.blMsg || '請改由 Elsa 為您現場安排預約，謝謝您 🙏';
-      errMsg.style.display = 'block';
-      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
-    } else if (data.msg === 'slot_taken') {
-      errMsg.textContent = '很抱歉,此時段已有人預約,請待 Elsa 稍後回覆您。\n因一人服務,可能無法即時回覆,建議提早預約或選其他時段,謝謝您 🙏';
-      errMsg.style.display = 'block';
-      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
-    } else if (data.msg === 'missing_fields') {
-      errMsg.textContent = '資料未填完整，請重新確認';
-      errMsg.style.display = 'block';
-      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
-    } else {
-      errMsg.style.display = 'block';
-      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
-    }
-  } catch (_) {
-    loading.style.display = 'none';
-    errMsg.style.display = 'block';
-    btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
-  }
-}
-
-function showSuccess(bookingId) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById('sectionSuccess').classList.add('active');
-  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
-  const serviceStr = state.services.map(s => s.name).join('、');
-  document.getElementById('successDesc').innerHTML =
-    '<br><strong>' + state.name + '</strong> 您好！<br><br>' +
-    '已收到您的預約登記 🙏<br><br>' +
-    '📋 ' + serviceStr + '<br>' +
-    '📅 ' + dateStr + ' ' + state.time + '<br>' +
-    '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
-    '<strong style="color:#e65100">✨ 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</strong><br><br>' +
-    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊';
-  for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
-}
-
-function renderPaymentButtons() {
-  const list = document.getElementById('paymentList');
-  if (!list) return;
-  let html = '';
-  if (siteSettings.payment_jkopay_url) {
-    html += '<a href="' + siteSettings.payment_jkopay_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 街口支付 →</a>';
-  } else { html += '<span class="payment-tag">💳 街口支付</span>'; }
-  if (siteSettings.payment_ipass_url) {
-    html += '<a href="' + siteSettings.payment_ipass_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 iPASS Money →</a>';
-  } else { html += '<span class="payment-tag">💳 iPASS Money</span>'; }
-  html += '<span class="payment-tag">🏦 轉帳</span>';
-  list.innerHTML = html;
-}
-
-function formatDate(d) {
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-
-// ══════════════════════════════════════════════════════════════
-// 【2026-04-19 新增】LINE Login 整合
-// ══════════════════════════════════════════════════════════════
-// Channel ID(從 GAS 後端取得,不寫死在前端方便之後改)
-let LINE_LOGIN_CHANNEL_ID = '2009831862';
-const LINE_LOGIN_REDIRECT = 'https://san555483-hub.github.io/booking.html';
-
-// 產生 state 參數(防 CSRF)+ 存在 sessionStorage
-function _genLoginState() {
-  const s = 'st_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
-  try { sessionStorage.setItem('line_login_state', s); } catch(_) {}
-  return s;
-}
-
-function _verifyLoginState(returned) {
-  try {
-    const saved = sessionStorage.getItem('line_login_state');
-    sessionStorage.removeItem('line_login_state');
-    return saved && saved === returned;
-  } catch(_) { return false; }
-}
-
-// 啟動 LINE 登入流程(使用者點按鈕時呼叫)
-function startLineLogin() {
-  const btn = document.querySelector('.btn-line-login');
-  if (btn) { btn.disabled = true; btn.innerHTML = '跳轉中...'; }
-
-  const st = _genLoginState();
-  const url = 'https://access.line.me/oauth2/v2.1/authorize?'
-    + 'response_type=code'
-    + '&client_id=' + encodeURIComponent(LINE_LOGIN_CHANNEL_ID)
-    + '&redirect_uri=' + encodeURIComponent(LINE_LOGIN_REDIRECT)
-    + '&state=' + encodeURIComponent(st)
-    + '&scope=' + encodeURIComponent('profile openid');
-  window.location.href = url;
-}
-
-// 頁面載入時檢查 URL 是否帶 code(LINE 剛回調)
-async function handleLineLoginReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const code  = params.get('code');
-  const retSt = params.get('state');
-  const err   = params.get('error');
-
-  if (err) {
-    // 使用者拒絕授權,清掉 URL 參數就好(不顯示錯誤,不打擾流程)
-    _cleanUrl();
-    return;
-  }
-  if (!code) return;  // 沒 code 就不是 LINE 回來
-
-  // 驗 state(防 CSRF)
-  if (!_verifyLoginState(retSt)) {
-    console.warn('state 驗證失敗,可能 URL 被竄改');
-    _cleanUrl();
-    return;
-  }
-
-  // 打後端換 UID + profile
-  try {
-    const r = await fetch(GAS_URL + '?action=lineLoginCallback&code=' + encodeURIComponent(code) + '&t=' + Date.now());
-    const d = await r.json();
-    if (!d.ok) {
-      console.warn('LINE 登入失敗:', d.msg);
-      _cleanUrl();
-      return;
-    }
-    // ✅ 登入成功
-    state.uid = d.uid;
-    state.displayName = d.displayName || '';
-    state.lineLoggedIn = true;
-    // 顯示已登入 UI
-    document.getElementById('lineLoginBox').style.display = 'none';
-    const box = document.getElementById('lineLoggedInBox');
-    box.style.display = 'flex';
-    document.getElementById('loggedInName').textContent = state.displayName || '';
-    // 如果是老顧客,自動帶入姓名電話
-    if (d.knownCustomer) {
-      state.name  = d.knownCustomer.name || state.displayName;
-      state.phone = d.knownCustomer.phone;
-      // 之後到 step3 時會自動填入 input
-    } else if (state.displayName) {
-      state.name = state.displayName;  // 至少帶 LINE 顯示名字
-    }
-    // 【2026-04-20 新增】登入成功後更新 Step 1「下一步」按鈕狀態
-    if (typeof updateBtn1State === 'function') updateBtn1State();
-  } catch(ex) {
-    console.warn('LINE 登入 callback 失敗:', ex);
-  }
-  _cleanUrl();
-}
-
-function _cleanUrl() {
-  // 把 URL 上的 code/state/error 參數清掉,保持網址乾淨
-  try {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('code');
-    url.searchParams.delete('state');
-    url.searchParams.delete('error');
-    url.searchParams.delete('error_description');
-    url.searchParams.delete('liffClientId');
-    url.searchParams.delete('liffRedirectUri');
-    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
-  } catch(_) {}
-}
-
-// 擴充:進入 step3 時,如果 state 已有資料,自動填 input
-const _origGoStep = typeof goStep === 'function' ? goStep : null;
-function _fillStep3IfLoggedIn() {
-  if (state.name) {
-    const inp = document.getElementById('inputName');
-    if (inp && !inp.value) inp.value = state.name;
-  }
-  if (state.phone) {
-    const inp = document.getElementById('inputPhone');
-    if (inp && !inp.value) inp.value = state.phone;
-  }
-}
-
-// 頁面載入後立刻檢查 LINE 登入回調 + 綁定 step 切換
-document.addEventListener('DOMContentLoaded', () => {
-  handleLineLoginReturn();
-  loadBookingProfile();
-  // 【2026-04-20 新增】初始化「下一步」按鈕狀態（顯示「請先 LINE 登入」）
-  if (typeof updateBtn1State === 'function') updateBtn1State();
-  // 延遲監聽 section3 顯示時填資料
-  const sec3 = document.getElementById('section3');
-  if (sec3) {
-    const observer = new MutationObserver(() => {
-      if (sec3.classList.contains('active')) _fillStep3IfLoggedIn();
-    });
-    observer.observe(sec3, { attributes: true, attributeFilter: ['class'] });
-  }
-  // ══════════════════════════════════════════════
-// 【2026/04/23 新增】booking.html 左側自介區
-// 回滾 flag：window.SHOW_BOOKING_PROFILE = false
 // ══════════════════════════════════════════════
-window.SHOW_BOOKING_PROFILE = true;
-
+// 【2026/04/23 新增】booking.html 左側自介區
+// ══════════════════════════════════════════════
 async function loadBookingProfile() {
   if (!window.SHOW_BOOKING_PROFILE) return;
   try {
@@ -1536,10 +804,554 @@ async function loadBookingProfile() {
     console.warn('[bkg2] 載入自介失敗', e);
   }
 }
-// ══ bkg2 JS END ══
+// ══ bkg2 loadBookingProfile END ══
+
+document.addEventListener('DOMContentLoaded', async () => {
+  loadMarqueeBanner();
+  loadBookingProfile();
+
+  try {
+    const t = Date.now();
+    const [svcRes, schedRes, settingsRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getServices&t=' + t, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' }),
+      fetch(GAS_URL + '?action=getSettings&t=' + t, { cache: 'no-store' }),
+    ]);
+    const svcData = await svcRes.json();
+    const schedData = await schedRes.json();
+    const settingsData = await settingsRes.json();
+    (settingsData.settings || []).forEach(s => { siteSettings[s.key] = s.value; });
+    allServices = (svcData.services || []).filter(s => s.active);
+    schedule = schedData.schedule || [];
+    renderServices();
+    renderDates();
+    renderPaymentButtons();
+    document.getElementById('sectionLoading').classList.remove('active');
+    document.getElementById('section1').classList.add('active');
+  } catch (err) {
+    document.getElementById('sectionLoading').innerHTML = '<div class="loading-screen" style="color:#c0392b">載入失敗，請重新整理頁面</div>';
+  }
+});
+
+function renderServices() {
+  const categories = {};
+  allServices.forEach(s => {
+    if (!categories[s.category]) categories[s.category] = [];
+    categories[s.category].push(s);
+  });
+  document.getElementById('serviceList').innerHTML = Object.entries(categories).map(([cat, items]) =>
+    '<div class="category-label">' + cat + '</div><div class="service-grid">' +
+    items.map(s =>
+      '<div class="service-card" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' +
+      '<div class="service-name">' + s.name + '</div>' +
+      '<div class="service-price">' + s.price + '</div>' +
+      '<div class="service-time">' + (s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘') + '</div>' +
+      (s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : '') +
+      '</div>'
+    ).join('') + '</div>'
+  ).join('');
+}
+
+function toggleService(id) {
+  const idx = state.services.findIndex(s => s.id === id);
+  if (idx >= 0) {
+    state.services.splice(idx, 1);
+    document.getElementById('svc_' + id).classList.remove('selected');
+  } else {
+    const svc = allServices.find(s => s.id === id);
+    if (svc) { state.services.push(svc); document.getElementById('svc_' + id).classList.add('selected'); }
+  }
+  renderSelectedTags();
+  updateBtn1State();
+}
+
+function removeService(id) {
+  state.services = state.services.filter(s => s.id !== id);
+  const card = document.getElementById('svc_' + id);
+  if (card) card.classList.remove('selected');
+  renderSelectedTags();
+  updateBtn1State();
+}
+
+function updateBtn1State() {
+  const btn = document.getElementById('btn1');
+  if (!btn) return;
+  const hasService = state.services.length > 0;
+  const isLoggedIn = !!(state.lineLoggedIn && state.uid);
+  btn.disabled = !(hasService && isLoggedIn);
+  if (!isLoggedIn) { btn.textContent = '請先 LINE 登入'; }
+  else if (!hasService) { btn.textContent = '請先選擇服務'; }
+  else { btn.textContent = '下一步'; }
+}
+
+function renderSelectedTags() {
+  const area = document.getElementById('selectedTagsArea');
+  if (state.services.length === 0) { area.innerHTML = ''; return; }
+  area.innerHTML = state.services.map(s =>
+    '<div class="selected-tag">' + s.name + '<span class="selected-tag-remove" onclick="removeService(\'' + s.id + '\')">×</span></div>'
+  ).join('');
+}
+
+function renderDates() {
+  const scroll = document.getElementById('dateScroll');
+  const today = new Date();
+  const closedDates = new Set(schedule.filter(s => s.type === 'closed').map(s => s.date));
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const dateStr = formatDate(d);
+    const isClosed = closedDates.has(dateStr);
+    const el = document.createElement('div');
+    el.className = 'date-item' + (isClosed ? ' closed' : '');
+    el.innerHTML = '<div class="date-day">週' + DAY_NAMES[d.getDay()] + '</div><div class="date-num">' + d.getDate() + '</div><div class="date-month">' + MONTH_NAMES[d.getMonth()] + '</div>' + (isClosed ? '<div class="date-closed-label">公休</div>' : '');
+    if (!isClosed) el.onclick = (function(date, el){ return function(){ selectDate(date, el); }; })(d, el);
+    scroll.appendChild(el);
+  }
+}
+
+async function selectDate(date, el) {
+  state.date = date; state.time = null;
+  document.querySelectorAll('.date-item').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn2').disabled = true;
+  const area = document.getElementById('timeSlotArea');
+  const loading = document.getElementById('loadingSlots');
+  area.innerHTML = ''; loading.style.display = 'block';
+  const dateStr = formatDate(date);
+
+  if (!window.BOOKING_MULTI_SOURCE) {
+    try {
+      const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      const booked = new Set((data.slots || []).map(normalizeTime));
+      lockedInfoMap = data.lockedInfo || {};
+      loading.style.display = 'none';
+      renderTimeSlotsLegacy(date, booked);
+    } catch (_) {
+      loading.style.display = 'none';
+      renderTimeSlotsLegacy(date, new Set());
+    }
+    return;
+  }
+
+  try {
+    const t = Date.now();
+    const fetches = [
+      fetch(GAS_URL + '?action=getBookings&date=' + encodeURIComponent(dateStr) + '&t=' + t, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ bookings: [] })),
+      window.FETCH_VIP_DATA ? fetch(GAS_VIP_URL + '?fn=getBookingsByDate&params=' + encodeURIComponent(JSON.stringify({ date: dateStr })) + '&t=' + t, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ bookings: [] })) : Promise.resolve({ bookings: [] }),
+      window.FETCH_LOCKED_SLOTS ? fetch(GAS_URL + '?action=getLockedSlots&t=' + t, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ slots: [] })) : Promise.resolve({ slots: [] }),
+      window.FETCH_SCHEDULE ? fetch(GAS_URL + '?action=getSchedule&t=' + t, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ schedule: [] })) : Promise.resolve({ schedule: [] }),
+      (window.FETCH_VIP_PHONES && !_vipPhoneHashSet) ? fetch(GAS_URL + '?action=getVipPhonesHashed&t=' + t, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ hashes: [] })) : Promise.resolve({ hashes: null })
+    ];
+    const [mainResp, vipResp, lockResp, schedResp, vipPhoneResp] = await Promise.all(fetches);
+
+    if (vipPhoneResp && Array.isArray(vipPhoneResp.hashes)) { _vipPhoneHashSet = new Set(vipPhoneResp.hashes); }
+    else if (!_vipPhoneHashSet) { _vipPhoneHashSet = new Set(); }
+
+    const slotInfoMap = {};
+    const mainBookings = (mainResp.bookings || []).filter(b => {
+      const bDate = String(b.date || '').substring(0, 10);
+      return bDate === dateStr && String(b.status || '') !== '已取消';
+    });
+    for (const b of mainBookings) {
+      const timeKey = normalizeTime(b.time);
+      if (!timeKey) continue;
+      const isPriority = String(b.priority || '').includes('✅') || String(b.priority || '').includes('加價');
+      let type = 'general', label = '已預約';
+      if (isPriority) { type = 'priority'; label = '指定加價服務預約'; }
+      else if (_vipPhoneHashSet && _vipPhoneHashSet.size > 0 && b.phone) {
+        const normPhone = normalizePhoneForHash(b.phone);
+        if (normPhone) {
+          const phoneHash = await sha256(normPhone);
+          if (_vipPhoneHashSet.has(phoneHash)) { type = 'vip-credit'; label = 'VIP客預約'; }
+        }
+      }
+      slotInfoMap[timeKey] = { type, label };
+    }
+
+    const vipBookings = (vipResp.bookings || []).filter(b => {
+      const bDate = String(b.date || '').substring(0, 10);
+      const bStatus = String(b.status || '');
+      return bDate === dateStr && bStatus !== '已取消' && bStatus !== '取消';
+    });
+    vipBookings.forEach(b => {
+      const timeKey = normalizeTime(b.time);
+      if (!timeKey) return;
+      if (!slotInfoMap[timeKey]) { slotInfoMap[timeKey] = { type: 'vip-deluxe', label: '尊爵客預約' }; }
+    });
+
+    const lockedSlots = (lockResp.slots || []).filter(s => s.date === dateStr);
+    lockedSlots.forEach(s => {
+      const timeKey = normalizeTime(s.time);
+      if (!timeKey) return;
+      if (!slotInfoMap[timeKey]) { slotInfoMap[timeKey] = { type: 'general', label: '已預約' }; }
+    });
+
+    const todaySched = (schedResp.schedule || []).filter(s => s.date === dateStr);
+    todaySched.forEach(s => {
+      const type = String(s.type || '').trim();
+      const timeRange = String(s.time || '').trim();
+      if (type === 'closed') {
+        BUSINESS_HOURS[date.getDay()].forEach(t => {
+          const nt = normalizeTime(t);
+          slotInfoMap[nt] = { type: 'closed', label: '公休' };
+        });
+      } else if (type === 'rest' && timeRange) {
+        const parts = timeRange.split('-');
+        if (parts.length === 2) {
+          const startMins = timeToMins(parts[0].trim());
+          const endMins = timeToMins(parts[1].trim());
+          BUSINESS_HOURS[date.getDay()].forEach(t => {
+            const nt = normalizeTime(t);
+            const tm = timeToMins(nt);
+            if (tm >= startMins && tm < endMins) {
+              if (!slotInfoMap[nt]) { slotInfoMap[nt] = { type: 'rest', label: '休息時段' }; }
+            }
+          });
+        }
+      }
+    });
+
+    loading.style.display = 'none';
+    renderTimeSlotsMulti(date, slotInfoMap);
+  } catch (err) {
+    console.error('多來源抓取失敗:', err);
+    loading.style.display = 'none';
+    try {
+      const res = await fetch(GAS_URL + '?action=getBookedSlots&date=' + dateStr + '&t=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      const booked = new Set((data.slots || []).map(normalizeTime));
+      renderTimeSlotsLegacy(date, booked);
+    } catch (_) {
+      renderTimeSlotsLegacy(date, new Set());
+    }
+  }
+}
+
+function timeToMins(t) {
+  const p = String(t).split(':');
+  return parseInt(p[0], 10) * 60 + parseInt(p[1] || '0', 10);
+}
+
+function renderTimeSlotsMulti(date, slotInfoMap) {
+  const slots = BUSINESS_HOURS[date.getDay()];
+  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
+  slots.forEach(function(t) {
+    const nt = normalizeTime(t);
+    const info = slotInfoMap[nt];
+    if (info) {
+      const cssClass = 'time-slot taken-base taken-' + info.type;
+      html += '<div class="' + cssClass + '">' + nt + '<br><span style="font-size:9px">' + info.label + '</span></div>';
+    } else {
+      html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
+    }
+  });
+  html += '</div>';
+  document.getElementById('timeSlotArea').innerHTML = html;
+}
+
+function renderTimeSlotsLegacy(date, booked) {
+  const slots = BUSINESS_HOURS[date.getDay()];
+  let html = '<div class="time-section-label">可預約時段</div><div class="time-grid">';
+  slots.forEach(function(t) {
+    const nt = normalizeTime(t);
+    const isBooked = booked.has(nt);
+    const lockNote = lockedInfoMap[nt] || '';
+    const isNotice = isBooked && lockNote.includes('訂製化溝通');
+    if (isNotice) { html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>'; }
+    else if (isBooked) { html += '<div class="time-slot taken-base taken-general">' + nt + '<br><span style="font-size:9px">已預約</span></div>'; }
+    else { html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>'; }
+  });
+  html += '</div>';
+  document.getElementById('timeSlotArea').innerHTML = html;
+}
+
+function renderTimeSlots(date, booked) { return renderTimeSlotsLegacy(date, booked); }
+
+function selectTime(time, el) {
+  state.time = time;
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn2').disabled = false;
+}
+
+function togglePriority() {
+  state.priority = !state.priority;
+  const check = document.getElementById('priorityCheck');
+  check.classList.toggle('checked', state.priority);
+  check.textContent = state.priority ? '✓' : '';
+  document.getElementById('memberTypeArea').style.display = state.priority ? 'block' : 'none';
+  if (!state.priority) { state.memberType = ''; state.priorityFee = 0; }
+  document.getElementById('memberFeeLabel').textContent = '$' + (siteSettings.priority_member_fee || 250);
+  document.getElementById('nonMemberFeeLabel').textContent = '$' + (siteSettings.priority_nonmember_fee || 350);
+}
+
+function selectMember(type) {
+  state.memberType = type;
+  state.priorityFee = type === 'member' ? Number(siteSettings.priority_member_fee || 250) : Number(siteSettings.priority_nonmember_fee || 350);
+  document.getElementById('btnMember').style.borderColor = type === 'member' ? 'var(--gold)' : 'var(--border)';
+  document.getElementById('btnMember').style.background = type === 'member' ? '#fdf6ee' : 'var(--surface)';
+  document.getElementById('btnNonMember').style.borderColor = type === 'nonmember' ? 'var(--gold)' : 'var(--border)';
+  document.getElementById('btnNonMember').style.background = type === 'nonmember' ? '#fdf6ee' : 'var(--surface)';
+}
+
+function goStep(n) {
+  if (n === 4) {
+    const name = document.getElementById('inputName').value.trim();
+    const phone = document.getElementById('inputPhone').value.trim();
+    const err = document.getElementById('errorMsg3');
+    if (!name || !phone) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    state.name = name; state.phone = phone;
+    state.note = document.getElementById('inputNote').value.trim();
+    renderSummary();
+  }
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('step' + i).className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    const sec = document.getElementById('section' + i);
+    if (sec) sec.className = 'section' + (i === n ? ' active' : '');
+  }
+  window.scrollTo(0, 0);
+}
+
+function renderSummary() {
+  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
+  const serviceNames = state.services.map(s => s.name).join('、');
+  const priceLines = state.services.map(s => {
+    const num = parseInt(String(s.price).replace(/[^0-9]/g, ''));
+    return { name: s.name, price: s.price, num: isNaN(num) ? 0 : num };
+  });
+  const serviceTotal = priceLines.reduce((sum, p) => sum + p.num, 0);
+  const priorityFee = state.priority && state.memberType ? state.priorityFee : 0;
+  const grandTotal = serviceTotal + priorityFee;
+  const priceDetailHtml = priceLines.map(p => p.name + ' ' + p.price).join('<br>');
+  const memberLabel = state.memberType === 'member' ? '會員' : state.memberType === 'nonmember' ? '非會員' : '';
+  document.getElementById('summaryBody').innerHTML =
+    '<div class="summary-row"><span class="summary-label">服務項目</span><span class="summary-value">' + serviceNames + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">服務費用</span><span class="summary-value" style="font-size:12px;line-height:1.8">' + priceDetailHtml + '</span></div>' +
+    (state.priority && state.memberType ? '<div class="summary-row"><span class="summary-label">加價服務(' + memberLabel + ')</span><span class="summary-value">$' + priorityFee + '</span></div>' : '') +
+    '<div class="summary-row" style="border-top:1.5px solid var(--gold);margin-top:4px"><span class="summary-label" style="font-weight:700">合計</span><span class="summary-value" style="color:var(--gold-dark);font-weight:700">$' + grandTotal + (serviceTotal === 0 ? '+（依髮況）' : '') + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">預約日期</span><span class="summary-value">' + dateStr + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">預約時間</span><span class="summary-value">' + (state.time||'') + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">姓名</span><span class="summary-value">' + state.name + '</span></div>' +
+    '<div class="summary-row"><span class="summary-label">手機</span><span class="summary-value">' + state.phone + '</span></div>' +
+    (state.note ? '<div class="summary-row"><span class="summary-label">備註</span><span class="summary-value">' + state.note + '</span></div>' : '');
+}
+
+let __isSubmitting = false;
+
+function validateBookingForm() {
+  if (!state.lineLoggedIn || !state.uid) { return '請先使用 LINE 登入才能預約 🙏'; }
+  const name = String(state.name || '').trim();
+  const phone = String(state.phone || '').trim();
+  if (name.length < 2) { return '請輸入真實姓名（至少 2 個字）'; }
+  if (/^\d+$/.test(name)) { return '姓名不可為純數字，請輸入真實姓名'; }
+  if (!/^09\d{8}$/.test(phone)) { return '請輸入正確手機號碼（09 開頭共 10 碼）'; }
+  if (/^(\d)\1{9}$/.test(phone)) { return '請輸入正確手機號碼'; }
+  return '';
+}
+
+async function submitBooking() {
+  if (__isSubmitting) return;
+  const validateMsg = validateBookingForm();
+  if (validateMsg) {
+    const errMsg0 = document.getElementById('errorMsg4');
+    errMsg0.textContent = validateMsg;
+    errMsg0.style.display = 'block';
+    return;
+  }
+  __isSubmitting = true;
+  const loading = document.getElementById('loadingSubmit');
+  const errMsg = document.getElementById('errorMsg4');
+  const btn = document.getElementById('btnSubmit');
+  loading.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = '送出中，請稍候...';
+  errMsg.style.display = 'none';
+  const dateStr = state.date ? formatDate(state.date) : '';
+  const serviceStr = state.services.map(s => s.name).join('、');
+
+  try {
+    const checkRes = await fetch(GAS_URL + '?action=checkSlot&date=' + dateStr + '&time=' + encodeURIComponent(normalizeTime(state.time)) + '&t=' + Date.now(), { cache: 'no-store' });
+    const checkData = await checkRes.json();
+    if (checkData.ok && checkData.available === false) {
+      const reason = checkData.reason === 'booked'
+        ? '很抱歉,此時段已有人預約,請待 Elsa 稍後回覆您。\n因一人服務,可能無法即時回覆,建議提早預約或選其他時段,謝謝您 🙏'
+        : '此時段已被鎖定,請返回重新選擇時間';
+      errMsg.textContent = reason;
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約';
+      loading.style.display = 'none';
+      __isSubmitting = false;
+      return;
+    }
+  } catch (_) {}
+
+  const params = new URLSearchParams({
+    action: 'booking', name: state.name, phone: state.phone, service: serviceStr,
+    date: dateStr, time: normalizeTime(state.time || ''), note: state.note,
+    priority: state.priority ? 'yes' : 'no', memberType: state.memberType || '',
+    uid: state.uid || '', displayName: state.displayName || '',
+  });
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST', cache: 'no-store',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+    const data = await res.json();
+    loading.style.display = 'none';
+    if (data.status === 'ok') { showSuccess(data.bookingId); }
+    else if (data.msg === 'blacklisted') {
+      errMsg.textContent = data.blMsg || '請改由 Elsa 為您現場安排預約，謝謝您 🙏';
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    } else if (data.msg === 'slot_taken') {
+      errMsg.textContent = '很抱歉,此時段已有人預約,請待 Elsa 稍後回覆您。\n因一人服務,可能無法即時回覆,建議提早預約或選其他時段,謝謝您 🙏';
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    } else if (data.msg === 'missing_fields') {
+      errMsg.textContent = '資料未填完整，請重新確認';
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    } else {
+      errMsg.style.display = 'block';
+      btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+    }
+  } catch (_) {
+    loading.style.display = 'none';
+    errMsg.style.display = 'block';
+    btn.disabled = false; btn.textContent = '確認送出預約'; __isSubmitting = false;
+  }
+}
+
+function showSuccess(bookingId) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sectionSuccess').classList.add('active');
+  const dateStr = state.date ? (state.date.getMonth()+1) + '月' + state.date.getDate() + '日（週' + DAY_NAMES[state.date.getDay()] + '）' : '';
+  const serviceStr = state.services.map(s => s.name).join('、');
+  document.getElementById('successDesc').innerHTML =
+    '<br><strong>' + state.name + '</strong> 您好！<br><br>' +
+    '已收到您的預約登記 🙏<br><br>' +
+    '📋 ' + serviceStr + '<br>' +
+    '📅 ' + dateStr + ' ' + state.time + '<br>' +
+    '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
+    '<strong style="color:#e65100">✨ 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</strong><br><br>' +
+    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊';
+  for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
+}
+
+function renderPaymentButtons() {
+  const list = document.getElementById('paymentList');
+  if (!list) return;
+  let html = '';
+  if (siteSettings.payment_jkopay_url) { html += '<a href="' + siteSettings.payment_jkopay_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 街口支付 →</a>'; }
+  else { html += '<span class="payment-tag">💳 街口支付</span>'; }
+  if (siteSettings.payment_ipass_url) { html += '<a href="' + siteSettings.payment_ipass_url + '" target="_blank" class="payment-tag" style="text-decoration:none;cursor:pointer;border-color:var(--gold)">💳 iPASS Money →</a>'; }
+  else { html += '<span class="payment-tag">💳 iPASS Money</span>'; }
+  html += '<span class="payment-tag">🏦 轉帳</span>';
+  list.innerHTML = html;
+}
+
+function formatDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+let LINE_LOGIN_CHANNEL_ID = '2009831862';
+const LINE_LOGIN_REDIRECT = 'https://san555483-hub.github.io/booking.html';
+
+function _genLoginState() {
+  const s = 'st_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+  try { sessionStorage.setItem('line_login_state', s); } catch(_) {}
+  return s;
+}
+
+function _verifyLoginState(returned) {
+  try {
+    const saved = sessionStorage.getItem('line_login_state');
+    sessionStorage.removeItem('line_login_state');
+    return saved && saved === returned;
+  } catch(_) { return false; }
+}
+
+function startLineLogin() {
+  const btn = document.querySelector('.btn-line-login');
+  if (btn) { btn.disabled = true; btn.innerHTML = '跳轉中...'; }
+  const st = _genLoginState();
+  const url = 'https://access.line.me/oauth2/v2.1/authorize?'
+    + 'response_type=code'
+    + '&client_id=' + encodeURIComponent(LINE_LOGIN_CHANNEL_ID)
+    + '&redirect_uri=' + encodeURIComponent(LINE_LOGIN_REDIRECT)
+    + '&state=' + encodeURIComponent(st)
+    + '&scope=' + encodeURIComponent('profile openid');
+  window.location.href = url;
+}
+
+async function handleLineLoginReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const code  = params.get('code');
+  const retSt = params.get('state');
+  const err   = params.get('error');
+  if (err) { _cleanUrl(); return; }
+  if (!code) return;
+  if (!_verifyLoginState(retSt)) { console.warn('state 驗證失敗'); _cleanUrl(); return; }
+  try {
+    const r = await fetch(GAS_URL + '?action=lineLoginCallback&code=' + encodeURIComponent(code) + '&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok) { console.warn('LINE 登入失敗:', d.msg); _cleanUrl(); return; }
+    state.uid = d.uid;
+    state.displayName = d.displayName || '';
+    state.lineLoggedIn = true;
+    document.getElementById('lineLoginBox').style.display = 'none';
+    const box = document.getElementById('lineLoggedInBox');
+    box.style.display = 'flex';
+    document.getElementById('loggedInName').textContent = state.displayName || '';
+    if (d.knownCustomer) {
+      state.name  = d.knownCustomer.name || state.displayName;
+      state.phone = d.knownCustomer.phone;
+    } else if (state.displayName) { state.name = state.displayName; }
+    if (typeof updateBtn1State === 'function') updateBtn1State();
+  } catch(ex) { console.warn('LINE 登入 callback 失敗:', ex); }
+  _cleanUrl();
+}
+
+function _cleanUrl() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('code');
+    url.searchParams.delete('state');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    url.searchParams.delete('liffClientId');
+    url.searchParams.delete('liffRedirectUri');
+    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+  } catch(_) {}
+}
+
+function _fillStep3IfLoggedIn() {
+  if (state.name) {
+    const inp = document.getElementById('inputName');
+    if (inp && !inp.value) inp.value = state.name;
+  }
+  if (state.phone) {
+    const inp = document.getElementById('inputPhone');
+    if (inp && !inp.value) inp.value = state.phone;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  handleLineLoginReturn();
+  if (typeof updateBtn1State === 'function') updateBtn1State();
+  const sec3 = document.getElementById('section3');
+  if (sec3) {
+    const observer = new MutationObserver(() => {
+      if (sec3.classList.contains('active')) _fillStep3IfLoggedIn();
+    });
+    observer.observe(sec3, { attributes: true, attributeFilter: ['class'] });
+  }
 });
 </script>
-</div><!-- bkg2-main END -->   
-</div><!-- bkg2-layout END -->  
+</div><!-- bkg2-main END -->
+</div><!-- bkg2-layout END -->
 </body>
 </html>
