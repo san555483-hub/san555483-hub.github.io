@@ -212,6 +212,35 @@ tr:hover td{background:rgba(61,43,31,.03);}
   .dash-toolbar-right{width:100%;margin-left:0;justify-content:space-around;}
   .dash-now-indicator::before{left:62px;}
 }
+/* ═══ 【2026/04/24 第5輪新增】圖片管理 V5 體驗升級樣式 ═══ */
+/* 回滾：刪除此區塊所有 .imgv5-* 樣式即可 */
+.imgv5-row{position:relative;cursor:default;transition:all .18s;}
+.imgv5-row.dragging{opacity:.4;transform:scale(.98);}
+.imgv5-row.drag-over{border-color:var(--rose)!important;background:var(--rose-lt)!important;box-shadow:0 0 0 2px var(--rose);}
+.imgv5-handle{flex:0 0 32px;display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;color:var(--mid);font-size:1.2rem;padding:4px;border-radius:3px;transition:all .15s;}
+.imgv5-handle:hover{background:var(--sand);color:var(--bark);}
+.imgv5-handle:active{cursor:grabbing;}
+.imgv5-check{flex:0 0 24px;display:flex;align-items:flex-start;padding-top:4px;}
+.imgv5-check input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--rose);}
+.imgv5-thumb-wrap{position:relative;cursor:zoom-in;}
+.imgv5-thumb-wrap::after{content:"🔍";position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:10px;font-size:.6rem;opacity:0;transition:opacity .18s;pointer-events:none;}
+.imgv5-thumb-wrap:hover::after{opacity:1;}
+.imgv5-replace-wrap{position:relative;display:inline-block;}
+.imgv5-replace-wrap input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.imgv5-bulkbar{position:sticky;top:48px;z-index:50;background:linear-gradient(90deg,var(--rose-lt),#fff);border:1px solid var(--rose);border-radius:4px;padding:10px 14px;margin-bottom:12px;display:none;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 8px var(--shadow);}
+.imgv5-bulkbar.active{display:flex;}
+.imgv5-bulkbar .count{font-weight:700;color:var(--rose);font-family:'Noto Sans TC',sans-serif;font-size:.8rem;}
+.imgv5-selectall{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;cursor:pointer;user-select:none;margin-bottom:8px;padding:4px 8px;background:#faf8f5;border:1px dashed var(--border);border-radius:3px;}
+.imgv5-selectall input{accent-color:var(--rose);}
+/* 全螢幕預覽 Modal */
+.imgv5-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(20,15,10,.92);align-items:center;justify-content:center;padding:20px;animation:imgv5FadeIn .22s ease;}
+.imgv5-modal.active{display:flex;}
+@keyframes imgv5FadeIn{from{opacity:0;}to{opacity:1;}}
+.imgv5-modal-img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,.5);background:#fff;}
+.imgv5-modal-close{position:absolute;top:16px;right:20px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.imgv5-modal-close:hover{background:rgba(255,255,255,.3);transform:rotate(90deg);}
+.imgv5-modal-hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:.7rem;font-family:'Noto Sans TC',sans-serif;letter-spacing:.1em;}
+/* ═══ 第5輪新增 END ═══ */
 </style>
 </head>
 <body>
@@ -838,7 +867,18 @@ tr:hover td{background:rgba(61,43,31,.03);}
               <div style="font-size:.78rem;font-weight:600;color:var(--bark);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;">
                 🖼️ 首頁左邊照片輪播（最多 5 張）
               </div>
+              <!-- ═══ 【2026/04/24 v5新增】批次操作列 + 全選 ═══ -->
+              <div class="imgv5-bulkbar" id="bulkbar-index">
+                <span class="count" id="bulkcount-index">已選 0 張</span>
+                <button class="btn btn-danger btn-sm" onclick="bulkDeleteImages('index')">🗑️ 批次刪除</button>
+                <button class="btn btn-outline btn-sm" onclick="clearSelection('index')" style="margin-left:auto;">取消選取</button>
+              </div>
+              <label class="imgv5-selectall">
+                <input type="checkbox" id="selectall-index" onchange="toggleSelectAll('index',this.checked)">
+                <span>全選首頁輪播</span>
+              </label>
               <div id="index-carousel-list"></div>
+              <!-- ═══ v5新增 END ═══ -->
 
             </div>
           </div>
@@ -951,7 +991,18 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <div class="card" style="margin-bottom:16px;">
             <div class="card-head"><h3>🖼️ 預約頁下方作品輪播（最多 5 張）</h3></div>
             <div class="card-body">
+              <!-- ═══ 【2026/04/24 v5新增】批次操作列 + 全選 ═══ -->
+              <div class="imgv5-bulkbar" id="bulkbar-booking">
+                <span class="count" id="bulkcount-booking">已選 0 張</span>
+                <button class="btn btn-danger btn-sm" onclick="bulkDeleteImages('booking')">🗑️ 批次刪除</button>
+                <button class="btn btn-outline btn-sm" onclick="clearSelection('booking')" style="margin-left:auto;">取消選取</button>
+              </div>
+              <label class="imgv5-selectall">
+                <input type="checkbox" id="selectall-booking" onchange="toggleSelectAll('booking',this.checked)">
+                <span>全選預約頁輪播</span>
+              </label>
               <div id="booking-carousel-list"></div>
+              <!-- ═══ v5新增 END ═══ -->
             </div>
           </div>
 
@@ -963,6 +1014,15 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
   <!-- ════ 圖片管理 pane END ════ -->
+
+  <!-- ═══ 【2026/04/24 v5新增】全螢幕預覽 Modal ═══ -->
+  <!-- 回滾：刪除此 div + JS 中 openImgModal/closeImgModal 即可 -->
+  <div class="imgv5-modal" id="imgv5-modal" onclick="closeImgModal(event)">
+    <button class="imgv5-modal-close" onclick="closeImgModal(event,true)" title="關閉（ESC）">✕</button>
+    <img class="imgv5-modal-img" id="imgv5-modal-img" src="" alt="">
+    <div class="imgv5-modal-hint">按 ESC 或點背景關閉</div>
+  </div>
+  <!-- ═══ v5新增 END ═══ -->
 
 </div>
 
@@ -2368,7 +2428,7 @@ async function loadImageConfig(){
 }
 
 function _imgFind(code){
-  return _imageConfig.find(x => x.code === code) || { code, url:'', fileId:'', order:0, enabled:false, text:'', updatedAt:'' };
+  return _imageConfig.find(x => x.code === code) || { code, url:'', fileId:'', order:0, enabled:false, text:'', updatedAt:'', sortOrder:999 };
 }
 
 function renderImageConfig(){
@@ -2381,11 +2441,15 @@ function renderImageConfig(){
   const ts1 = document.getElementById('img-status-INDEX_TITLE');
   if(ts1) ts1.textContent = titleCfg.updatedAt ? ('上次更新：'+titleCfg.updatedAt) : '';
 
-  // 2. 首頁輪播 5 張
+  // 2. 首頁輪播 5 張【v5：先按 sortOrder 排序，再用 renderImageRowV5】
   const carList = document.getElementById('index-carousel-list');
-  if(carList) carList.innerHTML = INDEX_CAROUSEL_CODES.map(renderImageRow).join('');
+  if(carList){
+    const sortedIndex = _sortByOrder(INDEX_CAROUSEL_CODES);
+    carList.innerHTML = sortedIndex.map(code => renderImageRowV5(code, 'index')).join('');
+    _bindDragEvents('index-carousel-list', 'index');
+  }
 
-  // 3. booking 個人照
+  // 3. booking 個人照（單張圖，不受 v5 影響）
   const profileWrap = document.getElementById('booking-profile-wrap');
   if(profileWrap) profileWrap.innerHTML = renderImageRow('BOOKING_PROFILE','個人照');
 
@@ -2398,9 +2462,13 @@ function renderImageConfig(){
   const ts2 = document.getElementById('img-status-BOOKING_INTRO');
   if(ts2) ts2.textContent = introCfg.updatedAt ? ('上次更新：'+introCfg.updatedAt) : '';
 
-  // 5. booking 下方輪播 5 張
+  // 5. booking 下方輪播 5 張【v5：先按 sortOrder 排序，再用 renderImageRowV5】
   const bkCarList = document.getElementById('booking-carousel-list');
-  if(bkCarList) bkCarList.innerHTML = BOOKING_CAROUSEL_CODES.map(renderImageRow).join('');
+  if(bkCarList){
+    const sortedBooking = _sortByOrder(BOOKING_CAROUSEL_CODES);
+    bkCarList.innerHTML = sortedBooking.map(code => renderImageRowV5(code, 'booking')).join('');
+    _bindDragEvents('booking-carousel-list', 'booking');
+  }
 
   // ═══ 【2026/04/23 第4輪新增】6. booking 自介區 4 個文字欄位 ═══
   // 回滾：刪除此 forEach + PROFILE_TEXT_CODES 常數 + saveAllProfileTexts 函式即可
@@ -2411,6 +2479,19 @@ function renderImageConfig(){
     if(ta) ta.value = cfg.text || '';
     if(en) en.checked = !!cfg.enabled;
   });
+
+  // ═══ 【v5】重整批次工具列狀態 ═══
+  _updateBulkBar('index');
+  _updateBulkBar('booking');
+}
+
+// ═══ 【2026/04/24 v5】按 sortOrder 排序 code 陣列（空值/0 當 999 排後面，穩定排序）═══
+function _sortByOrder(codes){
+  return codes.slice().map((code, idx) => {
+    const cfg = _imgFind(code);
+    const so = (cfg.sortOrder === undefined || cfg.sortOrder === null || cfg.sortOrder === '' || Number(cfg.sortOrder) === 0) ? 999 : Number(cfg.sortOrder);
+    return { code, so, idx };
+  }).sort((a, b) => a.so - b.so || a.idx - b.idx).map(x => x.code);
 }
 
 // ═══ 【2026/04/23 第4輪新增】自介區 4 個文字欄位 code 常數 ═══
@@ -2480,7 +2561,265 @@ function renderImageRow(code, customLabel){
     </div>`;
 }
 
-// 上傳圖片到 Drive（走 POST + text/plain，自動壓縮，解決大圖問題）
+// ════════════════════════════════════════════════════════════
+// ═══ 【2026/04/24 第5輪新增】圖片管理 V5 體驗升級四合一 ═══
+// ═══ A1 拖曳排序 / A2 批次刪除 / A3 替換圖片 / A4 預覽放大 ═══
+// 回滾：刪除下方所有 v5 函式 + renderImageConfig 改回舊版 + 刪 HTML 的 bulkbar/selectall/modal + 刪 CSS imgv5-* 即可
+// ════════════════════════════════════════════════════════════
+
+// v5 狀態：已勾選的 code（依群組分）
+const _imgSelected = { index: new Set(), booking: new Set() };
+// v5 拖曳中的 code
+let _draggingCode = null;
+let _draggingGroup = null;
+
+// ═══ V5 版 renderImageRow（輪播 5 張用，含勾選框 + 拖曳把手 + 替換按鈕 + 點擊預覽）═══
+function renderImageRowV5(code, group){
+  const cfg = _imgFind(code);
+  const hasImg = !!cfg.url;
+  const label = code.replace(/_/g,' ');
+  const checked = _imgSelected[group].has(code) ? 'checked' : '';
+  const preview = hasImg
+    ? `<div class="imgv5-thumb-wrap" onclick="openImgModal('${String(cfg.url).replace(/'/g,"\\'")}')" title="點擊看大圖"><img src="${cfg.url}" style="max-width:180px;max-height:120px;border:1px solid var(--border);border-radius:3px;background:#fff;object-fit:cover;display:block;" onerror="this.style.display='none'"></div>`
+    : `<div style="width:180px;height:120px;background:#f0ebe5;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--mid);font-size:.7rem;">（尚未上傳）</div>`;
+  const statusBadge = cfg.enabled && hasImg
+    ? `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:#e8f5ee;color:#2d7a4f">啟用中</span>`
+    : `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:#eee;color:#aaa">停用</span>`;
+  const sortBadge = `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:var(--sand);color:var(--bark);font-weight:600;">順序 ${cfg.sortOrder && Number(cfg.sortOrder) > 0 ? cfg.sortOrder : '—'}</span>`;
+  return `
+    <div class="imgv5-row" data-code="${code}" data-group="${group}" draggable="true"
+         style="display:flex;gap:10px;align-items:flex-start;padding:12px;background:#faf8f5;border:1px solid var(--border);border-radius:4px;margin-bottom:10px;flex-wrap:wrap;">
+      <div class="imgv5-handle" title="拖曳調整順序">⋮⋮</div>
+      <div class="imgv5-check">
+        <input type="checkbox" ${checked} onchange="toggleImageSelect('${code}','${group}',this.checked)" title="勾選以批次操作">
+      </div>
+      <div style="flex:0 0 180px;">
+        <div style="font-size:.7rem;font-weight:600;color:var(--bark);margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">${label}</div>
+        ${preview}
+      </div>
+      <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          ${statusBadge}
+          ${sortBadge}
+          ${cfg.updatedAt ? `<span style="font-size:.6rem;color:var(--mid);">更新：${cfg.updatedAt}</span>` : ''}
+        </div>
+        <input type="file" id="img-file-${code}" accept="image/*" style="font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-dark btn-sm" onclick="uploadImage('${code}')">⬆️ 上傳新圖</button>
+          ${hasImg ? `<span class="imgv5-replace-wrap"><button class="btn btn-outline btn-sm" style="color:var(--gold);border-color:var(--gold-lt);pointer-events:none;">🔄 替換</button><input type="file" accept="image/*" onchange="replaceImage('${code}',this.files[0])" title="選新圖直接取代舊圖"></span>` : ''}
+          ${hasImg ? `<label style="font-size:.7rem;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;"><input type="checkbox" id="img-en-${code}" ${cfg.enabled?'checked':''} onchange="toggleImageEnable('${code}',this.checked)"> 啟用</label>` : ''}
+          ${hasImg ? `<button class="btn btn-outline btn-sm" onclick="deactivateImageAction('${code}')" style="color:#a07a3a;border-color:#d4b98a;">🔸 停用</button>` : ''}
+          ${hasImg ? `<button class="btn btn-danger btn-sm" onclick="deleteImageHardAction('${code}')">🔺 徹底刪</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══ A1：拖曳排序 ═══
+function _bindDragEvents(listId, group){
+  const list = document.getElementById(listId);
+  if(!list) return;
+  const rows = list.querySelectorAll('.imgv5-row');
+  rows.forEach(row => {
+    row.addEventListener('dragstart', (e) => {
+      _draggingCode = row.dataset.code;
+      _draggingGroup = row.dataset.group;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', _draggingCode); }catch(err){}
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      rows.forEach(r => r.classList.remove('drag-over'));
+      _draggingCode = null;
+      _draggingGroup = null;
+    });
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if(_draggingGroup !== group) return; // 只允許同群組內拖曳
+      e.dataTransfer.dropEffect = 'move';
+      rows.forEach(r => r.classList.remove('drag-over'));
+      if(row.dataset.code !== _draggingCode) row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('drag-over');
+    });
+    row.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      if(!_draggingCode || _draggingGroup !== group || row.dataset.code === _draggingCode) return;
+      await _reorderByDrop(group, _draggingCode, row.dataset.code);
+    });
+  });
+}
+
+async function _reorderByDrop(group, fromCode, toCode){
+  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES;
+  // 取目前畫面順序（已按 sortOrder 排過）
+  const currentOrder = _sortByOrder(codes);
+  const fromIdx = currentOrder.indexOf(fromCode);
+  const toIdx = currentOrder.indexOf(toCode);
+  if(fromIdx < 0 || toIdx < 0) return;
+  // 重新排列：把 fromCode 移到 toCode 位置
+  const newOrder = currentOrder.slice();
+  newOrder.splice(fromIdx, 1);
+  newOrder.splice(toIdx, 0, fromCode);
+  // 產生新的 sort_order（1, 2, 3, 4, 5）
+  const payload = newOrder.map((code, idx) => ({ code, sort_order: idx + 1 }));
+  showMsg('img-msg', '排序儲存中…', 'loading');
+  try{
+    const r = await fetch(GAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'reorderImages', items: payload }),
+      redirect: 'follow'
+    });
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg', '✅ 順序已儲存', 'ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg', '❌ '+(d.msg||'排序失敗，還原中…'), 'err');
+      await loadImageConfig();
+    }
+  }catch(e){
+    showMsg('img-msg', '❌ 網路錯誤：'+e.message+'，還原中…', 'err');
+    await loadImageConfig();
+  }
+}
+
+// ═══ A2：批次刪除 ═══
+function toggleImageSelect(code, group, checked){
+  if(checked) _imgSelected[group].add(code);
+  else _imgSelected[group].delete(code);
+  _updateBulkBar(group);
+}
+
+function toggleSelectAll(group, checked){
+  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES;
+  if(checked){
+    // 只選有圖的
+    codes.forEach(code => {
+      const cfg = _imgFind(code);
+      if(cfg.url) _imgSelected[group].add(code);
+    });
+  } else {
+    _imgSelected[group].clear();
+  }
+  _updateBulkBar(group);
+  // 重新 render 該區塊讓勾選框視覺更新
+  renderImageConfig();
+}
+
+function clearSelection(group){
+  _imgSelected[group].clear();
+  const sa = document.getElementById('selectall-'+group);
+  if(sa) sa.checked = false;
+  _updateBulkBar(group);
+  renderImageConfig();
+}
+
+function _updateBulkBar(group){
+  const bar = document.getElementById('bulkbar-'+group);
+  const count = document.getElementById('bulkcount-'+group);
+  const n = _imgSelected[group].size;
+  if(bar){ bar.classList.toggle('active', n > 0); }
+  if(count){ count.textContent = '已選 '+n+' 張'; }
+}
+
+async function bulkDeleteImages(group){
+  const codes = Array.from(_imgSelected[group]);
+  if(codes.length === 0){
+    showMsg('img-msg', '❌ 請先勾選要刪除的圖片', 'err');
+    return;
+  }
+  if(!confirm('⚠️ 確定批次徹底刪除「'+codes.length+'」張圖？\n\n'+codes.join('、')+'\n\n會同時：\n1. 把 Drive 圖片檔丟進垃圾桶\n2. 清空各區塊的 URL、文字、啟用狀態\n\n此動作無法復原！')) return;
+  showMsg('img-msg', '批次刪除中…（共 '+codes.length+' 張）', 'loading');
+  let ok = 0, fail = 0;
+  for(const code of codes){
+    try{
+      const p = new URLSearchParams({ action:'deleteImageHard', code });
+      const r = await fetch(GAS+'?'+p.toString());
+      const d = await r.json();
+      if(d.ok) ok++; else fail++;
+    }catch(e){ fail++; }
+  }
+  _imgSelected[group].clear();
+  const sa = document.getElementById('selectall-'+group);
+  if(sa) sa.checked = false;
+  showMsg('img-msg', fail === 0 ? ('✅ 批次刪除完成（'+ok+' 張）') : ('⚠️ 成功 '+ok+' 張，失敗 '+fail+' 張'), fail === 0 ? 'ok' : 'err');
+  await loadImageConfig();
+}
+
+// ═══ A3：替換圖片（選新檔 → 自動壓縮 → 上傳 → 舊 Drive 檔在 GAS 端自動覆蓋/丟垃圾桶）═══
+async function replaceImage(code, file){
+  if(!file){ return; }
+  if(file.size > 20 * 1024 * 1024){
+    showMsg('img-msg', '❌ 圖片超過 20MB', 'err');
+    return;
+  }
+  if(!confirm('確定用新檔替換「'+code+'」？\n\n舊的 Drive 圖會被覆蓋（你原本的 uploadImageToDrive 已會處理舊檔）。')) return;
+  const origKB = Math.round(file.size / 1024);
+  showMsg('img-msg', '替換中…壓縮（原檔 '+origKB+'KB）', 'loading');
+  try{
+    const base64 = await _compressImage(file, 1600, 0.85);
+    const cleanBase64 = String(base64).replace(/^data:[^;]+;base64,/,'');
+    const compressedKB = Math.round(cleanBase64.length * 0.75 / 1024);
+    showMsg('img-msg', '替換中…上傳（已壓縮至 '+compressedKB+'KB）', 'loading');
+    const bodyJson = JSON.stringify({
+      action: 'uploadImageToDrive',
+      code: code,
+      base64: cleanBase64,
+      mimeType: 'image/jpeg',
+      filename: 'uni_'+code+'_'+Date.now()+'.jpg'
+    });
+    const r = await fetch(GAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: bodyJson,
+      redirect: 'follow'
+    });
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg', '✅ 替換成功（原 '+origKB+'KB → '+compressedKB+'KB）', 'ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg', '❌ '+(d.msg||'替換失敗'), 'err');
+    }
+  }catch(e){
+    showMsg('img-msg', '❌ 替換錯誤：'+e.message, 'err');
+  }
+}
+
+// ═══ A4：全螢幕預覽 Modal ═══
+function openImgModal(url){
+  if(!url) return;
+  const modal = document.getElementById('imgv5-modal');
+  const img = document.getElementById('imgv5-modal-img');
+  if(!modal || !img) return;
+  img.src = url;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeImgModal(ev, force){
+  // 點背景或 ✕ 才關；點圖片本身不關
+  if(!force && ev && ev.target && ev.target.id === 'imgv5-modal-img') return;
+  const modal = document.getElementById('imgv5-modal');
+  if(!modal) return;
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+  const img = document.getElementById('imgv5-modal-img');
+  if(img) img.src = '';
+}
+// ESC 關閉
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){
+    const modal = document.getElementById('imgv5-modal');
+    if(modal && modal.classList.contains('active')) closeImgModal(null, true);
+  }
+});
+// ═══ 第5輪新增 END ═══
+
 // 2026/04/23 v3E.2：加入 canvas 自動壓縮，iPhone/相機原圖直接丟也能傳
 async function _compressImage(file, maxWidth = 1600, quality = 0.85){
   // 如果檔案已經很小（< 500KB）直接用原檔，不浪費運算資源
