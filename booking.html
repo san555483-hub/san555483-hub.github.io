@@ -500,12 +500,14 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <div class="bkg2-photo" id="bkg2-photo"></div>
   </div>
   <div class="bkg2-name-block">
-    <div class="bkg2-badge">UNI Artisan</div>
-    <div class="bkg2-name">Elsa</div>
-    <div class="bkg2-title">一對一訂製・髮型設計師</div>
+    <!-- 【2026/04/23 第4輪】加 id 方便 JS 動態覆蓋，預設值保留為 fallback -->
+    <div class="bkg2-badge" id="bkg2-badge">UNI Artisan</div>
+    <div class="bkg2-name" id="bkg2-name">Elsa</div>
+    <div class="bkg2-title" id="bkg2-title">一對一訂製・髮型設計師</div>
   </div>
   <div class="bkg2-intro" id="bkg2-intro"></div>
-  <div class="bkg2-works-title">ARTWORKS</div>
+  <!-- 【2026/04/23 第4輪】加 id 方便 JS 動態覆蓋 -->
+  <div class="bkg2-works-title" id="bkg2-works-title">ARTWORKS</div>
   <div class="bkg2-works-carousel" id="bkg2-works-carousel"></div>
 </aside>
 
@@ -742,7 +744,34 @@ async function loadBookingProfile() {
       .filter(x => /^BOOKING_CAROUSEL_\d+$/.test(x.code) && x.url)
       .sort((a, b) => a.order - b.order);
 
-    if (!profile && !intro && !works.length) return;
+    // ═══ 【2026/04/23 第4輪新增】自介區 4 個文字欄位 ═══
+    // 規則：只有 enabled=true 且 text 不為空白時才覆蓋，否則保留 HTML 裡的預設值
+    // 回滾：刪除此區塊即可，HTML 預設文字會顯示
+    const textCodes = [
+      { code: 'BOOKING_PROFILE_BADGE',    elId: 'bkg2-badge' },
+      { code: 'BOOKING_PROFILE_NAME',     elId: 'bkg2-name' },
+      { code: 'BOOKING_PROFILE_SUBTITLE', elId: 'bkg2-title' },
+      { code: 'BOOKING_WORKS_TITLE',      elId: 'bkg2-works-title' }
+    ];
+    textCodes.forEach(({ code, elId }) => {
+      const cfg = d.images.find(x => x.code === code);
+      if (!cfg) return;
+      const isEnabled = cfg.enabled === true || cfg.enabled === 'true';
+      const hasText = cfg.text && String(cfg.text).trim();
+      if (isEnabled && hasText) {
+        const el = document.getElementById(elId);
+        if (el) el.textContent = String(cfg.text).trim();
+      }
+    });
+    // ═══ 第4輪新增 END ═══
+
+    // 【2026/04/23 第4輪】判斷是否有任何文字 code 啟用，有的話也要顯示自介區
+    const hasAnyEnabledText = textCodes.some(({ code }) => {
+      const cfg = d.images.find(x => x.code === code);
+      return cfg && (cfg.enabled === true || cfg.enabled === 'true') && cfg.text && String(cfg.text).trim();
+    });
+
+    if (!profile && !intro && !works.length && !hasAnyEnabledText) return;
 
     const photoEl = document.getElementById('bkg2-photo');
     if (photoEl && profile) {
