@@ -971,7 +971,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
         <div class="step-header-label">Featured Videos</div>
         <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:400;color:var(--bark);">精選熱門商品影音</h2>
         <div class="step-header-line"></div>
-        <p style="color:var(--mid);font-size:.76rem;margin-top:8px;font-family:'Noto Sans TC',sans-serif;">點擊影片區域貼上 YouTube 連結即可顯示</p>
+        <p style="color:var(--mid);font-size:.76rem;margin-top:8px;font-family:'Noto Sans TC',sans-serif;">每段精選短片預覽，點擊可播放/暫停</p>
       </div>
       <div class="video-grid" id="video-grid"></div>
     </div>
@@ -2355,7 +2355,31 @@ let videoCards = [
 ];
 
 // 載入影音資料
+// 【2026/04/25 第8輪】優先抓 🔴 主系統 SHOP_VIDEO_1~4(admin 上傳的精選影音),
+// 找不到才 fallback 用舊版 🔵 getVideos(videoCards 圖卡模式)。
 async function loadVideos(){
+  // ❶ 先抓 admin 上傳的 SHOP_VIDEO_1~4
+  try{
+    const r = await fetch(GAS_MAIN_URL + '?action=getImageConfig&block=INDEX&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if(d.ok && Array.isArray(d.images)){
+      const shopVideos = d.images
+        .filter(x => /^SHOP_VIDEO_[1-4]$/.test(x.code) && x.url)
+        .sort((a, b) => {
+          const sa = (a.sortOrder === undefined || a.sortOrder === null || a.sortOrder === '' || Number(a.sortOrder) === 0) ? 999 : Number(a.sortOrder);
+          const sb = (b.sortOrder === undefined || b.sortOrder === null || b.sortOrder === '' || Number(b.sortOrder) === 0) ? 999 : Number(b.sortOrder);
+          return sa - sb;
+        })
+        .map((x, i) => ({ url: x.url, title: x.text || ('精選影音 ' + (i+1)) }));
+      if(shopVideos.length > 0){
+        window._shopVideos = shopVideos;
+        renderVideos();
+        return; // 有 SHOP_VIDEO 就用它,不再抓舊版
+      }
+    }
+  }catch(e){ console.warn('[shopVideos] 載入失敗', e); }
+
+  // ❷ Fallback:抓舊版 getVideos(videoCards 圖卡模式)
   try{
     const res  = await fetch(GAS_URL+'?action=getVideos');
     const data = await res.json();
@@ -2371,6 +2395,13 @@ function renderVideos(){
   if(!g) return;
   const isOwner = document.body.classList.contains('owner-mode');
   g.innerHTML = '';
+
+  // ═══ 【2026/04/25 第8輪】優先用 admin 上傳的 SHOP_VIDEO_1~4，找不到再 fallback 用 videoCards ═══
+  if(window._shopVideos && window._shopVideos.length > 0){
+    _renderShopVideos(g);
+    return;
+  }
+
   videoCards.forEach((v,idx) => {
     const card = document.createElement('div');
     card.className = 'video-card';
@@ -2403,6 +2434,72 @@ function renderVideos(){
     g.appendChild(card);
   });
 }
+
+// ═══ 【2026/04/25 第8輪】渲染 admin 上傳的 SHOP_VIDEO 影片 ═══
+function _renderShopVideos(g){
+  // 一次只播一個的狀態（global）
+  if(window._currentPlayingVideo === undefined) window._currentPlayingVideo = null;
+  if(window._videoMuted === undefined) window._videoMuted = true;
+
+  window._shopVideos.forEach((v, idx) => {
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    card.innerHTML = `
+      <div class="video-frame-wrap" style="position:relative;cursor:pointer;">
+        <video id="shopvid-${idx}" src="${v.url}" muted playsinline preload="metadata" loop
+               style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;background:#000;"
+               onclick="_playShopVideo(${idx})"></video>
+        <div id="shopvid-overlay-${idx}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);pointer-events:none;transition:opacity .25s;">
+          <span style="color:#fff;font-size:2.2rem;text-shadow:0 2px 8px rgba(0,0,0,.6);">▶</span>
+        </div>
+        <button onclick="_toggleShopVideoMute(${idx},event)" id="shopvid-mute-${idx}"
+                style="position:absolute;bottom:8px;right:8px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;"
+                title="切換音效">🔇</button>
+      </div>
+      <div class="video-info">
+        <div class="video-title">${v.title || ('精選影音 ' + (idx+1))}</div>
+      </div>`;
+    g.appendChild(card);
+  });
+}
+
+window._playShopVideo = function(idx){
+  // 一次只播一個：暫停其他、播這個
+  const all = document.querySelectorAll('[id^="shopvid-"]');
+  all.forEach(el => {
+    if(el.tagName === 'VIDEO' && el.id !== 'shopvid-'+idx){
+      el.pause();
+      const ov = document.getElementById('shopvid-overlay-' + el.id.replace('shopvid-',''));
+      if(ov) ov.style.opacity = '1';
+    }
+  });
+  const v = document.getElementById('shopvid-'+idx);
+  const ov = document.getElementById('shopvid-overlay-'+idx);
+  if(!v) return;
+  if(v.paused){
+    v.muted = !!window._videoMuted;
+    v.play().catch(()=>{});
+    if(ov) ov.style.opacity = '0';
+    window._currentPlayingVideo = idx;
+  } else {
+    v.pause();
+    if(ov) ov.style.opacity = '1';
+    window._currentPlayingVideo = null;
+  }
+};
+
+window._toggleShopVideoMute = function(idx, ev){
+  if(ev) ev.stopPropagation();
+  window._videoMuted = !window._videoMuted;
+  // 套用到所有 shop 影片
+  document.querySelectorAll('[id^="shopvid-"]').forEach(el => {
+    if(el.tagName === 'VIDEO') el.muted = window._videoMuted;
+  });
+  // 更新所有按鈕圖示
+  document.querySelectorAll('[id^="shopvid-mute-"]').forEach(btn => {
+    btn.textContent = window._videoMuted ? '🔇' : '🔊';
+  });
+};
 
 function triggerVideoImg(idx){
   if(!document.body.classList.contains('owner-mode')) return;

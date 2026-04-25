@@ -1120,28 +1120,29 @@ tr:hover td{background:rgba(61,43,31,.03);}
             </div>
           </div>
 
-          <!-- ═══ 【2026/04/25 第7輪新增】區塊 D：購物網首頁輪播 ═══ -->
-          <!-- 回滾：刪除此整個 card + 下方 JS 的 SHOP_INDEX_CAROUSEL_CODES 相關程式即可 -->
+          <!-- ═══ 【2026/04/25 第8輪】區塊 D：購物網精選影音 ═══ -->
+          <!-- 回滾:刪除此整個 card + 下方 JS 的 SHOP_VIDEO_CODES 相關程式即可 -->
           <div class="card" style="margin-bottom:16px;">
-            <div class="card-head"><h3>🛒 購物網首頁輪播（最多 5 張）</h3></div>
+            <div class="card-head"><h3>🎬 購物網精選影音(最多 4 格)</h3></div>
             <div class="card-body">
               <p style="font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:12px;line-height:1.6;">
-                ※ 顯示在 🔵 購物 index.html 首頁左側 hero 區的輪播圖。<br>
-                ※ 與 booking 站的輪播<strong>各自獨立</strong>，請另外上傳。
+                ※ 顯示在 🔵 購物 index.html「精選熱門商品影音」區塊。<br>
+                ※ 規格:<strong>10 秒以內、檔案 < 20MB、自動降 720p、輸出 MP4 靜音</strong>,超過會自動拒絕。<br>
+                ※ 上傳影片後可勾「啟用」即時顯示;未上傳的格子會在前台<strong>自動隱藏</strong>。
               </p>
-              <div class="imgv5-bulkbar" id="bulkbar-shop">
-                <span class="count" id="bulkcount-shop">已選 0 張</span>
-                <button class="btn btn-danger btn-sm" onclick="bulkDeleteImages('shop')">🗑️ 批次刪除</button>
-                <button class="btn btn-outline btn-sm" onclick="clearSelection('shop')" style="margin-left:auto;">取消選取</button>
+              <div class="imgv5-bulkbar" id="bulkbar-shopvideo">
+                <span class="count" id="bulkcount-shopvideo">已選 0 個</span>
+                <button class="btn btn-danger btn-sm" onclick="bulkDeleteImages('shopvideo')">🗑️ 批次刪除</button>
+                <button class="btn btn-outline btn-sm" onclick="clearSelection('shopvideo')" style="margin-left:auto;">取消選取</button>
               </div>
               <label class="imgv5-selectall">
-                <input type="checkbox" id="selectall-shop" onchange="toggleSelectAll('shop',this.checked)">
-                <span>全選購物網輪播</span>
+                <input type="checkbox" id="selectall-shopvideo" onchange="toggleSelectAll('shopvideo',this.checked)">
+                <span>全選精選影音</span>
               </label>
-              <div id="shop-carousel-list"></div>
+              <div id="shopvideo-list"></div>
             </div>
           </div>
-          <!-- ═══ 第7輪新增 END ═══ -->
+          <!-- ═══ 第8輪新增 END ═══ -->
 
           <div id="img-msg" class="msg-box"></div>
           <div id="img-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
@@ -2870,8 +2871,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 let _imageConfig = [];
 const INDEX_CAROUSEL_CODES = ['INDEX_CAROUSEL_1','INDEX_CAROUSEL_2','INDEX_CAROUSEL_3','INDEX_CAROUSEL_4','INDEX_CAROUSEL_5'];
 const BOOKING_CAROUSEL_CODES = ['BOOKING_CAROUSEL_1','BOOKING_CAROUSEL_2','BOOKING_CAROUSEL_3','BOOKING_CAROUSEL_4','BOOKING_CAROUSEL_5'];
-// ═══ 【2026/04/25 第7輪新增】購物網首頁輪播 codes（與 booking 完全獨立）═══
-const SHOP_INDEX_CAROUSEL_CODES = ['SHOP_INDEX_CAR1','SHOP_INDEX_CAR2','SHOP_INDEX_CAR3','SHOP_INDEX_CAR4','SHOP_INDEX_CAR5'];
+// ═══ 【2026/04/25 第8輪】購物網精選影音 codes(4 格,獨立於圖片管理)═══
+const SHOP_VIDEO_CODES = ['SHOP_VIDEO_1','SHOP_VIDEO_2','SHOP_VIDEO_3','SHOP_VIDEO_4'];
 
 async function loadImageConfig(){
   const loading = document.getElementById('img-loading');
@@ -2932,12 +2933,12 @@ function renderImageConfig(){
     _bindDragEvents('booking-carousel-list', 'booking');
   }
 
-  // ═══ 【2026/04/25 第7輪新增】6. 購物網首頁輪播 5 張（獨立區塊）═══
-  const shopCarList = document.getElementById('shop-carousel-list');
-  if(shopCarList){
-    const sortedShop = _sortByOrder(SHOP_INDEX_CAROUSEL_CODES);
-    shopCarList.innerHTML = sortedShop.map(code => renderImageRowV5(code, 'shop')).join('');
-    _bindDragEvents('shop-carousel-list', 'shop');
+  // ═══ 【2026/04/25 第8輪】6. 購物網精選影音 4 格(用 renderVideoRow 影片版)═══
+  const shopVideoList = document.getElementById('shopvideo-list');
+  if(shopVideoList){
+    const sortedSV = _sortByOrder(SHOP_VIDEO_CODES);
+    shopVideoList.innerHTML = sortedSV.map(code => renderVideoRow(code, 'shopvideo')).join('');
+    _bindDragEvents('shopvideo-list', 'shopvideo');
   }
 
   // ═══ 【2026/04/23 第4輪新增】6. booking 自介區 4 個文字欄位 ═══
@@ -2953,7 +2954,7 @@ function renderImageConfig(){
   // ═══ 【v5】重整批次工具列狀態 ═══
   _updateBulkBar('index');
   _updateBulkBar('booking');
-  _updateBulkBar('shop');  // ═══ 第7輪新增 ═══
+  _updateBulkBar('shopvideo');  // ═══ 第8輪新增 ═══
 }
 
 // ═══ 【2026/04/24 v5】按 sortOrder 排序 code 陣列（空值/0 當 999 排後面，穩定排序）═══
@@ -3039,7 +3040,7 @@ function renderImageRow(code, customLabel){
 // ════════════════════════════════════════════════════════════
 
 // v5 狀態：已勾選的 code（依群組分）
-const _imgSelected = { index: new Set(), booking: new Set(), shop: new Set() };
+const _imgSelected = { index: new Set(), booking: new Set(), shopvideo: new Set() };
 // v5 拖曳中的 code
 let _draggingCode = null;
 let _draggingGroup = null;
@@ -3125,7 +3126,7 @@ function _bindDragEvents(listId, group){
 }
 
 async function _reorderByDrop(group, fromCode, toCode){
-  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : (group === 'shop' ? SHOP_INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES);
+  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : (group === 'shopvideo' ? SHOP_VIDEO_CODES : BOOKING_CAROUSEL_CODES);
   // 取目前畫面順序（已按 sortOrder 排過）
   const currentOrder = _sortByOrder(codes);
   const fromIdx = currentOrder.indexOf(fromCode);
@@ -3167,7 +3168,7 @@ function toggleImageSelect(code, group, checked){
 }
 
 function toggleSelectAll(group, checked){
-  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : (group === 'shop' ? SHOP_INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES);
+  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : (group === 'shopvideo' ? SHOP_VIDEO_CODES : BOOKING_CAROUSEL_CODES);
   if(checked){
     // 只選有圖的
     codes.forEach(code => {
@@ -3290,6 +3291,220 @@ document.addEventListener('keydown', (e) => {
   }
 });
 // ═══ 第5輪新增 END ═══
+
+// ════════════════════════════════════════════════════════════
+// ═══ 【2026/04/25 第8輪】購物網精選影音管理 ═══
+// 規格：10 秒以內、< 20MB、自動降 720p 輸出 MP4 靜音
+// 回滾：刪除整段 + HTML 移除「🎬 購物網精選影音」card 即可
+// ════════════════════════════════════════════════════════════
+
+// 影片版 row（沿用 renderImageRowV5 結構，只改成 <video> 預覽 + 影片驗證）
+function renderVideoRow(code, group){
+  const cfg = _imgFind(code);
+  const hasVideo = !!cfg.url;
+  const label = code.replace(/_/g,' ');
+  const checked = _imgSelected[group].has(code) ? 'checked' : '';
+  const preview = hasVideo
+    ? `<video src="${cfg.url}" muted playsinline preload="metadata" style="width:200px;height:140px;background:#000;border:1px solid var(--border);border-radius:3px;object-fit:cover;cursor:pointer;display:block;" onclick="this.paused?this.play():this.pause()" title="點擊播放/暫停"></video>`
+    : `<div style="width:200px;height:140px;background:#1a1a1a;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#888;font-size:.7rem;">（尚未上傳影片）</div>`;
+  const statusBadge = cfg.enabled && hasVideo
+    ? `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:#e8f5ee;color:#2d7a4f">啟用中</span>`
+    : `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:#eee;color:#aaa">停用</span>`;
+  const sortBadge = `<span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:var(--sand);color:var(--bark);font-weight:600;">順序 ${cfg.sortOrder && Number(cfg.sortOrder) > 0 ? cfg.sortOrder : '—'}</span>`;
+  return `
+    <div class="imgv5-row" data-code="${code}" data-group="${group}" draggable="true"
+         style="display:flex;gap:10px;align-items:flex-start;padding:12px;background:#faf8f5;border:1px solid var(--border);border-radius:4px;margin-bottom:10px;flex-wrap:wrap;">
+      <div class="imgv5-handle" title="拖曳調整順序">⋮⋮</div>
+      <div class="imgv5-check">
+        <input type="checkbox" ${checked} onchange="toggleImageSelect('${code}','${group}',this.checked)" title="勾選以批次操作">
+      </div>
+      <div style="flex:0 0 200px;">
+        <div style="font-size:.7rem;font-weight:600;color:var(--bark);margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">${label}</div>
+        ${preview}
+      </div>
+      <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          ${statusBadge}
+          ${sortBadge}
+          ${cfg.updatedAt ? `<span style="font-size:.6rem;color:var(--mid);">更新：${cfg.updatedAt}</span>` : ''}
+        </div>
+        <input type="file" id="vid-file-${code}" accept="video/*" style="font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-dark btn-sm" onclick="uploadVideo('${code}')">⬆️ 上傳新影片</button>
+          ${hasVideo ? `<label style="font-size:.7rem;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;"><input type="checkbox" id="img-en-${code}" ${cfg.enabled?'checked':''} onchange="toggleImageEnable('${code}',this.checked)"> 啟用</label>` : ''}
+          ${hasVideo ? `<button class="btn btn-outline btn-sm" onclick="deactivateImageAction('${code}')" style="color:#a07a3a;border-color:#d4b98a;">🔸 停用</button>` : ''}
+          ${hasVideo ? `<button class="btn btn-danger btn-sm" onclick="deleteImageHardAction('${code}')">🔺 徹底刪</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══ 影片上傳 + 自動驗證 + 自動轉檔（10s/20MB/720p/MP4/靜音）═══
+async function uploadVideo(code){
+  const fileInput = document.getElementById('vid-file-'+code);
+  if(!fileInput || !fileInput.files || !fileInput.files[0]){
+    showMsg('img-msg', '❌ 請先選擇影片檔', 'err');
+    return;
+  }
+  const file = fileInput.files[0];
+
+  // ❶ 大小驗證（< 100MB 才接受處理，處理後輸出會 < 20MB）
+  if(file.size > 100 * 1024 * 1024){
+    showMsg('img-msg', '❌ 原檔超過 100MB，請先用手機/剪輯軟體壓縮再上傳', 'err');
+    return;
+  }
+
+  // ❷ 秒數驗證
+  showMsg('img-msg', '檢查影片秒數中…', 'loading');
+  let duration;
+  try{
+    duration = await _getVideoDuration(file);
+  }catch(e){
+    showMsg('img-msg', '❌ 無法讀取影片資訊：'+e.message, 'err');
+    return;
+  }
+  if(duration > 10.5){
+    showMsg('img-msg', '❌ 影片長度 '+duration.toFixed(1)+' 秒，超過 10 秒上限', 'err');
+    return;
+  }
+
+  // ❸ 轉檔（降 720p、靜音、輸出 MP4）—— 用 canvas + MediaRecorder
+  showMsg('img-msg', '影片轉檔中（' + duration.toFixed(1) + 's）…請耐心等候', 'loading');
+  let blob;
+  try{
+    blob = await _transcodeVideoToMP4(file);
+  }catch(e){
+    showMsg('img-msg', '❌ 轉檔失敗：'+e.message, 'err');
+    return;
+  }
+
+  // ❹ 大小再驗
+  const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
+  if(blob.size > 25 * 1024 * 1024){
+    showMsg('img-msg', '❌ 轉檔後仍 '+sizeMB+'MB,請縮短影片或降畫質再試', 'err');
+    return;
+  }
+
+  // ❺ 上傳到 GAS Drive
+  showMsg('img-msg', '上傳中…（' + sizeMB + 'MB）', 'loading');
+  try{
+    const base64 = await _blobToBase64(blob);
+    const cleanBase64 = String(base64).replace(/^data:[^;]+;base64,/,'');
+    const r = await fetch(GAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'uploadImageToDrive', // 沿用既有上傳函式（同樣寫入 Drive + 圖片管理 Sheet）
+        code: code,
+        base64: cleanBase64,
+        mimeType: 'video/mp4',
+        filename: 'uni_'+code+'_'+Date.now()+'.mp4'
+      }),
+      redirect: 'follow'
+    });
+    const d = await r.json();
+    if(d.ok){
+      showMsg('img-msg', '✅ 影片上傳成功（' + sizeMB + 'MB,' + duration.toFixed(1) + 's）', 'ok');
+      await loadImageConfig();
+    } else {
+      showMsg('img-msg', '❌ '+(d.msg||'上傳失敗'), 'err');
+    }
+  }catch(e){
+    showMsg('img-msg', '❌ 上傳錯誤：'+e.message, 'err');
+  }
+}
+
+// 取影片秒數
+function _getVideoDuration(file){
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => {
+      const d = v.duration;
+      URL.revokeObjectURL(v.src);
+      if(isFinite(d) && d > 0) resolve(d);
+      else reject(new Error('無效的影片'));
+    };
+    v.onerror = () => { URL.revokeObjectURL(v.src); reject(new Error('影片格式不支援')); };
+    v.src = URL.createObjectURL(file);
+  });
+}
+
+// 轉檔：載入到 video → canvas 抽幀 → MediaRecorder 重錄成 MP4 (H.264/VP9 fallback)
+async function _transcodeVideoToMP4(file){
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video');
+    v.muted = true;
+    v.playsInline = true;
+    v.src = URL.createObjectURL(file);
+
+    v.onloadedmetadata = () => {
+      // 計算輸出尺寸（最長邊降到 1280，保比例）
+      let w = v.videoWidth, h = v.videoHeight;
+      const maxSide = 1280;
+      if(w > maxSide || h > maxSide){
+        if(w > h){ h = Math.round(h * maxSide / w); w = maxSide; }
+        else     { w = Math.round(w * maxSide / h); h = maxSide; }
+      }
+      // 偶數化（編碼器要求）
+      w = w - (w % 2);
+      h = h - (h % 2);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      const stream = canvas.captureStream(24);
+      // 找瀏覽器支援的格式
+      const candidates = [
+        'video/mp4;codecs=avc1.42E01E',
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ];
+      let mime = '';
+      for(const c of candidates){
+        if(MediaRecorder.isTypeSupported(c)){ mime = c; break; }
+      }
+      if(!mime){ reject(new Error('瀏覽器不支援影片轉檔')); return; }
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: mime,
+        videoBitsPerSecond: 1500000 // 1.5Mbps,10秒約 < 2MB
+      });
+      const chunks = [];
+      recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => {
+        const outBlob = new Blob(chunks, { type: mime.split(';')[0] });
+        URL.revokeObjectURL(v.src);
+        resolve(outBlob);
+      };
+      recorder.onerror = e => reject(e.error || new Error('錄製錯誤'));
+
+      recorder.start();
+      v.play();
+      const draw = () => {
+        if(v.ended || v.paused){ recorder.stop(); return; }
+        ctx.drawImage(v, 0, 0, w, h);
+        requestAnimationFrame(draw);
+      };
+      draw();
+      v.onended = () => recorder.stop();
+    };
+
+    v.onerror = () => { URL.revokeObjectURL(v.src); reject(new Error('影片載入失敗')); };
+  });
+}
+
+function _blobToBase64(blob){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('Blob 讀取失敗'));
+    r.readAsDataURL(blob);
+  });
+}
+// ═══ 第8輪新增 END ═══
 
 // 2026/04/23 v3E.2：加入 canvas 自動壓縮，iPhone/相機原圖直接丟也能傳
 async function _compressImage(file, maxWidth = 1600, quality = 0.85){
