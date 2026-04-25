@@ -1120,6 +1120,29 @@ tr:hover td{background:rgba(61,43,31,.03);}
             </div>
           </div>
 
+          <!-- ═══ 【2026/04/25 第7輪新增】區塊 D：購物網首頁輪播 ═══ -->
+          <!-- 回滾：刪除此整個 card + 下方 JS 的 SHOP_INDEX_CAROUSEL_CODES 相關程式即可 -->
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-head"><h3>🛒 購物網首頁輪播（最多 5 張）</h3></div>
+            <div class="card-body">
+              <p style="font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:12px;line-height:1.6;">
+                ※ 顯示在 🔵 購物 index.html 首頁左側 hero 區的輪播圖。<br>
+                ※ 與 booking 站的輪播<strong>各自獨立</strong>，請另外上傳。
+              </p>
+              <div class="imgv5-bulkbar" id="bulkbar-shop">
+                <span class="count" id="bulkcount-shop">已選 0 張</span>
+                <button class="btn btn-danger btn-sm" onclick="bulkDeleteImages('shop')">🗑️ 批次刪除</button>
+                <button class="btn btn-outline btn-sm" onclick="clearSelection('shop')" style="margin-left:auto;">取消選取</button>
+              </div>
+              <label class="imgv5-selectall">
+                <input type="checkbox" id="selectall-shop" onchange="toggleSelectAll('shop',this.checked)">
+                <span>全選購物網輪播</span>
+              </label>
+              <div id="shop-carousel-list"></div>
+            </div>
+          </div>
+          <!-- ═══ 第7輪新增 END ═══ -->
+
           <div id="img-msg" class="msg-box"></div>
           <div id="img-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
 
@@ -2847,6 +2870,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 let _imageConfig = [];
 const INDEX_CAROUSEL_CODES = ['INDEX_CAROUSEL_1','INDEX_CAROUSEL_2','INDEX_CAROUSEL_3','INDEX_CAROUSEL_4','INDEX_CAROUSEL_5'];
 const BOOKING_CAROUSEL_CODES = ['BOOKING_CAROUSEL_1','BOOKING_CAROUSEL_2','BOOKING_CAROUSEL_3','BOOKING_CAROUSEL_4','BOOKING_CAROUSEL_5'];
+// ═══ 【2026/04/25 第7輪新增】購物網首頁輪播 codes（與 booking 完全獨立）═══
+const SHOP_INDEX_CAROUSEL_CODES = ['SHOP_INDEX_CAR1','SHOP_INDEX_CAR2','SHOP_INDEX_CAR3','SHOP_INDEX_CAR4','SHOP_INDEX_CAR5'];
 
 async function loadImageConfig(){
   const loading = document.getElementById('img-loading');
@@ -2907,6 +2932,14 @@ function renderImageConfig(){
     _bindDragEvents('booking-carousel-list', 'booking');
   }
 
+  // ═══ 【2026/04/25 第7輪新增】6. 購物網首頁輪播 5 張（獨立區塊）═══
+  const shopCarList = document.getElementById('shop-carousel-list');
+  if(shopCarList){
+    const sortedShop = _sortByOrder(SHOP_INDEX_CAROUSEL_CODES);
+    shopCarList.innerHTML = sortedShop.map(code => renderImageRowV5(code, 'shop')).join('');
+    _bindDragEvents('shop-carousel-list', 'shop');
+  }
+
   // ═══ 【2026/04/23 第4輪新增】6. booking 自介區 4 個文字欄位 ═══
   // 回滾：刪除此 forEach + PROFILE_TEXT_CODES 常數 + saveAllProfileTexts 函式即可
   PROFILE_TEXT_CODES.forEach(code => {
@@ -2920,6 +2953,7 @@ function renderImageConfig(){
   // ═══ 【v5】重整批次工具列狀態 ═══
   _updateBulkBar('index');
   _updateBulkBar('booking');
+  _updateBulkBar('shop');  // ═══ 第7輪新增 ═══
 }
 
 // ═══ 【2026/04/24 v5】按 sortOrder 排序 code 陣列（空值/0 當 999 排後面，穩定排序）═══
@@ -3005,7 +3039,7 @@ function renderImageRow(code, customLabel){
 // ════════════════════════════════════════════════════════════
 
 // v5 狀態：已勾選的 code（依群組分）
-const _imgSelected = { index: new Set(), booking: new Set() };
+const _imgSelected = { index: new Set(), booking: new Set(), shop: new Set() };
 // v5 拖曳中的 code
 let _draggingCode = null;
 let _draggingGroup = null;
@@ -3091,7 +3125,7 @@ function _bindDragEvents(listId, group){
 }
 
 async function _reorderByDrop(group, fromCode, toCode){
-  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES;
+  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : (group === 'shop' ? SHOP_INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES);
   // 取目前畫面順序（已按 sortOrder 排過）
   const currentOrder = _sortByOrder(codes);
   const fromIdx = currentOrder.indexOf(fromCode);
@@ -3133,7 +3167,7 @@ function toggleImageSelect(code, group, checked){
 }
 
 function toggleSelectAll(group, checked){
-  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES;
+  const codes = group === 'index' ? INDEX_CAROUSEL_CODES : (group === 'shop' ? SHOP_INDEX_CAROUSEL_CODES : BOOKING_CAROUSEL_CODES);
   if(checked){
     // 只選有圖的
     codes.forEach(code => {

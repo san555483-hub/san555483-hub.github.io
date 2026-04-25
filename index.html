@@ -72,12 +72,13 @@ body{font-family:'Noto Serif TC',serif;background:var(--linen);color:var(--ink);
   position:absolute;
   inset:0;
   opacity:0;
-  transition:opacity 1.2s ease;
+  z-index:1; /* ═══ 【2026/04/25 第7輪】預設 z-index 1 ═══ */
+  transition:opacity .6s ease; /* ═══ 第7輪：1.2s → 0.6s ═══ */
   background-size:cover;
   background-position:center;
   background-repeat:no-repeat;
 }
-.hv2-slide.active{ opacity:1; }
+.hv2-slide.active{ opacity:1; z-index:2; } /* ═══ 第7輪：active 提升 z-index 防疊加 ═══ */
 .hv2-dots{
   position:absolute;
   bottom:16px;
@@ -2737,9 +2738,15 @@ async function loadHeroV2(){
     const d = await r.json();
     if(!d.ok || !d.images) return;
 
+    // ═══ 【2026/04/25 第7輪】改抓 SHOP_INDEX_CAR1~5（與 booking 站獨立）═══
+    // 依 sortOrder 排序（admin 後台拖曳設定的順序）
     const carousels = d.images
-      .filter(x => /^INDEX_CAROUSEL_\d+$/.test(x.code) && x.url)
-      .sort((a,b) => a.order - b.order);
+      .filter(x => /^SHOP_INDEX_CAR\d+$/.test(x.code) && x.url)
+      .sort((a, b) => {
+        const sa = (a.sortOrder === undefined || a.sortOrder === null || a.sortOrder === '' || Number(a.sortOrder) === 0) ? 999 : Number(a.sortOrder);
+        const sb = (b.sortOrder === undefined || b.sortOrder === null || b.sortOrder === '' || Number(b.sortOrder) === 0) ? 999 : Number(b.sortOrder);
+        return sa - sb;
+      });
     const titleConfig = d.images.find(x => x.code === 'INDEX_TITLE' && x.text && x.text.trim());
 
     if(!carousels.length && !titleConfig) return;
