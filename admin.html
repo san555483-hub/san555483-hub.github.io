@@ -241,6 +241,47 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .imgv5-modal-close:hover{background:rgba(255,255,255,.3);transform:rotate(90deg);}
 .imgv5-modal-hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:.7rem;font-family:'Noto Sans TC',sans-serif;letter-spacing:.1em;}
 /* ═══ 第5輪新增 END ═══ */
+/* ═══ 【2026/04/24 第6輪新增】手動新增/修改/刪除預約 modal ═══ */
+/* 回滾：刪除此區塊所有 .bkmodal-* 樣式即可 */
+.bkmodal{display:none;position:fixed;inset:0;z-index:9998;background:rgba(20,15,10,.55);align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;animation:bkmodalFadeIn .22s ease;}
+.bkmodal.active{display:flex;}
+@keyframes bkmodalFadeIn{from{opacity:0;}to{opacity:1;}}
+.bkmodal-box{background:#fff;width:100%;max-width:520px;border-radius:6px;box-shadow:0 12px 48px rgba(0,0,0,.3);overflow:hidden;animation:bkmodalSlide .26s ease;}
+@keyframes bkmodalSlide{from{transform:translateY(-20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.bkmodal-head{background:linear-gradient(135deg,var(--bark),#5a4a3c);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+.bkmodal-head h3{margin:0;font-size:.95rem;font-family:'Noto Sans TC',sans-serif;font-weight:600;letter-spacing:.05em;}
+.bkmodal-close{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;width:28px;height:28px;border-radius:3px;cursor:pointer;font-size:.95rem;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.bkmodal-close:hover{background:rgba(255,255,255,.15);}
+.bkmodal-body{padding:18px;}
+.bkmodal-row{margin-bottom:12px;position:relative;}
+.bkmodal-row label{display:block;font-size:.7rem;color:var(--bark);font-weight:600;font-family:'Noto Sans TC',sans-serif;margin-bottom:4px;letter-spacing:.05em;}
+.bkmodal-row label .required{color:#c44;margin-left:2px;}
+.bkmodal-row input[type=text],.bkmodal-row input[type=tel],.bkmodal-row input[type=date],.bkmodal-row select,.bkmodal-row textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-family:inherit;font-size:.78rem;color:var(--bark);background:#fff;transition:border-color .15s;}
+.bkmodal-row input:focus,.bkmodal-row select:focus,.bkmodal-row textarea:focus{outline:none;border-color:var(--rose);box-shadow:0 0 0 2px var(--rose-lt);}
+.bkmodal-row textarea{resize:vertical;min-height:60px;font-family:'Noto Sans TC',sans-serif;}
+.bkmodal-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.bkmodal-checkbox{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;cursor:pointer;user-select:none;padding:6px 10px;background:#faf8f5;border:1px dashed var(--border);border-radius:3px;margin-bottom:8px;}
+.bkmodal-checkbox input{accent-color:var(--rose);}
+.bkmodal-checkbox.warn{background:#fff5f0;border-color:#e8b89a;color:#a55a2a;}
+.bkmodal-checkbox.warn input{accent-color:#a55a2a;}
+.bkmodal-foot{padding:12px 18px;background:#faf8f5;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.bkmodal-msg{padding:10px 12px;border-radius:3px;margin-bottom:12px;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;display:none;line-height:1.5;}
+.bkmodal-msg.active{display:block;}
+.bkmodal-msg.err{background:#fff0f0;border:1px solid #ec9a9a;color:#a83838;}
+.bkmodal-msg.ok{background:#e8f5ee;border:1px solid #8ec9aa;color:#2d7a4f;}
+.bkmodal-msg.loading{background:#fdf6e8;border:1px solid #e8c98a;color:#8a6020;}
+/* 電話 autocomplete 下拉 */
+.bkmodal-suggest{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 3px 3px;box-shadow:0 4px 12px rgba(0,0,0,.08);max-height:180px;overflow-y:auto;z-index:10;display:none;}
+.bkmodal-suggest.active{display:block;}
+.bkmodal-suggest-item{padding:8px 10px;cursor:pointer;font-size:.74rem;color:var(--bark);border-bottom:1px solid #f0ebe5;font-family:'Noto Sans TC',sans-serif;}
+.bkmodal-suggest-item:hover{background:var(--rose-lt);}
+.bkmodal-suggest-item .phone{color:var(--mid);font-size:.68rem;margin-left:6px;}
+.bkmodal-suggest-empty{padding:8px 10px;font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+@media(max-width:640px){
+  .bkmodal-row-2{grid-template-columns:1fr;}
+  .bkmodal-box{max-width:100%;}
+}
+/* ═══ 第6輪新增 END ═══ */
 </style>
 </head>
 <body>
@@ -328,7 +369,10 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <div class="card">
         <div class="card-head">
           <h3>📅 預約紀錄管理</h3>
-          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadBookings()">🔄 重新載入</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.08);" onclick="openBookingModal()">➕ 手動新增預約</button>
+            <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadBookings()">🔄 重新載入</button>
+          </div>
         </div>
         <div class="card-body">
           <div class="stat-grid" id="booking-stats"></div>
@@ -345,7 +389,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>預約編號</th><th>日期</th><th>時間</th><th>姓名</th><th>電話</th><th>服務</th><th>狀態</th><th>備註</th><th>改狀態</th></tr></thead>
+              <thead><tr><th>預約編號</th><th>日期</th><th>時間</th><th>姓名</th><th>電話</th><th>服務</th><th>狀態</th><th>備註</th><th>改狀態</th><th>操作</th></tr></thead>
               <tbody id="booking-tbody"></tbody>
             </table>
           </div>
@@ -354,6 +398,76 @@ tr:hover td{background:rgba(61,43,31,.03);}
       </div>
     </div>
   </div>
+
+  <!-- ═══ 【2026/04/24 第6輪新增】手動新增/修改預約 Modal ═══ -->
+  <div class="bkmodal" id="bkmodal" onclick="if(event.target.id==='bkmodal')closeBookingModal()">
+    <div class="bkmodal-box">
+      <div class="bkmodal-head">
+        <h3 id="bkmodal-title">➕ 手動新增預約</h3>
+        <button class="bkmodal-close" onclick="closeBookingModal()" title="關閉（ESC）">✕</button>
+      </div>
+      <div class="bkmodal-body">
+        <div class="bkmodal-msg" id="bkmodal-msg"></div>
+        <input type="hidden" id="bk-edit-id" value="">
+
+        <div class="bkmodal-row" style="position:relative;">
+          <label>顧客電話 <span class="required">*</span></label>
+          <input type="tel" id="bk-phone" maxlength="20" placeholder="輸入 4 碼以上自動推薦" autocomplete="off" oninput="onBkPhoneInput()">
+          <div class="bkmodal-suggest" id="bk-phone-suggest"></div>
+        </div>
+
+        <div class="bkmodal-row">
+          <label>顧客姓名 <span class="required">*</span></label>
+          <input type="text" id="bk-name" maxlength="30" placeholder="王阿姨">
+        </div>
+
+        <div class="bkmodal-row-2">
+          <div class="bkmodal-row">
+            <label>預約日期 <span class="required">*</span></label>
+            <input type="date" id="bk-date" onchange="onBkDateChange()">
+          </div>
+          <div class="bkmodal-row">
+            <label>預約時間 <span class="required">*</span></label>
+            <select id="bk-time">
+              <option value="">— 請先選日期 —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bkmodal-row">
+          <label>服務項目 <span class="required">*</span></label>
+          <select id="bk-service">
+            <option value="">— 載入中… —</option>
+          </select>
+        </div>
+
+        <div class="bkmodal-row">
+          <label>備註（選填）</label>
+          <textarea id="bk-note" maxlength="200" placeholder="例如：第一次來、染深棕色、客人要求..."></textarea>
+        </div>
+
+        <label class="bkmodal-checkbox">
+          <input type="checkbox" id="bk-send-line" checked>
+          <span>📩 自動發送 LINE 確認訊息（顧客有綁 UID 才會推送）</span>
+        </label>
+
+        <label class="bkmodal-checkbox warn">
+          <input type="checkbox" id="bk-force-override">
+          <span>⚠️ 強制覆寫（公休/休息時段也可預約，自動標「指定加價」）</span>
+        </label>
+
+        <p style="font-size:.65rem;color:var(--mid);margin:8px 0 0 0;line-height:1.5;font-family:'Noto Sans TC',sans-serif;">
+          ※ 系統會自動檢查同時段衝突（含尊爵客、鎖時段）。<br>
+          ※ 預約成功後自動標記「【admin 代訂】」於備註欄。
+        </p>
+      </div>
+      <div class="bkmodal-foot">
+        <button class="btn btn-outline" onclick="closeBookingModal()">取消</button>
+        <button class="btn btn-dark" id="bk-submit-btn" onclick="submitBookingModal()">✅ 確認新增</button>
+      </div>
+    </div>
+  </div>
+  <!-- ═══ 第6輪 modal END ═══ -->
 
   <div class="tab-pane" id="pane-customer">
     <div class="pane-inner">
@@ -1124,11 +1238,15 @@ function filterBookingTable(){
     <td>${b.name}</td><td>${b.phone}</td>
     <td>${b.service}${b.priority?'<br><span style="font-size:.6rem;color:var(--gold)">⭐加價</span>':''}</td>
     <td><span class="status-badge ${sm[b.status]||''}">${b.status}</span></td>
-    <td style="font-size:.7rem;max-width:100px;">${b.note||''}</td>
+    <td style="font-size:.7rem;max-width:100px;">${escHtml(b.note||'')}</td>
     <td><select onchange="updateBookingStatus('${b.id}',this.value)" style="font-size:.68rem;padding:3px;border:1px solid var(--border);border-radius:3px;background:#fff;cursor:pointer;">
       <option value="">改狀態</option><option>待確認</option><option>已確認</option><option>已完成</option><option>已取消</option>
     </select></td>
-  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無資料</td></tr>';
+    <td style="white-space:nowrap;">
+      <button class="btn btn-outline btn-sm" onclick="openBookingModalEdit('${b.id}')" style="padding:3px 7px;font-size:.65rem;" title="編輯預約">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteBookingByAdmin('${b.id}')" style="padding:3px 7px;font-size:.65rem;" title="刪除預約">🗑️</button>
+    </td>
+  </tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:#aaa;padding:24px;">無資料</td></tr>';
 }
 
 function fmtDate(val){
@@ -1149,6 +1267,325 @@ async function updateBookingStatus(id,status){
   try{const r=await fetch(GAS+'?action=updateBooking&id='+encodeURIComponent(id)+'&status='+encodeURIComponent(status));const d=await r.json();if(d.status==='ok'){showToast('✓ 狀態已更新');loadBookings();}else showToast('❌ 更新失敗');}
   catch(e){showToast('❌ 網路錯誤');}
 }
+
+// ════════════════════════════════════════════════════════════
+// ═══ 【2026/04/24 第6輪新增】手動新增/修改/刪除預約 modal ═══
+// 回滾：刪除以下整段 + HTML 移除 #bkmodal + 表格移除「操作」欄即可
+// ════════════════════════════════════════════════════════════
+
+let _bkServices = [];           // 服務清單（從 GAS 載入一次後快取）
+let _bkAvailableSlots = [];     // 當前選定日期的可用時段
+let _bkPhoneSuggestTimer = null;
+let _bkLastDate = '';
+
+function _bkMsg(msg, type){
+  const el = document.getElementById('bkmodal-msg');
+  if(!el) return;
+  el.className = 'bkmodal-msg active ' + (type || 'loading');
+  el.textContent = msg;
+  if(type === 'ok' || type === 'err'){
+    setTimeout(() => { el.classList.remove('active'); }, 4500);
+  }
+}
+function _bkMsgClear(){
+  const el = document.getElementById('bkmodal-msg');
+  if(el){ el.classList.remove('active'); el.textContent = ''; }
+}
+
+// ═══ 開啟 modal（新增模式）═══
+async function openBookingModal(){
+  document.getElementById('bkmodal-title').textContent = '➕ 手動新增預約';
+  document.getElementById('bk-submit-btn').textContent = '✅ 確認新增';
+  document.getElementById('bk-edit-id').value = '';
+  // 清空欄位
+  document.getElementById('bk-phone').value = '';
+  document.getElementById('bk-name').value = '';
+  document.getElementById('bk-date').value = '';
+  document.getElementById('bk-time').innerHTML = '<option value="">— 請先選日期 —</option>';
+  document.getElementById('bk-note').value = '';
+  document.getElementById('bk-send-line').checked = true;
+  document.getElementById('bk-force-override').checked = false;
+  _bkMsgClear();
+  document.getElementById('bkmodal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  // 預設今天
+  const today = new Date();
+  const yyyy = today.getFullYear(), mm = String(today.getMonth()+1).padStart(2,'0'), dd = String(today.getDate()).padStart(2,'0');
+  document.getElementById('bk-date').value = yyyy+'-'+mm+'-'+dd;
+  // 載入服務 + 可用時段
+  await _bkLoadServices();
+  await _bkLoadAvailableSlots(yyyy+'-'+mm+'-'+dd);
+}
+
+// ═══ 開啟 modal（編輯模式）═══
+async function openBookingModalEdit(id){
+  const b = _bookings.find(x => String(x.id) === String(id));
+  if(!b){ showToast('❌ 找不到此筆預約'); return; }
+  document.getElementById('bkmodal-title').textContent = '✏️ 修改預約 #' + id;
+  document.getElementById('bk-submit-btn').textContent = '💾 儲存修改';
+  document.getElementById('bk-edit-id').value = id;
+  document.getElementById('bk-phone').value = b.phone || '';
+  document.getElementById('bk-name').value = b.name || '';
+  const dateStr = fmtDate(b.date);
+  document.getElementById('bk-date').value = dateStr;
+  document.getElementById('bk-note').value = (b.note || '').replace(/【admin 代訂[^】]*】/g, '').trim();
+  document.getElementById('bk-send-line').checked = false; // 編輯預設不重發 LINE
+  document.getElementById('bk-force-override').checked = !!b.priority;
+  _bkMsgClear();
+  document.getElementById('bkmodal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  await _bkLoadServices();
+  // 把當前服務選到下拉
+  const svcSel = document.getElementById('bk-service');
+  if(svcSel){
+    let matched = false;
+    for(const opt of svcSel.options){
+      if(opt.value === b.service){ opt.selected = true; matched = true; break; }
+    }
+    if(!matched && b.service){
+      const opt = document.createElement('option');
+      opt.value = b.service; opt.textContent = b.service + '（既有）';
+      opt.selected = true;
+      svcSel.appendChild(opt);
+    }
+  }
+  // 編輯模式：載入時段時把當前時段也保留為可選（避免被自己擋掉）
+  await _bkLoadAvailableSlots(dateStr, b.time);
+}
+
+function closeBookingModal(){
+  document.getElementById('bkmodal').classList.remove('active');
+  document.body.style.overflow = '';
+  document.getElementById('bk-phone-suggest').classList.remove('active');
+}
+
+// ═══ 載入服務清單 ═══
+async function _bkLoadServices(){
+  if(_bkServices.length > 0){
+    _bkRenderServices();
+    return;
+  }
+  try{
+    const r = await fetch(GAS + '?action=getServicesForBooking&t=' + Date.now());
+    const d = await r.json();
+    if(d.ok && Array.isArray(d.services)){
+      _bkServices = d.services;
+    } else {
+      // fallback：如果新 API 還沒部署，用舊的 getServices
+      const r2 = await fetch(GAS + '?action=getServices&t=' + Date.now());
+      const d2 = await r2.json();
+      _bkServices = (d2.services || d2.list || []).map(s => ({
+        name: s.name || s.service || s.title || String(s),
+        price: s.price || ''
+      }));
+    }
+    _bkRenderServices();
+  }catch(e){
+    document.getElementById('bk-service').innerHTML = '<option value="">— 服務載入失敗 —</option>';
+  }
+}
+function _bkRenderServices(){
+  const sel = document.getElementById('bk-service');
+  if(!sel) return;
+  if(!_bkServices.length){
+    sel.innerHTML = '<option value="">— 無服務資料 —</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— 請選擇服務 —</option>' +
+    _bkServices.map(s => `<option value="${escHtml(s.name)}">${escHtml(s.name)}${s.price?(' ('+escHtml(s.price)+')'):''}</option>`).join('');
+}
+
+// ═══ 載入可用時段（含衝突過濾）═══
+async function onBkDateChange(){
+  const dateVal = document.getElementById('bk-date').value;
+  if(!dateVal) return;
+  await _bkLoadAvailableSlots(dateVal);
+}
+async function _bkLoadAvailableSlots(dateStr, includeTime){
+  _bkLastDate = dateStr;
+  const sel = document.getElementById('bk-time');
+  sel.innerHTML = '<option value="">載入時段中…</option>';
+  try{
+    const r = await fetch(GAS + '?action=getAvailableSlotsForBooking&date=' + encodeURIComponent(dateStr) + '&t=' + Date.now());
+    const d = await r.json();
+    if(!d.ok){
+      sel.innerHTML = '<option value="">— '+(d.msg||'時段載入失敗')+' —</option>';
+      return;
+    }
+    _bkAvailableSlots = d.slots || [];
+    const force = document.getElementById('bk-force-override').checked;
+    const opts = ['<option value="">— 請選擇時段 —</option>'];
+    _bkAvailableSlots.forEach(s => {
+      const isCurrent = includeTime && s.time === includeTime;
+      // 強制覆寫模式：所有時段都可選；非強制：只顯示 available 或當前編輯時段
+      if(s.available || force || isCurrent){
+        let label = s.time;
+        if(!s.available){
+          label += '（' + (s.reason || '已占用') + '）';
+        }
+        opts.push(`<option value="${s.time}"${isCurrent?' selected':''}>${label}</option>`);
+      }
+    });
+    if(opts.length === 1){
+      opts.push('<option value="" disabled>（當天無可用時段）</option>');
+    }
+    sel.innerHTML = opts.join('');
+  }catch(e){
+    sel.innerHTML = '<option value="">— 網路錯誤，重試 —</option>';
+  }
+}
+// 強制覆寫 toggle 後重整時段下拉
+document.addEventListener('change', (e) => {
+  if(e.target && e.target.id === 'bk-force-override'){
+    if(_bkLastDate){
+      const editId = document.getElementById('bk-edit-id').value;
+      const cur = editId ? _bookings.find(x => String(x.id) === String(editId)) : null;
+      _bkLoadAvailableSlots(_bkLastDate, cur ? cur.time : null);
+    }
+  }
+});
+
+// ═══ 電話 autocomplete（從 _bookings 已載入清單抓現識顧客）═══
+function onBkPhoneInput(){
+  const v = document.getElementById('bk-phone').value.trim();
+  const box = document.getElementById('bk-phone-suggest');
+  clearTimeout(_bkPhoneSuggestTimer);
+  if(v.length < 4){
+    box.classList.remove('active');
+    return;
+  }
+  _bkPhoneSuggestTimer = setTimeout(() => {
+    // 從 _bookings 萃取唯一電話 + 姓名
+    const seen = new Set();
+    const matched = [];
+    (_bookings || []).forEach(b => {
+      const ph = String(b.phone || '').trim();
+      if(!ph || seen.has(ph)) return;
+      if(ph.indexOf(v) >= 0){
+        seen.add(ph);
+        matched.push({ phone: ph, name: b.name || '' });
+      }
+    });
+    if(matched.length === 0){
+      box.innerHTML = '<div class="bkmodal-suggest-empty">（查無現有顧客 — 新客請手動填姓名）</div>';
+      box.classList.add('active');
+      return;
+    }
+    box.innerHTML = matched.slice(0, 8).map(m =>
+      `<div class="bkmodal-suggest-item" onclick="_bkPickPhone('${escHtml(m.phone).replace(/'/g,"\\'")}','${escHtml(m.name).replace(/'/g,"\\'")}')"><strong>${escHtml(m.name)}</strong><span class="phone">${escHtml(m.phone)}</span></div>`
+    ).join('');
+    box.classList.add('active');
+  }, 180);
+}
+function _bkPickPhone(phone, name){
+  document.getElementById('bk-phone').value = phone;
+  document.getElementById('bk-name').value = name;
+  document.getElementById('bk-phone-suggest').classList.remove('active');
+}
+// 點外面收 suggest
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('bk-phone-suggest');
+  const inp = document.getElementById('bk-phone');
+  if(box && !box.contains(e.target) && e.target !== inp){
+    box.classList.remove('active');
+  }
+});
+
+// ═══ 提交（新增 / 修改 統一入口）═══
+async function submitBookingModal(){
+  const editId = document.getElementById('bk-edit-id').value.trim();
+  const isEdit = !!editId;
+  const phone = document.getElementById('bk-phone').value.trim();
+  const name = document.getElementById('bk-name').value.trim();
+  const date = document.getElementById('bk-date').value.trim();
+  const time = document.getElementById('bk-time').value.trim();
+  const service = document.getElementById('bk-service').value.trim();
+  const note = document.getElementById('bk-note').value.trim();
+  const sendLine = document.getElementById('bk-send-line').checked;
+  const forceOverride = document.getElementById('bk-force-override').checked;
+
+  // 前端基本驗證
+  if(!phone){ _bkMsg('❌ 請輸入電話', 'err'); return; }
+  if(!/^[0-9+\-\s()]{6,20}$/.test(phone)){ _bkMsg('❌ 電話格式不正確', 'err'); return; }
+  if(!name){ _bkMsg('❌ 請輸入顧客姓名', 'err'); return; }
+  if(!date){ _bkMsg('❌ 請選擇日期', 'err'); return; }
+  if(!time){ _bkMsg('❌ 請選擇時段', 'err'); return; }
+  if(!service){ _bkMsg('❌ 請選擇服務', 'err'); return; }
+
+  const btn = document.getElementById('bk-submit-btn');
+  btn.disabled = true;
+  _bkMsg(isEdit ? '儲存中…' : '新增中…', 'loading');
+
+  try{
+    const payload = {
+      action: isEdit ? 'updateBookingByAdmin' : 'addBookingByAdmin',
+      phone, name, date, time, service, note,
+      sendLine, forceOverride
+    };
+    if(isEdit) payload.id = editId;
+    const r = await fetch(GAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const d = await r.json();
+    if(d.ok){
+      _bkMsg('✅ ' + (d.msg || (isEdit ? '修改成功' : '新增成功')) + (d.lineSent ? '（LINE 已送）' : (sendLine ? '（顧客未綁 UID，未發 LINE）' : '')), 'ok');
+      // 成功後：清空表單但保留 modal（依 Q3 決定）
+      if(!isEdit){
+        document.getElementById('bk-phone').value = '';
+        document.getElementById('bk-name').value = '';
+        document.getElementById('bk-time').value = '';
+        document.getElementById('bk-service').value = '';
+        document.getElementById('bk-note').value = '';
+        document.getElementById('bk-force-override').checked = false;
+      }
+      // 後台表格重整
+      loadBookings();
+    } else {
+      _bkMsg('❌ ' + (d.msg || '操作失敗'), 'err');
+    }
+  }catch(e){
+    _bkMsg('❌ 網路錯誤：' + e.message, 'err');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// ═══ 刪除預約（軟刪除：status 改為「已刪除」）═══
+async function deleteBookingByAdmin(id){
+  const b = _bookings.find(x => String(x.id) === String(id));
+  if(!b){ showToast('❌ 找不到此筆'); return; }
+  if(!confirm('⚠️ 確定刪除這筆預約？\n\n#' + id + '\n' + b.name + ' / ' + b.phone + '\n' + fmtDate(b.date) + ' ' + b.time + ' / ' + b.service + '\n\n（軟刪除：status 會改為「已刪除」，可從 Sheet 還原）')) return;
+  try{
+    const r = await fetch(GAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'deleteBookingByAdmin', id }),
+      redirect: 'follow'
+    });
+    const d = await r.json();
+    if(d.ok){
+      showToast('✓ 已刪除');
+      loadBookings();
+    } else {
+      showToast('❌ ' + (d.msg || '刪除失敗'));
+    }
+  }catch(e){
+    showToast('❌ 網路錯誤');
+  }
+}
+
+// ESC 關閉
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){
+    const m = document.getElementById('bkmodal');
+    if(m && m.classList.contains('active')) closeBookingModal();
+  }
+});
+// ═══ 第6輪新增 END ═══
+
 
 // ════ 顧客管理 ════
 let _customers=[];
