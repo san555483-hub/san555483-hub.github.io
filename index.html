@@ -2739,14 +2739,20 @@ async function loadHeroV2(){
     if(!d.ok || !d.images) return;
 
     // ═══ 【2026/04/25 第7輪】改抓 SHOP_INDEX_CAR1~5（與 booking 站獨立）═══
-    // 依 sortOrder 排序（admin 後台拖曳設定的順序）
-    const carousels = d.images
+    // Fallback：找不到 SHOP_INDEX_CAR 就退回讀 INDEX_CAROUSEL（避免 hero 一片空白）
+    let carousels = d.images
       .filter(x => /^SHOP_INDEX_CAR\d+$/.test(x.code) && x.url)
       .sort((a, b) => {
         const sa = (a.sortOrder === undefined || a.sortOrder === null || a.sortOrder === '' || Number(a.sortOrder) === 0) ? 999 : Number(a.sortOrder);
         const sb = (b.sortOrder === undefined || b.sortOrder === null || b.sortOrder === '' || Number(b.sortOrder) === 0) ? 999 : Number(b.sortOrder);
         return sa - sb;
       });
+    // 如果沒有 SHOP_INDEX_CAR，退回原本的 INDEX_CAROUSEL（fallback）
+    if(carousels.length === 0){
+      carousels = d.images
+        .filter(x => /^INDEX_CAROUSEL_\d+$/.test(x.code) && x.url)
+        .sort((a,b) => (a.order || 0) - (b.order || 0));
+    }
     const titleConfig = d.images.find(x => x.code === 'INDEX_TITLE' && x.text && x.text.trim());
 
     if(!carousels.length && !titleConfig) return;
