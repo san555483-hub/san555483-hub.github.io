@@ -3341,6 +3341,8 @@ function renderVideoRow(code, group){
 
 // ═══ 影片上傳 + 自動驗證 + 自動轉檔（10s/20MB/720p/MP4/靜音）═══
 async function uploadVideo(code){
+  // 【2026/04/26 第10輪】改走 Cloudinary：跳過 canvas 轉檔(那會砍音軌)
+  // Cloudinary 後端會自動轉碼+優化+保留音軌
   const fileInput = document.getElementById('vid-file-'+code);
   if(!fileInput || !fileInput.files || !fileInput.files[0]){
     showMsg('img-msg', '❌ 請先選擇影片檔', 'err');
@@ -3348,13 +3350,13 @@ async function uploadVideo(code){
   }
   const file = fileInput.files[0];
 
-  // ❶ 大小驗證（< 100MB 才接受處理，處理後輸出會 < 20MB）
+  // ❶ 大小驗證（< 100MB,Cloudinary 免費版單檔上限 100MB）
   if(file.size > 100 * 1024 * 1024){
-    showMsg('img-msg', '❌ 原檔超過 100MB，請先用手機/剪輯軟體壓縮再上傳', 'err');
+    showMsg('img-msg', '❌ 原檔超過 100MB,請先用手機/剪輯軟體壓縮再上傳', 'err');
     return;
   }
 
-  // ❷ 秒數驗證
+  // ❷ 秒數驗證(放寬到 30 秒)
   showMsg('img-msg', '檢查影片秒數中…', 'loading');
   let duration;
   try{
@@ -3363,49 +3365,32 @@ async function uploadVideo(code){
     showMsg('img-msg', '❌ 無法讀取影片資訊：'+e.message, 'err');
     return;
   }
-  if(duration > 10.5){
-    showMsg('img-msg', '❌ 影片長度 '+duration.toFixed(1)+' 秒，超過 10 秒上限', 'err');
+  if(duration > 30.5){
+    showMsg('img-msg', '❌ 影片長度 '+duration.toFixed(1)+' 秒,超過 30 秒上限', 'err');
     return;
   }
 
-  // ❸ 轉檔（降 720p、靜音、輸出 MP4）—— 用 canvas + MediaRecorder
-  showMsg('img-msg', '影片轉檔中（' + duration.toFixed(1) + 's）…請耐心等候', 'loading');
-  let blob;
+  // ❸ 直接送原檔給 Cloudinary(無轉檔,保留音軌)
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+  showMsg('img-msg', '上傳到 Cloudinary 中…(' + sizeMB + 'MB,' + duration.toFixed(1) + 's)', 'loading');
   try{
-    blob = await _transcodeVideoToMP4(file);
-  }catch(e){
-    showMsg('img-msg', '❌ 轉檔失敗：'+e.message, 'err');
-    return;
-  }
-
-  // ❹ 大小再驗
-  const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
-  if(blob.size > 25 * 1024 * 1024){
-    showMsg('img-msg', '❌ 轉檔後仍 '+sizeMB+'MB,請縮短影片或降畫質再試', 'err');
-    return;
-  }
-
-  // ❺ 上傳到 GAS Drive
-  showMsg('img-msg', '上傳中…（' + sizeMB + 'MB）', 'loading');
-  try{
-    const base64 = await _blobToBase64(blob);
+    const base64 = await _blobToBase64(file);
     const cleanBase64 = String(base64).replace(/^data:[^;]+;base64,/,'');
     const r = await fetch(GAS, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
-        action: 'uploadImageToDrive', // 沿用既有上傳函式（同樣寫入 Drive + 圖片管理 Sheet）
+        action: 'uploadVideoToCloudinary',
         code: code,
-        base64: cleanBase64,
-        mimeType: 'video/mp4',
-        filename: 'uni_'+code+'_'+Date.now()+'.mp4'
+        base64: cleanBase64
       }),
       redirect: 'follow'
     });
     const d = await r.json();
     if(d.ok){
-      showMsg('img-msg', '✅ 影片上傳成功（' + sizeMB + 'MB,' + duration.toFixed(1) + 's）', 'ok');
-      await loadImageConfig();
+      showMsg('img-msg', '✅ 影片上傳成功(' + sizeMB + 'MB,' + duration.toFixed(1) + 's,Cloudinary 處理中)', 'ok');
+      // 給 Cloudinary 1.5 秒建立轉碼快取再 reload
+      setTimeout(async () => { await loadImageConfig(); }, 1500);
     } else {
       showMsg('img-msg', '❌ '+(d.msg||'上傳失敗'), 'err');
     }
