@@ -3814,11 +3814,11 @@ function renderTemplates(){
 async function saveTemplate(id){
   const content = document.getElementById('tpl-' + id).value;
   try{
-    const fd = new FormData();
-    fd.append('action', 'updateMessageTemplate');
-    fd.append('id', id);
-    fd.append('content', content);
-    const r = await fetch(GAS, { method:'POST', body:fd });
+    const p = new URLSearchParams();
+    p.append('action', 'updateMessageTemplate');
+    p.append('id', id);
+    p.append('content', content);
+    const r = await fetch(GAS + '?' + p.toString());
     const d = await r.json();
     if(d.status === 'ok'){ showToast('✓ 已儲存(5 分鐘內生效)'); }
     else{ showToast('❌ ' + (d.msg || '儲存失敗')); }
@@ -3827,11 +3827,11 @@ async function saveTemplate(id){
 
 async function toggleTemplate(id, enabled){
   try{
-    const fd = new FormData();
-    fd.append('action', 'updateMessageTemplate');
-    fd.append('id', id);
-    fd.append('enabled', enabled ? 'true' : 'false');
-    await fetch(GAS, { method:'POST', body:fd });
+    const p = new URLSearchParams();
+    p.append('action', 'updateMessageTemplate');
+    p.append('id', id);
+    p.append('enabled', enabled ? 'true' : 'false');
+    await fetch(GAS + '?' + p.toString());
     showToast(enabled ? '✓ 已啟用' : '✓ 已停用');
     loadTemplates();
   }catch(e){ showToast('❌ 網路錯誤'); }
@@ -3840,10 +3840,10 @@ async function toggleTemplate(id, enabled){
 async function resetTemplate(id){
   if(!confirm('恢復為預設文字?')) return;
   try{
-    const fd = new FormData();
-    fd.append('action', 'resetMessageTemplate');
-    fd.append('id', id);
-    const r = await fetch(GAS, { method:'POST', body:fd });
+    const p = new URLSearchParams();
+    p.append('action', 'resetMessageTemplate');
+    p.append('id', id);
+    const r = await fetch(GAS + '?' + p.toString());
     const d = await r.json();
     if(d.status === 'ok'){ showToast('✓ 已重設'); loadTemplates(); }
     else{ showToast('❌ ' + (d.msg || '失敗')); }
@@ -3916,10 +3916,10 @@ function renderCancelWarn(d){
 async function clearCancel(phone, name){
   if(!confirm('清零「' + (name || phone) + '」的取消紀錄?')) return;
   try{
-    const fd = new FormData();
-    fd.append('action', 'clearCancelRecord');
-    fd.append('phone', phone);
-    const r = await fetch(GAS, { method:'POST', body:fd });
+    const p = new URLSearchParams();
+    p.append('action', 'clearCancelRecord');
+    p.append('phone', phone);
+    const r = await fetch(GAS + '?' + p.toString());
     const d = await r.json();
     if(d.status === 'ok'){ showToast('✓ 已清零'); loadCancelWarn(); }
     else{ showToast('❌ ' + (d.msg || '失敗')); }
@@ -3943,18 +3943,18 @@ async function submitAddCust(){
   const phone = document.getElementById('ac-phone').value.trim();
   if(!name){ document.getElementById('ac-msg').innerHTML = '<span style="color:#c9897a;">⚠️ 請填姓名</span>'; return; }
   if(!phone){ document.getElementById('ac-msg').innerHTML = '<span style="color:#c9897a;">⚠️ 請填電話</span>'; return; }
-  const fd = new FormData();
-  fd.append('action', 'addCustomerManual');
-  fd.append('name', name);
-  fd.append('phone', phone);
-  fd.append('gender', document.getElementById('ac-gender').value);
-  fd.append('birth',  document.getElementById('ac-birth').value);
-  fd.append('source', document.getElementById('ac-source').value);
-  fd.append('tags',   document.getElementById('ac-tags').value);
-  fd.append('remark', document.getElementById('ac-remark').value);
+  const p = new URLSearchParams();
+  p.append('action', 'addCustomerManual');
+  p.append('name', name);
+  p.append('phone', phone);
+  p.append('gender', document.getElementById('ac-gender').value);
+  p.append('birth',  document.getElementById('ac-birth').value);
+  p.append('source', document.getElementById('ac-source').value);
+  p.append('tags',   document.getElementById('ac-tags').value);
+  p.append('remark', document.getElementById('ac-remark').value);
   document.getElementById('ac-msg').innerHTML = '<span style="color:var(--mid);">儲存中…</span>';
   try{
-    const r = await fetch(GAS, { method:'POST', body:fd });
+    const r = await fetch(GAS + '?' + p.toString());
     const d = await r.json();
     if(d.status === 'ok'){
       document.getElementById('ac-msg').innerHTML = '<span style="color:#7a8c6e;">' + d.msg + '<br><small>' + (d.hint || '') + '</small></span>';
