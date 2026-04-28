@@ -326,6 +326,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('quickmenu')">💬 快速選單</button>
       <!-- ═══ 2026/04/23 新增圖片管理 tab（回滾：刪除這行 + 後面的 pane-image + JS 即可）═══ -->
       <button class="tab-btn" onclick="switchTab('image')" id="tab-btn-image">📸 圖片管理</button>
+       <button class="tab-btn" onclick="switchTab('template')" id="tab-btn-template">📝 訊息範本</button>
+      <button class="tab-btn" onclick="switchTab('cancelwarn')" id="tab-btn-cancelwarn">⚠️ 取消預警</button>
     </div>
   </div>
 
@@ -474,6 +476,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <div class="card">
         <div class="card-head">
           <h3>👥 顧客追蹤管理</h3>
+           <button class="btn" style="background:var(--gold);color:#fff;margin-right:8px;" onclick="openAddCustModal()">➕ 手動建檔</button>
           <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCustomers()">🔄 重新載入</button>
         </div>
         <div class="card-body">
@@ -1152,6 +1155,109 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
   <!-- ════ 圖片管理 pane END ════ -->
+   <!-- ═══════════ 📝 訊息範本 pane ═══════════ -->
+  <!-- 回滾：刪除整個 <div class="tab-pane" id="pane-template"> ... </div> -->
+  <div class="tab-pane" id="pane-template">
+    <div class="pane-inner">
+      <div class="card">
+        <div class="card-head">
+          <h3>📝 訊息範本中控台</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadTemplates()">🔄 重新載入</button>
+            <button class="btn" style="background:var(--gold);color:#fff;" onclick="clearTplCache()">⚡ 清除快取</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="background:#f5e8e4;padding:12px;border-radius:4px;font-size:.72rem;line-height:1.6;margin-bottom:14px;">
+            💡 <b>說明：</b>修改 Bot 自動回覆文字。改完按「儲存」→ 5 分鐘內生效；想立即生效按「⚡ 清除快取」。<br>
+            🔧 <b>變數：</b><code style="background:#fff;padding:1px 4px;border-radius:2px;">{{NAME}}</code> 客人名 ｜ <code style="background:#fff;padding:1px 4px;border-radius:2px;">{{DATE}}</code> 日期 ｜ <code style="background:#fff;padding:1px 4px;border-radius:2px;">{{TIME}}</code> 時間 ｜ <code style="background:#fff;padding:1px 4px;border-radius:2px;">{{BOOKING_URL}}</code> 預約連結
+          </div>
+          <div id="template-list" style="display:flex;flex-direction:column;gap:14px;"></div>
+          <div id="template-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ⚠️ 取消預警 pane ═══════════ -->
+  <!-- 回滾：刪除整個 <div class="tab-pane" id="pane-cancelwarn"> ... </div> -->
+  <div class="tab-pane" id="pane-cancelwarn">
+    <div class="pane-inner">
+      <div class="card">
+        <div class="card-head">
+          <h3>⚠️ 取消預約預警名單</h3>
+          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCancelWarn()">🔄 重新載入</button>
+        </div>
+        <div class="card-body">
+          <div id="cancelwarn-stats" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;"></div>
+          <div style="background:#fff7f4;border-left:3px solid #c9897a;padding:10px 14px;font-size:.72rem;line-height:1.6;margin-bottom:14px;">
+            📌 <b>規則：</b>客人 90 天內取消 ≥3 次 → 自動標記，下次點預約連結被擋，需電話/現場安排。<br>
+            🔓 <b>解除：</b>點該列「清零」按鈕，過往紀錄保留但不計入。
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>名稱</th><th>電話</th><th>取消次數</th><th>最後取消</th><th>狀態</th><th>操作</th></tr></thead>
+              <tbody id="cancelwarn-tbody"></tbody>
+            </table>
+          </div>
+          <div id="cancelwarn-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ➕ 手動新增顧客 modal ═══════════ -->
+  <!-- 回滾：刪除整個 <div id="addCustModal"> ... </div> + JS openAddCustModal 等函式 -->
+  <div id="addCustModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:6px;width:92%;max-width:500px;max-height:92vh;overflow-y:auto;">
+      <div style="background:var(--bark);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:.95rem;">➕ 手動新增顧客</h3>
+        <span style="cursor:pointer;font-size:1.4rem;" onclick="closeAddCustModal()">×</span>
+      </div>
+      <div style="padding:18px;">
+        <div style="background:#fff7f4;padding:8px 12px;border-radius:4px;font-size:.7rem;margin-bottom:12px;">
+          💡 適用：電話約客 / 現場新客 / 還沒加 LINE 的老客<br>
+          🔗 該客人之後加 LINE + 提交電話時，會自動補綁 UID
+        </div>
+        <div class="form-grid" style="display:flex;flex-direction:column;gap:10px;">
+          <label style="font-size:.75rem;">姓名 <span style="color:#c9897a;">*</span><input type="text" id="ac-name" class="search-input" placeholder="必填" style="margin-top:3px;"></label>
+          <label style="font-size:.75rem;">電話 <span style="color:#c9897a;">*</span><input type="tel" id="ac-phone" class="search-input" placeholder="必填,建檔後可自動綁 LINE" style="margin-top:3px;"></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <label style="font-size:.75rem;">性別
+              <select id="ac-gender" class="search-input" style="margin-top:3px;">
+                <option value="">—</option>
+                <option value="女">女</option>
+                <option value="男">男</option>
+                <option value="其他">其他</option>
+              </select>
+            </label>
+            <label style="font-size:.75rem;">生日<input type="text" id="ac-birth" class="search-input" placeholder="如 03/15" style="margin-top:3px;"></label>
+          </div>
+          <label style="font-size:.75rem;">來源
+            <select id="ac-source" class="search-input" style="margin-top:3px;">
+              <option value="">—</option>
+              <option value="電話">電話預約</option>
+              <option value="現場">現場新客</option>
+              <option value="介紹">朋友介紹</option>
+              <option value="社群">社群媒體</option>
+              <option value="其他">其他</option>
+            </select>
+          </label>
+          <label style="font-size:.75rem;">標籤
+            <input type="text" id="ac-tags" class="search-input" placeholder="如 VIP、兒童、過敏(用逗號分隔)" style="margin-top:3px;">
+          </label>
+          <label style="font-size:.75rem;">備註
+            <textarea id="ac-remark" class="search-input" rows="3" placeholder="髮性、偏好、注意事項…" style="margin-top:3px;resize:vertical;"></textarea>
+          </label>
+        </div>
+        <div id="ac-msg" style="font-size:.72rem;margin-top:10px;"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+          <button class="btn" style="background:#aaa;color:#fff;" onclick="closeAddCustModal()">取消</button>
+          <button class="btn" style="background:var(--bark);color:#fff;" onclick="submitAddCust()">✓ 建檔</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══ 【2026/04/24 v5新增】全螢幕預覽 Modal ═══ -->
   <!-- 回滾：刪除此 div + JS 中 openImgModal/closeImgModal 即可 -->
@@ -1225,9 +1331,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig};
-  if(map[name])map[name]();
-}
+ const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn};
 
 function initAdmin(){Dashboard.init();initLockTimes();}
 
@@ -3660,5 +3764,217 @@ async function saveImageText(code){
 }
 // ════ 圖片管理 JS END ════
 </script>
+   <!-- ═══ 三模組擴充 JS（v1.0 2026-04-28）═══ -->
+<script>
+let _templates = [];
+
+async function loadTemplates(){
+  show('template-loading');
+  document.getElementById('template-list').innerHTML = '';
+  try{
+    const r = await fetch(GAS + '?action=getMessageTemplates&t=' + Date.now());
+    const d = await r.json();
+    _templates = d.templates || [];
+    hide('template-loading');
+    renderTemplates();
+  }catch(e){
+    hide('template-loading');
+    showToast('載入失敗');
+  }
+}
+
+function renderTemplates(){
+  const html = _templates.map(t => `
+    <div class="card" style="margin:0;border:1px solid var(--border);">
+      <div style="background:${t.enabled?'#faf6f1':'#f0e8e0'};padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
+        <div>
+          <code style="background:var(--bark);color:var(--gold-lt);padding:2px 8px;border-radius:3px;font-size:.7rem;">${escTpl(t.id)}</code>
+          <span style="margin-left:8px;font-size:.78rem;color:var(--bark);">${escTpl(t.scenario)}</span>
+        </div>
+        <label style="font-size:.7rem;cursor:pointer;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" ${t.enabled?'checked':''} onchange="toggleTemplate('${escTpl(t.id)}', this.checked)">
+          ${t.enabled?'啟用中':'已停用'}
+        </label>
+      </div>
+      <div style="padding:12px 14px;">
+        <textarea id="tpl-${escTpl(t.id)}" rows="5" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:.78rem;padding:8px;border:1px solid var(--border);border-radius:3px;resize:vertical;line-height:1.5;">${escTpl(t.content)}</textarea>
+        <div style="font-size:.65rem;color:var(--mid);margin-top:6px;">可用變數:${escTpl(t.vars || '無')}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">
+          <button class="btn btn-sm" style="background:#eee;color:#666;font-size:.7rem;padding:4px 10px;" onclick="resetTemplate('${escTpl(t.id)}')">↺ 重設預設</button>
+          <button class="btn btn-sm" style="background:var(--bark);color:#fff;font-size:.7rem;padding:4px 10px;" onclick="saveTemplate('${escTpl(t.id)}')">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('template-list').innerHTML = html || '<div style="text-align:center;color:#999;padding:30px;">尚無範本</div>';
+}
+
+async function saveTemplate(id){
+  const content = document.getElementById('tpl-' + id).value;
+  try{
+    const fd = new FormData();
+    fd.append('action', 'updateMessageTemplate');
+    fd.append('id', id);
+    fd.append('content', content);
+    const r = await fetch(GAS, { method:'POST', body:fd });
+    const d = await r.json();
+    if(d.status === 'ok'){ showToast('✓ 已儲存(5 分鐘內生效)'); }
+    else{ showToast('❌ ' + (d.msg || '儲存失敗')); }
+  }catch(e){ showToast('❌ 網路錯誤'); }
+}
+
+async function toggleTemplate(id, enabled){
+  try{
+    const fd = new FormData();
+    fd.append('action', 'updateMessageTemplate');
+    fd.append('id', id);
+    fd.append('enabled', enabled ? 'true' : 'false');
+    await fetch(GAS, { method:'POST', body:fd });
+    showToast(enabled ? '✓ 已啟用' : '✓ 已停用');
+    loadTemplates();
+  }catch(e){ showToast('❌ 網路錯誤'); }
+}
+
+async function resetTemplate(id){
+  if(!confirm('恢復為預設文字?')) return;
+  try{
+    const fd = new FormData();
+    fd.append('action', 'resetMessageTemplate');
+    fd.append('id', id);
+    const r = await fetch(GAS, { method:'POST', body:fd });
+    const d = await r.json();
+    if(d.status === 'ok'){ showToast('✓ 已重設'); loadTemplates(); }
+    else{ showToast('❌ ' + (d.msg || '失敗')); }
+  }catch(e){ showToast('❌ 網路錯誤'); }
+}
+
+async function clearTplCache(){
+  try{
+    const r = await fetch(GAS + '?action=clearTemplateCache&t=' + Date.now());
+    const d = await r.json();
+    showToast(d.msg || '✓ 已清除快取');
+  }catch(e){ showToast('❌ 網路錯誤'); }
+}
+
+async function loadCancelWarn(){
+  show('cancelwarn-loading');
+  document.getElementById('cancelwarn-tbody').innerHTML = '';
+  try{
+    const r = await fetch(GAS + '?action=getCancelWarningList&t=' + Date.now());
+    const d = await r.json();
+    hide('cancelwarn-loading');
+    renderCancelWarn(d);
+  }catch(e){
+    hide('cancelwarn-loading');
+    showToast('載入失敗');
+  }
+}
+
+function renderCancelWarn(d){
+  const list = d.list || [];
+  const limit = d.limit || 3;
+  const total = list.length;
+  const blocked = list.filter(x => x.count >= limit).length;
+  const warning = list.filter(x => x.count === limit - 1).length;
+  document.getElementById('cancelwarn-stats').innerHTML = `
+    <div style="background:#fff;padding:14px;border-radius:4px;border-left:3px solid #c9897a;flex:1;min-width:140px;">
+      <div style="font-size:.65rem;color:var(--mid);">已限制人數</div>
+      <div style="font-size:1.4rem;font-weight:600;color:#c9897a;">${blocked}</div>
+    </div>
+    <div style="background:#fff;padding:14px;border-radius:4px;border-left:3px solid #b8895a;flex:1;min-width:140px;">
+      <div style="font-size:.65rem;color:var(--mid);">即將達標 (${limit-1}次)</div>
+      <div style="font-size:1.4rem;font-weight:600;color:#b8895a;">${warning}</div>
+    </div>
+    <div style="background:#fff;padding:14px;border-radius:4px;border-left:3px solid #7a8c6e;flex:1;min-width:140px;">
+      <div style="font-size:.65rem;color:var(--mid);">追蹤總人數</div>
+      <div style="font-size:1.4rem;font-weight:600;color:#7a8c6e;">${total}</div>
+    </div>`;
+  if(list.length === 0){
+    document.getElementById('cancelwarn-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">目前沒有取消紀錄</td></tr>';
+    return;
+  }
+  document.getElementById('cancelwarn-tbody').innerHTML = list.map(c => {
+    const isBlocked = c.count >= limit;
+    const status = isBlocked
+      ? `<span style="background:#c9897a;color:#fff;padding:2px 8px;border-radius:3px;font-size:.65rem;">🚫 已限制</span>`
+      : c.count === limit - 1
+        ? `<span style="background:#b8895a;color:#fff;padding:2px 8px;border-radius:3px;font-size:.65rem;">⚠️ 即將達標</span>`
+        : `<span style="color:var(--mid);font-size:.7rem;">追蹤中</span>`;
+    return `<tr>
+      <td>${escTpl(c.name || '—')}</td>
+      <td>${escTpl(c.phone)}</td>
+      <td style="font-weight:600;color:${isBlocked?'#c9897a':'var(--bark)'};">${c.count} / ${limit}</td>
+      <td style="font-size:.7rem;color:var(--mid);">${escTpl(c.lastCancel || '')}</td>
+      <td>${status}</td>
+      <td><button class="btn btn-sm" style="background:#7a8c6e;color:#fff;font-size:.65rem;padding:3px 8px;" onclick="clearCancel('${escTpl(c.phone)}','${escTpl(c.name)}')">↺ 清零</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function clearCancel(phone, name){
+  if(!confirm('清零「' + (name || phone) + '」的取消紀錄?')) return;
+  try{
+    const fd = new FormData();
+    fd.append('action', 'clearCancelRecord');
+    fd.append('phone', phone);
+    const r = await fetch(GAS, { method:'POST', body:fd });
+    const d = await r.json();
+    if(d.status === 'ok'){ showToast('✓ 已清零'); loadCancelWarn(); }
+    else{ showToast('❌ ' + (d.msg || '失敗')); }
+  }catch(e){ showToast('❌ 網路錯誤'); }
+}
+
+function openAddCustModal(){
+  ['ac-name','ac-phone','ac-birth','ac-tags','ac-remark'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ac-gender').value = '';
+  document.getElementById('ac-source').value = '';
+  document.getElementById('ac-msg').innerHTML = '';
+  document.getElementById('addCustModal').style.display = 'flex';
+}
+
+function closeAddCustModal(){
+  document.getElementById('addCustModal').style.display = 'none';
+}
+
+async function submitAddCust(){
+  const name = document.getElementById('ac-name').value.trim();
+  const phone = document.getElementById('ac-phone').value.trim();
+  if(!name){ document.getElementById('ac-msg').innerHTML = '<span style="color:#c9897a;">⚠️ 請填姓名</span>'; return; }
+  if(!phone){ document.getElementById('ac-msg').innerHTML = '<span style="color:#c9897a;">⚠️ 請填電話</span>'; return; }
+  const fd = new FormData();
+  fd.append('action', 'addCustomerManual');
+  fd.append('name', name);
+  fd.append('phone', phone);
+  fd.append('gender', document.getElementById('ac-gender').value);
+  fd.append('birth',  document.getElementById('ac-birth').value);
+  fd.append('source', document.getElementById('ac-source').value);
+  fd.append('tags',   document.getElementById('ac-tags').value);
+  fd.append('remark', document.getElementById('ac-remark').value);
+  document.getElementById('ac-msg').innerHTML = '<span style="color:var(--mid);">儲存中…</span>';
+  try{
+    const r = await fetch(GAS, { method:'POST', body:fd });
+    const d = await r.json();
+    if(d.status === 'ok'){
+      document.getElementById('ac-msg').innerHTML = '<span style="color:#7a8c6e;">' + d.msg + '<br><small>' + (d.hint || '') + '</small></span>';
+      showToast('✓ 已建檔');
+      setTimeout(() => { closeAddCustModal(); if(typeof loadCustomers === 'function') loadCustomers(); }, 1500);
+    }else if(d.status === 'duplicate'){
+      const ex = d.existing;
+      document.getElementById('ac-msg').innerHTML = '<div style="background:#fef3f0;padding:8px;border-radius:3px;border-left:3px solid #c9897a;">⚠️ <b>電話已存在!</b><br>姓名:' + escTpl(ex.lineName || '—') + '<br>類型:' + escTpl(ex.customerType || '—') + '<br>備註:' + escTpl(ex.remark || '—') + '</div>';
+    }else{
+      document.getElementById('ac-msg').innerHTML = '<span style="color:#c9897a;">❌ ' + escTpl(d.msg || '失敗') + '</span>';
+    }
+  }catch(e){
+    document.getElementById('ac-msg').innerHTML = '<span style="color:#c9897a;">❌ 網路錯誤</span>';
+  }
+}
+
+function escTpl(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+<!-- ═══ 三模組擴充 JS END ═══ -->
 </body>
 </html>
