@@ -674,6 +674,14 @@ window.FETCH_VIP_PHONES = true;
 // 【2026/04/23 新增】自介區 flag
 window.SHOW_BOOKING_PROFILE = true;
 
+// ═══════════════════════════════════════════════════════════
+// 【2026/04/28 新增】跑馬燈獨立化 flag
+// 回滾：window.MARQUEE_FALLBACK_TO_SHOP = false 即停用 fallback
+//   true  = booking 撈不到時 fallback 撈 shop（過渡期建議用，避免 admin 還沒設定 booking 槽時前台空白）
+//   false = 嚴格只撈 booking，撈不到就空白
+// ═══════════════════════════════════════════════════════════
+window.MARQUEE_FALLBACK_TO_SHOP = true;
+
 const BUSINESS_HOURS = {
   0: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
   1: ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'],
@@ -710,13 +718,27 @@ function normalizePhoneForHash(phone) {
   return digits.length === 9 ? '0' + digits : digits;
 }
 
+// ═══════════════════════════════════════════════════════════
+// 【2026/04/28 改寫】跑馬燈：BOOKING 站台優先，撈不到 fallback 撈 shop
+// 回滾：把整個 loadMarqueeBanner 函式還原成原本只撈 site=booking 的單一 fetch 版即可
+// ═══════════════════════════════════════════════════════════
 async function loadMarqueeBanner() {
   try {
-    const r = await fetch(GAS_URL + '?action=getMarquees&site=booking&enabledOnly=true&t=' + Date.now());
-    const d = await r.json();
-    if (!d.ok || !d.marquees || !d.marquees.length) return;
-    const texts = d.marquees.filter(m => m.content && m.content.trim()).sort((a, b) => a.order - b.order).map(m => m.content.trim());
-    if (!texts.length) return;
+    // ═══ Step 1：先撈 booking 站台 ═══
+    let texts = await _fetchMarqueeBySite('booking');
+
+    // ═══ Step 2：booking 撈不到 + flag 啟用 → fallback 撈 shop ═══
+    let usedFallback = false;
+    if ((!texts || !texts.length) && window.MARQUEE_FALLBACK_TO_SHOP) {
+      texts = await _fetchMarqueeBySite('shop');
+      usedFallback = true;
+      if (texts && texts.length) {
+        console.info('[marquee] booking 站台無內容，已 fallback 顯示購物站台跑馬燈（共 ' + texts.length + ' 則）');
+      }
+    }
+
+    if (!texts || !texts.length) return;
+
     const combined = texts.join('　　✦　　');
     const track = document.getElementById('marqueeTrack');
     const bar   = document.getElementById('marqueeBar');
@@ -725,7 +747,23 @@ async function loadMarqueeBanner() {
     const duration = Math.min(120, Math.max(40, Math.round(combined.length * 1.8)));
     track.style.animation = `mqRoll ${duration}s linear infinite`;
     bar.classList.add('has-content');
+    if (usedFallback) bar.dataset.fallback = '1';
   } catch(e) { console.warn('marquee load failed', e); }
+}
+
+async function _fetchMarqueeBySite(site) {
+  try {
+    const r = await fetch(GAS_URL + '?action=getMarquees&site=' + encodeURIComponent(site) + '&enabledOnly=true&t=' + Date.now());
+    const d = await r.json();
+    if (!d.ok || !d.marquees || !d.marquees.length) return [];
+    return d.marquees
+      .filter(m => m.content && m.content.trim())
+      .sort((a, b) => a.order - b.order)
+      .map(m => m.content.trim());
+  } catch(e) {
+    console.warn('[marquee] fetch site=' + site + ' failed', e);
+    return [];
+  }
 }
 
 // ══════════════════════════════════════════════
