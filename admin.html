@@ -326,6 +326,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('quickmenu')">💬 快速選單</button>
       <!-- ═══ 2026/04/23 新增圖片管理 tab（回滾：刪除這行 + 後面的 pane-image + JS 即可）═══ -->
       <button class="tab-btn" onclick="switchTab('image')" id="tab-btn-image">📸 圖片管理</button>
+      <button class="tab-btn" onclick="switchTab('cdb')" id="tab-btn-cdb">📇 顧客資料庫</button>
        <button class="tab-btn" onclick="switchTab('template')" id="tab-btn-template">📝 訊息範本</button>
       <button class="tab-btn" onclick="switchTab('cancelwarn')" id="tab-btn-cancelwarn">⚠️ 取消預警</button>
     </div>
@@ -1206,6 +1207,180 @@ tr:hover td{background:rgba(61,43,31,.03);}
     </div>
   </div>
 
+  <!-- ═══════════ 📇 顧客資料庫 pane v1.0 ═══════════ -->
+  <!-- 回滾：刪除整個 <div class="tab-pane" id="pane-cdb"> ... </div> -->
+  <div class="tab-pane" id="pane-cdb">
+    <div class="pane-inner">
+      <div class="card">
+        <div class="card-head">
+          <h3>📇 顧客資料庫</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn" style="background:var(--gold);color:#fff;" onclick="cdbOpenAdd()">➕ 新增顧客</button>
+            <button class="btn" style="background:var(--moss);color:#fff;" onclick="cdbOpenImport()">📥 批次匯入</button>
+            <button class="btn" style="background:var(--rose);color:#fff;" onclick="cdbMigrate()">🔄 從戰鬥版搬移</button>
+            <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="cdbLoad()">↻ 重新載入</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="background:#f5e8e4;padding:10px 14px;border-radius:4px;font-size:.72rem;line-height:1.6;margin-bottom:14px;">
+            💡 <b>說明：</b>這裡是獨立的顧客檔案管理（17 欄完整資訊），跟「顧客追蹤表」分工不衝突。<br>
+            🆕 <b>新客：</b>點 ➕ 新增顧客 → 填表 → 系統自動產生編號 C0001、C0002...<br>
+            📥 <b>批次：</b>有大量資料？點 📥 批次匯入 一次貼上去。<br>
+            🔄 <b>遷移：</b>第一次用？點「從戰鬥版搬移」一鍵把現有客人複製過來。
+          </div>
+          <div class="search-bar" style="display:flex;gap:8px;align-items:center;">
+            <input class="search-input" type="text" id="cdb-search" placeholder="🔍 搜尋姓名/電話/標籤/編號" oninput="cdbFilter()" style="flex:1;">
+            <select id="cdb-filter-type" onchange="cdbFilter()" class="search-input" style="max-width:120px;">
+              <option value="">全部類型</option>
+              <option value="VIP">VIP</option>
+              <option value="一般">一般</option>
+              <option value="新客">新客</option>
+              <option value="老客">老客</option>
+              <option value="兒童">兒童</option>
+            </select>
+            <select id="cdb-filter-allergy" onchange="cdbFilter()" class="search-input" style="max-width:130px;">
+              <option value="">過敏狀態</option>
+              <option value="has">⚠️ 有過敏</option>
+              <option value="no">無過敏</option>
+            </select>
+          </div>
+          <div id="cdb-stats" style="margin:10px 0;font-size:.7rem;color:var(--mid);"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>編號</th><th>姓名</th><th>電話</th><th>性別</th>
+                <th>類型</th><th>標籤</th><th>過敏</th><th>操作</th>
+              </tr></thead>
+              <tbody id="cdb-tbody"></tbody>
+            </table>
+          </div>
+          <div id="cdb-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 📇 新增/編輯 顧客 modal ═══════════ -->
+  <div id="cdbModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;">
+    <div style="background:#fff;border-radius:6px;width:94%;max-width:680px;max-height:92vh;overflow-y:auto;">
+      <div style="background:var(--bark);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
+        <h3 style="margin:0;font-size:.95rem;" id="cdb-modal-title">➕ 新增顧客檔案</h3>
+        <span style="cursor:pointer;font-size:1.4rem;" onclick="cdbCloseModal()">×</span>
+      </div>
+      <div style="padding:18px;">
+
+        <!-- 基本資料 -->
+        <div style="margin-bottom:14px;">
+          <h4 style="font-size:.78rem;color:var(--bark);border-bottom:2px solid var(--gold);padding-bottom:4px;margin-bottom:8px;">📋 基本資料</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <label style="font-size:.72rem;">姓名 <span style="color:#c9897a;">*</span><input type="text" id="cdb-name" class="search-input" placeholder="必填" style="margin-top:3px;"></label>
+            <label style="font-size:.72rem;">電話 <span style="color:#c9897a;">*</span><input type="tel" id="cdb-phone" class="search-input" placeholder="必填 09XX-XXXXXX" style="margin-top:3px;"></label>
+            <label style="font-size:.72rem;">性別
+              <select id="cdb-gender" class="search-input" style="margin-top:3px;">
+                <option value="">—</option><option value="女">女</option><option value="男">男</option><option value="其他">其他</option>
+              </select>
+            </label>
+            <label style="font-size:.72rem;">生日<input type="text" id="cdb-birth" class="search-input" placeholder="MM/DD 例 03/15" style="margin-top:3px;"></label>
+            <label style="font-size:.72rem;grid-column:1/3;">LINE 名稱<input type="text" id="cdb-lineName" class="search-input" placeholder="客人 LINE 顯示名" style="margin-top:3px;"></label>
+            <label style="font-size:.72rem;grid-column:1/3;">LINE UID <span style="color:var(--mid);font-size:.65rem;">(留空 系統自動補)</span><input type="text" id="cdb-lineUid" class="search-input" placeholder="U... (空白即可)" style="margin-top:3px;"></label>
+          </div>
+        </div>
+
+        <!-- 分類 -->
+        <div style="margin-bottom:14px;">
+          <h4 style="font-size:.78rem;color:var(--bark);border-bottom:2px solid var(--gold);padding-bottom:4px;margin-bottom:8px;">🏷️ 分類</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <label style="font-size:.72rem;">來源
+              <select id="cdb-source" class="search-input" style="margin-top:3px;">
+                <option value="">—</option>
+                <option value="電話">電話預約</option>
+                <option value="現場">現場新客</option>
+                <option value="介紹">朋友介紹</option>
+                <option value="社群">社群媒體</option>
+                <option value="LINE 自動">LINE 自動</option>
+                <option value="其他">其他</option>
+              </select>
+            </label>
+            <label style="font-size:.72rem;">客人類型
+              <select id="cdb-custType" class="search-input" style="margin-top:3px;">
+                <option value="">—</option>
+                <option value="一般">一般</option>
+                <option value="VIP">VIP</option>
+                <option value="新客">新客</option>
+                <option value="老客">老客</option>
+                <option value="兒童">兒童</option>
+                <option value="家庭客">家庭客</option>
+              </select>
+            </label>
+            <label style="font-size:.72rem;">介紹人<input type="text" id="cdb-referrer" class="search-input" placeholder="老客帶新客記錄" style="margin-top:3px;"></label>
+            <label style="font-size:.72rem;">標籤<input type="text" id="cdb-tags" class="search-input" placeholder="VIP 安靜 帶小孩 (空格分隔)" style="margin-top:3px;"></label>
+          </div>
+        </div>
+
+        <!-- 髮況檔案 -->
+        <div style="margin-bottom:14px;">
+          <h4 style="font-size:.78rem;color:var(--bark);border-bottom:2px solid var(--gold);padding-bottom:4px;margin-bottom:8px;">💇 髮況檔案</h4>
+          <label style="font-size:.72rem;display:block;margin-bottom:6px;">髮性<input type="text" id="cdb-hairType" class="search-input" placeholder="例: 細軟、髮量少、油性頭皮" style="margin-top:3px;"></label>
+          <label style="font-size:.72rem;display:block;margin-bottom:6px;">偏好設計<input type="text" id="cdb-preference" class="search-input" placeholder="例: 不要太短、層次高、自然黑" style="margin-top:3px;"></label>
+          <label style="font-size:.72rem;display:block;color:#c9897a;font-weight:600;">⚠️ 過敏/禁忌
+            <input type="text" id="cdb-allergy" class="search-input" placeholder="例: 對 xx 染劑過敏" style="margin-top:3px;border:1px solid #c9897a;">
+          </label>
+        </div>
+
+        <!-- 紀錄 -->
+        <div style="margin-bottom:14px;">
+          <h4 style="font-size:.78rem;color:var(--bark);border-bottom:2px solid var(--gold);padding-bottom:4px;margin-bottom:8px;">📅 紀錄</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <label style="font-size:.72rem;">第一次到店<input type="date" id="cdb-firstVisit" class="search-input" style="margin-top:3px;"></label>
+            <label style="font-size:.72rem;">最後到店<input type="date" id="cdb-lastVisit" class="search-input" style="margin-top:3px;"></label>
+          </div>
+          <label style="font-size:.72rem;display:block;margin-top:6px;">備註
+            <textarea id="cdb-remark" class="search-input" rows="2" placeholder="自由文字..." style="margin-top:3px;resize:vertical;"></textarea>
+          </label>
+        </div>
+
+        <div id="cdb-modal-msg" style="font-size:.72rem;margin-top:10px;"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+          <button class="btn" style="background:#aaa;color:#fff;" onclick="cdbCloseModal()">取消</button>
+          <button class="btn" style="background:var(--bark);color:#fff;" onclick="cdbSubmit()">💾 儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 📥 批次匯入 modal ═══════════ -->
+  <div id="cdbImportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;">
+    <div style="background:#fff;border-radius:6px;width:94%;max-width:760px;max-height:92vh;overflow-y:auto;">
+      <div style="background:var(--bark);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
+        <h3 style="margin:0;font-size:.95rem;">📥 批次匯入顧客資料</h3>
+        <span style="cursor:pointer;font-size:1.4rem;" onclick="cdbCloseImport()">×</span>
+      </div>
+      <div style="padding:18px;">
+        <div style="background:#fff7f4;padding:10px 12px;border-radius:4px;font-size:.7rem;line-height:1.6;margin-bottom:12px;border-left:3px solid var(--gold);">
+          📌 <b>使用方法：</b><br>
+          1. 在 Excel/Google Sheet 整理好客人資料<br>
+          2. 選取資料欄位 → Ctrl+C 複製<br>
+          3. 貼到下方文字框 → 點「📤 開始匯入」<br>
+          <br>
+          🔢 <b>欄位順序（最少要前 2 欄）：</b><br>
+          <code style="background:#fff;padding:2px 4px;font-size:.65rem;">姓名 | 電話 | 性別 | 生日 | LINE UID | LINE名稱 | 來源 | 類型 | 髮性 | 偏好 | 過敏 | 標籤 | 介紹人 | 第一次到店 | 最後到店 | 備註</code>
+        </div>
+
+        <button class="btn btn-sm" style="background:var(--moss);color:#fff;font-size:.7rem;margin-bottom:8px;" onclick="cdbImportSample()">📋 貼上範例 (測試用)</button>
+
+        <textarea id="cdb-import-data" rows="10" style="width:100%;font-family:monospace;font-size:.72rem;padding:10px;border:1px solid var(--border);border-radius:4px;resize:vertical;line-height:1.6;" placeholder="從 Excel 或 Google Sheet 複製貼上 (每行一筆,Tab 分隔)&#10;&#10;範例:&#10;王小美	0911000001	女	03/15&#10;李錦連	0911906775	男	06/20"></textarea>
+
+        <div id="cdb-import-msg" style="font-size:.72rem;margin-top:10px;"></div>
+        <div id="cdb-import-results" style="margin-top:10px;max-height:200px;overflow-y:auto;font-size:.7rem;"></div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+          <button class="btn" style="background:#aaa;color:#fff;" onclick="cdbCloseImport()">取消</button>
+          <button class="btn" style="background:var(--bark);color:#fff;" onclick="cdbDoImport()">📤 開始匯入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════ ➕ 手動新增顧客 modal ═══════════ -->
   <!-- 回滾：刪除整個 <div id="addCustModal"> ... </div> + JS openAddCustModal 等函式 -->
   <div id="addCustModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
@@ -1331,7 +1506,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad};
   if(map[name])map[name]();
 }
 
@@ -3975,6 +4150,255 @@ function escTpl(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 📇 顧客資料庫 JS v1.0
+// ════════════════════════════════════════════════════════════════════
+let _cdbList = [];
+let _cdbEditRow = 0;
+
+async function cdbLoad(){
+  show('cdb-loading');
+  document.getElementById('cdb-tbody').innerHTML = '';
+  try{
+    const r = await fetch(GAS + '?action=getCustomerDB&t=' + Date.now());
+    const d = await r.json();
+    _cdbList = d.customers || [];
+    hide('cdb-loading');
+    cdbRenderStats();
+    cdbFilter();
+  }catch(e){
+    hide('cdb-loading');
+    showToast('載入失敗');
+  }
+}
+
+function cdbRenderStats(){
+  const total = _cdbList.length;
+  const allergyCount = _cdbList.filter(c => c.allergy && c.allergy.trim()).length;
+  const vipCount = _cdbList.filter(c => c.custType === 'VIP').length;
+  document.getElementById('cdb-stats').innerHTML =
+    '共 <b>' + total + '</b> 位顧客 ｜ ' +
+    '⚠️ 過敏 <b style="color:#c9897a;">' + allergyCount + '</b> 位 ｜ ' +
+    '👑 VIP <b style="color:var(--gold);">' + vipCount + '</b> 位';
+}
+
+function cdbFilter(){
+  const q = (document.getElementById('cdb-search').value || '').trim().toLowerCase();
+  const ftype = document.getElementById('cdb-filter-type').value;
+  const fallergy = document.getElementById('cdb-filter-allergy').value;
+
+  const filtered = _cdbList.filter(c => {
+    if (q && !((c.name + c.phone + c.tags + c.id + c.lineName).toLowerCase().includes(q))) return false;
+    if (ftype && c.custType !== ftype) return false;
+    if (fallergy === 'has' && !(c.allergy && c.allergy.trim())) return false;
+    if (fallergy === 'no' && c.allergy && c.allergy.trim()) return false;
+    if (String(c.tags || '').indexOf('[已刪除') === 0) return false;
+    return true;
+  });
+
+  if (filtered.length === 0){
+    document.getElementById('cdb-tbody').innerHTML =
+      '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">' +
+      (_cdbList.length === 0 ? '尚無資料,點 ➕ 新增顧客 開始建檔,或 🔄 從戰鬥版搬移' : '沒有符合篩選的客人') +
+      '</td></tr>';
+    return;
+  }
+
+  document.getElementById('cdb-tbody').innerHTML = filtered.map(c => {
+    const allergyTag = c.allergy && c.allergy.trim()
+      ? '<span style="background:#c9897a;color:#fff;padding:2px 6px;border-radius:3px;font-size:.62rem;" title="' + escTpl(c.allergy) + '">⚠️ 有</span>'
+      : '<span style="color:#bbb;font-size:.7rem;">—</span>';
+    const typeTag = c.custType
+      ? '<span style="background:' + (c.custType==='VIP'?'var(--gold)':c.custType==='兒童'?'var(--moss)':'var(--mid)') + ';color:#fff;padding:2px 6px;border-radius:3px;font-size:.62rem;">' + escTpl(c.custType) + '</span>'
+      : '—';
+    const tagBadges = String(c.tags || '').split(/\s+/).filter(x=>x).slice(0,3).map(t =>
+      '<span style="background:#f0e8e0;color:var(--bark);padding:1px 5px;border-radius:2px;font-size:.6rem;margin-right:2px;">' + escTpl(t) + '</span>'
+    ).join('');
+    return '<tr>' +
+      '<td style="font-family:monospace;color:var(--gold);font-weight:600;">' + escTpl(c.id) + '</td>' +
+      '<td><b>' + escTpl(c.name) + '</b>' + (c.lineUid ? ' <span title="已綁 LINE" style="color:#7a8c6e;font-size:.7rem;">🔗</span>' : '') + '</td>' +
+      '<td style="font-family:monospace;font-size:.75rem;">' + escTpl(c.phone) + '</td>' +
+      '<td>' + escTpl(c.gender || '—') + '</td>' +
+      '<td>' + typeTag + '</td>' +
+      '<td>' + (tagBadges || '—') + '</td>' +
+      '<td>' + allergyTag + '</td>' +
+      '<td><button class="btn btn-sm" style="background:var(--bark);color:#fff;font-size:.65rem;padding:3px 8px;margin-right:4px;" onclick="cdbOpenEdit(' + c.rowIndex + ')">✏️ 編輯</button>' +
+      '<button class="btn btn-sm" style="background:#c9897a;color:#fff;font-size:.65rem;padding:3px 8px;" onclick="cdbDelete(' + c.rowIndex + ',\'' + escTpl(c.name) + '\')">🗑</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function cdbOpenAdd(){
+  _cdbEditRow = 0;
+  document.getElementById('cdb-modal-title').textContent = '➕ 新增顧客檔案';
+  ['cdb-name','cdb-phone','cdb-birth','cdb-lineName','cdb-lineUid','cdb-referrer','cdb-tags','cdb-hairType','cdb-preference','cdb-allergy','cdb-firstVisit','cdb-lastVisit','cdb-remark']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cdb-gender').value = '';
+  document.getElementById('cdb-source').value = '';
+  document.getElementById('cdb-custType').value = '';
+  document.getElementById('cdb-modal-msg').innerHTML = '';
+  document.getElementById('cdbModal').style.display = 'flex';
+}
+
+function cdbOpenEdit(rowIndex){
+  const c = _cdbList.find(x => x.rowIndex === rowIndex);
+  if (!c) { showToast('找不到該筆'); return; }
+  _cdbEditRow = rowIndex;
+  document.getElementById('cdb-modal-title').textContent = '✏️ 編輯 ' + c.id + ' / ' + c.name;
+  document.getElementById('cdb-name').value       = c.name || '';
+  document.getElementById('cdb-phone').value      = c.phone || '';
+  document.getElementById('cdb-gender').value     = c.gender || '';
+  document.getElementById('cdb-birth').value      = c.birth || '';
+  document.getElementById('cdb-lineUid').value    = c.lineUid || '';
+  document.getElementById('cdb-lineName').value   = c.lineName || '';
+  document.getElementById('cdb-source').value     = c.source || '';
+  document.getElementById('cdb-custType').value   = c.custType || '';
+  document.getElementById('cdb-hairType').value   = c.hairType || '';
+  document.getElementById('cdb-preference').value = c.preference || '';
+  document.getElementById('cdb-allergy').value    = c.allergy || '';
+  document.getElementById('cdb-tags').value       = c.tags || '';
+  document.getElementById('cdb-referrer').value   = c.referrer || '';
+  document.getElementById('cdb-firstVisit').value = c.firstVisit || '';
+  document.getElementById('cdb-lastVisit').value  = c.lastVisit || '';
+  document.getElementById('cdb-remark').value     = c.remark || '';
+  document.getElementById('cdb-modal-msg').innerHTML = '';
+  document.getElementById('cdbModal').style.display = 'flex';
+}
+
+function cdbCloseModal(){
+  document.getElementById('cdbModal').style.display = 'none';
+}
+
+async function cdbSubmit(){
+  const name  = document.getElementById('cdb-name').value.trim();
+  const phone = document.getElementById('cdb-phone').value.trim();
+  const msgEl = document.getElementById('cdb-modal-msg');
+
+  if (!name)  { msgEl.innerHTML = '<span style="color:#c9897a;">⚠️ 請填姓名</span>'; return; }
+  if (!phone) { msgEl.innerHTML = '<span style="color:#c9897a;">⚠️ 請填電話</span>'; return; }
+
+  const p = new URLSearchParams();
+  p.append('action', _cdbEditRow ? 'updateCustomerDB' : 'addCustomerDB');
+  if (_cdbEditRow) p.append('rowIndex', _cdbEditRow);
+  p.append('name', name);
+  p.append('phone', phone);
+  p.append('gender',     document.getElementById('cdb-gender').value);
+  p.append('birth',      document.getElementById('cdb-birth').value);
+  p.append('lineUid',    document.getElementById('cdb-lineUid').value);
+  p.append('lineName',   document.getElementById('cdb-lineName').value);
+  p.append('source',     document.getElementById('cdb-source').value);
+  p.append('custType',   document.getElementById('cdb-custType').value);
+  p.append('hairType',   document.getElementById('cdb-hairType').value);
+  p.append('preference', document.getElementById('cdb-preference').value);
+  p.append('allergy',    document.getElementById('cdb-allergy').value);
+  p.append('tags',       document.getElementById('cdb-tags').value);
+  p.append('referrer',   document.getElementById('cdb-referrer').value);
+  p.append('firstVisit', document.getElementById('cdb-firstVisit').value);
+  p.append('lastVisit',  document.getElementById('cdb-lastVisit').value);
+  p.append('remark',     document.getElementById('cdb-remark').value);
+
+  msgEl.innerHTML = '<span style="color:var(--mid);">儲存中…</span>';
+  try{
+    const r = await fetch(GAS + '?' + p.toString());
+    const d = await r.json();
+    if (d.status === 'ok'){
+      msgEl.innerHTML = '<span style="color:#7a8c6e;">' + escTpl(d.msg) + '</span>';
+      showToast(d.msg);
+      setTimeout(() => { cdbCloseModal(); cdbLoad(); }, 1200);
+    } else if (d.status === 'duplicate'){
+      msgEl.innerHTML = '<div style="background:#fef3f0;padding:8px;border-radius:3px;border-left:3px solid #c9897a;">⚠️ <b>電話已存在!</b><br>' +
+        '編號:' + escTpl(d.existing.id) + ' / ' + escTpl(d.existing.name) + '</div>';
+    } else {
+      msgEl.innerHTML = '<span style="color:#c9897a;">❌ ' + escTpl(d.msg || '失敗') + '</span>';
+    }
+  }catch(e){
+    msgEl.innerHTML = '<span style="color:#c9897a;">❌ 網路錯誤</span>';
+  }
+}
+
+async function cdbDelete(rowIndex, name){
+  if (!confirm('確定刪除「' + name + '」?\n\n軟刪除:資料保留,但會從列表隱藏(可從 Sheet 還原)')) return;
+  try{
+    const p = new URLSearchParams();
+    p.append('action', 'deleteCustomerDB');
+    p.append('rowIndex', rowIndex);
+    const r = await fetch(GAS + '?' + p.toString());
+    const d = await r.json();
+    if (d.status === 'ok'){ showToast('✓ 已刪除'); cdbLoad(); }
+    else { showToast('❌ ' + (d.msg || '失敗')); }
+  }catch(e){ showToast('❌ 網路錯誤'); }
+}
+
+// ════ 批次匯入 ════
+function cdbOpenImport(){
+  document.getElementById('cdb-import-data').value = '';
+  document.getElementById('cdb-import-msg').innerHTML = '';
+  document.getElementById('cdb-import-results').innerHTML = '';
+  document.getElementById('cdbImportModal').style.display = 'flex';
+}
+
+function cdbCloseImport(){
+  document.getElementById('cdbImportModal').style.display = 'none';
+}
+
+function cdbImportSample(){
+  document.getElementById('cdb-import-data').value =
+    '王小美\t0911000001\t女\t03/15\t\t\t介紹\tVIP\t細軟\t不要太短\t\tVIP 安靜\t蔡秀卿\n' +
+    '李錦連\t0911906775\t男\t06/20\t\t\t電話\t一般\t\t\t\t\t\n' +
+    '張美玲\t0922333444\t女\t11/08\t\t\t現場\t老客\t細軟、油性\t層次高\t染劑過敏\t老客\t';
+}
+
+async function cdbDoImport(){
+  const data = document.getElementById('cdb-import-data').value.trim();
+  if (!data){
+    document.getElementById('cdb-import-msg').innerHTML = '<span style="color:#c9897a;">⚠️ 請先貼上資料</span>';
+    return;
+  }
+  const lines = data.split('\n').filter(l => l.trim()).length;
+  if (!confirm('準備匯入 ' + lines + ' 筆資料,確定?')) return;
+
+  document.getElementById('cdb-import-msg').innerHTML = '<span style="color:var(--mid);">匯入中… (' + lines + ' 筆)</span>';
+  try{
+    const p = new URLSearchParams();
+    p.append('action', 'importCustomerDB');
+    p.append('data', data);
+    const r = await fetch(GAS + '?' + p.toString());
+    const d = await r.json();
+    if (d.status === 'ok'){
+      document.getElementById('cdb-import-msg').innerHTML =
+        '<span style="color:#7a8c6e;font-weight:600;">' + escTpl(d.msg) + '</span>';
+      // 顯示明細
+      const html = (d.results || []).map(r => {
+        if (r.status === 'ok') return '<div>✅ 第 ' + r.line + ' 行 → ' + escTpl(r.id) + ' ' + escTpl(r.name) + '</div>';
+        if (r.status === 'duplicate') return '<div style="color:#c9897a;">⚠️ 第 ' + r.line + ' 行 → ' + escTpl(r.reason) + '</div>';
+        return '<div style="color:#999;">⏭️ 第 ' + r.line + ' 行 → ' + escTpl(r.reason) + '</div>';
+      }).join('');
+      document.getElementById('cdb-import-results').innerHTML = html;
+      setTimeout(() => cdbLoad(), 1500);
+    } else {
+      document.getElementById('cdb-import-msg').innerHTML = '<span style="color:#c9897a;">❌ ' + escTpl(d.msg || '失敗') + '</span>';
+    }
+  }catch(e){
+    document.getElementById('cdb-import-msg').innerHTML = '<span style="color:#c9897a;">❌ 網路錯誤</span>';
+  }
+}
+
+async function cdbMigrate(){
+  if (!confirm('從「顧客追蹤表(Elsa戰鬥版)」搬移所有客人到資料庫?\n\n• 會自動跳過已存在的電話\n• 戰鬥版資料完全不動\n• 之後 LINE 系統繼續寫戰鬥版,你管理就用資料庫\n\n建議第一次使用點此鍵,把現有客人一鍵搬移。')) return;
+
+  showToast('搬移中… 請稍候');
+  try{
+    const r = await fetch(GAS + '?action=migrateFromBattleSheet&t=' + Date.now());
+    const d = await r.json();
+    if (d.status === 'ok'){
+      alert('✅ ' + d.msg);
+      cdbLoad();
+    } else {
+      showToast('❌ ' + (d.msg || '失敗'));
+    }
+  }catch(e){ showToast('❌ 網路錯誤'); }
 }
 </script>
 <!-- ═══ 三模組擴充 JS END ═══ -->
