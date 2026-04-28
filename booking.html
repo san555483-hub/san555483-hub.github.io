@@ -1201,6 +1201,26 @@ async function submitBooking() {
   const serviceStr = state.services.map(s => s.name).join('、');
 
   try {
+     // ═══ 取消預警攔截（v1 2026-04-28 新增）═══
+    try {
+      const cancelRes = await fetch(
+        GAS_URL + '?action=checkCancelLimit&phone=' + encodeURIComponent(state.phone) + '&t=' + Date.now(),
+        { cache: 'no-store' }
+      );
+      const cancelData = await cancelRes.json();
+      if (cancelData.blocked === true) {
+        errMsg.innerHTML = (cancelData.msg || '為了讓每位客人都能順利預約,您目前的預約方式需改為現場安排或電話預約唷\n📞 03-260-9960 ext 206').replace(/\n/g,'<br>');
+        errMsg.style.display = 'block';
+        errMsg.style.background = '#fff7f4';
+        errMsg.style.borderLeft = '3px solid #c9897a';
+        errMsg.style.padding = '10px 14px';
+        btn.disabled = false; btn.textContent = '確認送出預約';
+        loading.style.display = 'none';
+        __isSubmitting = false;
+        return;
+      }
+    } catch (_) { /* 取消檢查失敗時放行(不影響正常客人)*/ }
+    // ═══ 取消預警攔截 END ═══
     const checkRes = await fetch(GAS_URL + '?action=checkSlot&date=' + dateStr + '&time=' + encodeURIComponent(normalizeTime(state.time)) + '&t=' + Date.now(), { cache: 'no-store' });
     const checkData = await checkRes.json();
     if (checkData.ok && checkData.available === false) {
