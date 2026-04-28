@@ -4164,7 +4164,13 @@ async function cdbLoad(){
   try{
     const r = await fetch(GAS + '?action=getCustomerDB&t=' + Date.now());
     const d = await r.json();
-    _cdbList = d.customers || [];
+    _cdbList = (d.customers || []).map(c => {
+      // ★★★ 顯示前強制補 0:9 碼 9 開頭 → 補 0
+      let p = String(c.phone || '').replace(/[^\d]/g, '');
+      if (/^9\d{8}$/.test(p)) p = '0' + p;
+      c.phone = p;
+      return c;
+    });
     hide('cdb-loading');
     cdbRenderStats();
     cdbFilter();
@@ -4273,7 +4279,10 @@ function cdbCloseModal(){
 
 async function cdbSubmit(){
   const name  = document.getElementById('cdb-name').value.trim();
-  const phone = document.getElementById('cdb-phone').value.trim();
+  let phone = document.getElementById('cdb-phone').value.trim();
+  // ★★★ 前端強制補 0 (avoid Sheet 吃 0 problem at source)
+  phone = phone.replace(/[^\d]/g, ''); // 只留數字
+  if (/^9\d{8}$/.test(phone)) phone = '0' + phone; // 9 碼 9 開頭 → 補 0
   const msgEl = document.getElementById('cdb-modal-msg');
 
   if (!name)  { msgEl.innerHTML = '<span style="color:#c9897a;">⚠️ 請填姓名</span>'; return; }
