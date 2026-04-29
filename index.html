@@ -654,11 +654,21 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 /* ── 影音區塊 ── */
 .video-section{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
 .video-section-inner{max-width:900px;margin:0 auto;padding:0 16px 40px;}
+/* === 9:16直式改版前備份 v1（2026/04/29）===
 .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
 @media(max-width:480px){.video-grid{grid-template-columns:1fr 1fr;gap:10px;}}
+=== 備份結束 === */
+/* 9:16直式版 v1：桌面3欄、平板2欄、手機1欄置中（單欄寬度限制避免過大） */
+.video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+@media(max-width:768px){.video-grid{grid-template-columns:repeat(2,1fr);gap:14px;}}
+@media(max-width:480px){.video-grid{grid-template-columns:1fr;gap:16px;max-width:340px;margin:0 auto;}}
 .video-card{background:var(--linen);border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:transform .3s,box-shadow .3s;}
 .video-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px var(--shadow);}
+/* === 9:16直式改版前備份 v1（2026/04/29）===
 .video-frame-wrap{position:relative;width:100%;padding-top:56.25%;background:#1a1a1a;}
+=== 備份結束 === */
+/* 9:16直式版 v1：padding-top:177.78% = 16÷9×100%（直式比例） */
+.video-frame-wrap{position:relative;width:100%;padding-top:177.78%;background:#1a1a1a;}
 .video-frame-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
 .video-ph{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.45);font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
 .video-ph-icon{font-size:1.8rem;opacity:.4;}
