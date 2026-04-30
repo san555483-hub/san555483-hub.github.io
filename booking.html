@@ -739,15 +739,31 @@ async function loadMarqueeBanner() {
 
     if (!texts || !texts.length) return;
 
-    const combined = texts.join('　　✦　　');
     const track = document.getElementById('marqueeTrack');
     const bar   = document.getElementById('marqueeBar');
     if (!track || !bar) return;
-    track.innerHTML = `<span class="marquee-text">${combined}</span><span class="marquee-sep">　　✦　　</span><span class="marquee-text">${combined}</span>`;
-    const duration = Math.min(120, Math.max(40, Math.round(combined.length * 1.8)));
+
+    // ═══ 每則跑馬燈獨立 span + 編號標記 + 金色分隔符 ═══
+    // 為了「跑馬燈循環」感，把所有內容渲染兩遍接在一起
+    const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const sep = '<span class="marquee-sep" style="color:#d4a55c;font-weight:700;">　　◆　　</span>';
+    const buildItems = () => texts.map((t, i) =>
+      `<span class="marquee-text marquee-item-${i+1}"><span style="color:#d4a55c;font-weight:700;margin-right:6px;">【${i+1}】</span>${escapeHtml(t)}</span>`
+    ).join(sep);
+    // 渲染兩遍 + 中間加分隔符 → 跑完一輪自然接下一輪
+    track.innerHTML = buildItems() + sep + buildItems();
+
+    // 速度依「全部文字總長度」計算（之前只算第一則的 combined.length 算錯）
+    const totalLen = texts.reduce((sum, t) => sum + t.length, 0);
+    const duration = Math.min(180, Math.max(60, Math.round(totalLen * 1.6)));
     track.style.animation = `mqRoll ${duration}s linear infinite`;
     bar.classList.add('has-content');
     if (usedFallback) bar.dataset.fallback = '1';
+
+    // ═══ 渲染驗證 console ═══
+    console.info('[marquee] ✅ 渲染完成，共 ' + texts.length + ' 則，總長 ' + totalLen + ' 字，動畫 ' + duration + ' 秒');
+    console.info('[marquee] DOM children count = ' + track.children.length + ' (應為 ' + (texts.length * 2 + 1) + ')');
+    texts.forEach((t, i) => console.info('  【' + (i+1) + '】' + t.substring(0, 30) + (t.length > 30 ? '...' : '')));
   } catch(e) { console.warn('marquee load failed', e); }
 }
 
