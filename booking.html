@@ -753,13 +753,19 @@ async function loadMarqueeBanner() {
 
 async function _fetchMarqueeBySite(site) {
   try {
-    const r = await fetch(GAS_URL + '?action=getMarquees&site=' + encodeURIComponent(site) + '&enabledOnly=true&t=' + Date.now());
+    // 不依賴後端 enabledOnly 篩選，前端自己嚴格判定（防呆 GAS enabled 欄位格式不一）
+    const r = await fetch(GAS_URL + '?action=getMarquees&site=' + encodeURIComponent(site) + '&t=' + Date.now());
     const d = await r.json();
+    console.info('[marquee] site=' + site + ' raw response:', d);
     if (!d.ok || !d.marquees || !d.marquees.length) return [];
-    return d.marquees
-      .filter(m => m.content && m.content.trim())
-      .sort((a, b) => a.order - b.order)
-      .map(m => m.content.trim());
+    // 嚴格 enabled 判定：支援 true / "true" / "TRUE" / 1 / "1" 等各種格式
+    const isEnabled = (v) => v === true || v === 1 || (typeof v === 'string' && (v.toLowerCase() === 'true' || v === '1'));
+    const filtered = d.marquees
+      .filter(m => isEnabled(m.enabled) && m.content && String(m.content).trim())
+      .sort((a, b) => (Number(a.order)||0) - (Number(b.order)||0))
+      .map(m => String(m.content).trim());
+    console.info('[marquee] site=' + site + ' enabled & non-empty count = ' + filtered.length, filtered);
+    return filtered;
   } catch(e) {
     console.warn('[marquee] fetch site=' + site + ' failed', e);
     return [];
