@@ -84,6 +84,10 @@ tr:hover td{background:rgba(61,43,31,.03);}
 .marquee-textarea{flex:1;border:1.5px solid var(--border);border-radius:4px;padding:8px;font-size:.78rem;resize:vertical;min-height:52px;font-family:'Noto Sans TC',sans-serif;outline:none;}
 .marquee-textarea:focus{border-color:var(--rose);}
 .marquee-actions{display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0;}
+.marquee-site-switch{display:flex;gap:8px;margin-bottom:14px;padding:6px;background:var(--linen);border:1px solid var(--border);border-radius:8px;}
+.marquee-site-btn{flex:1;padding:8px 14px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;font-weight:600;border:1.5px solid transparent;border-radius:6px;background:transparent;color:var(--mid);cursor:pointer;transition:all .2s;}
+.marquee-site-btn:hover{color:var(--bark);}
+.marquee-site-btn.active{background:#fff;border-color:var(--gold);color:var(--bark);box-shadow:0 2px 6px rgba(184,137,90,.15);}
 .lock-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
 .lock-row:last-child{border-bottom:none;}
 .credit-pos{color:#2d7a4f;font-weight:600;}
@@ -739,9 +743,13 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <div class="tab-pane" id="pane-marquee">
     <div class="pane-inner">
       <div class="card">
-        <div class="card-head"><h3>📢 主系統廣播跑馬燈（顯示於購物網站）</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadMarquees()">🔄 重新載入</button></div>
+        <div class="card-head"><h3 id="marquee-card-title">📢 廣播跑馬燈管理</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadMarquees()">🔄 重新載入</button></div>
         <div class="card-body">
-          <p style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">最多5則，啟用中且有文字的廣播才會顯示在購物網站頂端。儲存後即時生效。</p>
+          <div class="marquee-site-switch">
+            <button class="marquee-site-btn active" id="mq-btn-shop" onclick="switchMarqueeSite('shop')">🛒 購物網站</button>
+            <button class="marquee-site-btn" id="mq-btn-booking" onclick="switchMarqueeSite('booking')">📅 預約網站</button>
+          </div>
+          <p id="marquee-hint" style="font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:14px;line-height:1.6">最多5則，啟用中且有文字的廣播才會顯示在購物網站頂端。儲存後即時生效。</p>
           <div id="marquee-list"></div>
           <div id="marquee-msg" class="msg-box"></div>
         </div>
@@ -2293,15 +2301,33 @@ async function deductCredit(){
 
 // ════ 跑馬燈 ════
 let _marquees=[];
+let _currentSite='shop';
+function switchMarqueeSite(site){
+  if(site===_currentSite)return;
+  _currentSite=site;
+  document.getElementById('mq-btn-shop').classList.toggle('active',site==='shop');
+  document.getElementById('mq-btn-booking').classList.toggle('active',site==='booking');
+  const titleEl=document.getElementById('marquee-card-title');
+  const hintEl=document.getElementById('marquee-hint');
+  if(site==='shop'){
+    if(titleEl)titleEl.textContent='📢 廣播跑馬燈管理（購物網站）';
+    if(hintEl)hintEl.textContent='最多5則，啟用中且有文字的廣播才會顯示在購物網站頂端。儲存後即時生效。';
+  }else{
+    if(titleEl)titleEl.textContent='📢 廣播跑馬燈管理（預約網站）';
+    if(hintEl)hintEl.textContent='最多5則，啟用中且有文字的廣播才會顯示在預約網站頂端。儲存後即時生效。';
+  }
+  loadMarquees();
+}
 async function loadMarquees(){
   document.getElementById('marquee-list').innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>載入中…</div>';
   try{
-    const r=await fetch(GAS+'?action=getMarquees&site=shop&t='+Date.now());const d=await r.json();
+    const site=_currentSite||'shop';
+    const r=await fetch(GAS+'?action=getMarquees&site='+site+'&t='+Date.now());const d=await r.json();
     const raw=d.ok?(d.marquees||[]):[];
     _marquees=[];
     for(let i=1;i<=5;i++){
       const found=raw.find(m=>Number(m.order)===i);
-      _marquees.push(found?{...found,enabled:found.enabled===true||found.enabled==='true'}:{id:'shop_'+i,site:'shop',order:i,content:'',enabled:false});
+      _marquees.push(found?{...found,enabled:found.enabled===true||found.enabled==='true'}:{id:site+'_'+i,site:site,order:i,content:'',enabled:false});
     }
     document.getElementById('marquee-list').innerHTML=_marquees.map(m=>`
       <div class="marquee-row">
@@ -2310,7 +2336,7 @@ async function loadMarquees(){
         <div class="marquee-actions">
           <span style="font-size:.6rem;padding:2px 7px;border-radius:8px;background:${m.enabled&&m.content.trim()?'#e8f5ee':'#eee'};color:${m.enabled&&m.content.trim()?'#2d7a4f':'#aaa'}">${m.enabled&&m.content.trim()?'啟用中':'停用'}</span>
           <label style="font-size:.7rem;display:flex;align-items:center;gap:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;"><input type="checkbox" id="mq-en-${m.id}" ${m.enabled?'checked':''}> 啟用</label>
-          <button class="btn btn-dark btn-sm" onclick="saveMarquee('${m.id}','shop',${m.order})">儲存</button>
+          <button class="btn btn-dark btn-sm" onclick="saveMarquee('${m.id}','${site}',${m.order})">儲存</button>
           <button class="btn btn-danger btn-sm" onclick="clearMarquee('${m.id}')">清空</button>
         </div>
       </div>`).join('');
@@ -2332,7 +2358,7 @@ async function clearMarquee(id){
   const textEl=document.getElementById('mq-text-'+id),enEl=document.getElementById('mq-en-'+id);
   if(textEl)textEl.value='';if(enEl)enEl.checked=false;
   const m=_marquees.find(x=>x.id===id);
-  if(m)await saveMarquee(id,m.site||'shop',m.order);
+  if(m)await saveMarquee(id,m.site||_currentSite||'shop',m.order);
 }
 
 // ════ 購物訂單 ════
