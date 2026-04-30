@@ -2807,35 +2807,44 @@ document.getElementById('inp-phone').addEventListener('input', function(){
 // ============================================================
 async function loadMarqueeBanner() {
   try {
-    const r = await fetch(GAS_URL + '?action=getMarquees&site=shop&enabledOnly=true&t=' + Date.now());
+    // 不依賴後端 enabledOnly 篩選，前端自己嚴格判定（防呆 GAS enabled 欄位格式不一）
+    const r = await fetch(GAS_URL + '?action=getMarquees&site=shop&t=' + Date.now());
     const d = await r.json();
-    if (!d.ok || !d.marquees || !d.marquees.length) return; // 無內容就不顯示
+    console.info('[marquee] site=shop raw response:', d);
+    if (!d.ok || !d.marquees || !d.marquees.length) return;
+    // 嚴格 enabled 判定：支援 true / "true" / "TRUE" / 1 / "1" 各種格式
+    const isEnabled = (v) => v === true || v === 1 || (typeof v === 'string' && (v.toLowerCase() === 'true' || v === '1'));
     const texts = d.marquees
-      .filter(m => m.content && m.content.trim())
-      .sort((a,b) => a.order - b.order)
-      .map(m => m.content.trim());
+      .filter(m => isEnabled(m.enabled) && m.content && String(m.content).trim())
+      .sort((a, b) => (Number(a.order)||0) - (Number(b.order)||0))
+      .map(m => String(m.content).trim());
+    console.info('[marquee] site=shop enabled & non-empty count = ' + texts.length, texts);
     if (!texts.length) return;
 
-    // 建立跑馬燈內容（重複一次讓捲動無縫）
-    const combined = texts.join('　　✦　　');
     const track = document.getElementById('marqueeTrack');
     const bar   = document.getElementById('marqueeBar');
     if (!track || !bar) return;
 
-    // 兩份文字讓動畫無縫接續
-    track.innerHTML =
-      `<span class="marquee-text">${combined}</span>` +
-      `<span class="marquee-sep">　　✦　　</span>` +
-      `<span class="marquee-text">${combined}</span>`;
+    // ═══ 每則跑馬燈獨立 span + 編號標記 + 金色分隔符 ═══
+    const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const sep = '<span class="marquee-sep" style="color:#d4a55c;font-weight:700;">　　◆　　</span>';
+    const buildItems = () => texts.map((t, i) =>
+      `<span class="marquee-text marquee-item-${i+1}"><span style="color:#d4a55c;font-weight:700;margin-right:6px;">【${i+1}】</span>${escapeHtml(t)}</span>`
+    ).join(sep);
+    // 渲染兩遍 + 中間加分隔符 → 跑完一輪自然接下一輪無縫
+    track.innerHTML = buildItems() + sep + buildItems();
 
-    // 依文字長度動態算動畫時間（每個字約 0.4s，最少 12s，最多 60s）
-    const totalChars = combined.length;
-    const duration   = Math.min(180, Math.max(60, Math.round(totalChars * 1.5)));
+    // 速度依「全部文字總長度」計算
+    const totalLen = texts.reduce((sum, t) => sum + t.length, 0);
+    const duration = Math.min(180, Math.max(60, Math.round(totalLen * 1.6)));
     track.style.animation = `mqRoll ${duration}s linear infinite`;
+    bar.classList.add('has-content');
 
-    bar.classList.add('has-content'); // 顯示 bar
+    // ═══ 渲染驗證 console ═══
+    console.info('[marquee] ✅ 渲染完成，共 ' + texts.length + ' 則，總長 ' + totalLen + ' 字，動畫 ' + duration + ' 秒');
+    console.info('[marquee] DOM children count = ' + track.children.length + ' (應為 ' + (texts.length * 2 + 1) + ')');
+    texts.forEach((t, i) => console.info('  【' + (i+1) + '】' + t.substring(0, 30) + (t.length > 30 ? '...' : '')));
   } catch(e) {
-    // 靜默失敗，不影響主頁面
     console.warn('marquee load failed', e);
   }
 }
