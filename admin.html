@@ -784,14 +784,97 @@ tr:hover td{background:rgba(61,43,31,.03);}
           <div id="mo-msg" class="msg-box"></div>
         </div>
       </div>
+      <!-- ════════════════════════════════════════════════════════
+           📊 三系統訂單統一儀表板（v3D 新增）
+           來源：🌐 線上(🔵 購物 GAS) + 🏪 現場(🔴 主系統 GAS) + 👑 VIP(🟣 VIP GAS)
+           ════════════════════════════════════════════════════════ -->
       <div class="card">
-        <div class="card-head"><h3>🛍️ 購物訂單查看</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadOrders()">🔄 重新載入</button></div>
+        <div class="card-head">
+          <h3>📊 三系統訂單統一儀表板</h3>
+          <button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadAllOrders()">🔄 重新載入全部</button>
+        </div>
         <div class="card-body">
-          <div class="search-bar">
-            <input class="search-input" type="text" id="order-search" placeholder="搜尋訂單號/電話/姓名" oninput="filterOrderTable()">
+
+          <!-- 📈 統計卡片區 -->
+          <div id="dash-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+            <div style="background:linear-gradient(135deg,#3d2b1f,#5c3d2e);color:#fff;padding:12px;border-radius:6px;text-align:center;">
+              <div style="font-size:.65rem;opacity:.85;font-family:'Noto Sans TC',sans-serif;">📋 篩選後總筆數</div>
+              <div id="stat-count" style="font-size:1.4rem;font-weight:700;margin-top:4px;">—</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#5c3d2e,#8b6f47);color:#fff;padding:12px;border-radius:6px;text-align:center;">
+              <div style="font-size:.65rem;opacity:.85;font-family:'Noto Sans TC',sans-serif;">💰 篩選後總營業額</div>
+              <div id="stat-revenue" style="font-size:1.4rem;font-weight:700;margin-top:4px;">—</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#2d5a3d,#3d7a4f);color:#fff;padding:12px;border-radius:6px;text-align:center;">
+              <div style="font-size:.65rem;opacity:.85;font-family:'Noto Sans TC',sans-serif;">📅 今日營業額</div>
+              <div id="stat-today" style="font-size:1.4rem;font-weight:700;margin-top:4px;">—</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#2d5a8e,#4a7bb5);color:#fff;padding:12px;border-radius:6px;text-align:center;">
+              <div style="font-size:.65rem;opacity:.85;font-family:'Noto Sans TC',sans-serif;">📆 本月營業額</div>
+              <div id="stat-month" style="font-size:1.4rem;font-weight:700;margin-top:4px;">—</div>
+            </div>
           </div>
-          <div class="table-wrap"><table><thead><tr><th>訂單號</th><th>時間</th><th>LINE名稱</th><th>電話</th><th>商品</th><th>金額</th><th>付款</th><th>配送</th><th>備註</th></tr></thead><tbody id="order-tbody"></tbody></table></div>
+
+          <!-- 📊 三來源分項統計 -->
+          <div id="dash-source-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;">
+            <div style="background:#fff5e6;border-left:4px solid #d4a574;padding:8px 10px;border-radius:4px;">
+              <div style="color:#8b6f47;font-weight:600;">🌐 線上訂單</div>
+              <div id="src-stat-shop" style="margin-top:2px;color:#5c3d2e;">— 筆 / NT$ —</div>
+            </div>
+            <div style="background:#fef0e8;border-left:4px solid #c97064;padding:8px 10px;border-radius:4px;">
+              <div style="color:#9a4a40;font-weight:600;">🏪 現場訂單</div>
+              <div id="src-stat-main" style="margin-top:2px;color:#5c3d2e;">— 筆 / NT$ —</div>
+            </div>
+            <div style="background:#f3e8ff;border-left:4px solid #9a6fc4;padding:8px 10px;border-radius:4px;">
+              <div style="color:#6a4a8e;font-weight:600;">👑 VIP 購物</div>
+              <div id="src-stat-vip" style="margin-top:2px;color:#5c3d2e;">— 筆 / NT$ —</div>
+            </div>
+          </div>
+
+          <!-- 🔘 來源篩選 + 日期區間 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button class="dash-src-btn active" data-src="all" onclick="setDashSource('all')" style="padding:6px 12px;border:1.5px solid var(--border);background:#3d2b1f;color:#fff;border-radius:4px;cursor:pointer;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;">全部</button>
+              <button class="dash-src-btn" data-src="shop" onclick="setDashSource('shop')" style="padding:6px 12px;border:1.5px solid var(--border);background:#fff;color:#3d2b1f;border-radius:4px;cursor:pointer;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;">🌐 線上</button>
+              <button class="dash-src-btn" data-src="main" onclick="setDashSource('main')" style="padding:6px 12px;border:1.5px solid var(--border);background:#fff;color:#3d2b1f;border-radius:4px;cursor:pointer;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;">🏪 現場</button>
+              <button class="dash-src-btn" data-src="vip" onclick="setDashSource('vip')" style="padding:6px 12px;border:1.5px solid var(--border);background:#fff;color:#3d2b1f;border-radius:4px;cursor:pointer;font-size:.72rem;font-family:'Noto Sans TC',sans-serif;">👑 VIP</button>
+            </div>
+            <div style="flex:1;min-width:200px;"></div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button class="dash-range-btn" data-range="today" onclick="setDashRange('today')" style="padding:6px 10px;border:1.5px solid var(--border);background:#fff;color:#3d2b1f;border-radius:4px;cursor:pointer;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">今日</button>
+              <button class="dash-range-btn" data-range="week" onclick="setDashRange('week')" style="padding:6px 10px;border:1.5px solid var(--border);background:#fff;color:#3d2b1f;border-radius:4px;cursor:pointer;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">本週</button>
+              <button class="dash-range-btn active" data-range="month" onclick="setDashRange('month')" style="padding:6px 10px;border:1.5px solid var(--border);background:#3d2b1f;color:#fff;border-radius:4px;cursor:pointer;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">本月</button>
+              <button class="dash-range-btn" data-range="all" onclick="setDashRange('all')" style="padding:6px 10px;border:1.5px solid var(--border);background:#fff;color:#3d2b1f;border-radius:4px;cursor:pointer;font-size:.7rem;font-family:'Noto Sans TC',sans-serif;">全部</button>
+            </div>
+          </div>
+
+          <!-- 🔍 搜尋 -->
+          <div class="search-bar">
+            <input class="search-input" type="text" id="order-search" placeholder="搜尋訂單號/電話/姓名/商品" oninput="renderDashTable()">
+          </div>
+
+          <!-- 📋 統一訂單列表 -->
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:60px;">來源</th>
+                  <th>訂單號</th>
+                  <th>時間</th>
+                  <th>客人</th>
+                  <th>電話</th>
+                  <th>商品</th>
+                  <th>金額</th>
+                  <th>付款</th>
+                  <th>狀態</th>
+                  <th style="width:120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="order-tbody"></tbody>
+            </table>
+          </div>
           <div id="order-loading" class="loading-wrap" style="display:none"><div class="loading-spinner"></div>載入中…</div>
+          <div id="dash-load-result" style="margin-top:10px;font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;"></div>
         </div>
       </div>
     </div>
@@ -2361,33 +2444,341 @@ async function clearMarquee(id){
   if(m)await saveMarquee(id,m.site||_currentSite||'shop',m.order);
 }
 
-// ════ 購物訂單 ════
-let _orders=[];
-async function loadOrders(){
-  show('order-loading');document.getElementById('order-tbody').innerHTML='';
-  try{
-    const r=await fetch(GAS+'?action=getOrders&t='+Date.now());
-    const d=await r.json();
-    _orders=d.orders||[];hide('order-loading');filterOrderTable();
-  }catch(e){
-    hide('order-loading');
-    document.getElementById('order-tbody').innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">載入失敗</td></tr>';
+// ════════════════════════════════════════════════════════
+// 📊 三系統訂單統一儀表板（v3D 新版）
+// 來源：🌐 線上(🔵 購物 GAS) + 🏪 現場(🔴 主系統 GAS) + 👑 VIP(🟣 VIP GAS)
+// ════════════════════════════════════════════════════════
+
+// ────────────────────────────────────────────
+// 📦 ORDER_DASHBOARD 公版抽離區（admin.html 端）
+// ────────────────────────────────────────────
+const ORDER_DASHBOARD_CONFIG = {
+  // [UNI_EXCLUSIVE] 三系統 GAS URL（換沙龍只需改這裡）
+  GAS_MAIN: GAS,        // 🔴 主系統（現場訂單，已在頁面上方定義）
+  GAS_SHOP: GAS_SHOP,   // 🔵 購物系統（線上訂單，已定義）
+  GAS_VIP:  GAS_VIP     // 🟣 VIP 系統（VIP 購物，已定義）
+};
+const ORDER_DASHBOARD_BUSINESS_CONFIG = {
+  ENABLE_ONLINE: true,    // 線上訂單來源
+  ENABLE_OFFLINE: true,   // 現場訂單來源
+  ENABLE_VIP: true,       // VIP 購物來源
+  DEFAULT_RANGE: 'month', // today | week | month | all
+  ORDER_STATUS_FLOW: ['待付款', '已付款', '已出貨', '已完成', '已取消'],
+  AUTO_NOTIFY_ON_STATUS_CHANGE: true
+};
+const ORDER_DASHBOARD_TEXTS = {
+  SOURCE_ONLINE:  '🌐 線上',
+  SOURCE_OFFLINE: '🏪 現場',
+  SOURCE_VIP:     '👑 VIP',
+  STATUS_LABELS: { '待付款':'⏳','已付款':'💰','已出貨':'📦','已完成':'✅','已取消':'❌' }
+};
+// ────────────────────────────────────────────
+
+let _allOrders = [];          // 全部三系統合併訂單
+let _dashFilterSource = 'all';// 來源篩選
+let _dashFilterRange  = 'month'; // 日期區間
+
+// 主入口：載入三系統訂單
+async function loadAllOrders(){
+  show('order-loading');
+  document.getElementById('order-tbody').innerHTML='';
+  document.getElementById('dash-load-result').textContent='';
+  _allOrders = [];
+
+  const range = _calcDashDateRange(_dashFilterRange);
+  const dateParams = range ? `&startDate=${range.startDate}&endDate=${range.endDate}` : '';
+
+  // 三來源並行載入
+  const tasks = [];
+  const results = { shop:null, main:null, vip:null };
+
+  if (ORDER_DASHBOARD_BUSINESS_CONFIG.ENABLE_ONLINE) {
+    tasks.push(
+      fetch(ORDER_DASHBOARD_CONFIG.GAS_SHOP+'?action=getOrdersV2'+dateParams+'&t='+Date.now())
+        .then(r=>r.json())
+        .then(d=>{ results.shop = d; })
+        .catch(e=>{ results.shop = { error: e.message }; })
+    );
+  }
+  if (ORDER_DASHBOARD_BUSINESS_CONFIG.ENABLE_OFFLINE) {
+    tasks.push(
+      fetch(ORDER_DASHBOARD_CONFIG.GAS_MAIN+'?action=getOrders&t='+Date.now())
+        .then(r=>r.json())
+        .then(d=>{ results.main = d; })
+        .catch(e=>{ results.main = { error: e.message }; })
+    );
+  }
+  if (ORDER_DASHBOARD_BUSINESS_CONFIG.ENABLE_VIP) {
+    tasks.push(
+      fetch(ORDER_DASHBOARD_CONFIG.GAS_VIP+'?action=getAllPurchaseLogs'+dateParams+'&t='+Date.now())
+        .then(r=>r.json())
+        .then(d=>{ results.vip = d; })
+        .catch(e=>{ results.vip = { error: e.message }; })
+    );
+  }
+
+  await Promise.all(tasks);
+
+  // 整合並標準化
+  const errors = [];
+
+  // 🌐 線上訂單（🔵 購物 GAS - getOrdersV2）
+  if (results.shop && results.shop.success && Array.isArray(results.shop.orders)) {
+    results.shop.orders.forEach(o => {
+      _allOrders.push({
+        source: 'shop',
+        sourceLabel: ORDER_DASHBOARD_TEXTS.SOURCE_ONLINE,
+        orderNum: o.orderNum||'',
+        time: o.time||'',
+        dateRaw: o.dateRaw||0,
+        customerName: o.customerName||'',
+        phone: o.phone||'',
+        items: o.items||'',
+        amount: Number(o.amount||0),
+        payMethod: o.payMethod||'',
+        status: o.status||'待付款',
+        canChangeStatus: true,    // 線上訂單可改狀態
+        _row: o._row||0
+      });
+    });
+  } else if (results.shop && (results.shop.error || !results.shop.success)) {
+    errors.push('🌐 線上訂單載入失敗：'+(results.shop.error||results.shop.message||'未知錯誤'));
+  }
+
+  // 🏪 現場訂單（🔴 主系統 GAS - getOrders）
+  if (results.main && results.main.ok && Array.isArray(results.main.orders)) {
+    results.main.orders.forEach(o => {
+      const t = o.time || '';
+      let dateRaw = 0;
+      try { dateRaw = t ? new Date(t).getTime() : 0; } catch(_){}
+      _allOrders.push({
+        source: 'main',
+        sourceLabel: ORDER_DASHBOARD_TEXTS.SOURCE_OFFLINE,
+        orderNum: o.orderNum||'',
+        time: t,
+        dateRaw: dateRaw,
+        customerName: o.lineName||'',
+        phone: o.phone||'',
+        items: o.items||'',
+        amount: Number(o.total||0),
+        payMethod: o.payMethod||'',
+        status: o.status||'已完成',
+        canChangeStatus: false,   // 現場訂單視為已完成
+        _row: o._row||0
+      });
+    });
+  } else if (results.main && (results.main.error || !results.main.ok)) {
+    errors.push('🏪 現場訂單載入失敗：'+(results.main.error||results.main.msg||'未知錯誤'));
+  }
+
+  // 👑 VIP 購物（🟣 VIP GAS - getAllPurchaseLogs）
+  if (results.vip && results.vip.success && Array.isArray(results.vip.logs)) {
+    results.vip.logs.forEach(o => {
+      _allOrders.push({
+        source: 'vip',
+        sourceLabel: ORDER_DASHBOARD_TEXTS.SOURCE_VIP,
+        orderNum: o.orderNum||'',
+        time: o.date||'',
+        dateRaw: o.dateRaw||0,
+        customerName: o.customerName||'',
+        phone: o.phone||'',
+        items: (o.productName||'') + (o.qty>1 ? ' ×'+o.qty : ''),
+        amount: Number(o.amount||0),
+        payMethod: o.payMethod||'',
+        status: o.status||'已完成',
+        canChangeStatus: false,
+        _row: 0
+      });
+    });
+  } else if (results.vip && (results.vip.error || !results.vip.success)) {
+    errors.push('👑 VIP 購物載入失敗：'+(results.vip.error||results.vip.message||'未知錯誤'));
+  }
+
+  // 按時間倒序
+  _allOrders.sort((a,b)=>b.dateRaw - a.dateRaw);
+
+  hide('order-loading');
+
+  // 顯示結果摘要
+  const resultEl = document.getElementById('dash-load-result');
+  let html = '✅ 已載入 '+_allOrders.length+' 筆訂單';
+  if (errors.length) {
+    html += '<br><span style="color:#c0392b;">⚠️ '+errors.join(' | ')+'</span>';
+  }
+  resultEl.innerHTML = html;
+
+  renderDashTable();
+}
+
+// 計算日期區間
+function _calcDashDateRange(rangeKey){
+  const fmt = d => d.toISOString().slice(0,10);
+  const now = new Date();
+  if (rangeKey === 'today') {
+    const ymd = fmt(now);
+    return { startDate: ymd, endDate: ymd };
+  }
+  if (rangeKey === 'week') {
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay()); // 週日為起點
+    return { startDate: fmt(start), endDate: fmt(now) };
+  }
+  if (rangeKey === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { startDate: fmt(start), endDate: fmt(now) };
+  }
+  return null; // all
+}
+
+// 切換來源篩選
+function setDashSource(src){
+  _dashFilterSource = src;
+  document.querySelectorAll('.dash-src-btn').forEach(btn=>{
+    const isActive = btn.dataset.src === src;
+    btn.classList.toggle('active', isActive);
+    btn.style.background = isActive ? '#3d2b1f' : '#fff';
+    btn.style.color = isActive ? '#fff' : '#3d2b1f';
+  });
+  renderDashTable();
+}
+
+// 切換日期區間（會重新載入資料）
+function setDashRange(range){
+  _dashFilterRange = range;
+  document.querySelectorAll('.dash-range-btn').forEach(btn=>{
+    const isActive = btn.dataset.range === range;
+    btn.classList.toggle('active', isActive);
+    btn.style.background = isActive ? '#3d2b1f' : '#fff';
+    btn.style.color = isActive ? '#fff' : '#3d2b1f';
+  });
+  loadAllOrders();
+}
+
+// 渲染儀表板列表 + 統計
+function renderDashTable(){
+  const q = (document.getElementById('order-search').value||'').toLowerCase();
+
+  // 篩選資料
+  let filtered = _allOrders;
+  if (_dashFilterSource !== 'all') {
+    filtered = filtered.filter(o => o.source === _dashFilterSource);
+  }
+  if (q) {
+    filtered = filtered.filter(o =>
+      ((o.orderNum||'')+(o.phone||'')+(o.customerName||'')+(o.items||'')).toLowerCase().includes(q)
+    );
+  }
+
+  // 統計
+  const stats = { total: filtered.length, revenue: 0, today: 0, month: 0,
+                  shop:{count:0,sum:0}, main:{count:0,sum:0}, vip:{count:0,sum:0} };
+  const now = new Date();
+  const todayKey = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  const monthKey = now.getFullYear()+'-'+(now.getMonth()+1);
+
+  filtered.forEach(o => {
+    const amt = Number(o.amount)||0;
+    stats.revenue += amt;
+    if (o.dateRaw) {
+      const d = new Date(o.dateRaw);
+      const dKey = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+      const mKey = d.getFullYear()+'-'+(d.getMonth()+1);
+      if (dKey === todayKey) stats.today += amt;
+      if (mKey === monthKey) stats.month += amt;
+    }
+    if (stats[o.source]) {
+      stats[o.source].count++;
+      stats[o.source].sum += amt;
+    }
+  });
+
+  document.getElementById('stat-count').textContent = stats.total + ' 筆';
+  document.getElementById('stat-revenue').textContent = 'NT$ ' + stats.revenue.toLocaleString();
+  document.getElementById('stat-today').textContent = 'NT$ ' + stats.today.toLocaleString();
+  document.getElementById('stat-month').textContent = 'NT$ ' + stats.month.toLocaleString();
+  document.getElementById('src-stat-shop').textContent = stats.shop.count + ' 筆 / NT$ ' + stats.shop.sum.toLocaleString();
+  document.getElementById('src-stat-main').textContent = stats.main.count + ' 筆 / NT$ ' + stats.main.sum.toLocaleString();
+  document.getElementById('src-stat-vip').textContent  = stats.vip.count  + ' 筆 / NT$ ' + stats.vip.sum.toLocaleString();
+
+  // 列表
+  if (!filtered.length) {
+    document.getElementById('order-tbody').innerHTML =
+      '<tr><td colspan="10" style="text-align:center;color:#aaa;padding:24px;">無訂單資料</td></tr>';
+    return;
+  }
+
+  const html = filtered.map(o => {
+    const srcColor = o.source==='shop'?'#d4a574':o.source==='main'?'#c97064':'#9a6fc4';
+    const statusEmoji = ORDER_DASHBOARD_TEXTS.STATUS_LABELS[o.status] || '📋';
+
+    let actionBtn = '';
+    if (o.canChangeStatus && o.source==='shop') {
+      const flow = ORDER_DASHBOARD_BUSINESS_CONFIG.ORDER_STATUS_FLOW;
+      const idx = flow.indexOf(o.status);
+      const nextStatus = (idx >= 0 && idx < flow.length-2) ? flow[idx+1] : null;
+      if (nextStatus && nextStatus !== '已取消') {
+        actionBtn = `<button onclick="changeOrderStatus('${o.orderNum}','${nextStatus}',this)" style="padding:4px 8px;border:1px solid #3d2b1f;background:#3d2b1f;color:#fff;border-radius:3px;cursor:pointer;font-size:.65rem;font-family:'Noto Sans TC',sans-serif;">→ ${nextStatus}</button>`;
+      } else if (o.status === '已完成') {
+        actionBtn = '<span style="font-size:.65rem;color:#3d7a4f;">✓ 完成</span>';
+      } else if (o.status === '已取消') {
+        actionBtn = '<span style="font-size:.65rem;color:#aaa;">已取消</span>';
+      }
+    }
+
+    return `<tr>
+      <td><span style="background:${srcColor};color:#fff;padding:2px 6px;border-radius:3px;font-size:.6rem;font-family:'Noto Sans TC',sans-serif;">${o.sourceLabel||''}</span></td>
+      <td style="font-size:.65rem;font-family:'Noto Sans TC',sans-serif;">${o.orderNum||''}</td>
+      <td style="font-size:.68rem;color:#aaa;">${o.time||''}</td>
+      <td>${o.customerName||''}</td>
+      <td>${o.phone||''}</td>
+      <td style="font-size:.7rem;max-width:160px;">${o.items||''}</td>
+      <td><strong>NT$ ${Number(o.amount||0).toLocaleString()}</strong></td>
+      <td style="font-size:.7rem;">${o.payMethod||''}</td>
+      <td style="font-size:.7rem;">${statusEmoji} ${o.status||''}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('order-tbody').innerHTML = html;
+}
+
+// 變更訂單狀態（僅線上訂單可用）
+async function changeOrderStatus(orderNum, newStatus, btnEl){
+  if (!orderNum || !newStatus) return;
+  const ok = confirm('確定要把訂單 '+orderNum+' 改成「'+newStatus+'」嗎？\n\n' +
+                     (ORDER_DASHBOARD_BUSINESS_CONFIG.AUTO_NOTIFY_ON_STATUS_CHANGE
+                       ? '✅ 將自動發送 LINE 通知客人' : ''));
+  if (!ok) return;
+
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '處理中…'; }
+
+  try {
+    const url = ORDER_DASHBOARD_CONFIG.GAS_SHOP +
+                '?action=updateOrderStatus' +
+                '&orderNum=' + encodeURIComponent(orderNum) +
+                '&status=' + encodeURIComponent(newStatus) +
+                '&t=' + Date.now();
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.success) {
+      // 更新本地資料
+      const target = _allOrders.find(o => o.orderNum === orderNum && o.source==='shop');
+      if (target) target.status = newStatus;
+      renderDashTable();
+      alert('✅ 已更新狀態為「'+newStatus+'」' + (d.notified ? '\n📲 已發送 LINE 通知' : ''));
+    } else {
+      alert('❌ 更新失敗：' + (d.message||d.msg||'未知錯誤'));
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = '→ '+newStatus; }
+    }
+  } catch(e) {
+    alert('❌ 網路錯誤：' + e.message);
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = '→ '+newStatus; }
   }
 }
-function filterOrderTable(){
-  const q=document.getElementById('order-search').value.toLowerCase();
-  const filtered=_orders.filter(o=>!q||(o.orderNum+o.phone+o.lineName).toLowerCase().includes(q));
-  document.getElementById('order-tbody').innerHTML=filtered.map(o=>`<tr>
-    <td style="font-size:.65rem;font-family:'Noto Sans TC',sans-serif;">${o.orderNum||''}</td>
-    <td style="font-size:.68rem;color:#aaa;">${o.time||''}</td>
-    <td>${o.lineName||''}</td><td>${o.phone||''}</td>
-    <td style="font-size:.7rem;max-width:140px;">${o.items||''}</td>
-    <td><strong>NT$ ${Number(o.total||0).toLocaleString()}</strong></td>
-    <td style="font-size:.7rem;">${o.payMethod||''}</td>
-    <td style="font-size:.7rem;">${o.shipping||''}</td>
-    <td style="font-size:.68rem;color:var(--mid);">${o.note||''}</td>
-  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px;">無訂單資料</td></tr>';
-}
+
+// 向下相容：舊的 loadOrders / filterOrderTable 保留為別名
+function loadOrders(){ return loadAllOrders(); }
+function filterOrderTable(){ return renderDashTable(); }
 
 // ════ 手動新增訂單 ════
 let _moProductList = [];
