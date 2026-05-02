@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#E8B4B8">
+<title>UNI 點數系統 · 後台</title>
+
+<!-- ════════════════════════════════════════════════════════════════════
+  UNI 點數系統 - 前端 admin 後台 v1.0  (2026/05/02)
+  專屬:UNI 髮型設計
+  ────────────────────────────────────────
+  ★ 6 大 Tab:概覽 / 獎池 / 獎品 / 客人 / 領獎 / 設定
+  ★ 3 種登入模式:永久 / 暫時 / 不記住
+  ★ RWD:桌機側欄 + 手機底欄,全裝置適用
+  ★ 風格:莫蘭迪粉柔和 + 水彩貓點綴
+  ★ 公版抽離:CONFIG / BUSINESS_CONFIG / TEXTS 集中
+  ★ 緊急回滾:整檔下架即可,後端 m_admin.gs 不受影響
+═════════════════════════════════════════════════════════════════════ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   CSS 變數(公版抽離:改色全改這)
+═══════════════════════════════════════════════════════════════════ */
+:root {
+  /* 莫蘭迪粉系 */
+  --c-primary: #E8B4B8;
+  --c-primary-deep: #A88D8F;
+  --c-primary-light: #F5E6E7;
+  --c-bg: #FAF6F6;
+  --c-bg-card: #FFFFFF;
+  --c-text: #3D2C2D;
+  --c-text-soft: #6B5556;
+  --c-text-muted: #A89899;
+  --c-accent: #D4A5A5;
+  --c-success: #A8C4A2;
+  --c-warning: #E0B584;
+  --c-danger: #C8807A;
+  --c-divider: #EFE3E3;
+
+  /* 稀有度色 */
+  --c-ssr: linear-gradient(135deg, #F4D58D 0%, #E8B86A 100%);
+  --c-s: linear-gradient(135deg, #C8A8D8 0%, #A88BC0 100%);
+  --c-a: linear-gradient(135deg, #A8C4D8 0%, #8BA8C0 100%);
+  --c-b: linear-gradient(135deg, #B8C8B0 0%, #98AC90 100%);
+  --c-c: linear-gradient(135deg, #D8C8B8 0%, #B8A898 100%);
+
+  /* 陰影 */
+  --shadow-sm: 0 1px 3px rgba(168, 141, 143, 0.08);
+  --shadow-md: 0 4px 16px rgba(168, 141, 143, 0.12);
+  --shadow-lg: 0 12px 40px rgba(168, 141, 143, 0.18);
+  --shadow-pop: 0 8px 24px rgba(232, 180, 184, 0.35);
+
+  /* 圓角 */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  /* 字 */
+  --f-display: 'Cormorant Garamond', 'Noto Serif TC', serif;
+  --f-body: 'Noto Sans TC', -apple-system, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Reset & Base
+═══════════════════════════════════════════════════════════════════ */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow-x: hidden; }
+body {
+  font-family: var(--f-body);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select, textarea { font-family: inherit; }
+
+/* 水彩貓背景紋理 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 800px 600px at 10% 20%, rgba(232, 180, 184, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 600px 800px at 90% 80%, rgba(212, 165, 165, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 400px 400px at 50% 50%, rgba(245, 230, 231, 0.4) 0%, transparent 60%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   登入頁
+═══════════════════════════════════════════════════════════════════ */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+.login-card {
+  background: var(--c-bg-card);
+  border-radius: var(--r-xl);
+  padding: 48px 36px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(232, 180, 184, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.login-cat {
+  font-size: 56px;
+  text-align: center;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 12px rgba(232, 180, 184, 0.5));
+}
+.login-title {
+  font-family: var(--f-display);
+  font-size: 38px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--c-primary-deep);
+  letter-spacing: 0.04em;
+  font-style: italic;
+}
+.login-sub {
+  text-align: center;
+  color: var(--c-text-muted);
+  font-size: 13px;
+  margin-bottom: 36px;
+  letter-spacing: 0.15em;
+}
+.login-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-soft);
+  margin-bottom: 8px;
+  display: block;
+  letter-spacing: 0.05em;
+}
+.login-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--c-divider);
+  border-radius: var(--r-md);
+  font-size: 15px;
+  background: var(--c-bg);
+  transition: all 0.2s;
+  color: var(--c-text);
+}
+.login-input:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(232, 180, 184, 0.15);
+}
+.login-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 16px 0 24px;
+}
+.login-mode {
+  padding: 10px 6px;
+  border: 1.5px solid var(--c-divider);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--c-bg);
+  color: var(--c-text-soft);
+}
+.login-mode.active {
+  border-color: var(--c-primary);
+  background: var(--c-primary-light);
+  color: var(--c-primary-deep);
+  font-weight: 600;
+}
+.login-mode-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+.btn-primary {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-accent) 100%);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: var(--shadow-pop);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(232, 180, 184, 0.5); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   主體版型
+═══════════════════════════════════════════════════════════════════ */
+.app { display: none; min-height: 100vh; position: relative; z-index: 1; }
+.app.active { display: flex; }
+
+/* 桌機側欄 */
+.sidebar {
+  width: 240px;
+  background: var(--c-bg-card);
+  border-right: 1px solid var(--c-divider);
+  padding: 28px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 24px;
+  border-bottom: 1px solid var(--c-divider);
+  margin-bottom: 16px;
+}
+.brand-cat { font-size: 28px; filter: drop-shadow(0 2px 4px rgba(232, 180, 184, 0.4)); }
+.brand-text {
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--c-primary-deep);
+  font-style: italic;
+  letter-spacing: 0.04em;
+}
+.brand-sub {
+  font-size: 10px;
+  color: var(--c-text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  color: var(--c-text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  text-align: left;
+  width: 100%;
+}
+.nav-item:hover { background: var(--c-primary-light); color: var(--c-primary-deep); }
+.nav-item.active {
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-accent) 100%);
+  color: white;
+  box-shadow: var(--shadow-pop);
+}
+.nav-icon { font-size: 18px; width: 24px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--c-danger);
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.nav-item.active .nav-badge { background: white; color: var(--c-danger); }
+.sidebar-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--c-divider);
+}
+.btn-logout {
+  width: 100%;
+  padding: 10px;
+  background: var(--c-bg);
+  color: var(--c-text-muted);
+  font-size: 13px;
+  border-radius: var(--r-md);
+  transition: all 0.2s;
+}
+.btn-logout:hover { background: var(--c-danger); color: white; }
+
+/* 內容區 */
+.content { flex: 1; padding: 32px 40px; min-width: 0; max-width: 100%; }
+.page-head {
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-title {
+  font-family: var(--f-display);
+  font-size: 42px;
+  font-weight: 600;
+  color: var(--c-text);
+  letter-spacing: 0.02em;
+  font-style: italic;
+  line-height: 1.1;
+}
+.page-sub {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* 手機底欄 */
+.mobile-bar { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   通用元件
+═══════════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--c-divider);
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+.card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.card-value {
+  font-family: var(--f-display);
+  font-size: 38px;
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: 1;
+}
+.card-meta {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  margin-top: 8px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn-soft { background: var(--c-primary-light); color: var(--c-primary-deep); }
+.btn-soft:hover { background: var(--c-primary); color: white; }
+.btn-ghost { background: transparent; color: var(--c-text-soft); border: 1px solid var(--c-divider); }
+.btn-ghost:hover { background: var(--c-bg); border-color: var(--c-primary); color: var(--c-primary-deep); }
+.btn-success { background: var(--c-success); color: white; }
+.btn-success:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.btn-danger { background: var(--c-danger); color: white; }
+.btn-danger:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.btn-sm { padding: 6px 10px; font-size: 12px; }
+.btn-block { width: 100%; justify-content: center; }
+
+.input, .select {
+  padding: 10px 14px;
+  border: 1.5px solid var(--c-divider);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  background: var(--c-bg);
+  color: var(--c-text);
+  width: 100%;
+  transition: all 0.2s;
+}
+.input:focus, .select:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(232, 180, 184, 0.15);
+}
+
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.tag-ssr { background: var(--c-ssr); color: #6B4A1A; }
+.tag-s { background: var(--c-s); color: white; }
+.tag-a { background: var(--c-a); color: white; }
+.tag-b { background: var(--c-b); color: white; }
+.tag-c { background: var(--c-c); color: white; }
+.tag-on { background: var(--c-success); color: white; }
+.tag-off { background: var(--c-text-muted); color: white; }
+.tag-pending { background: var(--c-warning); color: white; }
+.tag-done { background: var(--c-success); color: white; }
+
+/* 開關 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--c-divider);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+.switch-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px; width: 18px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.25s;
+  box-shadow: var(--shadow-sm);
+}
+.switch input:checked + .switch-slider { background: var(--c-success); }
+.switch input:checked + .switch-slider::before { transform: translateX(20px); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 1:概覽
+═══════════════════════════════════════════════════════════════════ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: attr(data-watermark);
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 96px;
+  opacity: 0.05;
+  font-family: var(--f-display);
+  font-style: italic;
+  pointer-events: none;
+}
+.stat-card.highlight {
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-accent) 100%);
+  color: white;
+  border: none;
+}
+.stat-card.highlight .card-title,
+.stat-card.highlight .card-value,
+.stat-card.highlight .card-meta { color: white; opacity: 0.95; }
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.section-title {
+  font-family: var(--f-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--c-text);
+  font-style: italic;
+}
+.section-meta {
+  font-size: 12px;
+  color: var(--c-text-muted);
+  letter-spacing: 0.15em;
+}
+
+.rarity-bars { display: flex; flex-direction: column; gap: 10px; }
+.rarity-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 50px;
+  align-items: center;
+  gap: 12px;
+}
+.rarity-bar {
+  height: 8px;
+  background: var(--c-divider);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rarity-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease-out; }
+.rarity-count { text-align: right; font-family: var(--f-mono); font-size: 13px; color: var(--c-text-soft); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 2:獎池管理
+═══════════════════════════════════════════════════════════════════ */
+.pool-list { display: flex; flex-direction: column; gap: 16px; }
+.pool-card {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-divider);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+}
+.pool-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pool-name {
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--c-text);
+}
+.pool-id { font-family: var(--f-mono); font-size: 11px; color: var(--c-text-muted); margin-left: 8px; }
+.pool-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-label {
+  font-size: 11px;
+  color: var(--c-text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 3:獎品管理
+═══════════════════════════════════════════════════════════════════ */
+.prize-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.chip {
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-divider);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--c-text-soft);
+}
+.chip.active {
+  background: var(--c-primary);
+  color: white;
+  border-color: var(--c-primary);
+}
+.prize-table {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-divider);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.prize-row {
+  display: grid;
+  grid-template-columns: 80px 1.5fr 70px 90px 90px 80px 110px;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--c-divider);
+  align-items: center;
+}
+.prize-row:last-child { border-bottom: none; }
+.prize-row.head {
+  background: var(--c-bg);
+  font-size: 11px;
+  color: var(--c-text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.prize-row .input-inline {
+  padding: 6px 10px;
+  border: 1px solid var(--c-divider);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  background: var(--c-bg);
+  width: 100%;
+}
+.prize-row .input-inline:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  background: white;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 4:客人查詢
+═══════════════════════════════════════════════════════════════════ */
+.user-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.user-toolbar .input { max-width: 260px; }
+.user-toolbar .select { max-width: 160px; }
+
+.user-list {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-divider);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.user-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px 80px 100px;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--c-divider);
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.user-row:last-child { border-bottom: none; }
+.user-row:hover { background: var(--c-primary-light); }
+.user-row.head {
+  background: var(--c-bg);
+  font-size: 11px;
+  color: var(--c-text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: default;
+}
+.user-row.head:hover { background: var(--c-bg); }
+.uid-cell { font-family: var(--f-mono); font-size: 12px; color: var(--c-text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uid-cell .uid-name { font-family: var(--f-body); font-size: 14px; color: var(--c-text); display: block; margin-bottom: 2px; font-weight: 500; }
+
+/* 客人詳細 modal */
+.modal-mask {
+  position: fixed; inset: 0;
+  background: rgba(61, 44, 45, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal-mask.active { display: flex; animation: fadeIn 0.2s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--c-bg-card);
+  border-radius: var(--r-xl);
+  max-width: 720px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  animation: slideUp 0.25s;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-head {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--c-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+}
+.modal-title {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--c-text);
+}
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--c-bg);
+  color: var(--c-text-soft);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.modal-close:hover { background: var(--c-danger); color: white; }
+.modal-body { padding: 24px 28px 32px; }
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.detail-stat {
+  background: var(--c-bg);
+  border-radius: var(--r-md);
+  padding: 14px;
+  border: 1px solid var(--c-divider);
+}
+.detail-stat-label { font-size: 11px; color: var(--c-text-muted); letter-spacing: 0.1em; }
+.detail-stat-value { font-family: var(--f-display); font-size: 24px; font-weight: 600; margin-top: 4px; }
+.detail-section { margin-top: 24px; }
+.detail-section h4 {
+  font-family: var(--f-display);
+  font-size: 18px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--c-text);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--c-divider);
+}
+.detail-list { display: flex; flex-direction: column; gap: 6px; }
+.detail-line {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 10px;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--c-bg);
+  border-radius: var(--r-sm);
+}
+.detail-line .time { font-family: var(--f-mono); font-size: 11px; color: var(--c-text-muted); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 5:領獎管理
+═══════════════════════════════════════════════════════════════════ */
+.pending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.pending-card {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  border: 1px solid var(--c-divider);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pending-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+}
+.pending-prize {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 600;
+  font-style: italic;
+}
+.pending-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--c-text-soft);
+}
+.pending-meta .uid { font-family: var(--f-mono); color: var(--c-text-muted); font-size: 11px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 6:設定
+═══════════════════════════════════════════════════════════════════ */
+.settings-list { display: flex; flex-direction: column; gap: 12px; }
+.settings-row {
+  background: var(--c-bg-card);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  border: 1px solid var(--c-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.settings-key { font-weight: 500; }
+.settings-key small { display: block; color: var(--c-text-muted); font-size: 12px; font-weight: 400; margin-top: 2px; }
+.settings-val { font-family: var(--f-mono); font-size: 13px; color: var(--c-text-soft); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Loading / Toast
+═══════════════════════════════════════════════════════════════════ */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--c-text-muted);
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--c-divider);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--c-text-muted);
+}
+.empty-cat { font-size: 56px; margin-bottom: 12px; opacity: 0.5; }
+
+.toast-zone {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--c-bg-card);
+  border-radius: var(--r-md);
+  padding: 14px 20px;
+  box-shadow: var(--shadow-lg);
+  border-left: 4px solid var(--c-primary);
+  font-size: 14px;
+  min-width: 220px;
+  max-width: 360px;
+  animation: toastIn 0.3s, toastOut 0.3s 2.7s forwards;
+  pointer-events: auto;
+}
+.toast.success { border-left-color: var(--c-success); }
+.toast.error { border-left-color: var(--c-danger); }
+.toast.warning { border-left-color: var(--c-warning); }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } }
+@keyframes toastOut { to { transform: translateX(100%); opacity: 0; } }
+
+/* ═══════════════════════════════════════════════════════════════════
+   RWD ─ 平板
+═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .content { padding: 24px 24px 100px; }
+  .page-title { font-size: 34px; }
+  .prize-row { grid-template-columns: 60px 1fr 60px 70px 70px 60px 90px; gap: 8px; padding: 12px 14px; font-size: 13px; }
+  .user-row { grid-template-columns: 1fr 80px 80px 70px 80px; gap: 8px; padding: 12px 14px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RWD ─ 手機
+═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .content { padding: 16px 14px 90px; }
+  .page-head { margin-bottom: 18px; }
+  .page-title { font-size: 28px; }
+
+  .mobile-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--c-bg-card);
+    border-top: 1px solid var(--c-divider);
+    padding: 8px 4px env(safe-area-inset-bottom, 8px);
+    z-index: 50;
+    box-shadow: 0 -4px 16px rgba(168, 141, 143, 0.1);
+  }
+  .mobile-bar .nav-item {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 4px;
+    font-size: 10px;
+    text-align: center;
+    flex: 1;
+    border-radius: var(--r-sm);
+  }
+  .mobile-bar .nav-icon { font-size: 20px; width: auto; }
+  .mobile-bar .nav-text { font-size: 10px; }
+  .mobile-bar .nav-item.active {
+    background: var(--c-primary-light);
+    color: var(--c-primary-deep);
+    box-shadow: none;
+  }
+  .mobile-bar .nav-badge {
+    position: absolute;
+    top: 2px; right: 16%;
+    margin: 0;
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+  .mobile-logout-row {
+    background: var(--c-bg-card);
+    border-bottom: 1px solid var(--c-divider);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: -16px -14px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+  .mobile-logout-row .brand-text { font-size: 18px; }
+  .mobile-logout-row .btn-logout { width: auto; padding: 6px 12px; font-size: 12px; }
+
+  /* 桌機側欄隱藏,手機改用 mobile-logout-row */
+  .desktop-only { display: none !important; }
+
+  /* 表格在手機改卡片式 */
+  .prize-row {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 8px;
+    position: relative;
+  }
+  .prize-row.head { display: none; }
+  .prize-row .cell-mobile-label {
+    font-size: 11px;
+    color: var(--c-text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-right: 8px;
+    font-weight: 500;
+    display: inline-block;
+    min-width: 60px;
+  }
+  .prize-row > * {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .prize-row .cell-name { font-weight: 600; font-size: 16px; padding-right: 60px; }
+  .prize-row .cell-rarity { position: absolute; top: 14px; right: 14px; }
+
+  .user-row {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 14px;
+  }
+  .user-row.head { display: none; }
+  .user-row .uid-cell { grid-column: 1 / -1; }
+  .user-row .num-pair {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--c-text-soft);
+  }
+  .user-row .num-pair small { color: var(--c-text-muted); font-size: 11px; }
+
+  .modal { max-height: 95vh; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  .modal-mask { padding: 0; align-items: end; }
+  .detail-line { grid-template-columns: 1fr; gap: 4px; }
+
+  .login-card { padding: 32px 24px; }
+  .login-title { font-size: 32px; }
+  .stat-card::after { font-size: 64px; }
+  .pool-fields { grid-template-columns: 1fr 1fr; }
+  .toast-zone { right: 10px; left: 10px; top: 10px; }
+  .toast { min-width: 0; max-width: none; }
+}
+
+/* 桌機隱藏行動底欄 */
+@media (min-width: 769px) {
+  .mobile-bar, .mobile-logout-row { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+   登入畫面
+═══════════════════════════════════════════════════════════════════ -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-cat">🐱</div>
+    <h1 class="login-title">UNI Points</h1>
+    <p class="login-sub">A D M I N · C O N S O L E</p>
+
+    <label class="login-label">管理員 Token</label>
+    <input type="password" id="tokenInput" class="login-input" placeholder="請輸入 ADMIN_TOKEN" autocomplete="current-password">
+
+    <div style="height:16px;"></div>
+
+    <label class="login-label">登入記憶模式</label>
+    <div class="login-modes">
+      <div class="login-mode" data-mode="permanent">
+        <span class="login-mode-icon">🔓</span>
+        永久記住
+      </div>
+      <div class="login-mode active" data-mode="session">
+        <span class="login-mode-icon">🕐</span>
+        暫時記住
+      </div>
+      <div class="login-mode" data-mode="none">
+        <span class="login-mode-icon">🔒</span>
+        不記住
+      </div>
+    </div>
+
+    <button id="btnLogin" class="btn-primary">登 入</button>
+
+    <p style="margin-top:20px;text-align:center;font-size:11px;color:var(--c-text-muted);letter-spacing:0.1em;">
+      🐾 莫蘭迪粉系 · 水彩貓系列
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+   主應用
+═══════════════════════════════════════════════════════════════════ -->
+<div id="app" class="app">
+
+  <!-- 桌機側欄 -->
+  <aside class="sidebar desktop-only">
+    <div class="brand">
+      <span class="brand-cat">🐱</span>
+      <div>
+        <div class="brand-text">UNI</div>
+        <div class="brand-sub">Points Admin</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-tab="dashboard">
+        <span class="nav-icon">📊</span><span class="nav-text">概覽</span>
+      </button>
+      <button class="nav-item" data-tab="pools">
+        <span class="nav-icon">🎰</span><span class="nav-text">獎池管理</span>
+      </button>
+      <button class="nav-item" data-tab="prizes">
+        <span class="nav-icon">🎁</span><span class="nav-text">獎品管理</span>
+      </button>
+      <button class="nav-item" data-tab="users">
+        <span class="nav-icon">👤</span><span class="nav-text">客人查詢</span>
+      </button>
+      <button class="nav-item" data-tab="pending">
+        <span class="nav-icon">📦</span><span class="nav-text">領獎管理</span>
+        <span id="pendingBadge" class="nav-badge" style="display:none;">0</span>
+      </button>
+      <button class="nav-item" data-tab="settings">
+        <span class="nav-icon">⚙️</span><span class="nav-text">設定</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="btnLogout" class="btn-logout">登出</button>
+    </div>
+  </aside>
+
+  <!-- 內容區 -->
+  <main class="content">
+
+    <!-- 手機頂部 logo + 登出 -->
+    <div class="mobile-logout-row">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:22px;">🐱</span>
+        <span class="brand-text">UNI Points</span>
+      </div>
+      <button id="btnLogoutMobile" class="btn-logout">登出</button>
+    </div>
+
+    <!-- ─────────── Tab 1:概覽 ─────────── -->
+    <section id="page-dashboard" class="page">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub">系統 · 概 覽</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-soft btn-sm" onclick="loadDashboard()">↻ 重新整理</button>
+        </div>
+      </div>
+      <div id="dashboardBody"></div>
+    </section>
+
+    <!-- ─────────── Tab 2:獎池管理 ─────────── -->
+    <section id="page-pools" class="page" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Pools</h1>
+          <p class="page-sub">獎 池 · 設 定</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-soft btn-sm" onclick="loadPools()">↻ 重新整理</button>
+        </div>
+      </div>
+      <div id="poolsBody"></div>
+    </section>
+
+    <!-- ─────────── Tab 3:獎品管理 ─────────── -->
+    <section id="page-prizes" class="page" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Prizes</h1>
+          <p class="page-sub">獎 品 · 機 率</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-soft btn-sm" onclick="showAddPrizeModal()">＋ 新增獎品</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadPrizes()">↻ 重新整理</button>
+        </div>
+      </div>
+      <div class="prize-filters" id="prizeFilters"></div>
+      <div id="prizesBody"></div>
+    </section>
+
+    <!-- ─────────── Tab 4:客人查詢 ─────────── -->
+    <section id="page-users" class="page" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Customers</h1>
+          <p class="page-sub">客 人 · 查 詢</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ 重新整理</button>
+        </div>
+      </div>
+      <div class="user-toolbar">
+        <input type="text" id="userSearch" class="input" placeholder="🔍 搜尋 UID 或角色名..." oninput="renderUsers()">
+        <select id="userSort" class="select" onchange="loadUsers()">
+          <option value="points">💎 點數高低</option>
+          <option value="reputation">⭐ 譽望高低</option>
+          <option value="draws">🎰 抽獎次數</option>
+          <option value="recent">🕒 最近活躍</option>
+        </select>
+      </div>
+      <div id="usersBody"></div>
+    </section>
+
+    <!-- ─────────── Tab 5:領獎管理 ─────────── -->
+    <section id="page-pending" class="page" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Redemptions</h1>
+          <p class="page-sub">待 領 · 清 單</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-soft btn-sm" onclick="loadPending()">↻ 重新整理</button>
+        </div>
+      </div>
+      <div id="pendingBody"></div>
+    </section>
+
+    <!-- ─────────── Tab 6:設定 ─────────── -->
+    <section id="page-settings" class="page" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Settings</h1>
+          <p class="page-sub">系 統 · 資 訊</p>
+        </div>
+      </div>
+      <div id="settingsBody"></div>
+    </section>
+
+  </main>
+
+  <!-- 手機底欄 -->
+  <nav class="mobile-bar">
+    <button class="nav-item active" data-tab="dashboard">
+      <span class="nav-icon">📊</span><span class="nav-text">概覽</span>
+    </button>
+    <button class="nav-item" data-tab="pools">
+      <span class="nav-icon">🎰</span><span class="nav-text">獎池</span>
+    </button>
+    <button class="nav-item" data-tab="prizes">
+      <span class="nav-icon">🎁</span><span class="nav-text">獎品</span>
+    </button>
+    <button class="nav-item" data-tab="users">
+      <span class="nav-icon">👤</span><span class="nav-text">客人</span>
+    </button>
+    <button class="nav-item" data-tab="pending" style="position:relative;">
+      <span class="nav-icon">📦</span><span class="nav-text">領獎</span>
+      <span id="pendingBadgeMobile" class="nav-badge" style="display:none;">0</span>
+    </button>
+    <button class="nav-item" data-tab="settings">
+      <span class="nav-icon">⚙️</span><span class="nav-text">設定</span>
+    </button>
+  </nav>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+   Modal:客人詳細
+═══════════════════════════════════════════════════════════════════ -->
+<div id="userModal" class="modal-mask" onclick="if(event.target===this)closeModal('userModal')">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="userModalTitle">客人詳細</div>
+        <div id="userModalSubtitle" style="font-family:var(--f-mono);font-size:11px;color:var(--c-text-muted);margin-top:4px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('userModal')">✕</button>
+    </div>
+    <div class="modal-body" id="userModalBody"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+   Modal:新增獎品
+═══════════════════════════════════════════════════════════════════ -->
+<div id="addPrizeModal" class="modal-mask" onclick="if(event.target===this)closeModal('addPrizeModal')">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title">＋ 新增獎品</div>
+      <button class="modal-close" onclick="closeModal('addPrizeModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label class="login-label">獎池</label>
+          <select id="addPool" class="select"></select>
+        </div>
+        <div>
+          <label class="login-label">稀有度</label>
+          <select id="addRarity" class="select">
+            <option value="SSR">SSR</option>
+            <option value="S">S</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+        <div>
+          <label class="login-label">獎品名稱</label>
+          <input type="text" id="addName" class="input" placeholder="例:大吉貓 SSR">
+        </div>
+        <div>
+          <label class="login-label">獎勵點數</label>
+          <input type="number" id="addPoints" class="input" placeholder="例:200">
+        </div>
+        <div>
+          <label class="login-label">機率 (%)</label>
+          <input type="number" id="addRate" class="input" step="0.1" placeholder="例:1">
+        </div>
+        <button class="btn-primary" onclick="submitAddPrize()" style="margin-top:8px;">確認新增</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+   Toast 容器
+═══════════════════════════════════════════════════════════════════ -->
+<div class="toast-zone" id="toastZone"></div>
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG 區(公版抽離:改這裡就能換店)
+═══════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  POINTS_GAS_URL: 'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec',
+  ADMIN_TOKEN_KEY: 'uni_admin_token',
+  ADMIN_MODE_KEY: 'uni_admin_mode',
+  STORE_NAME: 'UNI 髮型設計',         // [UNI_EXCLUSIVE]
+  BRAND: 'UNI',                       // [UNI_EXCLUSIVE]
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUSINESS_CONFIG 區(商業參數,公版可調)
+═══════════════════════════════════════════════════════════════════ */
+const BUSINESS_CONFIG = {
+  USER_LIST_LIMIT: 200,
+  PENDING_LIST_LIMIT: 50,
+  REQUEST_TIMEOUT_MS: 30000,
+  RARITY_ORDER: ['SSR', 'S', 'A', 'B', 'C'],
+  TAB_RARITY_PRIORITY: { SSR: 5, S: 4, A: 3, B: 2, C: 1 },
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEXTS 區(全部中文字串集中)
+═══════════════════════════════════════════════════════════════════ */
+const TEXTS = {
+  LOGIN_FAIL: '登入失敗,請檢查 Token',
+  LOGIN_OK: '登入成功 🐱',
+  LOGOUT_OK: '已登出',
+  REQ_FAIL: '請求失敗',
+  UPDATE_OK: '更新成功',
+  DELETE_OK: '刪除成功',
+  CREATE_OK: '新增成功',
+  CONFIRM_DELETE: '確認刪除這個獎品?(無法復原)',
+  CONFIRM_REDEEM: '確認標記為「已領取」?',
+  EMPTY_USERS: '還沒有客人資料',
+  EMPTY_PENDING: '目前沒有待領獎品 ✨',
+  EMPTY_PRIZES: '還沒有獎品',
+  LOADING: '載入中...',
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   全域狀態
+═══════════════════════════════════════════════════════════════════ */
+const STATE = {
+  token: '',
+  mode: 'session',  // permanent / session / none
+  currentTab: 'dashboard',
+  pools: [],
+  prizes: [],
+  users: [],
+  pending: [],
+  prizeFilter: 'ALL',
+};
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   工具函式
+═══════════════════════════════════════════════════════════════════ */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function fmt(n) { return Number(n || 0).toLocaleString('zh-TW'); }
+function shortUid(uid) {
+  if (!uid) return '—';
+  return uid.length > 14 ? uid.slice(0, 8) + '…' + uid.slice(-4) : uid;
+}
+
+function toast(msg, type = 'info') {
+  const z = $('toastZone');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  z.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* GET fetch wrapper(GitHub Pages 不能 POST,全 GET)*/
+async function apiGet(action, params = {}) {
+  const url = new URL(CONFIG.POINTS_GAS_URL);
+  url.searchParams.set('action', action);
+  url.searchParams.set('token', STATE.token);
+  for (const k in params) {
+    if (params[k] === undefined || params[k] === null) continue;
+    url.searchParams.set(k, params[k]);
+  }
+  try {
+    const res = await fetch(url.toString(), { method: 'GET' });
+    const json = await res.json();
+    if (json.ok === false) {
+      toast(json.error || TEXTS.REQ_FAIL, 'error');
+    }
+    return json;
+  } catch (e) {
+    toast(TEXTS.REQ_FAIL + ':' + e.message, 'error');
+    return { ok: false, error: e.message };
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   登入流程
+═══════════════════════════════════════════════════════════════════ */
+function initLogin() {
+  // 找已記住的 token
+  const permToken = localStorage.getItem(CONFIG.ADMIN_TOKEN_KEY);
+  const sessToken = sessionStorage.getItem(CONFIG.ADMIN_TOKEN_KEY);
+  const remembered = permToken || sessToken;
+  const remMode = localStorage.getItem(CONFIG.ADMIN_MODE_KEY) || 'session';
+
+  // 還原模式選擇
+  document.querySelectorAll('.login-mode').forEach(m => {
+    m.classList.toggle('active', m.dataset.mode === remMode);
+  });
+
+  if (remembered) {
+    STATE.token = remembered;
+    STATE.mode = permToken ? 'permanent' : 'session';
+    enterApp();
+    return;
+  }
+
+  // 綁定模式按鈕
+  document.querySelectorAll('.login-mode').forEach(m => {
+    m.addEventListener('click', () => {
+      document.querySelectorAll('.login-mode').forEach(x => x.classList.remove('active'));
+      m.classList.add('active');
+    });
+  });
+
+  $('btnLogin').addEventListener('click', doLogin);
+  $('tokenInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+}
+
+async function doLogin() {
+  const token = $('tokenInput').value.trim();
+  if (!token) {
+    toast('請輸入 Token', 'warning');
+    return;
+  }
+  const mode = document.querySelector('.login-mode.active').dataset.mode;
+
+  // 先試呼叫一個 admin API 驗證 token
+  $('btnLogin').disabled = true;
+  $('btnLogin').textContent = '驗證中...';
+
+  STATE.token = token;
+  const r = await apiGet('adminDashboard');
+
+  if (!r.ok) {
+    STATE.token = '';
+    $('btnLogin').disabled = false;
+    $('btnLogin').textContent = '登 入';
+    toast(TEXTS.LOGIN_FAIL, 'error');
+    return;
+  }
+
+  // 成功 → 寫入記憶
+  STATE.mode = mode;
+  localStorage.setItem(CONFIG.ADMIN_MODE_KEY, mode);
+  if (mode === 'permanent') {
+    localStorage.setItem(CONFIG.ADMIN_TOKEN_KEY, token);
+    sessionStorage.removeItem(CONFIG.ADMIN_TOKEN_KEY);
+  } else if (mode === 'session') {
+    sessionStorage.setItem(CONFIG.ADMIN_TOKEN_KEY, token);
+    localStorage.removeItem(CONFIG.ADMIN_TOKEN_KEY);
+  } else {
+    localStorage.removeItem(CONFIG.ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(CONFIG.ADMIN_TOKEN_KEY);
+  }
+
+  toast(TEXTS.LOGIN_OK, 'success');
+  enterApp(r);
+}
+
+function logout() {
+  localStorage.removeItem(CONFIG.ADMIN_TOKEN_KEY);
+  sessionStorage.removeItem(CONFIG.ADMIN_TOKEN_KEY);
+  STATE.token = '';
+  $('app').classList.remove('active');
+  $('loginScreen').style.display = 'flex';
+  $('tokenInput').value = '';
+  $('btnLogin').disabled = false;
+  $('btnLogin').textContent = '登 入';
+  toast(TEXTS.LOGOUT_OK, 'success');
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   進入 App
+═══════════════════════════════════════════════════════════════════ */
+function enterApp(initialData) {
+  $('loginScreen').style.display = 'none';
+  $('app').classList.add('active');
+
+  // 綁 nav 切 tab
+  document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+  $('btnLogout').addEventListener('click', logout);
+  $('btnLogoutMobile').addEventListener('click', logout);
+
+  // 載入第一頁
+  if (initialData) renderDashboard(initialData);
+  else loadDashboard();
+}
+
+function switchTab(tab) {
+  STATE.currentTab = tab;
+  // 切 nav active
+  document.querySelectorAll('.nav-item[data-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  // 切 page
+  document.querySelectorAll('.page').forEach(p => {
+    p.style.display = (p.id === 'page-' + tab) ? '' : 'none';
+  });
+  // 載入該 tab 資料
+  switch (tab) {
+    case 'dashboard': loadDashboard(); break;
+    case 'pools': loadPools(); break;
+    case 'prizes': loadPrizes(); break;
+    case 'users': loadUsers(); break;
+    case 'pending': loadPending(); break;
+    case 'settings': renderSettings(); break;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 1:Dashboard
+═══════════════════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  $('dashboardBody').innerHTML = '<div class="loading"><div class="spinner"></div>' + TEXTS.LOADING + '</div>';
+  const r = await apiGet('adminDashboard');
+  if (r.ok) renderDashboard(r);
+  else $('dashboardBody').innerHTML = '<div class="empty">載入失敗:' + esc(r.error || '') + '</div>';
+}
+
+function renderDashboard(r) {
+  const today = r.today || {};
+  const recent = r.recent || {};
+  const cir = r.circulation || {};
+  const pending = r.pendingPrizes || 0;
+
+  // 更新側欄 badge
+  if (pending > 0) {
+    $('pendingBadge').textContent = pending;
+    $('pendingBadge').style.display = '';
+    $('pendingBadgeMobile').textContent = pending;
+    $('pendingBadgeMobile').style.display = '';
+  } else {
+    $('pendingBadge').style.display = 'none';
+    $('pendingBadgeMobile').style.display = 'none';
+  }
+
+  // 稀有度條
+  const rarityHtml = BUSINESS_CONFIG.RARITY_ORDER.map(rar => {
+    const cnt = (recent.rarityCount && recent.rarityCount[rar]) || 0;
+    const pct = recent.draws > 0 ? (cnt / recent.draws * 100) : 0;
+    return `
+      <div class="rarity-row">
+        <span class="tag tag-${rar.toLowerCase()}">${rar}</span>
+        <div class="rarity-bar"><div class="rarity-fill" style="width:${pct}%;background:var(--c-${rar.toLowerCase()});"></div></div>
+        <div class="rarity-count">${cnt}</div>
+      </div>`;
+  }).join('');
+
+  $('dashboardBody').innerHTML = `
+    <div class="stats-grid">
+      <div class="card stat-card highlight" data-watermark="🎰">
+        <div class="card-title">今日 抽獎次數</div>
+        <div class="card-value">${fmt(today.draws)}</div>
+        <div class="card-meta">消耗 ${fmt(today.cost)} 點 · 派出 ${fmt(today.won)} 點</div>
+      </div>
+      <div class="card stat-card" data-watermark="📦">
+        <div class="card-title">待領獎品</div>
+        <div class="card-value">${fmt(pending)}</div>
+        <div class="card-meta">SSR / S / A 未領取</div>
+      </div>
+      <div class="card stat-card" data-watermark="💎">
+        <div class="card-title">總點數流通量</div>
+        <div class="card-value">${fmt(cir.totalPoints)}</div>
+        <div class="card-meta">${fmt(cir.totalUsers)} 位客人持有</div>
+      </div>
+      <div class="card stat-card" data-watermark="📈">
+        <div class="card-title">今日 點數淨流</div>
+        <div class="card-value" style="color:${(today.net || 0) >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">${(today.net || 0) >= 0 ? '+' : ''}${fmt(today.net)}</div>
+        <div class="card-meta">派出 − 消耗</div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">過去 ${recent.days || 7} 天 · 稀有度分布</h2>
+      </div>
+      <div class="section-meta">共 ${fmt(recent.draws)} 次抽獎</div>
+    </div>
+    <div class="card">
+      <div class="rarity-bars">${rarityHtml}</div>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--c-divider);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:13px;">
+        <div><div style="color:var(--c-text-muted);font-size:11px;letter-spacing:0.1em;">消耗</div><div style="font-family:var(--f-display);font-size:22px;font-weight:600;">${fmt(recent.cost)}</div></div>
+        <div><div style="color:var(--c-text-muted);font-size:11px;letter-spacing:0.1em;">派出</div><div style="font-family:var(--f-display);font-size:22px;font-weight:600;">${fmt(recent.won)}</div></div>
+        <div><div style="color:var(--c-text-muted);font-size:11px;letter-spacing:0.1em;">淨流</div><div style="font-family:var(--f-display);font-size:22px;font-weight:600;color:${(recent.net || 0) >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};">${(recent.net || 0) >= 0 ? '+' : ''}${fmt(recent.net)}</div></div>
+      </div>
+    </div>
+
+    <div style="text-align:right;font-size:11px;color:var(--c-text-muted);margin-top:16px;letter-spacing:0.1em;">
+      ⏱ ${esc(r.generatedAt || '')}
+    </div>
+  `;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 2:獎池管理
+═══════════════════════════════════════════════════════════════════ */
+async function loadPools() {
+  $('poolsBody').innerHTML = '<div class="loading"><div class="spinner"></div>' + TEXTS.LOADING + '</div>';
+  const r = await apiGet('getLotteryPools');
+  if (!r.ok) {
+    $('poolsBody').innerHTML = '<div class="empty">載入失敗:' + esc(r.error || '') + '</div>';
+    return;
+  }
+  STATE.pools = r.pools || [];
+  renderPools();
+}
+
+function renderPools() {
+  if (!STATE.pools.length) {
+    $('poolsBody').innerHTML = '<div class="empty"><div class="empty-cat">🎰</div>還沒有獎池</div>';
+    return;
+  }
+  const html = STATE.pools.map(p => `
+    <div class="pool-card" data-pool="${esc(p.poolId)}">
+      <div class="pool-head">
+        <div>
+          <span class="pool-name">${esc(p.name || p.poolId)}</span>
+          <span class="pool-id">${esc(p.poolId)}</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" ${p.active ? 'checked' : ''} onchange="updatePool('${esc(p.poolId)}', 'active', this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+      <div class="pool-fields">
+        <div class="field-group">
+          <label class="field-label">名稱</label>
+          <input type="text" class="input-inline" value="${esc(p.name || '')}" onchange="updatePool('${esc(p.poolId)}', 'name', this.value)" style="padding:8px 10px;border:1px solid var(--c-divider);border-radius:var(--r-sm);font-size:14px;background:var(--c-bg);">
+        </div>
+        <div class="field-group">
+          <label class="field-label">成本(點)</label>
+          <input type="number" class="input-inline" value="${p.cost || 0}" onchange="updatePool('${esc(p.poolId)}', 'cost', this.value)" style="padding:8px 10px;border:1px solid var(--c-divider);border-radius:var(--r-sm);font-size:14px;background:var(--c-bg);">
+        </div>
+        <div class="field-group">
+          <label class="field-label">譽望加分</label>
+          <input type="number" class="input-inline" value="${p.reputationBonus || 0}" onchange="updatePool('${esc(p.poolId)}', 'reputationBonus', this.value)" style="padding:8px 10px;border:1px solid var(--c-divider);border-radius:var(--r-sm);font-size:14px;background:var(--c-bg);">
+        </div>
+        <div class="field-group">
+          <label class="field-label">獎品數</label>
+          <div style="padding:8px 10px;font-family:var(--f-mono);color:var(--c-text-soft);">${p.prizeCount || 0}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  $('poolsBody').innerHTML = '<div class="pool-list">' + html + '</div>';
+}
+
+async function updatePool(poolId, field, value) {
+  const params = { poolId };
+  params[field] = value;
+  const r = await apiGet('adminUpdatePool', params);
+  if (r.ok) toast(TEXTS.UPDATE_OK + ' · ' + poolId, 'success');
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 3:獎品管理
+═══════════════════════════════════════════════════════════════════ */
+async function loadPrizes() {
+  $('prizesBody').innerHTML = '<div class="loading"><div class="spinner"></div>' + TEXTS.LOADING + '</div>';
+  // 獎池要先有(給篩選和新增用)
+  if (!STATE.pools.length) {
+    const pr = await apiGet('getLotteryPools');
+    if (pr.ok) STATE.pools = pr.pools || [];
+  }
+  // 抓所有獎品(用各池的 getPoolPrizes 收集)
+  // 後端沒有單一 list-all-prizes,故走 getPoolPrizes 串接
+  const all = [];
+  for (const pool of STATE.pools) {
+    const r = await apiGet('getPoolPrizes', { poolId: pool.poolId });
+    if (r.ok && r.prizes) {
+      r.prizes.forEach(pz => {
+        pz._poolName = pool.name;
+        pz._poolId = pool.poolId;
+        all.push(pz);
+      });
+    }
+  }
+  STATE.prizes = all;
+  renderPrizeFilters();
+  renderPrizes();
+}
+
+function renderPrizeFilters() {
+  const totalCount = STATE.prizes.length;
+  const items = [{ id: 'ALL', label: '全部 · ' + totalCount }];
+  STATE.pools.forEach(p => {
+    const cnt = STATE.prizes.filter(pz => pz._poolId === p.poolId).length;
+    items.push({ id: p.poolId, label: (p.name || p.poolId) + ' · ' + cnt });
+  });
+  $('prizeFilters').innerHTML = items.map(i => `
+    <span class="chip ${i.id === STATE.prizeFilter ? 'active' : ''}" onclick="STATE.prizeFilter='${esc(i.id)}';renderPrizeFilters();renderPrizes();">${esc(i.label)}</span>
+  `).join('');
+}
+
+function renderPrizes() {
+  let list = STATE.prizes;
+  if (STATE.prizeFilter !== 'ALL') {
+    list = list.filter(p => p._poolId === STATE.prizeFilter);
+  }
+  // 排序:獎池 → 稀有度
+  list.sort((a, b) => {
+    if (a._poolId !== b._poolId) return (a._poolId || '').localeCompare(b._poolId || '');
+    return (BUSINESS_CONFIG.TAB_RARITY_PRIORITY[b.rarity] || 0) - (BUSINESS_CONFIG.TAB_RARITY_PRIORITY[a.rarity] || 0);
+  });
+
+  if (!list.length) {
+    $('prizesBody').innerHTML = '<div class="empty"><div class="empty-cat">🎁</div>' + TEXTS.EMPTY_PRIZES + '</div>';
+    return;
+  }
+
+  const head = `
+    <div class="prize-row head">
+      <div>稀有度</div>
+      <div>獎品名 / 獎池</div>
+      <div>獎勵點</div>
+      <div>機率%</div>
+      <div>啟用</div>
+      <div>—</div>
+      <div>操作</div>
+    </div>
+  `;
+
+  const rows = list.map(p => `
+    <div class="prize-row">
+      <div class="cell-rarity"><span class="tag tag-${(p.rarity || '').toLowerCase()}">${esc(p.rarity)}</span></div>
+      <div class="cell-name">
+        <span class="cell-mobile-label">獎品</span>
+        <span>${esc(p.prizeName || '—')}<small style="display:block;color:var(--c-text-muted);font-size:11px;font-weight:400;">${esc(p._poolName || p._poolId)} · <span style="font-family:var(--f-mono);">${esc(p.prizeId)}</span></small></span>
+      </div>
+      <div>
+        <span class="cell-mobile-label">獎勵</span>
+        <input type="number" class="input-inline" value="${p.rewardPoints || 0}" onchange="updatePrize('${esc(p.prizeId)}', 'rewardPoints', this.value)">
+      </div>
+      <div>
+        <span class="cell-mobile-label">機率</span>
+        <input type="number" step="0.1" class="input-inline" value="${p.rate || 0}" onchange="updatePrize('${esc(p.prizeId)}', 'rate', this.value)">
+      </div>
+      <div>
+        <span class="cell-mobile-label">啟用</span>
+        <label class="switch"><input type="checkbox" ${p.active ? 'checked' : ''} onchange="updatePrize('${esc(p.prizeId)}', 'active', this.checked)"><span class="switch-slider"></span></label>
+      </div>
+      <div></div>
+      <div>
+        <button class="btn btn-danger btn-sm" onclick="deletePrize('${esc(p.prizeId)}')">🗑 刪除</button>
+      </div>
+    </div>
+  `).join('');
+
+  $('prizesBody').innerHTML = '<div class="prize-table">' + head + rows + '</div>';
+}
+
+async function updatePrize(prizeId, field, value) {
+  const params = { prizeId };
+  params[field] = value;
+  const r = await apiGet('adminUpdatePrize', params);
+  if (r.ok) toast(TEXTS.UPDATE_OK, 'success');
+}
+
+async function deletePrize(prizeId) {
+  if (!confirm(TEXTS.CONFIRM_DELETE + '\n\n' + prizeId)) return;
+  const r = await apiGet('adminDeletePrize', { prizeId });
+  if (r.ok) {
+    toast(TEXTS.DELETE_OK, 'success');
+    loadPrizes();
+  }
+}
+
+function showAddPrizeModal() {
+  if (!STATE.pools.length) {
+    toast('請先確認獎池有資料', 'warning');
+    return;
+  }
+  $('addPool').innerHTML = STATE.pools.map(p =>
+    `<option value="${esc(p.poolId)}">${esc(p.name || p.poolId)}</option>`
+  ).join('');
+  $('addRarity').value = 'A';
+  $('addName').value = '';
+  $('addPoints').value = '';
+  $('addRate').value = '';
+  $('addPrizeModal').classList.add('active');
+}
+
+async function submitAddPrize() {
+  const params = {
+    poolId: $('addPool').value,
+    rarity: $('addRarity').value,
+    prizeName: $('addName').value.trim(),
+    rewardPoints: $('addPoints').value || 0,
+    rate: $('addRate').value || 0,
+  };
+  if (!params.prizeName) {
+    toast('請填獎品名稱', 'warning');
+    return;
+  }
+  const r = await apiGet('adminAddPrize', params);
+  if (r.ok) {
+    toast(TEXTS.CREATE_OK, 'success');
+    closeModal('addPrizeModal');
+    loadPrizes();
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 4:客人查詢
+═══════════════════════════════════════════════════════════════════ */
+async function loadUsers() {
+  $('usersBody').innerHTML = '<div class="loading"><div class="spinner"></div>' + TEXTS.LOADING + '</div>';
+  const sortBy = $('userSort').value;
+  const r = await apiGet('adminListAllUsers', { limit: BUSINESS_CONFIG.USER_LIST_LIMIT, sortBy });
+  if (!r.ok) {
+    $('usersBody').innerHTML = '<div class="empty">載入失敗:' + esc(r.error || '') + '</div>';
+    return;
+  }
+  STATE.users = r.users || [];
+  renderUsers();
+}
+
+function renderUsers() {
+  let list = STATE.users;
+  const q = $('userSearch').value.trim().toLowerCase();
+  if (q) {
+    list = list.filter(u =>
+      (u.uid || '').toLowerCase().includes(q) ||
+      (u.characterName || '').toLowerCase().includes(q) ||
+      (u.referralCode || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (!list.length) {
+    $('usersBody').innerHTML = '<div class="empty"><div class="empty-cat">👤</div>' + TEXTS.EMPTY_USERS + '</div>';
+    return;
+  }
+
+  const head = `
+    <div class="user-row head">
+      <div>客人 (UID / 角色)</div>
+      <div>點數</div>
+      <div>譽望</div>
+      <div>抽獎</div>
+      <div>更新</div>
+    </div>
+  `;
+
+  const rows = list.map(u => `
+    <div class="user-row" onclick="openUserDetail('${esc(u.uid)}')">
+      <div class="uid-cell">
+        <span class="uid-name">
+          ${u.characterName ? '🐱 ' + esc(u.characterName) : '🐾 未抽角色'}
+          ${u.characterRarity ? ' <span class="tag tag-' + u.characterRarity.toLowerCase() + '" style="font-size:9px;padding:1px 6px;">' + esc(u.characterRarity) + '</span>' : ''}
+        </span>
+        ${esc(shortUid(u.uid))}${u.referralCode ? ' · 邀:' + esc(u.referralCode) : ''}
+      </div>
+      <div class="num-pair"><span><small>💎</small> ${fmt(u.points)}</span></div>
+      <div class="num-pair"><span><small>⭐</small> ${fmt(u.reputation)}</span></div>
+      <div class="num-pair"><span><small>🎰</small> ${fmt(u.totalDraws)}</span></div>
+      <div style="font-size:11px;color:var(--c-text-muted);font-family:var(--f-mono);">${esc(u.updatedAt || '—')}</div>
+    </div>
+  `).join('');
+
+  $('usersBody').innerHTML = '<div class="user-list">' + head + rows + '</div>';
+}
+
+async function openUserDetail(uid) {
+  $('userModal').classList.add('active');
+  $('userModalTitle').textContent = '客人詳細';
+  $('userModalSubtitle').textContent = uid;
+  $('userModalBody').innerHTML = '<div class="loading"><div class="spinner"></div>' + TEXTS.LOADING + '</div>';
+  const r = await apiGet('adminGetUserDetail', { uid });
+  if (!r.ok) {
+    $('userModalBody').innerHTML = '<div class="empty">' + esc(r.error || '載入失敗') + '</div>';
+    return;
+  }
+  renderUserDetail(r.detail);
+}
+
+function renderUserDetail(d) {
+  const char = d.character;
+  const stats = d.stats || {};
+
+  $('userModalTitle').innerHTML = char
+    ? '🐱 ' + esc(char.charName)
+    : '🐾 ' + esc(shortUid(d.uid));
+  $('userModalSubtitle').textContent = d.uid;
+
+  const recentTxHtml = (d.recentTx || []).length
+    ? d.recentTx.map(t => `
+        <div class="detail-line">
+          <span class="time">${esc(t.time)}</span>
+          <span>${esc(t.type)} · <small style="color:var(--c-text-muted);">${esc(t.source)}</small></span>
+          <span style="color:${t.amount >= 0 ? 'var(--c-success)' : 'var(--c-danger)'};font-weight:600;">${t.amount >= 0 ? '+' : ''}${fmt(t.amount)}</span>
+        </div>
+      `).join('')
+    : '<div style="color:var(--c-text-muted);font-size:13px;padding:12px;">尚無紀錄</div>';
+
+  const recentDrawsHtml = (d.recentDraws || []).length
+    ? d.recentDraws.map(t => `
+        <div class="detail-line">
+          <span class="time">${esc(t.time)}</span>
+          <span><span class="tag tag-${(t.rarity || '').toLowerCase()}" style="font-size:10px;padding:1px 6px;">${esc(t.rarity)}</span> ${esc(t.prizeName)}</span>
+          <span style="color:var(--c-success);font-weight:600;">+${fmt(t.rewardPoints)}</span>
+        </div>
+      `).join('')
+    : '<div style="color:var(--c-text-muted);font-size:13px;padding:12px;">尚無紀錄</div>';
+
+  const pendingHtml = (d.pendingPrizes || []).length
+    ? d.pendingPrizes.map(p => `
+        <div class="detail-line">
+          <span class="time">${esc(p.time)}</span>
+          <span><span class="tag tag-${p.rarity.toLowerCase()}" style="font-size:10px;padding:1px 6px;">${esc(p.rarity)}</span> ${esc(p.prizeName)}</span>
+          <button class="btn btn-success btn-sm" onclick="markRedeemed(${p.row}, () => openUserDetail('${esc(d.uid)}'))">✓ 已領</button>
+        </div>
+      `).join('')
+    : '<div style="color:var(--c-text-muted);font-size:13px;padding:12px;">沒有待領 ✨</div>';
+
+  $('userModalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-stat"><div class="detail-stat-label">💎 點 數</div><div class="detail-stat-value">${fmt(d.points)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">⭐ 譽 望</div><div class="detail-stat-value">${fmt(d.reputation)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">🎰 總 抽 數</div><div class="detail-stat-value">${fmt(stats.totalDraws)}</div></div>
+      <div class="detail-stat"><div class="detail-stat-label">📦 待 領</div><div class="detail-stat-value">${fmt((d.pendingPrizes || []).length)}</div></div>
+    </div>
+
+    ${d.referralCode ? `
+      <div style="background:var(--c-primary-light);border-radius:var(--r-md);padding:12px 16px;font-size:13px;margin-bottom:16px;">
+        🎟 邀請碼:<strong style="font-family:var(--f-mono);font-size:15px;">${esc(d.referralCode)}</strong>
+      </div>` : ''}
+
+    ${char ? `
+      <div class="detail-section">
+        <h4>🐱 角色卡</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;font-size:13px;">
+          <div><small style="color:var(--c-text-muted);">名稱</small><div>${esc(char.charName)}</div></div>
+          <div><small style="color:var(--c-text-muted);">稀有度</small><div><span class="tag tag-${(char.rarity || '').toLowerCase()}">${esc(char.rarity)}</span></div></div>
+          <div><small style="color:var(--c-text-muted);">場景</small><div>${esc(char.scene || '—')}</div></div>
+          <div><small style="color:var(--c-text-muted);">取得時間</small><div style="font-family:var(--f-mono);font-size:11px;">${esc(char.obtainedAt)}</div></div>
+        </div>
+      </div>` : ''}
+
+    <div class="detail-section">
+      <h4>📦 待領獎品</h4>
+      <div class="detail-list">${pendingHtml}</div>
+    </div>
+
+    <div class="detail-section">
+      <h4>🎰 最近抽獎</h4>
+      <div class="detail-list">${recentDrawsHtml}</div>
+    </div>
+
+    <div class="detail-section">
+      <h4>💎 最近點數交易</h4>
+      <div class="detail-list">${recentTxHtml}</div>
+    </div>
+  `;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 5:領獎管理
+═══════════════════════════════════════════════════════════════════ */
+async function loadPending() {
+  $('pendingBody').innerHTML = '<div class="loading"><div class="spinner"></div>' + TEXTS.LOADING + '</div>';
+  const r = await apiGet('adminListPendingPrizes', { limit: BUSINESS_CONFIG.PENDING_LIST_LIMIT });
+  if (!r.ok) {
+    $('pendingBody').innerHTML = '<div class="empty">載入失敗:' + esc(r.error || '') + '</div>';
+    return;
+  }
+  STATE.pending = r.pending || [];
+  // 同步更新 badge
+  const cnt = r.pendingCount || STATE.pending.length;
+  if (cnt > 0) {
+    $('pendingBadge').textContent = cnt;
+    $('pendingBadge').style.display = '';
+    $('pendingBadgeMobile').textContent = cnt;
+    $('pendingBadgeMobile').style.display = '';
+  } else {
+    $('pendingBadge').style.display = 'none';
+    $('pendingBadgeMobile').style.display = 'none';
+  }
+  renderPending();
+}
+
+function renderPending() {
+  if (!STATE.pending.length) {
+    $('pendingBody').innerHTML = '<div class="empty"><div class="empty-cat">✨</div>' + TEXTS.EMPTY_PENDING + '</div>';
+    return;
+  }
+  const html = STATE.pending.map(p => `
+    <div class="pending-card">
+      <div class="top">
+        <div class="pending-prize">${esc(p.prizeName || '獎品')}</div>
+        <span class="tag tag-${(p.rarity || '').toLowerCase()}">${esc(p.rarity)}</span>
+      </div>
+      <div class="pending-meta">
+        <span>🕒 ${esc(p.time || '')}</span>
+        <span class="uid">👤 ${esc(p.uid || '—')}</span>
+        ${p.poolName ? '<span>🎰 ' + esc(p.poolName) + '</span>' : ''}
+        ${p.rewardPoints ? '<span>💎 +' + fmt(p.rewardPoints) + ' 點</span>' : ''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:auto;">
+        <button class="btn btn-ghost btn-sm" onclick="openUserDetail('${esc(p.uid || '')}')" style="flex:1;">查客人</button>
+        <button class="btn btn-success btn-sm" onclick="markRedeemed(${p.row}, loadPending)" style="flex:1;">✓ 標記已領</button>
+      </div>
+    </div>
+  `).join('');
+  $('pendingBody').innerHTML = '<div class="pending-grid">' + html + '</div>';
+}
+
+async function markRedeemed(row, after) {
+  if (!confirm(TEXTS.CONFIRM_REDEEM)) return;
+  const r = await apiGet('adminMarkPrizeRedeemed', { row });
+  if (r.ok) {
+    toast(r.msg || '已標記', 'success');
+    if (after) after();
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab 6:設定(v1 顯示系統資訊,v2 再擴充)
+═══════════════════════════════════════════════════════════════════ */
+function renderSettings() {
+  $('settingsBody').innerHTML = `
+    <div class="settings-list">
+      <div class="settings-row">
+        <div class="settings-key">店名 <small>STORE_NAME</small></div>
+        <div class="settings-val">${esc(CONFIG.STORE_NAME)}</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-key">後端 GAS URL <small>API endpoint</small></div>
+        <div class="settings-val" style="word-break:break-all;font-size:11px;max-width:60%;text-align:right;">${esc(CONFIG.POINTS_GAS_URL)}</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-key">登入模式 <small>目前生效</small></div>
+        <div class="settings-val">${STATE.mode === 'permanent' ? '🔓 永久記住 (localStorage)' : STATE.mode === 'session' ? '🕐 暫時記住 (sessionStorage)' : '🔒 不記住'}</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-key">客人列表上限 <small>USER_LIST_LIMIT</small></div>
+        <div class="settings-val">${BUSINESS_CONFIG.USER_LIST_LIMIT}</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-key">待領清單上限 <small>PENDING_LIST_LIMIT</small></div>
+        <div class="settings-val">${BUSINESS_CONFIG.PENDING_LIST_LIMIT}</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-key">前端版本 <small>frontend</small></div>
+        <div class="settings-val">v1.0 (2026/05/02)</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">🚨 緊急回滾</div>
+      <p style="font-size:13px;color:var(--c-text-soft);line-height:1.7;">
+        前端出問題:把這個 <code style="background:var(--c-bg);padding:2px 6px;border-radius:4px;font-family:var(--f-mono);">points-admin.html</code> 從 GitHub 移除即可,
+        後端 <code style="background:var(--c-bg);padding:2px 6px;border-radius:4px;font-family:var(--f-mono);">m_admin.gs</code> 不受影響。
+        要全停 admin API:後端 <code style="background:var(--c-bg);padding:2px 6px;border-radius:4px;font-family:var(--f-mono);">ADMIN_CONFIG.ENABLED = false</code> 即停用所有 admin API。
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:16px;text-align:center;padding:32px;">
+      <div style="font-size:48px;margin-bottom:12px;">🐱</div>
+      <div style="font-family:var(--f-display);font-size:22px;font-style:italic;color:var(--c-primary-deep);margin-bottom:6px;">${esc(CONFIG.STORE_NAME)}</div>
+      <div style="font-size:11px;color:var(--c-text-muted);letter-spacing:0.2em;">P O I N T S · A D M I N · v 1 . 0</div>
+    </div>
+  `;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Modal 通用
+═══════════════════════════════════════════════════════════════════ */
+function closeModal(id) { $(id).classList.remove('active'); }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   啟動
+═══════════════════════════════════════════════════════════════════ */
+initLogin();
+</script>
+</body>
+</html>
