@@ -2487,6 +2487,8 @@ async function loadAllOrders(){
 
   const range = _calcDashDateRange(_dashFilterRange);
   const dateParams = range ? `&startDate=${range.startDate}&endDate=${range.endDate}` : '';
+  // 🟣 VIP GAS 用 ?fn= + ?params={JSON} 格式（與其他兩個 GAS 不同）
+  const vipDateParams = range ? '&params=' + encodeURIComponent(JSON.stringify({startDate:range.startDate, endDate:range.endDate})) : '';
 
   // 三來源並行載入
   const tasks = [];
@@ -2510,7 +2512,7 @@ async function loadAllOrders(){
   }
   if (ORDER_DASHBOARD_BUSINESS_CONFIG.ENABLE_VIP) {
     tasks.push(
-      fetch(ORDER_DASHBOARD_CONFIG.GAS_VIP+'?action=getAllPurchaseLogs'+dateParams+'&t='+Date.now())
+      fetch(ORDER_DASHBOARD_CONFIG.GAS_VIP+'?fn=getAllPurchaseLogs'+vipDateParams+'&t='+Date.now())
         .then(r=>r.json())
         .then(d=>{ results.vip = d; })
         .catch(e=>{ results.vip = { error: e.message }; })
