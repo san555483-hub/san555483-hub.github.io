@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#FAF6F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
+<title>UNI 點數樂園</title>
+<!--
+═══════════════════════════════════════════════════════════════════════
+  UNI 點數系統 · 顧客端遊戲頁 v1.0(骨架版)
+═══════════════════════════════════════════════════════════════════════
+  📅 建立:2026/05/03
+  🎯 用途:顧客端 SPA,4 畫面(主選單/我的貓/抽獎/譽望榜)
+  📁 部署:GitHub Pages → san555483-hub.github.io/points-game.html
+  🔌 後端:點數 GAS(action=getPoints / getMyCharacter / drawCharacter / getReputation)
+  🎨 主題:Auto(跟系統)/ 柔粉軌 / 深色軌 三選一,localStorage 記憶
+  🔐 認證:LINE Login(主)+ ?uid 參數(備援)
+
+  🚨 緊急回滾:GitHub Revert 上一版 commit,30 秒內復原
+  📦 公版抽離難度:🟢 簡單(CONFIG/BIZ/TEXTS 三段分離,// [UNI_EXCLUSIVE] 標註)
+═══════════════════════════════════════════════════════════════════════
+-->
+<style>
+  /* ════════════════════════════════════════════════════════════════
+     主題系統:auto / soft(柔粉) / dark(深色)
+  ════════════════════════════════════════════════════════════════ */
+  :root {
+    /* 柔粉軌(預設亮色)*/
+    --bg: #FAF6F0;
+    --bg-card: #FFFFFF;
+    --bg-elev: #F4ECE3;
+    --text: #3D2C2D;
+    --text-mute: #6B5556;
+    --text-hint: #A89899;
+    --line: #EFE3E3;
+    --gold: #C9A668;
+    --gold-deep: #A88547;
+    --rose: #A88D8F;
+    --green: #A8C4A2;
+    --red: #C8807A;
+    --shadow: 0 2px 12px rgba(168, 141, 143, 0.10);
+    --rarity-n: #A89899;
+    --rarity-r: #A88BC0;
+    --rarity-ssr: #C9A668;
+  }
+
+  /* 深色軌 */
+  [data-theme="dark"] {
+    --bg: #1A1A1A;
+    --bg-card: #242424;
+    --bg-elev: #2E2E2E;
+    --text: #F0E5D8;
+    --text-mute: #C9B8A3;
+    --text-hint: #8A7866;
+    --line: #383838;
+    --gold: #D4B374;
+    --gold-deep: #C9A668;
+    --rose: #C9A4A4;
+    --green: #B8D4B0;
+    --red: #E0958F;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    --rarity-n: #8A7866;
+    --rarity-r: #C8B0DA;
+    --rarity-ssr: #E8C77E;
+  }
+
+  /* Auto 跟系統(預設)*/
+  @media (prefers-color-scheme: dark) {
+    [data-theme="auto"] {
+      --bg: #1A1A1A;
+      --bg-card: #242424;
+      --bg-elev: #2E2E2E;
+      --text: #F0E5D8;
+      --text-mute: #C9B8A3;
+      --text-hint: #8A7866;
+      --line: #383838;
+      --gold: #D4B374;
+      --gold-deep: #C9A668;
+      --rose: #C9A4A4;
+      --green: #B8D4B0;
+      --red: #E0958F;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+      --rarity-n: #8A7866;
+      --rarity-r: #C8B0DA;
+      --rarity-ssr: #E8C77E;
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     基礎重置
+  ════════════════════════════════════════════════════════════════ */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s, color 0.3s;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  img { display: block; max-width: 100%; user-select: none; -webkit-user-drag: none; }
+
+  /* ════════════════════════════════════════════════════════════════
+     版面容器
+  ════════════════════════════════════════════════════════════════ */
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 80px;
+    position: relative;
+  }
+
+  /* 頂部 bar */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding: 14px 18px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+  }
+  .topbar h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .back-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--bg-elev);
+    color: var(--text-mute);
+    font-size: 18px;
+  }
+  .theme-btn {
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: var(--bg-elev);
+    color: var(--text-mute);
+    font-size: 12px;
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     畫面切換動畫
+  ════════════════════════════════════════════════════════════════ */
+  .scene { display: none; padding: 18px; animation: fade .25s ease; }
+  .scene.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ════════════════════════════════════════════════════════════════
+     #home 主選單
+  ════════════════════════════════════════════════════════════════ */
+  .hero-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 22px 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+  }
+  .hero-greet { font-size: 13px; color: var(--text-mute); margin-bottom: 4px; }
+  .hero-name { font-size: 18px; color: var(--text); font-weight: 600; margin-bottom: 14px; }
+  .hero-points-row { display: flex; align-items: baseline; gap: 6px; }
+  .hero-points-num {
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .hero-points-unit { font-size: 14px; color: var(--text-mute); }
+  .hero-stats {
+    display: flex;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    gap: 12px;
+  }
+  .hero-stat { flex: 1; text-align: center; }
+  .hero-stat-label { font-size: 11px; color: var(--text-hint); margin-bottom: 4px; letter-spacing: 0.05em; }
+  .hero-stat-val { font-size: 18px; font-weight: 600; color: var(--text); }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .menu-card {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 18px 14px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .menu-card:active { transform: scale(0.97); }
+  .menu-icon {
+    width: 52px; height: 52px;
+    margin: 0 auto 10px;
+    border-radius: 16px;
+    background: var(--bg-elev);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+  .menu-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .menu-desc { font-size: 11px; color: var(--text-hint); }
+
+  .quick-links {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 4px 0;
+    border: 1px solid var(--line);
+  }
+  .quick-link {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    width: 100%;
+    text-align: left;
+  }
+  .quick-link:last-child { border-bottom: none; }
+  .quick-link-text { font-size: 14px; color: var(--text); }
+  .quick-link-arrow { color: var(--text-hint); font-size: 14px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     #cats 我的貓圖鑑
+  ════════════════════════════════════════════════════════════════ */
+  .cats-summary {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    text-align: center;
+  }
+  .cats-progress {
+    font-size: 13px; color: var(--text-mute); margin-bottom: 6px;
+  }
+  .cats-progress-num {
+    font-size: 26px; font-weight: 700; color: var(--gold);
+  }
+  .cats-progress-bar {
+    margin-top: 10px;
+    height: 6px;
+    background: var(--bg-elev);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .cats-progress-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 3px;
+    transition: width .5s ease;
+  }
+  .cats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .cat-card {
+    aspect-ratio: 3/4;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .cat-card.locked { opacity: 0.45; filter: grayscale(0.8); }
+  .cat-card.unlocked { box-shadow: var(--shadow); }
+  .cat-img-wrap {
+    flex: 1;
+    background: var(--bg-elev);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    position: relative;
+  }
+  .cat-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .cat-info { padding: 6px 6px 8px; text-align: center; }
+  .cat-name { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .cat-rarity {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    display: inline-block;
+    font-weight: 700;
+  }
+  .cat-rarity.N { background: var(--bg-elev); color: var(--rarity-n); }
+  .cat-rarity.R { background: rgba(168, 139, 192, 0.15); color: var(--rarity-r); }
+  .cat-rarity.SSR { background: rgba(201, 166, 104, 0.18); color: var(--rarity-ssr); }
+  .cat-lock-icon {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 26px;
+    color: var(--text-hint);
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     #draw 99 點盲盒
+  ════════════════════════════════════════════════════════════════ */
+  .draw-hero {
+    background: var(--bg-card);
+    border-radius: 22px;
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+  .draw-machine {
+    width: 140px; height: 140px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+    background: var(--bg-elev);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .draw-machine.spinning { animation: shake .15s infinite; }
+  @keyframes shake {
+    0%, 100% { transform: translate(0, 0) rotate(0); }
+    25% { transform: translate(-2px, 2px) rotate(-2deg); }
+    75% { transform: translate(2px, -2px) rotate(2deg); }
+  }
+  .draw-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .draw-cost { font-size: 13px; color: var(--text-mute); margin-bottom: 4px; }
+  .draw-cost .gold { color: var(--gold); font-weight: 700; }
+
+  .draw-pools {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .draw-pool {
+    flex: 1;
+    background: var(--bg-elev);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .draw-pool-tier { font-size: 11px; color: var(--text-mute); margin-bottom: 2px; }
+  .draw-pool-rate { font-size: 16px; font-weight: 700; color: var(--text); }
+  .draw-pool-name { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
+
+  .draw-action {
+    width: 100%;
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--gold);
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    transition: transform .15s, opacity .2s;
+  }
+  .draw-action:active { transform: scale(0.97); }
+  .draw-action:disabled { opacity: 0.4; }
+
+  .draw-history {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+  }
+  .draw-history h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-mute);
+    margin: 0 0 10px;
+  }
+  .draw-history-empty { font-size: 12px; color: var(--text-hint); text-align: center; padding: 8px 0; }
+
+  /* 抽獎結果遮罩 */
+  .draw-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .draw-modal.show { display: flex; }
+  .draw-modal-card {
+    background: var(--bg-card);
+    border-radius: 24px;
+    padding: 30px 24px;
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+    animation: pop .5s cubic-bezier(.2, 1.2, .4, 1);
+    border: 2px solid var(--gold);
+  }
+  @keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .result-rarity {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+  }
+  .result-img {
+    width: 160px; height: 160px;
+    margin: 12px auto;
+    border-radius: 18px;
+    background: var(--bg-elev);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 80px;
+    overflow: hidden;
+  }
+  .result-img img { width: 100%; height: 100%; object-fit: cover; }
+  .result-name { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .result-scene { font-size: 13px; color: var(--text-mute); margin-bottom: 18px; }
+  .result-close {
+    padding: 10px 24px;
+    border-radius: 14px;
+    background: var(--gold);
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     #rep 譽望榜
+  ════════════════════════════════════════════════════════════════ */
+  .rep-mine {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 22px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+  .rep-label { font-size: 12px; color: var(--text-mute); letter-spacing: 0.1em; margin-bottom: 6px; }
+  .rep-num {
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .rep-tier {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 4px 12px;
+    background: var(--bg-elev);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-mute);
+  }
+  .rep-desc { font-size: 12px; color: var(--text-hint); margin-top: 12px; line-height: 1.6; }
+
+  .rep-board {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 14px 0 4px;
+    border: 1px solid var(--line);
+  }
+  .rep-board h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-mute);
+    margin: 0 0 10px;
+    padding: 0 18px;
+  }
+  .rep-row {
+    display: flex; align-items: center;
+    padding: 10px 18px;
+    border-top: 1px solid var(--line);
+  }
+  .rep-rank {
+    width: 28px; font-size: 14px; font-weight: 700; color: var(--text-mute);
+  }
+  .rep-rank.gold { color: var(--gold); }
+  .rep-rowname { flex: 1; font-size: 13px; color: var(--text); }
+  .rep-rowscore { font-size: 13px; font-weight: 600; color: var(--gold); }
+  .rep-board-empty { padding: 20px 18px; text-align: center; color: var(--text-hint); font-size: 12px; }
+  .rep-board-locked {
+    padding: 24px 18px;
+    text-align: center;
+    color: var(--text-hint);
+    font-size: 12px;
+  }
+  .rep-board-locked .lock { font-size: 28px; margin-bottom: 8px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     底部分頁
+  ════════════════════════════════════════════════════════════════ */
+  .tabbar {
+    position: fixed;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--line);
+    display: flex;
+    z-index: 90;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0 12px;
+    text-align: center;
+    color: var(--text-hint);
+    font-size: 11px;
+    transition: color .15s;
+  }
+  .tab.active { color: var(--gold); }
+  .tab-icon { font-size: 22px; margin-bottom: 2px; }
+  .tab-text { font-weight: 600; }
+
+  /* ════════════════════════════════════════════════════════════════
+     Toast
+  ════════════════════════════════════════════════════════════════ */
+  .toast {
+    position: fixed;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 18px;
+    border-radius: 16px;
+    font-size: 13px;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity .25s;
+    pointer-events: none;
+    max-width: 80%;
+    text-align: center;
+  }
+  .toast.show { opacity: 0.95; }
+
+  /* ════════════════════════════════════════════════════════════════
+     Loading
+  ════════════════════════════════════════════════════════════════ */
+  .loading-page {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 500;
+  }
+  .loading-page.hide { display: none; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--bg-elev);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: var(--text-mute); font-size: 13px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     確認彈窗
+  ════════════════════════════════════════════════════════════════ */
+  .confirm-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 250;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .confirm-modal.show { display: flex; }
+  .confirm-card {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 22px;
+    max-width: 320px;
+    width: 100%;
+  }
+  .confirm-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .confirm-msg { font-size: 14px; color: var(--text-mute); margin-bottom: 18px; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .confirm-btn.cancel { background: var(--bg-elev); color: var(--text-mute); }
+  .confirm-btn.ok { background: var(--gold); color: #FFFFFF; }
+
+  /* SSR 結果光環 */
+  .result-glow-ssr {
+    background: radial-gradient(circle, rgba(201, 166, 104, 0.35) 0%, transparent 70%);
+    animation: glow 2s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- 頂部 bar -->
+  <div class="topbar">
+    <button class="back-btn" id="backBtn" style="display:none;" aria-label="返回">←</button>
+    <h1 id="topTitle">UNI 點數樂園</h1>
+    <button class="theme-btn" id="themeBtn" aria-label="切換主題">A</button>
+  </div>
+
+  <!-- ████████████ #home 主選單 ████████████ -->
+  <section class="scene active" id="scene-home">
+    <div class="hero-card">
+      <div class="hero-greet">嗨,歡迎回來</div>
+      <div class="hero-name" id="heroName">UNI 顧客</div>
+      <div class="hero-points-row">
+        <div class="hero-points-num" id="heroPoints">—</div>
+        <div class="hero-points-unit">點</div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-label">譽望</div>
+          <div class="hero-stat-val" id="heroRep">—</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">已抽到</div>
+          <div class="hero-stat-val" id="heroCats">—</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">抽獎次數</div>
+          <div class="hero-stat-val" id="heroDraws">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-grid">
+      <button class="menu-card" data-go="cats">
+        <div class="menu-icon">🐱</div>
+        <div class="menu-title">我的貓</div>
+        <div class="menu-desc">12 隻收集圖鑑</div>
+      </button>
+      <button class="menu-card" data-go="draw">
+        <div class="menu-icon">🎰</div>
+        <div class="menu-title">99 點盲盒</div>
+        <div class="menu-desc">三賞等你抽</div>
+      </button>
+      <button class="menu-card" data-go="rep">
+        <div class="menu-icon">⭐</div>
+        <div class="menu-title">譽望</div>
+        <div class="menu-desc">我的分數</div>
+      </button>
+      <button class="menu-card" id="referralBtn">
+        <div class="menu-icon">🎟</div>
+        <div class="menu-title">介紹卡</div>
+        <div class="menu-desc">邀請朋友</div>
+      </button>
+    </div>
+
+    <div class="quick-links">
+      <button class="quick-link" id="howEarnBtn">
+        <span class="quick-link-text">💎 怎麼累積點數?</span>
+        <span class="quick-link-arrow">→</span>
+      </button>
+      <button class="quick-link" id="exchangeBtn">
+        <span class="quick-link-text">💱 點數兌換規則</span>
+        <span class="quick-link-arrow">→</span>
+      </button>
+      <button class="quick-link" id="contactBtn">
+        <span class="quick-link-text">💬 聯絡 Elsa</span>
+        <span class="quick-link-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ████████████ #cats 我的貓圖鑑 ████████████ -->
+  <section class="scene" id="scene-cats">
+    <div class="cats-summary">
+      <div class="cats-progress">已收集 <span class="cats-progress-num" id="catsCollected">0</span> / 12 隻</div>
+      <div class="cats-progress-bar">
+        <div class="cats-progress-fill" id="catsProgressFill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="cats-grid" id="catsGrid">
+      <!-- JS 生成 12 隻 -->
+    </div>
+  </section>
+
+  <!-- ████████████ #draw 99 點盲盒 ████████████ -->
+  <section class="scene" id="scene-draw">
+    <div class="draw-hero">
+      <div class="draw-machine" id="drawMachine">🎰</div>
+      <div class="draw-title">99 點盲盒</div>
+      <div class="draw-cost">消耗 <span class="gold">99</span> 點 · 三賞等你抽</div>
+
+      <div class="draw-pools">
+        <div class="draw-pool">
+          <div class="draw-pool-tier">A 賞</div>
+          <div class="draw-pool-rate">5%</div>
+          <div class="draw-pool-name">SSR</div>
+        </div>
+        <div class="draw-pool">
+          <div class="draw-pool-tier">B 賞</div>
+          <div class="draw-pool-rate">15%</div>
+          <div class="draw-pool-name">R</div>
+        </div>
+        <div class="draw-pool">
+          <div class="draw-pool-tier">C 賞</div>
+          <div class="draw-pool-rate">80%</div>
+          <div class="draw-pool-name">N</div>
+        </div>
+      </div>
+
+      <button class="draw-action" id="drawBtn">立即抽獎</button>
+      <div style="margin-top:8px; font-size:11px; color:var(--text-hint);" id="drawBalanceHint">目前持有 — 點</div>
+    </div>
+
+    <div class="draw-history">
+      <h3>我的抽獎紀錄</h3>
+      <div id="drawHistoryList">
+        <div class="draw-history-empty">還沒有紀錄,快去抽你第一張卡!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ████████████ #rep 譽望榜 ████████████ -->
+  <section class="scene" id="scene-rep">
+    <div class="rep-mine">
+      <div class="rep-label">我的譽望</div>
+      <div class="rep-num" id="repNum">0</div>
+      <div class="rep-tier" id="repTier">實習勇者</div>
+      <div class="rep-desc">介紹朋友 / 完成消費 / 守時都會加分</div>
+    </div>
+
+    <div class="rep-board">
+      <h3 id="repBoardTitle">譽望排行榜</h3>
+      <div id="repBoardBody">
+        <div class="rep-board-locked">
+          <div class="lock">🔒</div>
+          <div>排行榜尚未開放</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 底部 tab -->
+  <nav class="tabbar">
+    <button class="tab active" data-go="home">
+      <div class="tab-icon">🏠</div>
+      <div class="tab-text">首頁</div>
+    </button>
+    <button class="tab" data-go="cats">
+      <div class="tab-icon">🐱</div>
+      <div class="tab-text">我的貓</div>
+    </button>
+    <button class="tab" data-go="draw">
+      <div class="tab-icon">🎰</div>
+      <div class="tab-text">抽獎</div>
+    </button>
+    <button class="tab" data-go="rep">
+      <div class="tab-icon">⭐</div>
+      <div class="tab-text">譽望</div>
+    </button>
+  </nav>
+
+</div>
+
+<!-- 抽獎結果 Modal -->
+<div class="draw-modal" id="drawModal">
+  <div class="draw-modal-card">
+    <div class="result-rarity" id="resultRarity"></div>
+    <div class="result-img" id="resultImg"></div>
+    <div class="result-name" id="resultName"></div>
+    <div class="result-scene" id="resultScene"></div>
+    <button class="result-close" id="resultClose">收下</button>
+  </div>
+</div>
+
+<!-- 確認彈窗 -->
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-card">
+    <div class="confirm-title" id="confirmTitle">確認</div>
+    <div class="confirm-msg" id="confirmMsg">訊息</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn cancel" id="confirmCancel">取消</button>
+      <button class="confirm-btn ok" id="confirmOk">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 全頁 loading -->
+<div class="loading-page" id="loadingPage">
+  <div class="spinner"></div>
+  <div class="loading-text">載入中...</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   CONFIG 區
+══════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  // 點數 GAS 入口
+  POINTS_GAS_URL: 'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec',
+  ADMIN_TOKEN: 'unisalon_points_2026',  // 後端會驗
+  // LINE Login(對齊 booking.html)
+  LINE_LOGIN_CHANNEL_ID: '2009831862',
+  LINE_LOGIN_CALLBACK: 'https://san555483-hub.github.io/points-game.html',
+  // 12 貓圖路徑(Placeholder,你之後給路徑改這個)
+  CAT_IMG_BASE: 'https://san555483-hub.github.io/cats/',  // [UNI_EXCLUSIVE] 公版需替換
+  CAT_IMG_USE_PLACEHOLDER: true,  // 改 false 啟用真實圖片
+  // LINE OA 聯絡(對齊主系統)
+  LINE_OA_URL: 'https://line.me/R/ti/p/@uni',  // [UNI_EXCLUSIVE] 公版需替換
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   BUSINESS_CONFIG 區(商業參數)
+══════════════════════════════════════════════════════════════════ */
+const BIZ = {
+  // 抽獎成本
+  DRAW_COST: 99,
+  // 譽望分級門檻
+  REP_TIERS: [
+    { min: 0, name: '實習勇者' },
+    { min: 501, name: '鋼鐵衛士' },
+    { min: 2001, name: '傳奇聖王' },
+  ],
+  // 譽望榜開關(Q4 答案)
+  SHOW_LEADERBOARD: false,
+  // 12 貓清單(對齊後端,順序 = 圖鑑顯示順序)
+  CATS: [
+    { id: 'N01', name: '橘貓', rarity: 'N', emoji: '🐈' },
+    { id: 'N02', name: '虎斑', rarity: 'N', emoji: '🐈' },
+    { id: 'N03', name: '黑貓', rarity: 'N', emoji: '🐈‍⬛' },
+    { id: 'N04', name: '白貓', rarity: 'N', emoji: '🐈' },
+    { id: 'N05', name: '玳瑁', rarity: 'N', emoji: '🐈' },
+    { id: 'R01', name: '布偶', rarity: 'R', emoji: '😺' },
+    { id: 'R02', name: '波斯', rarity: 'R', emoji: '😸' },
+    { id: 'R03', name: '英短', rarity: 'R', emoji: '😼' },
+    { id: 'R04', name: '緬因', rarity: 'R', emoji: '🦁' },
+    { id: 'SSR01', name: '月光女王', rarity: 'SSR', emoji: '🌙' },
+    { id: 'SSR02', name: '星砂使者', rarity: 'SSR', emoji: '✨' },
+    { id: 'SSR03', name: 'CATWOMAN', rarity: 'SSR', emoji: '😻' },
+  ],
+  // localStorage key
+  STORAGE_KEYS: {
+    THEME: 'uni_pg_theme',
+    LAST_DATA: 'uni_pg_lastdata',
+    HISTORY: 'uni_pg_history',
+  },
+  // API 逾時
+  API_TIMEOUT_MS: 12000,
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   TEXTS 區(全中文字串集中,公版替換點)
+══════════════════════════════════════════════════════════════════ */
+const TEXTS = {
+  STORE_NAME: 'UNI 髮型設計',  // [UNI_EXCLUSIVE]
+  GREETING: '嗨,歡迎回來',
+  GUEST_NAME: 'UNI 顧客',  // [UNI_EXCLUSIVE]
+  ERR_NOT_LOGIN: '請先登入 LINE 才能查看點數',
+  ERR_NETWORK: '連線失敗,請稍後再試 🐾',
+  ERR_NO_POINTS: '您還沒有點數帳戶,完成第一次消費後系統會自動為您建立 ✨',
+  ERR_NOT_ENOUGH: '點數不足,需要 99 點才能抽獎',
+  CONFIRM_DRAW_TITLE: '確認抽獎?',
+  CONFIRM_DRAW_MSG: '將消耗 99 點,A賞5% / B賞15% / C賞80%',
+  DRAW_SUCCESS_TITLES: { SSR: '✨ A 賞 SSR ✨', R: '🌟 B 賞 R 🌟', N: 'C 賞 N' },
+  HOW_EARN: [
+    '消費 1 元 = 1 點',
+    '註冊綁定:+100 點',
+    '完成美髮分享照:+100 點',
+    '準時赴約:+20 點',
+    '介紹朋友首次消費:+200 點',
+  ],
+  EXCHANGE_RULES: [
+    '30 點 = 折抵 1 元現金',
+    '50 點 = 儲值 1 元',
+    '99 點 = 抽 1 次盲盒',
+    '兌換時請出示 LINE 給 Elsa',
+  ],
+  REP_DESC: '介紹朋友 / 完成消費 / 守時都會加分',
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   全域狀態
+══════════════════════════════════════════════════════════════════ */
+const STATE = {
+  uid: '',
+  loginMethod: '',  // 'line' | 'param' | ''
+  data: {
+    points: 0,
+    reputation: 0,
+    totalDraws: 0,
+    catsOwned: [],   // ['N01','SSR03',...]
+    referralCode: '',
+    name: '',
+  },
+  history: [],
+  scene: 'home',
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   工具函式
+══════════════════════════════════════════════════════════════════ */
+function $(id) { return document.getElementById(id); }
+function showToast(msg, ms) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), ms || 2500);
+}
+function setLoading(on) {
+  $('loadingPage').classList.toggle('hide', !on);
+}
+function getQueryParam(k) {
+  const u = new URLSearchParams(location.search);
+  return u.get(k) || '';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   主題切換(Auto / Soft / Dark)
+══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  const valid = ['auto', 'soft', 'dark'];
+  const t = valid.includes(theme) ? theme : 'auto';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem(BIZ.STORAGE_KEYS.THEME, t);
+  const btn = $('themeBtn');
+  if (t === 'auto') btn.textContent = 'A';
+  else if (t === 'soft') btn.textContent = '☀';
+  else btn.textContent = '☾';
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(BIZ.STORAGE_KEYS.THEME) || 'auto';
+  const next = cur === 'auto' ? 'soft' : (cur === 'soft' ? 'dark' : 'auto');
+  applyTheme(next);
+  showToast({ auto: '主題:跟系統', soft: '主題:柔粉', dark: '主題:深色' }[next]);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   LINE Login + UID 取得
+══════════════════════════════════════════════════════════════════ */
+function getUid() {
+  // 1. URL ?uid=xxx 備援(Q1)
+  const paramUid = getQueryParam('uid');
+  if (paramUid && /^U[a-z0-9]{32}$/i.test(paramUid)) {
+    STATE.uid = paramUid;
+    STATE.loginMethod = 'param';
+    return paramUid;
+  }
+  // 2. LINE Login 回呼(?code=xxx)
+  const code = getQueryParam('code');
+  if (code) {
+    handleLineCallback(code);
+    return null;
+  }
+  // 3. localStorage 上次登入
+  const cached = localStorage.getItem('uni_pg_uid');
+  if (cached && /^U[a-z0-9]{32}$/i.test(cached)) {
+    STATE.uid = cached;
+    STATE.loginMethod = 'cache';
+    return cached;
+  }
+  // 4. 都沒有 → LINE Login
+  return null;
+}
+function startLineLogin() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem('uni_pg_state', state);
+  const url = 'https://access.line.me/oauth2/v2.1/authorize'
+    + '?response_type=code'
+    + '&client_id=' + CONFIG.LINE_LOGIN_CHANNEL_ID
+    + '&redirect_uri=' + encodeURIComponent(CONFIG.LINE_LOGIN_CALLBACK)
+    + '&state=' + state
+    + '&scope=profile%20openid'
+    + '&bot_prompt=normal';
+  location.href = url;
+}
+async function handleLineCallback(code) {
+  // 走點數 GAS 換 UID(後端應該有實作 lineLoginExchange action;若無則退回 ?uid 模式)
+  setLoading(true);
+  try {
+    const r = await callPointsApi('lineLoginExchange', { code: code, redirect_uri: CONFIG.LINE_LOGIN_CALLBACK });
+    if (r && r.ok && r.uid) {
+      STATE.uid = r.uid;
+      STATE.loginMethod = 'line';
+      localStorage.setItem('uni_pg_uid', r.uid);
+      // 清除 URL 上的 ?code 參數
+      history.replaceState({}, '', location.pathname);
+      await loadData();
+    } else {
+      showToast('LINE 登入失敗,改用備援');
+      // 後端如果還沒實作,允許用戶手動輸入 ?uid
+    }
+  } catch (e) {
+    console.error(e);
+    showToast(TEXTS.ERR_NETWORK);
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   API 呼叫(GET 模式,對齊後端慣例)
+══════════════════════════════════════════════════════════════════ */
+async function callPointsApi(action, params) {
+  const url = new URL(CONFIG.POINTS_GAS_URL);
+  url.searchParams.set('action', action);
+  url.searchParams.set('token', CONFIG.ADMIN_TOKEN);
+  if (params) {
+    Object.keys(params).forEach(k => {
+      if (params[k] != null) url.searchParams.set(k, params[k]);
+    });
+  }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), BIZ.API_TIMEOUT_MS);
+  try {
+    const res = await fetch(url.toString(), { method: 'GET', signal: ctrl.signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error('[API ' + action + ']', err);
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   資料載入(主流程)
+══════════════════════════════════════════════════════════════════ */
+async function loadData() {
+  if (!STATE.uid) {
+    showToast(TEXTS.ERR_NOT_LOGIN);
+    return;
+  }
+  setLoading(true);
+  // 先用 localStorage 的舊資料快速渲染
+  loadCacheData();
+  try {
+    // 1. getPoints(包 reputation, totalDraws, referralCode)
+    const rPts = await callPointsApi('getPoints', { uid: STATE.uid });
+    if (rPts && rPts.ok) {
+      STATE.data.points = (rPts.balance != null ? rPts.balance : (rPts.points || 0));
+      STATE.data.reputation = rPts.reputation || 0;
+      STATE.data.totalDraws = rPts.totalDraws || 0;
+      STATE.data.referralCode = rPts.referralCode || '';
+      STATE.data.name = rPts.name || rPts.displayName || TEXTS.GUEST_NAME;
+    }
+    // 2. getMyCharacter → 已抽到的貓清單(後端可能回單個 character 或 array)
+    const rChar = await callPointsApi('getCatsCollection', { uid: STATE.uid });
+    if (rChar && rChar.ok && Array.isArray(rChar.cats)) {
+      STATE.data.catsOwned = rChar.cats;
+    } else {
+      // 退回 getMyCharacter(只回最新一隻)
+      const rOne = await callPointsApi('getMyCharacter', { uid: STATE.uid });
+      if (rOne && rOne.ok && rOne.character && rOne.character.charId) {
+        if (!STATE.data.catsOwned.includes(rOne.character.charId)) {
+          STATE.data.catsOwned.push(rOne.character.charId);
+        }
+      }
+    }
+    // 3. 譽望榜(若開關開)
+    if (BIZ.SHOW_LEADERBOARD) {
+      const rBoard = await callPointsApi('getReputationBoard', { limit: 10 });
+      if (rBoard && rBoard.ok && Array.isArray(rBoard.list)) {
+        STATE.data.repBoard = rBoard.list;
+      }
+    }
+    saveCacheData();
+    renderAll();
+  } catch (e) {
+    console.error(e);
+    showToast(TEXTS.ERR_NETWORK);
+  } finally {
+    setLoading(false);
+  }
+}
+function loadCacheData() {
+  try {
+    const raw = localStorage.getItem(BIZ.STORAGE_KEYS.LAST_DATA);
+    if (raw) {
+      const d = JSON.parse(raw);
+      Object.assign(STATE.data, d.data || {});
+      STATE.history = d.history || [];
+      renderAll();
+    }
+  } catch (_) {}
+}
+function saveCacheData() {
+  try {
+    localStorage.setItem(BIZ.STORAGE_KEYS.LAST_DATA, JSON.stringify({
+      data: STATE.data, history: STATE.history, ts: Date.now()
+    }));
+  } catch (_) {}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   畫面渲染
+══════════════════════════════════════════════════════════════════ */
+function renderAll() {
+  renderHome();
+  renderCats();
+  renderDraw();
+  renderRep();
+}
+function renderHome() {
+  $('heroName').textContent = STATE.data.name || TEXTS.GUEST_NAME;
+  $('heroPoints').textContent = (STATE.data.points || 0).toLocaleString();
+  $('heroRep').textContent = STATE.data.reputation || 0;
+  $('heroCats').textContent = (STATE.data.catsOwned || []).length + ' / 12';
+  $('heroDraws').textContent = STATE.data.totalDraws || 0;
+}
+function renderCats() {
+  const grid = $('catsGrid');
+  const owned = new Set(STATE.data.catsOwned || []);
+  grid.innerHTML = '';
+  BIZ.CATS.forEach(cat => {
+    const isOwned = owned.has(cat.id);
+    const div = document.createElement('div');
+    div.className = 'cat-card ' + (isOwned ? 'unlocked' : 'locked');
+    const imgHtml = (CONFIG.CAT_IMG_USE_PLACEHOLDER || !isOwned)
+      ? `<span style="font-size:36px;">${isOwned ? cat.emoji : ''}</span>` +
+        (isOwned ? '' : '<div class="cat-lock-icon">🔒</div>')
+      : `<img src="${CONFIG.CAT_IMG_BASE}${cat.id}.png" alt="${cat.name}" loading="lazy">`;
+    div.innerHTML = `
+      <div class="cat-img-wrap">${imgHtml}</div>
+      <div class="cat-info">
+        <div class="cat-name">${isOwned ? cat.name : '???'}</div>
+        <span class="cat-rarity ${cat.rarity}">${cat.rarity}</span>
+      </div>`;
+    grid.appendChild(div);
+  });
+  const collected = (STATE.data.catsOwned || []).length;
+  $('catsCollected').textContent = collected;
+  $('catsProgressFill').style.width = (collected / 12 * 100) + '%';
+}
+function renderDraw() {
+  $('drawBalanceHint').textContent = '目前持有 ' + (STATE.data.points || 0) + ' 點';
+  const enough = (STATE.data.points || 0) >= BIZ.DRAW_COST;
+  $('drawBtn').disabled = !enough;
+  $('drawBtn').textContent = enough ? '立即抽獎' : '點數不足';
+  // 歷史
+  const list = $('drawHistoryList');
+  if (STATE.history.length === 0) {
+    list.innerHTML = '<div class="draw-history-empty">還沒有紀錄,快去抽你第一張卡!</div>';
+  } else {
+    list.innerHTML = STATE.history.slice(0, 10).map(h => `
+      <div style="display:flex; justify-content:space-between; padding:8px 0; border-top:1px solid var(--line); font-size:12px;">
+        <span style="color:var(--text-mute);">${h.time}</span>
+        <span style="color:var(--text); font-weight:600;">${h.rarity} · ${h.name}</span>
+      </div>`).join('');
+  }
+}
+function renderRep() {
+  const rep = STATE.data.reputation || 0;
+  $('repNum').textContent = rep;
+  // 找等級
+  let tier = BIZ.REP_TIERS[0].name;
+  for (let i = BIZ.REP_TIERS.length - 1; i >= 0; i--) {
+    if (rep >= BIZ.REP_TIERS[i].min) { tier = BIZ.REP_TIERS[i].name; break; }
+  }
+  $('repTier').textContent = tier;
+  // 排行榜
+  const body = $('repBoardBody');
+  if (!BIZ.SHOW_LEADERBOARD) {
+    body.innerHTML = '<div class="rep-board-locked"><div class="lock">🔒</div><div>排行榜尚未開放</div></div>';
+    return;
+  }
+  const list = STATE.data.repBoard || [];
+  if (list.length === 0) {
+    body.innerHTML = '<div class="rep-board-empty">尚無資料</div>';
+    return;
+  }
+  body.innerHTML = list.map((row, i) => `
+    <div class="rep-row">
+      <div class="rep-rank ${i < 3 ? 'gold' : ''}">${i + 1}</div>
+      <div class="rep-rowname">${row.name || '匿名'}</div>
+      <div class="rep-rowscore">${row.reputation || 0}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   抽獎流程
+══════════════════════════════════════════════════════════════════ */
+function openConfirm(title, msg, onOk) {
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent = msg;
+  $('confirmModal').classList.add('show');
+  const ok = $('confirmOk');
+  const cancel = $('confirmCancel');
+  const close = () => $('confirmModal').classList.remove('show');
+  ok.onclick = () => { close(); onOk(); };
+  cancel.onclick = close;
+}
+async function doDraw() {
+  if ((STATE.data.points || 0) < BIZ.DRAW_COST) {
+    showToast(TEXTS.ERR_NOT_ENOUGH);
+    return;
+  }
+  // 抽獎動畫(2 秒搖)
+  $('drawMachine').classList.add('spinning');
+  $('drawBtn').disabled = true;
+  const r = await callPointsApi('drawCharacter', { uid: STATE.uid });
+  await new Promise(r => setTimeout(r, 2000));
+  $('drawMachine').classList.remove('spinning');
+
+  if (!r || !r.ok) {
+    showToast(r && r.msg ? r.msg : TEXTS.ERR_NETWORK);
+    $('drawBtn').disabled = false;
+    return;
+  }
+  // 結果處理
+  const ch = r.character || {};
+  const newPoints = (r.balance != null ? r.balance : r.points);
+  if (newPoints != null) STATE.data.points = newPoints;
+  STATE.data.totalDraws = (STATE.data.totalDraws || 0) + 1;
+  if (ch.charId && !STATE.data.catsOwned.includes(ch.charId)) {
+    STATE.data.catsOwned.push(ch.charId);
+  }
+  // 寫入歷史
+  STATE.history.unshift({
+    time: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+    rarity: ch.rarity || 'N',
+    name: ch.charName || ch.name || '?',
+  });
+  saveCacheData();
+  renderAll();
+  showResultModal(ch);
+}
+function showResultModal(ch) {
+  const r = ch.rarity || 'N';
+  $('resultRarity').textContent = TEXTS.DRAW_SUCCESS_TITLES[r] || r;
+  $('resultRarity').style.color = r === 'SSR' ? 'var(--rarity-ssr)' : (r === 'R' ? 'var(--rarity-r)' : 'var(--rarity-n)');
+  $('resultName').textContent = ch.charName || ch.name || '神秘貓咪';
+  $('resultScene').textContent = ch.scene ? '場景:' + ch.scene : '';
+  // 圖片
+  const imgWrap = $('resultImg');
+  imgWrap.classList.toggle('result-glow-ssr', r === 'SSR');
+  // 找對應 emoji
+  const cat = BIZ.CATS.find(c => c.id === ch.charId) || {};
+  if (CONFIG.CAT_IMG_USE_PLACEHOLDER) {
+    imgWrap.innerHTML = `<span style="font-size:80px;">${cat.emoji || '🐱'}</span>`;
+  } else {
+    imgWrap.innerHTML = `<img src="${CONFIG.CAT_IMG_BASE}${ch.charId}.png" alt="${ch.charName}">`;
+  }
+  $('drawModal').classList.add('show');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   路由 / 切畫面
+══════════════════════════════════════════════════════════════════ */
+function go(scene) {
+  STATE.scene = scene;
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  const target = $('scene-' + scene);
+  if (target) target.classList.add('active');
+  // tab active
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.go === scene);
+  });
+  // 標題
+  const titles = { home: 'UNI 點數樂園', cats: '我的貓 · 12 隻', draw: '99 點盲盒', rep: '我的譽望' };
+  $('topTitle').textContent = titles[scene] || 'UNI 點數樂園';
+  $('backBtn').style.display = scene === 'home' ? 'none' : 'flex';
+  window.scrollTo(0, 0);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   介紹卡 / 兌換 / 聯絡 / 怎麼累積
+══════════════════════════════════════════════════════════════════ */
+function showReferral() {
+  const code = STATE.data.referralCode || '';
+  const msg = code
+    ? '我的邀請碼:\n\n' + code + '\n\n分享給朋友,他註冊+消費你也得 200 點!'
+    : '還沒有介紹碼,聯絡 Elsa 開通';
+  openConfirm('🎟 我的介紹卡', msg, () => {
+    if (code) navigator.clipboard?.writeText(code).then(() => showToast('已複製邀請碼'));
+  });
+}
+function showHowEarn() {
+  openConfirm('💎 怎麼累積點數?', TEXTS.HOW_EARN.map(s => '・' + s).join('\n'), () => {});
+}
+function showExchange() {
+  openConfirm('💱 點數兌換規則', TEXTS.EXCHANGE_RULES.map(s => '・' + s).join('\n'), () => {});
+}
+function contactElsa() {
+  location.href = CONFIG.LINE_OA_URL;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   事件綁定
+══════════════════════════════════════════════════════════════════ */
+function bindEvents() {
+  // tab + 主選單卡片
+  document.querySelectorAll('[data-go]').forEach(el => {
+    el.addEventListener('click', () => go(el.dataset.go));
+  });
+  // 返回鍵
+  $('backBtn').addEventListener('click', () => go('home'));
+  // 主題
+  $('themeBtn').addEventListener('click', toggleTheme);
+  // 抽獎
+  $('drawBtn').addEventListener('click', () => {
+    openConfirm(TEXTS.CONFIRM_DRAW_TITLE, TEXTS.CONFIRM_DRAW_MSG, doDraw);
+  });
+  $('resultClose').addEventListener('click', () => $('drawModal').classList.remove('show'));
+  // 介紹卡 / 怎麼累積 / 兌換 / 聯絡
+  $('referralBtn').addEventListener('click', showReferral);
+  $('howEarnBtn').addEventListener('click', showHowEarn);
+  $('exchangeBtn').addEventListener('click', showExchange);
+  $('contactBtn').addEventListener('click', contactElsa);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   啟動
+══════════════════════════════════════════════════════════════════ */
+async function init() {
+  // 主題
+  applyTheme(localStorage.getItem(BIZ.STORAGE_KEYS.THEME) || 'auto');
+  bindEvents();
+
+  // 取 UID
+  const uid = getUid();
+  if (uid) {
+    await loadData();
+  } else {
+    // 沒 UID → LINE Login
+    setLoading(false);
+    openConfirm('登入點數樂園', '需要 LINE 登入才能查看你的點數和角色卡 🐾', () => {
+      startLineLogin();
+    });
+  }
+  setLoading(false);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
