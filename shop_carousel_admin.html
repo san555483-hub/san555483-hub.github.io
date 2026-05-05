@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛍️ 購物賴 — 輪播選單管理</title>
+<style>
+  /* ════════ 設計系統 ════════ */
+  :root {
+    --uni-brown: #3D2817;
+    --uni-brown-light: #5C4033;
+    --uni-cream: #F5EFE6;
+    --uni-cream-deep: #E8D5C4;
+    --uni-gold: #D4B896;
+    --uni-text: #2C1810;
+    --uni-muted: #8B6F47;
+    --uni-success: #4A7C59;
+    --uni-danger: #B23A48;
+    --uni-bg: #FAF7F2;
+    --shadow-sm: 0 2px 4px rgba(61,40,23,.08);
+    --shadow-md: 0 4px 12px rgba(61,40,23,.12);
+    --shadow-lg: 0 8px 24px rgba(61,40,23,.18);
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Noto Serif TC', 'Songti TC', serif;
+    background: var(--uni-bg);
+    color: var(--uni-text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  
+  /* ════════ 頂欄 ════════ */
+  .header {
+    background: linear-gradient(135deg, var(--uni-brown) 0%, var(--uni-brown-light) 100%);
+    color: var(--uni-cream);
+    padding: 20px 32px;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .header h1 small {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-left: 12px;
+    font-weight: normal;
+  }
+  .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  
+  .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary {
+    background: var(--uni-gold);
+    color: var(--uni-brown);
+  }
+  .btn-primary:hover { background: #E8CCA8; transform: translateY(-1px); }
+  .btn-success {
+    background: var(--uni-success);
+    color: white;
+  }
+  .btn-success:hover { background: #3A6347; }
+  .btn-danger {
+    background: transparent;
+    color: var(--uni-cream);
+    border: 1px solid rgba(245,239,230,.3);
+  }
+  .btn-danger:hover { background: rgba(178,58,72,.2); border-color: var(--uni-danger); }
+  .btn-ghost {
+    background: rgba(245,239,230,.1);
+    color: var(--uni-cream);
+  }
+  .btn-ghost:hover { background: rgba(245,239,230,.2); }
+  
+  /* ════════ 主版面 ════════ */
+  .main {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 32px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+  }
+  
+  /* ════════ 左側編輯區 ════════ */
+  .editor-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* Tab */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--uni-cream-deep);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--uni-muted);
+    position: relative;
+    transition: color 0.2s;
+    border-radius: 6px 6px 0 0;
+  }
+  .tab.active {
+    color: var(--uni-brown);
+    background: var(--uni-cream);
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--uni-brown);
+    border-radius: 3px 3px 0 0;
+  }
+  .tab-add {
+    color: var(--uni-success);
+    font-weight: 700;
+  }
+  
+  /* 頁面標題編輯 */
+  .page-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    background: var(--uni-cream);
+    border-radius: 8px;
+  }
+  .page-title-row label {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--uni-brown);
+    white-space: nowrap;
+  }
+  .page-title-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--uni-gold);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    background: white;
+  }
+  .page-title-row .btn-delete-page {
+    background: transparent;
+    color: var(--uni-danger);
+    border: 1px solid var(--uni-danger);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .page-title-row .btn-delete-page:hover { background: var(--uni-danger); color: white; }
+  
+  /* 主圖區 */
+  .hero-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--uni-bg);
+    border-radius: 8px;
+    border: 1px dashed var(--uni-gold);
+  }
+  .hero-section label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--uni-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .hero-section input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--uni-gold);
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .hero-preview {
+    width: 100%;
+    aspect-ratio: 2/1;
+    background: var(--uni-cream-deep) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23D4B896'%3E%3Cpath d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E") center/60px no-repeat;
+    border-radius: 6px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .hero-preview.has-image { background-color: transparent; }
+  
+  /* 按鈕卡片 */
+  .slot-card {
+    border: 1px solid var(--uni-cream-deep);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: white;
+    transition: all 0.2s;
+  }
+  .slot-card:hover { box-shadow: var(--shadow-sm); }
+  .slot-card.disabled { opacity: 0.5; background: var(--uni-bg); }
+  
+  .slot-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .slot-title {
+    font-weight: 700;
+    color: var(--uni-brown);
+    font-size: 15px;
+  }
+  .slot-actions { display: flex; gap: 6px; align-items: center; }
+  .slot-actions button {
+    padding: 4px 10px;
+    border: 1px solid var(--uni-gold);
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--uni-brown);
+  }
+  .slot-actions button:hover { background: var(--uni-cream); }
+  .slot-actions .btn-del { color: var(--uni-danger); border-color: var(--uni-danger); }
+  
+  .slot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .slot-grid label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--uni-muted);
+    margin-bottom: 4px;
+  }
+  .slot-grid input, .slot-grid select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--uni-cream-deep);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .slot-grid input:focus, .slot-grid select:focus {
+    outline: none;
+    border-color: var(--uni-brown);
+  }
+  .slot-grid .full { grid-column: span 2; }
+  
+  .toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    color: var(--uni-muted);
+  }
+  .toggle-switch input { display: none; }
+  .toggle-switch .track {
+    width: 32px; height: 18px;
+    background: #ccc;
+    border-radius: 18px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle-switch .track::before {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: white;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .track { background: var(--uni-success); }
+  .toggle-switch input:checked + .track::before { transform: translateX(14px); }
+  
+  .add-slot-btn {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 2px dashed var(--uni-gold);
+    border-radius: 8px;
+    color: var(--uni-brown);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .add-slot-btn:hover {
+    background: var(--uni-cream);
+    border-color: var(--uni-brown);
+  }
+  
+  /* ════════ 右側 LINE 預覽 ════════ */
+  .preview-panel {
+    position: sticky;
+    top: 100px;
+    height: fit-content;
+  }
+  .preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--uni-muted);
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  
+  .phone-frame {
+    width: 100%;
+    background: #8AABD6;
+    border-radius: 24px;
+    padding: 16px 12px;
+    box-shadow: var(--shadow-lg);
+    border: 8px solid #1a1a1a;
+    position: relative;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 20px;
+    background: #1a1a1a;
+    border-radius: 0 0 12px 12px;
+  }
+  .phone-status {
+    font-size: 11px;
+    color: white;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 8px;
+  }
+  
+  .flex-carousel-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--uni-brown) transparent;
+  }
+  .flex-carousel-wrapper::-webkit-scrollbar { height: 6px; }
+  .flex-carousel-wrapper::-webkit-scrollbar-thumb { background: var(--uni-brown); border-radius: 3px; }
+  
+  .flex-carousel {
+    display: flex;
+    gap: 8px;
+    padding-right: 30px;
+  }
+  
+  .flex-bubble {
+    flex: 0 0 240px;
+    background: var(--uni-cream);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .flex-bubble-hero {
+    width: 100%;
+    aspect-ratio: 2/1;
+    background: var(--uni-cream-deep);
+    background-size: cover;
+    background-position: center;
+  }
+  .flex-bubble-body {
+    padding: 12px;
+  }
+  .flex-bubble-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--uni-brown);
+    text-align: center;
+  }
+  .flex-bubble-subtitle {
+    font-size: 11px;
+    color: var(--uni-muted);
+    text-align: center;
+    margin-top: 2px;
+  }
+  .flex-bubble-sep {
+    height: 1px;
+    background: var(--uni-gold);
+    margin: 10px 0;
+  }
+  .flex-bubble-btn {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    cursor: default;
+  }
+  .flex-bubble-btn:last-child { margin-bottom: 0; }
+  
+  .preview-empty {
+    background: rgba(255,255,255,.5);
+    padding: 40px 16px;
+    border-radius: 12px;
+    text-align: center;
+    color: var(--uni-muted);
+    font-size: 13px;
+  }
+  
+  /* ════════ Toast ════════ */
+  .toast {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    padding: 14px 24px;
+    background: var(--uni-success);
+    color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    transform: translateX(120%);
+    transition: transform 0.3s;
+    font-weight: 600;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.error { background: var(--uni-danger); }
+  
+  /* ════════ Modal ════════ */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(61,40,23,.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .modal.show { display: flex; }
+  .modal-box {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+  }
+  .modal-box h3 { color: var(--uni-brown); margin-bottom: 12px; }
+  .modal-box p { color: var(--uni-muted); margin-bottom: 16px; font-size: 14px; }
+  .modal-box input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--uni-gold);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-family: inherit;
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  
+  /* ════════ RWD ════════ */
+  @media (max-width: 1024px) {
+    .main { grid-template-columns: 1fr; }
+    .preview-panel { position: static; }
+    .phone-frame { max-width: 360px; margin: 0 auto; }
+  }
+  @media (max-width: 600px) {
+    .header { padding: 14px 16px; }
+    .header h1 { font-size: 18px; }
+    .header h1 small { display: block; margin-left: 0; margin-top: 4px; }
+    .main { padding: 16px; }
+    .editor-panel { padding: 16px; }
+    .slot-grid { grid-template-columns: 1fr; }
+    .slot-grid .full { grid-column: span 1; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <h1>🛍️ 購物賴輪播選單 <small>v1.0 · 即時預覽編輯</small></h1>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="loadData()">🔄 重新載入</button>
+      <button class="btn btn-primary" onclick="openPushTest()">📤 測試推送</button>
+      <button class="btn btn-success" onclick="saveAll()">💾 儲存全部</button>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <!-- 左：編輯區 -->
+  <section class="editor-panel">
+    <div class="tabs" id="tabs"></div>
+    <div id="pageContent"></div>
+  </section>
+
+  <!-- 右：LINE 預覽 -->
+  <aside class="preview-panel">
+    <div class="preview-title">📱 LINE 即時預覽</div>
+    <div class="phone-frame">
+      <div class="phone-status">
+        <span>5:41</span>
+        <span>📶 📡 🔋</span>
+      </div>
+      <div id="livePreview"></div>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<!-- 推送測試 Modal -->
+<div id="pushModal" class="modal">
+  <div class="modal-box">
+    <h3>📤 測試推送至 LINE</h3>
+    <p>輸入 LINE UID（建議先測試自己的）</p>
+    <input id="testUid" placeholder="U21e198ba1e0185560050f87d7bedc7f0" />
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="background:#eee;color:#333" onclick="closePushTest()">取消</button>
+      <button class="btn btn-success" onclick="confirmPushTest()">推送</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   📌 設定區（部署前修改這裡）
+   ════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  // 🔵 購物系統 GAS Web App URL
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec',
+  ADMIN_TOKEN: 'unisalon_points_2026',
+  DEFAULT_OWNER_UID: 'U21e198ba1e0185560050f87d7bedc7f0',
+  MAX_PAGES: 10,
+  SLOTS_PER_PAGE: 3
+};
+
+/* ════════════════════════════════════════════════════════════════
+   📦 狀態管理
+   ════════════════════════════════════════════════════════════════ */
+let state = {
+  pages: {},        // { 1: { title, slots: [{...}, {...}] }, 2: {...} }
+  currentPage: 1
+};
+
+/* ════════════════════════════════════════════════════════════════
+   🚀 啟動
+   ════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+  showToast('載入中...', 'info');
+  try {
+    const res = await fetch(`${CONFIG.GAS_URL}?action=getCarousel&token=${CONFIG.ADMIN_TOKEN}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || '載入失敗');
+    
+    // 整理成 pages 結構
+    state.pages = {};
+    (json.data || []).forEach(row => {
+      const pn = Number(row.pageNo);
+      if (!state.pages[pn]) {
+        state.pages[pn] = { title: row.pageTitle || `第 ${pn} 頁`, slots: [] };
+      }
+      state.pages[pn].slots.push({
+        slotNo: Number(row.slotNo),
+        enabled: row.enabled === true || row.enabled === 'TRUE',
+        imageUrl: row.imageUrl || '',
+        btnText: row.btnText || '',
+        actionType: row.actionType || 'message',
+        actionValue: row.actionValue || '',
+        bgColor: row.bgColor || '#3D2817',
+        textColor: row.textColor || '#FFFFFF'
+      });
+    });
+    
+    // 若無資料，預設一頁
+    if (Object.keys(state.pages).length === 0) {
+      state.pages[1] = { title: '第 1 頁', slots: [createEmptySlot(1)] };
+    }
+    
+    // 排序 slot
+    Object.values(state.pages).forEach(p => p.slots.sort((a, b) => a.slotNo - b.slotNo));
+    
+    state.currentPage = Number(Object.keys(state.pages)[0]);
+    render();
+    showToast('✅ 已載入');
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+    console.error(err);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   🎨 渲染
+   ════════════════════════════════════════════════════════════════ */
+function render() {
+  renderTabs();
+  renderEditor();
+  renderPreview();
+}
+
+function renderTabs() {
+  const pageNos = Object.keys(state.pages).map(Number).sort((a, b) => a - b);
+  const html = pageNos.map(pn => `
+    <button class="tab ${pn === state.currentPage ? 'active' : ''}" 
+            onclick="switchPage(${pn})">第 ${pn} 頁</button>
+  `).join('');
+  const addBtn = pageNos.length < CONFIG.MAX_PAGES
+    ? `<button class="tab tab-add" onclick="addPage()">＋ 新增頁面</button>`
+    : '';
+  document.getElementById('tabs').innerHTML = html + addBtn;
+}
+
+function renderEditor() {
+  const page = state.pages[state.currentPage];
+  if (!page) {
+    document.getElementById('pageContent').innerHTML = '<p style="text-align:center;padding:40px;color:#999">無頁面資料</p>';
+    return;
+  }
+  
+  const slotsHtml = page.slots.map((slot, idx) => renderSlotCard(slot, idx)).join('');
+  const canAddSlot = page.slots.length < CONFIG.SLOTS_PER_PAGE;
+  
+  document.getElementById('pageContent').innerHTML = `
+    <div class="page-title-row">
+      <label>📝 頁面標題</label>
+      <input type="text" value="${escapeAttr(page.title)}" 
+             onchange="updatePageTitle(this.value)" 
+             placeholder="例：購物主入口">
+      ${Object.keys(state.pages).length > 1 ? 
+        `<button class="btn-delete-page" onclick="deletePage()">🗑 刪除此頁</button>` : ''}
+    </div>
+    
+    ${slotsHtml}
+    
+    ${canAddSlot ? 
+      `<button class="add-slot-btn" onclick="addSlot()">＋ 新增按鈕（最多 ${CONFIG.SLOTS_PER_PAGE} 顆）</button>` 
+      : ''}
+  `;
+}
+
+function renderSlotCard(slot, idx) {
+  return `
+    <div class="slot-card ${slot.enabled ? '' : 'disabled'}">
+      <div class="slot-header">
+        <span class="slot-title">🔘 按鈕 ${idx + 1}</span>
+        <div class="slot-actions">
+          <label class="toggle-switch">
+            <input type="checkbox" ${slot.enabled ? 'checked' : ''} 
+                   onchange="updateSlot(${idx}, 'enabled', this.checked)">
+            <span class="track"></span>
+            <span>啟用</span>
+          </label>
+          ${idx > 0 ? `<button onclick="moveSlot(${idx}, -1)" title="上移">↑</button>` : ''}
+          ${idx < state.pages[state.currentPage].slots.length - 1 ? 
+            `<button onclick="moveSlot(${idx}, 1)" title="下移">↓</button>` : ''}
+          <button class="btn-del" onclick="deleteSlot(${idx})" title="刪除">✕</button>
+        </div>
+      </div>
+      
+      <div class="slot-grid">
+        <div class="full">
+          <label>🖼️ 主圖網址（每頁第一個按鈕的圖會作為 hero）</label>
+          <input type="text" value="${escapeAttr(slot.imageUrl)}" 
+                 onchange="updateSlot(${idx}, 'imageUrl', this.value)"
+                 placeholder="https://res.cloudinary.com/.../SHOP_CAROUSEL_X.jpg">
+        </div>
+        <div class="full">
+          <label>📝 按鈕文字</label>
+          <input type="text" value="${escapeAttr(slot.btnText)}" 
+                 onchange="updateSlot(${idx}, 'btnText', this.value)"
+                 placeholder="例：🛍️ 線上購物車">
+        </div>
+        <div>
+          <label>⚙️ 動作類型</label>
+          <select onchange="updateSlot(${idx}, 'actionType', this.value)">
+            <option value="message" ${slot.actionType === 'message' ? 'selected' : ''}>訊息（觸發關鍵字）</option>
+            <option value="uri" ${slot.actionType === 'uri' ? 'selected' : ''}>連結（開網頁）</option>
+            <option value="postback" ${slot.actionType === 'postback' ? 'selected' : ''}>Postback（內部）</option>
+          </select>
+        </div>
+        <div>
+          <label>🎯 動作值</label>
+          <input type="text" value="${escapeAttr(slot.actionValue)}" 
+                 onchange="updateSlot(${idx}, 'actionValue', this.value)"
+                 placeholder="${getActionPlaceholder(slot.actionType)}">
+        </div>
+        <div>
+          <label>🎨 背景色</label>
+          <input type="color" value="${slot.bgColor}" 
+                 onchange="updateSlot(${idx}, 'bgColor', this.value)">
+        </div>
+        <div>
+          <label>🔤 文字色</label>
+          <input type="color" value="${slot.textColor}" 
+                 onchange="updateSlot(${idx}, 'textColor', this.value)">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPreview() {
+  const pageNos = Object.keys(state.pages).map(Number).sort((a, b) => a - b);
+  if (pageNos.length === 0) {
+    document.getElementById('livePreview').innerHTML = '<div class="preview-empty">尚無資料</div>';
+    return;
+  }
+  
+  const total = pageNos.length;
+  const bubbles = pageNos.map(pn => {
+    const page = state.pages[pn];
+    const enabledSlots = page.slots.filter(s => s.enabled);
+    const heroUrl = (enabledSlots[0] || page.slots[0] || {}).imageUrl || '';
+    
+    const buttons = enabledSlots.map(s => `
+      <button class="flex-bubble-btn" style="background:${s.bgColor};color:${s.textColor}">
+        ${escapeHtml(s.btnText || '按鈕')}
+      </button>
+    `).join('');
+    
+    return `
+      <div class="flex-bubble">
+        <div class="flex-bubble-hero" style="${heroUrl ? `background-image:url('${escapeAttr(heroUrl)}')` : ''}"></div>
+        <div class="flex-bubble-body">
+          <div class="flex-bubble-title">UNI 服務選單 ${pn}/${total}</div>
+          <div class="flex-bubble-subtitle">${escapeHtml(page.title)}</div>
+          <div class="flex-bubble-sep"></div>
+          ${buttons || '<div style="text-align:center;color:#999;font-size:11px;padding:8px">無啟用按鈕</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('livePreview').innerHTML = `
+    <div class="flex-carousel-wrapper">
+      <div class="flex-carousel">${bubbles}</div>
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   🛠 編輯動作
+   ════════════════════════════════════════════════════════════════ */
+function switchPage(pn) {
+  state.currentPage = pn;
+  render();
+}
+
+function updatePageTitle(val) {
+  state.pages[state.currentPage].title = val;
+  renderPreview();
+}
+
+function updateSlot(idx, field, val) {
+  state.pages[state.currentPage].slots[idx][field] = val;
+  // imageUrl 變更時要重新渲染整頁（因為 hero 會更新）
+  if (field === 'imageUrl' || field === 'enabled') {
+    render();
+  } else {
+    renderPreview();
+  }
+}
+
+function addSlot() {
+  const page = state.pages[state.currentPage];
+  if (page.slots.length >= CONFIG.SLOTS_PER_PAGE) return;
+  page.slots.push(createEmptySlot(page.slots.length + 1));
+  render();
+}
+
+function deleteSlot(idx) {
+  if (!confirm('確定刪除此按鈕？')) return;
+  const page = state.pages[state.currentPage];
+  page.slots.splice(idx, 1);
+  // 重編 slotNo
+  page.slots.forEach((s, i) => s.slotNo = i + 1);
+  render();
+}
+
+function moveSlot(idx, dir) {
+  const page = state.pages[state.currentPage];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= page.slots.length) return;
+  [page.slots[idx], page.slots[newIdx]] = [page.slots[newIdx], page.slots[idx]];
+  page.slots.forEach((s, i) => s.slotNo = i + 1);
+  render();
+}
+
+function addPage() {
+  const pageNos = Object.keys(state.pages).map(Number);
+  if (pageNos.length >= CONFIG.MAX_PAGES) {
+    showToast('已達最大頁數', 'error');
+    return;
+  }
+  const newPn = Math.max(...pageNos, 0) + 1;
+  state.pages[newPn] = {
+    title: `第 ${newPn} 頁`,
+    slots: [createEmptySlot(1)]
+  };
+  state.currentPage = newPn;
+  render();
+}
+
+function deletePage() {
+  if (Object.keys(state.pages).length <= 1) {
+    showToast('至少保留一頁', 'error');
+    return;
+  }
+  if (!confirm(`確定刪除第 ${state.currentPage} 頁？`)) return;
+  delete state.pages[state.currentPage];
+  state.currentPage = Number(Object.keys(state.pages).sort((a, b) => Number(a) - Number(b))[0]);
+  render();
+}
+
+function createEmptySlot(slotNo) {
+  return {
+    slotNo,
+    enabled: true,
+    imageUrl: '',
+    btnText: '新按鈕',
+    actionType: 'message',
+    actionValue: '',
+    bgColor: '#3D2817',
+    textColor: '#FFFFFF'
+  };
+}
+
+function getActionPlaceholder(type) {
+  if (type === 'uri') return 'https://...';
+  if (type === 'postback') return 'action=xxx';
+  return '觸發關鍵字（例：本月優惠）';
+}
+
+/* ════════════════════════════════════════════════════════════════
+   💾 儲存 / 推送
+   ════════════════════════════════════════════════════════════════ */
+async function saveAll() {
+  // 重整 pageNo 連續（避免刪除中間頁造成跳號）
+  const pageNos = Object.keys(state.pages).map(Number).sort((a, b) => a - b);
+  const remapped = {};
+  pageNos.forEach((oldPn, idx) => {
+    remapped[idx + 1] = state.pages[oldPn];
+  });
+  state.pages = remapped;
+  state.currentPage = Math.min(state.currentPage, pageNos.length) || 1;
+  
+  // 攤平成 row 陣列
+  const payload = [];
+  Object.keys(state.pages).map(Number).sort((a, b) => a - b).forEach(pn => {
+    const page = state.pages[pn];
+    page.slots.forEach((slot, idx) => {
+      payload.push({
+        pageNo: pn,
+        slotNo: idx + 1,
+        enabled: slot.enabled,
+        pageTitle: page.title,
+        imageUrl: slot.imageUrl,
+        btnText: slot.btnText,
+        actionType: slot.actionType,
+        actionValue: slot.actionValue,
+        bgColor: slot.bgColor,
+        textColor: slot.textColor
+      });
+    });
+  });
+  
+  showToast('儲存中...', 'info');
+  try {
+    const url = `${CONFIG.GAS_URL}?action=saveCarousel&token=${CONFIG.ADMIN_TOKEN}&payload=${encodeURIComponent(JSON.stringify(payload))}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || '儲存失敗');
+    showToast(`✅ 已儲存 ${json.count} 筆`);
+    render();
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+function openPushTest() {
+  document.getElementById('testUid').value = CONFIG.DEFAULT_OWNER_UID;
+  document.getElementById('pushModal').classList.add('show');
+}
+
+function closePushTest() {
+  document.getElementById('pushModal').classList.remove('show');
+}
+
+async function confirmPushTest() {
+  const uid = document.getElementById('testUid').value.trim();
+  if (!uid) {
+    showToast('請輸入 UID', 'error');
+    return;
+  }
+  closePushTest();
+  showToast('推送中...', 'info');
+  try {
+    const url = `${CONFIG.GAS_URL}?action=pushTest&token=${CONFIG.ADMIN_TOKEN}&uid=${encodeURIComponent(uid)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || '推送失敗');
+    showToast('✅ 已推送，請至 LINE 檢查');
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   🔧 工具
+   ════════════════════════════════════════════════════════════════ */
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('error', type === 'error');
+  el.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => 
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+</script>
+</body>
+</html>
