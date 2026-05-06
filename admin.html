@@ -316,6 +316,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
   <div class="tab-nav">
     <div class="tab-inner">
       <button class="tab-btn active" onclick="switchTab('dashboard')">📊 當日總控臺</button>
+      <!-- 2026/05/06 品牌投票 tab(優先顯示) -->
+      <button class="tab-btn" onclick="switchTab('vote')" id="tab-btn-vote" style="background:linear-gradient(135deg,#FFF5E1,#F4D7DC);font-weight:600;">🗳️ 品牌投票</button>
       <button class="tab-btn" onclick="switchTab('booking')">📅 預約紀錄</button>
       <button class="tab-btn" onclick="switchTab('customer')">👥 顧客管理</button>
       <button class="tab-btn" onclick="switchTab('blacklist')">🚫 黑名單</button>
@@ -333,8 +335,6 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('cdb')" id="tab-btn-cdb">📇 顧客資料庫</button>
        <button class="tab-btn" onclick="switchTab('template')" id="tab-btn-template">📝 訊息範本</button>
       <button class="tab-btn" onclick="switchTab('cancelwarn')" id="tab-btn-cancelwarn">⚠️ 取消預警</button>
-      <!-- ═══ 2026/05/06 新增品牌投票 tab(回滾:刪除這行 + pane-vote + JS 即可)═══ -->
-      <button class="tab-btn" onclick="switchTab('vote')" id="tab-btn-vote">🗳️ 品牌投票</button>
     </div>
   </div>
 
