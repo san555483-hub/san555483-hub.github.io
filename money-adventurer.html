@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <style>
 /* ═══════════════════════════════════════════════
-   錢途冒險者 落地頁 v1.2.1
+   錢途冒險者 落地頁 v1.2.2
    ═══════════════════════════════════════════════ */
 
 /* ── 設計 Token ──────────────────────────── */
@@ -267,13 +267,24 @@ button { font-family: inherit; cursor: pointer; border: none; }
 }
 .story-banner-image {
   width: 100%;
-  aspect-ratio: 16/9;
+  height: 320px;
   border-radius: var(--radius-lg);
-  background-image: url('hero-warm.png');
-  background-size: cover;
-  background-position: center;
   box-shadow: var(--shadow-card);
   border: 4px solid white;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-cream);
+}
+.story-banner-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+@media (max-width: 768px) {
+  .story-banner-image { height: 240px; }
 }
 .story-banner-text h2 {
   font-size: clamp(24px, 4vw, 36px);
@@ -330,16 +341,29 @@ button { font-family: inherit; cursor: pointer; border: none; }
 }
 .feature-card-image {
   width: 100%;
-  aspect-ratio: 4/3;
-  background-image: url('cats-trio.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #FFF8E7;
+  height: 240px;
+  background: #FFF8E7;
   border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.feature-card-image img {
+  max-width: 90%;
+  max-height: 220px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 .feature-card.has-image .feature-card-content {
   padding: 28px 32px 36px;
+}
+@media (max-width: 768px) {
+  .feature-card-image { height: 200px; }
+  .feature-card-image img { max-height: 180px; }
 }
 
 /* ═══════════════════════════════════════
@@ -1105,7 +1129,9 @@ button { font-family: inherit; cursor: pointer; border: none; }
      ═══════════════════════════════════════ -->
 <section class="story-banner">
   <div class="story-banner-inner">
-    <div class="story-banner-image"></div>
+    <div class="story-banner-image">
+      <img src="hero-warm.png" alt="親子探險水彩畫">
+    </div>
     <div class="story-banner-text">
       <div class="quote-mark">"</div>
       <h2>不是教孩子<span class="accent">變有錢</span><br>是教孩子<span class="accent">看懂錢</span></h2>
@@ -1304,7 +1330,7 @@ button { font-family: inherit; cursor: pointer; border: none; }
 
 <script>
 /* ═══════════════════════════════════════════════
-   錢途冒險者 落地頁 v1.2.1 - 邏輯層
+   錢途冒險者 落地頁 v1.2.2 - 邏輯層
    架構:CONFIG / BUSINESS_CONFIG / TEXTS 三層分離
    ═══════════════════════════════════════════════ */
 
@@ -1465,7 +1491,9 @@ document.getElementById('features-list').innerHTML = TEXTS.features.map((f, i) =
   if (i === 1) {
     return `
       <div class="feature-card has-image">
-        <div class="feature-card-image"></div>
+        <div class="feature-card-image">
+          <img src="cats-trio.png" alt="親子限定貓 3 隻">
+        </div>
         <div class="feature-card-content">
           <h3 class="feature-title">${f.title}</h3>
           <p class="feature-desc">${f.desc}</p>
@@ -1642,7 +1670,7 @@ window.addEventListener('scroll', () => {
   }
 });
 
-console.log('[錢途冒險者落地頁 v1.2.1] Ready ✅');
+console.log('[錢途冒險者落地頁 v1.2.2] Ready ✅');
 </script>
 
 </body>
