@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>錢途冒險者 — 孩子的第一張理財地圖</title>
+<meta name="description" content="從零用錢到投資思維,12 關親子冒險,陪孩子走完真實的金錢之路。">
+<meta property="og:title" content="錢途冒險者 — 孩子的第一張理財地圖">
+<meta property="og:description" content="12 關親子任務 × 親子限定貓收集 × 家長週報通知">
+<meta property="og:type" content="website">
+<style>
+/* ═══════════════════════════════════════════════
+   錢途冒險者 落地頁 v1.2
+   ═══════════════════════════════════════════════ */
+
+/* ── 設計 Token ──────────────────────────── */
+:root {
+  /* 主色 — 探險綠 + 寶藏金 */
+  --color-primary: #2D6A4F;       /* 探險深綠 */
+  --color-primary-light: #52B788; /* 嫩芽綠 */
+  --color-accent: #F4A261;        /* 寶藏金 */
+  --color-accent-deep: #E76F51;   /* 落日橘 */
+  --color-night: #1B263B;         /* 夜空藍 */
+  --color-cream: #FFF8E7;         /* 羊皮紙米 */
+  --color-text: #2B2D42;
+  --color-text-light: #5C677D;
+  --color-bg: #FFFCF5;
+  --color-card: #FFFFFF;
+  --color-border: rgba(45, 106, 79, 0.15);
+
+  /* 漸層 */
+  --gradient-hero: linear-gradient(135deg, #2D6A4F 0%, #52B788 50%, #F4A261 100%);
+  --gradient-treasure: linear-gradient(135deg, #F4A261 0%, #E9C46A 100%);
+  --gradient-night: linear-gradient(135deg, #1B263B 0%, #2D6A4F 100%);
+
+  /* 字型 */
+  --font-main: "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Noto Sans TC", sans-serif;
+
+  /* 圓角 / 陰影 */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-soft: 0 4px 20px rgba(45, 106, 79, 0.08);
+  --shadow-card: 0 8px 30px rgba(45, 106, 79, 0.12);
+  --shadow-glow: 0 0 40px rgba(244, 162, 97, 0.4);
+}
+
+/* ── Reset ──────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; }
+
+/* ── 共用元件 ──────────────────────────── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+.section { padding: 80px 0; }
+.section-title {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--color-night);
+  letter-spacing: -0.02em;
+}
+.section-subtitle {
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 16px;
+  margin-bottom: 60px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn {
+  display: inline-block;
+  padding: 18px 48px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary {
+  background: var(--gradient-treasure);
+  color: var(--color-night);
+  box-shadow: var(--shadow-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 50px rgba(244, 162, 97, 0.6);
+}
+.btn-secondary {
+  background: white;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+.btn-secondary:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ═══════════════════════════════════════
+   [1] Hero 主視覺區
+   ═══════════════════════════════════════ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: var(--gradient-night);
+  overflow: hidden;
+  padding: 100px 20px 60px;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(244, 162, 97, 0.3), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(82, 183, 136, 0.3), transparent 40%);
+  pointer-events: none;
+}
+/* 星空粒子 */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 10% 20%, white, transparent),
+    radial-gradient(1px 1px at 25% 80%, white, transparent),
+    radial-gradient(2px 2px at 50% 30%, white, transparent),
+    radial-gradient(1px 1px at 70% 60%, white, transparent),
+    radial-gradient(2px 2px at 85% 25%, white, transparent),
+    radial-gradient(1px 1px at 95% 75%, white, transparent);
+  background-size: 100% 100%;
+  opacity: 0.6;
+  animation: twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  color: white;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  background: rgba(244, 162, 97, 0.2);
+  border: 1px solid rgba(244, 162, 97, 0.5);
+  border-radius: 999px;
+  color: var(--color-accent);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+}
+.hero h1 {
+  font-size: clamp(36px, 7vw, 64px);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 24px;
+  letter-spacing: -0.03em;
+}
+.hero h1 .highlight {
+  background: var(--gradient-treasure);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+.hero-sub {
+  font-size: clamp(16px, 2.5vw, 20px);
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 40px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hero-cta-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+.hero-stat-item {
+  text-align: center;
+  min-width: 100px;
+}
+.hero-stat-num {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--color-accent);
+  display: block;
+}
+.hero-stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+}
+
+/* Hero 主視覺背景圖(A 版寫實) */
+.hero-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url('assets/hero-main.png');
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  z-index: 0;
+  opacity: 0.85;
+}
+.hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(27, 38, 59, 0.5) 0%,
+    rgba(27, 38, 59, 0.3) 40%,
+    rgba(27, 38, 59, 0.85) 100%
+  );
+  z-index: 1;
+}
+
+/* B 版過渡橫幅 — 內頁第二大張 */
+.story-banner {
+  width: 100%;
+  padding: 80px 20px;
+  background: var(--color-cream);
+  position: relative;
+  overflow: hidden;
+}
+.story-banner-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.story-banner-image {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-lg);
+  background-image: url('assets/hero-warm.png');
+  background-size: cover;
+  background-position: center;
+  box-shadow: var(--shadow-card);
+  border: 4px solid white;
+}
+.story-banner-text h2 {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 900;
+  color: var(--color-night);
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+.story-banner-text h2 .accent {
+  color: var(--color-primary);
+}
+.story-banner-text p {
+  color: var(--color-text-light);
+  font-size: 16px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+.story-banner-text .quote-mark {
+  font-size: 56px;
+  color: var(--color-accent);
+  line-height: 0.5;
+  font-family: serif;
+}
+
+@media (max-width: 768px) {
+  .story-banner { padding: 60px 20px; }
+  .story-banner-inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* ═══════════════════════════════════════
+   Hero 頂部 Logo
+   ═══════════════════════════════════════ */
+.hero-logo {
+  width: 140px;
+  height: auto;
+  margin: 0 auto 24px;
+  filter: drop-shadow(0 4px 20px rgba(244, 162, 97, 0.4));
+  display: block;
+}
+@media (max-width: 768px) {
+  .hero-logo { width: 110px; }
+}
+
+/* ═══════════════════════════════════════
+   親子貓特色卡(特色區第 2 卡)
+   ═══════════════════════════════════════ */
+.feature-card.has-image {
+  padding: 0;
+  overflow: hidden;
+}
+.feature-card-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-image: url('assets/cats-trio.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #FFF8E7;
+  border-bottom: 1px solid var(--color-border);
+}
+.feature-card.has-image .feature-card-content {
+  padding: 28px 32px 36px;
+}
+
+/* ═══════════════════════════════════════
+   12 關地圖預覽區
+   ═══════════════════════════════════════ */
+.quest-map {
+  background: var(--color-cream);
+  position: relative;
+  overflow: hidden;
+}
+.quest-map::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(244, 162, 97, 0.05), transparent 60%);
+  pointer-events: none;
+}
+.quest-map-image-wrap {
+  margin: 48px auto 0;
+  max-width: 1100px;
+  position: relative;
+}
+.quest-map-image {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 6px solid white;
+  display: block;
+  cursor: zoom-in;
+  transition: transform 0.4s ease;
+}
+.quest-map-image:hover {
+  transform: scale(1.01);
+}
+.quest-map-overlay {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(27, 38, 59, 0.85);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.quest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 1100px;
+  margin: 48px auto 0;
+}
+.quest-item {
+  background: white;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+.quest-item:hover {
+  border-color: var(--color-primary-light);
+  transform: translateX(4px);
+}
+.quest-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gradient-treasure);
+  color: var(--color-night);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.quest-name {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 14px;
+}
+.quest-name-en {
+  font-size: 11px;
+  color: var(--color-text-light);
+  letter-spacing: 0.05em;
+}
+
+/* 圖片放大 lightbox */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: zoom-out;
+}
+.lightbox.show { display: flex; }
+.lightbox img {
+  max-width: 95%;
+  max-height: 95vh;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 60px rgba(244, 162, 97, 0.3);
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+/* ═══════════════════════════════════════
+   家長 Dashboard 展示區
+   ═══════════════════════════════════════ */
+.dashboard-show {
+  background: linear-gradient(180deg, var(--color-bg) 0%, #F5F1E8 100%);
+}
+.dashboard-show-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.dashboard-text h2 {
+  font-size: clamp(28px, 4.5vw, 38px);
+  font-weight: 900;
+  color: var(--color-night);
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+.dashboard-text h2 .accent {
+  color: var(--color-primary);
+}
+.dashboard-features {
+  list-style: none;
+  margin-top: 28px;
+}
+.dashboard-features li {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--color-border);
+  align-items: flex-start;
+}
+.dashboard-features li:last-child { border-bottom: none; }
+.dashboard-features-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--gradient-treasure);
+  color: var(--color-night);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.dashboard-features-text strong {
+  display: block;
+  color: var(--color-night);
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.dashboard-features-text span {
+  color: var(--color-text-light);
+  font-size: 14px;
+}
+
+.dashboard-image {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .dashboard-show-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* ═══════════════════════════════════════
+   Footer Logo
+   ═══════════════════════════════════════ */
+.footer-logo {
+  width: 70px;
+  height: auto;
+  margin: 0 auto 16px;
+  display: block;
+  opacity: 0.9;
+}
+
+/* ═══════════════════════════════════════
+   [2] 痛點共鳴區
+   ═══════════════════════════════════════ */
+.painpoint {
+  background: var(--color-cream);
+}
+.painpoint-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+.painpoint-card {
+  background: white;
+  padding: 36px 28px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+.painpoint-card:hover { transform: translateY(-4px); }
+.painpoint-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+.painpoint-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-night);
+  margin-bottom: 12px;
+}
+.painpoint-desc {
+  color: var(--color-text-light);
+  font-size: 15px;
+}
+
+/* ═══════════════════════════════════════
+   [3] 產品特色區
+   ═══════════════════════════════════════ */
+.features {
+  background: var(--color-bg);
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+.feature-card {
+  background: white;
+  padding: 40px 32px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--gradient-hero);
+}
+.feature-emoji {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+.feature-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-night);
+  margin-bottom: 12px;
+}
+.feature-desc {
+  color: var(--color-text-light);
+  font-size: 15px;
+  margin-bottom: 16px;
+}
+.feature-list {
+  list-style: none;
+  padding: 0;
+}
+.feature-list li {
+  padding: 8px 0;
+  color: var(--color-text);
+  font-size: 14px;
+  border-bottom: 1px dashed var(--color-border);
+}
+.feature-list li:last-child { border-bottom: none; }
+.feature-list li::before {
+  content: '✓ ';
+  color: var(--color-primary-light);
+  font-weight: 900;
+}
+
+/* ═══════════════════════════════════════
+   [4] 價值堆疊區
+   ═══════════════════════════════════════ */
+.value-stack {
+  background: var(--color-night);
+  color: white;
+  position: relative;
+}
+.value-stack::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(244, 162, 97, 0.15), transparent 60%);
+  pointer-events: none;
+}
+.value-stack .section-title { color: white; position: relative; z-index: 1; }
+.value-stack .section-subtitle { color: rgba(255, 255, 255, 0.7); position: relative; z-index: 1; }
+
+.value-list {
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.value-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+.value-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-accent);
+}
+.value-item-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+}
+.value-item-emoji {
+  font-size: 24px;
+}
+.value-item-price {
+  font-weight: 700;
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.value-total {
+  margin-top: 24px;
+  padding: 28px;
+  background: var(--gradient-treasure);
+  color: var(--color-night);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+.value-total-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.value-total-original {
+  font-size: 24px;
+  text-decoration: line-through;
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+.value-total-now {
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.value-total-tag {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 16px;
+  background: var(--color-night);
+  color: var(--color-accent);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════
+   [5] 三階段定價區
+   ═══════════════════════════════════════ */
+.pricing {
+  background: var(--color-cream);
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  max-width: 900px;
+  margin: 48px auto 0;
+}
+.pricing-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  text-align: center;
+  position: relative;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+.pricing-card.featured {
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-glow);
+}
+.pricing-card.featured::before {
+  content: '🔥 限量 30 名';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-accent-deep);
+  color: white;
+  padding: 6px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pricing-stage {
+  font-size: 13px;
+  color: var(--color-text-light);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.pricing-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-night);
+  margin-bottom: 16px;
+}
+.pricing-price {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.pricing-price .currency {
+  font-size: 20px;
+  vertical-align: top;
+  margin-right: 4px;
+}
+.pricing-card.featured .pricing-price { color: var(--color-accent-deep); }
+.pricing-note {
+  font-size: 13px;
+  color: var(--color-text-light);
+  margin-bottom: 20px;
+}
+
+/* 進度條 */
+.progress-wrap {
+  background: var(--color-cream);
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid var(--color-border);
+}
+.progress-bar {
+  height: 100%;
+  background: var(--gradient-treasure);
+  border-radius: 999px;
+  transition: width 0.6s ease;
+}
+.progress-text {
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+/* ═══════════════════════════════════════
+   [6] FAQ 區
+   ═══════════════════════════════════════ */
+.faq {
+  background: var(--color-bg);
+}
+.faq-list {
+  max-width: 760px;
+  margin: 48px auto 0;
+}
+.faq-item {
+  background: white;
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+.faq-question {
+  padding: 20px 24px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-night);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s ease;
+}
+.faq-question:hover { background: var(--color-cream); }
+.faq-question::after {
+  content: '+';
+  font-size: 24px;
+  color: var(--color-primary);
+  transition: transform 0.3s ease;
+}
+.faq-item.active .faq-question::after {
+  transform: rotate(45deg);
+}
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: 0 24px;
+  color: var(--color-text-light);
+  line-height: 1.8;
+}
+.faq-item.active .faq-answer {
+  max-height: 300px;
+  padding: 0 24px 20px;
+}
+
+/* ═══════════════════════════════════════
+   [7] 報名表單區
+   ═══════════════════════════════════════ */
+.signup {
+  background: var(--gradient-night);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.signup::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(244, 162, 97, 0.2), transparent 50%);
+  pointer-events: none;
+}
+.signup-inner {
+  max-width: 560px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.signup .section-title { color: white; }
+.signup .section-subtitle { color: rgba(255, 255, 255, 0.75); }
+
+.signup-form {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  margin-top: 32px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.form-label .required { color: var(--color-accent); }
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  color: var(--color-text);
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: white;
+}
+.form-submit {
+  width: 100%;
+  padding: 18px;
+  background: var(--gradient-treasure);
+  color: var(--color-night);
+  border-radius: var(--radius-sm);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 8px;
+  transition: all 0.3s ease;
+}
+.form-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+.form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.form-success {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+  color: white;
+}
+.form-success.show { display: block; }
+.form-success-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+.form-note {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 16px;
+}
+
+/* ═══════════════════════════════════════
+   [8] Footer
+   ═══════════════════════════════════════ */
+.footer {
+  background: #0F1A2E;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 13px;
+}
+.footer-brand {
+  font-size: 16px;
+  color: white;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.footer-uni {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════
+   響應式調整
+   ═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  .section { padding: 60px 0; }
+  .hero { min-height: 90vh; padding: 80px 20px 40px; }
+  .hero-stats { gap: 24px; }
+  .hero-stat-num { font-size: 24px; }
+  .pricing-card.featured { transform: none; }
+  .btn { padding: 16px 36px; font-size: 16px; }
+  .value-item { padding: 16px 20px; font-size: 14px; }
+  .value-item-name { font-size: 14px; }
+  .value-total-now { font-size: 36px; }
+}
+
+/* 浮動 CTA(手機底部固定) */
+.floating-cta {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 99;
+  background: var(--gradient-treasure);
+  color: var(--color-night);
+  padding: 16px;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(244, 162, 97, 0.4);
+  font-size: 15px;
+}
+@media (max-width: 768px) {
+  .floating-cta.show { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     [1] HERO 主視覺區
+     ═══════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <!-- A 版寫實圖當全螢幕背景 -->
+  <div class="hero-bg-image"></div>
+  <div class="hero-bg-overlay"></div>
+
+  <div class="hero-inner">
+    <img src="assets/logo.png" alt="錢途冒險者 Money Adventurer" class="hero-logo">
+    <div class="hero-badge">🗺️ 親子理財冒險 × 限量早鳥開放中</div>
+    <h1>
+      孩子的<span class="highlight">第一張</span><br>
+      理財地圖
+    </h1>
+    <p class="hero-sub" id="hero-sub-text">
+      <!-- 由 TEXTS 注入 -->
+    </p>
+    <div class="hero-cta-group">
+      <a href="#signup" class="btn btn-primary">🎯 早鳥搶先體驗</a>
+      <a href="#features" class="btn btn-secondary" style="background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.3);">了解更多</a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat-item">
+        <span class="hero-stat-num">12</span>
+        <span class="hero-stat-label">關親子任務</span>
+      </div>
+      <div class="hero-stat-item">
+        <span class="hero-stat-num">3</span>
+        <span class="hero-stat-label">隻親子限定貓</span>
+      </div>
+      <div class="hero-stat-item">
+        <span class="hero-stat-num" id="stat-spots">30</span>
+        <span class="hero-stat-label">早鳥限額</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [2] 痛點共鳴區
+     ═══════════════════════════════════════ -->
+<section class="section painpoint">
+  <div class="container">
+    <h2 class="section-title">這些畫面 是不是很熟悉?</h2>
+    <p class="section-subtitle">每個爸媽都遇過,但教科書沒教過怎麼解</p>
+    <div class="painpoint-grid" id="painpoint-list">
+      <!-- 由 TEXTS 注入 -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [2.5] 故事過渡橫幅(B 版水彩童書感)
+     ═══════════════════════════════════════ -->
+<section class="story-banner">
+  <div class="story-banner-inner">
+    <div class="story-banner-image"></div>
+    <div class="story-banner-text">
+      <div class="quote-mark">"</div>
+      <h2>不是教孩子<span class="accent">變有錢</span><br>是教孩子<span class="accent">看懂錢</span></h2>
+      <p>我們不要孩子背公式、算複利,然後在真實生活裡還是亂花錢。</p>
+      <p>每一關都是一個情境:零用錢怎麼分?該不該買這個?如果我多存一週會怎樣?</p>
+      <p><strong style="color:var(--color-primary);">12 關走完,孩子會把「思考」變成本能。</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [3] 產品特色區
+     ═══════════════════════════════════════ -->
+<section class="section features" id="features">
+  <div class="container">
+    <h2 class="section-title">三大核心 陪孩子走完真實的金錢之路</h2>
+    <p class="section-subtitle">不是死板教材,是一場有故事、有獎勵、有家長同步的成長冒險</p>
+    <div class="features-grid" id="features-list">
+      <!-- 由 TEXTS 注入 -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [3.5] 12 關地圖預覽
+     ═══════════════════════════════════════ -->
+<section class="section quest-map">
+  <div class="container">
+    <h2 class="section-title">完整 12 關 冒險地圖</h2>
+    <p class="section-subtitle">從第一桶金到財務自由 — 每一關都是孩子要走過的真實情境</p>
+
+    <div class="quest-map-image-wrap">
+      <img src="assets/map-12quests.png" alt="12 關冒險地圖" class="quest-map-image" id="questMapImg">
+      <div class="quest-map-overlay">🔍 點擊放大看細節</div>
+    </div>
+
+    <div class="quest-list" id="quest-list">
+      <!-- 由 BUSINESS_CONFIG 注入 -->
+    </div>
+  </div>
+</section>
+
+<!-- 圖片放大 lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">×</button>
+  <img src="assets/map-12quests.png" alt="12 關冒險地圖放大">
+</div>
+
+<!-- ═══════════════════════════════════════
+     [4] 價值堆疊區
+     ═══════════════════════════════════════ -->
+<section class="section value-stack">
+  <div class="container">
+    <h2 class="section-title">完整方案 你會拿到的所有東西</h2>
+    <p class="section-subtitle">這不只是一套課程,是一個生態系</p>
+    <div class="value-list" id="value-list">
+      <!-- 由 TEXTS 注入 -->
+    </div>
+    <div class="value-total">
+      <div class="value-total-label">總價值</div>
+      <div class="value-total-original" id="total-original">NT$ 5,500</div>
+      <div class="value-total-now" id="total-now">NT$ 1,500</div>
+      <div class="value-total-tag">早鳥獨享 ✨</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [4.5] 家長 Dashboard 展示區
+     ═══════════════════════════════════════ -->
+<section class="section dashboard-show">
+  <div class="container">
+    <div class="dashboard-show-inner">
+      <div class="dashboard-text">
+        <h2>不用再追問<br>孩子的<span class="accent">每一步</span></h2>
+        <p style="color:var(--color-text-light);font-size:16px;line-height:1.8;">
+          家長後台讓你即時看見孩子的學習軌跡 — 哪一關卡住了、哪個成就解鎖了、這週進度如何 — 通通自動同步到你的手上。
+        </p>
+        <ul class="dashboard-features">
+          <li>
+            <div class="dashboard-features-icon">📊</div>
+            <div class="dashboard-features-text">
+              <strong>進度追蹤儀表板</strong>
+              <span>每關完成度、累計徽章、學習時間,一覽無遺</span>
+            </div>
+          </li>
+          <li>
+            <div class="dashboard-features-icon">🏆</div>
+            <div class="dashboard-features-text">
+              <strong>成就即時通知</strong>
+              <span>孩子解鎖新成就時,你會立刻收到 LINE Push</span>
+            </div>
+          </li>
+          <li>
+            <div class="dashboard-features-icon">📅</div>
+            <div class="dashboard-features-text">
+              <strong>每週 Email 報告</strong>
+              <span>每週日自動寄送一份精美的學習摘要</span>
+            </div>
+          </li>
+          <li>
+            <div class="dashboard-features-icon">🔔</div>
+            <div class="dashboard-features-text">
+              <strong>卡關預警</strong>
+              <span>孩子三天沒進度?系統會提醒你陪伴介入</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <img src="assets/parent-dashboard.png" alt="家長 Dashboard" class="dashboard-image">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [5] 三階段定價區
+     ═══════════════════════════════════════ -->
+<section class="section pricing">
+  <div class="container">
+    <h2 class="section-title">三階段定價 越早加入 省越多</h2>
+    <p class="section-subtitle">早鳥滿額後立即進入下一階段,沒有再延後</p>
+    <div class="pricing-grid" id="pricing-list">
+      <!-- 由 BUSINESS_CONFIG 注入 -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [6] FAQ 區
+     ═══════════════════════════════════════ -->
+<section class="section faq">
+  <div class="container">
+    <h2 class="section-title">常見問題</h2>
+    <p class="section-subtitle">家長在意的我們都先想過了</p>
+    <div class="faq-list" id="faq-list">
+      <!-- 由 TEXTS 注入 -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [7] 報名表單區
+     ═══════════════════════════════════════ -->
+<section class="section signup" id="signup">
+  <div class="signup-inner">
+    <h2 class="section-title">🎯 立即加入早鳥名單</h2>
+    <p class="section-subtitle">填寫資料後,我們會在 24 小時內以 LINE 聯繫你</p>
+
+    <div class="signup-form" id="form-wrap">
+      <div class="form-group">
+        <label class="form-label">家長姓名 <span class="required">*</span></label>
+        <input type="text" class="form-input" id="f-name" placeholder="您的稱呼" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">LINE ID 或手機 <span class="required">*</span></label>
+        <input type="text" class="form-input" id="f-contact" placeholder="方便我們聯繫您" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">孩子年齡</label>
+        <select class="form-select" id="f-age">
+          <option value="">請選擇</option>
+          <option value="6-8">6-8 歲</option>
+          <option value="9-11">9-11 歲</option>
+          <option value="12-14">12-14 歲</option>
+          <option value="15+">15 歲以上</option>
+        </select>
+      </div>
+      <button class="form-submit" id="submit-btn">🚀 我要搶先體驗</button>
+      <p class="form-note">送出即同意我們以您填寫的方式與您聯繫</p>
+    </div>
+
+    <div class="form-success" id="form-success">
+      <div class="form-success-icon">🎉</div>
+      <h3 style="font-size:24px;margin-bottom:12px;">已加入早鳥名單!</h3>
+      <p>我們會盡快用 LINE 與你聯繫,請留意通知</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     [8] Footer
+     ═══════════════════════════════════════ -->
+<footer class="footer">
+  <img src="assets/logo.png" alt="錢途冒險者" class="footer-logo">
+  <div class="footer-brand">🗺️ 錢途冒險者</div>
+  <div>孩子的第一張理財地圖 | © 2026</div>
+  <!-- [UNI_EXCLUSIVE] 公版抽離時刪除此行 -->
+  <div class="footer-uni">UNI 髮型設計 × 錢途冒險者 共同出品</div>
+</footer>
+
+<!-- 手機浮動 CTA -->
+<a href="#signup" class="floating-cta" id="floatCta">🎯 早鳥搶先體驗 NT$ 1,500</a>
+
+
+<script>
+/* ═══════════════════════════════════════════════
+   錢途冒險者 落地頁 v1.2 - 邏輯層
+   架構:CONFIG / BUSINESS_CONFIG / TEXTS 三層分離
+   ═══════════════════════════════════════════════ */
+
+// ─── L1 資料層:站台識別 ─────────────────────────
+// [UNI_EXCLUSIVE] 公版抽離時整段替換
+const CONFIG = {
+  brand: '錢途冒險者',
+  parentBrand: 'UNI 髮型設計',
+  contactLine: 'https://line.me/R/ti/p/@unisalon',  // ⚠️ 請改為實際 LINE 連結
+  contactEmail: 'san555483@gmail.com',
+  // 提交端點(下棒接 GAS)
+  submitEndpoint: '',  // 留空 → 走 localStorage,有值 → POST 到 GAS
+  // GitHub Pages 路徑
+  pageURL: 'https://san555483-hub.github.io/money-adventurer.html',
+};
+
+// ─── L1 資料層:商業邏輯設定 ───────────────────
+const BUSINESS_CONFIG = {
+  // 三階段定價
+  pricing: [
+    {
+      stage: 'STAGE 1',
+      name: '早鳥方案',
+      price: 1500,
+      note: '限量 30 名,售完即止',
+      featured: true,
+      taken: 0,        // 已售出(可後台改)
+      total: 30,       // 總名額
+    },
+    {
+      stage: 'STAGE 2',
+      name: '限時方案',
+      price: 2000,
+      note: '早鳥滿額後啟動',
+      featured: false,
+    },
+    {
+      stage: 'STAGE 3',
+      name: '正式上架',
+      price: 2500,
+      note: '所有通路統一售價',
+      featured: false,
+    },
+  ],
+  // 價值堆疊
+  valueStack: [
+    { emoji: '📚', name: '主課程 12 關任務系統', price: 2500 },
+    { emoji: '🐱', name: '親子限定貓 3 隻獨家成就', price: 800 },
+    { emoji: '📊', name: '家長週報 Email 自動寄送', price: 600 },
+    { emoji: '💬', name: 'LINE 即時里程碑通知', price: 400 },
+    { emoji: '🎯', name: '任務集點獎勵機制', price: 1200 },
+  ],
+  totalValue: 5500,
+  earlyBirdPrice: 1500,
+  // 12 關名單(對應地圖)
+  quests: [
+    { num: 1, name: '賺取第一桶金', en: 'EARN IT' },
+    { num: 2, name: '零用錢冒險', en: 'ALLOWANCE' },
+    { num: 3, name: '做預算', en: 'MAKE A BUDGET' },
+    { num: 4, name: '聰明消費', en: 'SPEND WISELY' },
+    { num: 5, name: '為目標儲蓄', en: 'SAVE FOR GOALS' },
+    { num: 6, name: '銀行智慧', en: 'BANK SMART' },
+    { num: 7, name: '研究與學習', en: 'RESEARCH' },
+    { num: 8, name: '投資成長', en: 'INVEST & GROW' },
+    { num: 9, name: '提升技能', en: 'EARN MORE' },
+    { num: 10, name: '回饋社會', en: 'GIVE BACK' },
+    { num: 11, name: '檢討進步', en: 'REVIEW' },
+    { num: 12, name: '財務自由', en: 'FINANCIAL FREEDOM' },
+  ],
+};
+
+// ─── L1 資料層:文案統一管理 ───────────────────
+const TEXTS = {
+  heroSub: '從零用錢到投資思維,12 關親子冒險、3 隻限定貓、家長同步追蹤 — 陪孩子走完真實的金錢之路。',
+
+  painpoints: [
+    { icon: '😰', title: '錢一拿到就花光', desc: '剛給的零用錢轉眼就消失,根本不知道孩子買了什麼。' },
+    { icon: '🤔', title: '想教但無從下手', desc: '理財書都太理論,生活情境又抓不到切入時機。' },
+    { icon: '📚', title: '教科書 ≠ 真實生活', desc: '會算複利,但不會選擇要不要買;會背名詞,但沒做過決定。' },
+  ],
+
+  features: [
+    {
+      emoji: '🗺️',
+      title: '12 關親子任務',
+      desc: '從「分零用錢」到「擬定預算」,每關都是真實生活情境',
+      bullets: [
+        '6 歲到 15 歲分齡設計',
+        '每關 7-14 天,陪孩子慢慢走',
+        '通關有徽章 × 集點 × 解鎖獎勵',
+      ],
+    },
+    {
+      emoji: '🐱',
+      title: '親子限定貓收集',
+      desc: '通關才能解鎖的 3 隻獨家貓貓 ── 一般通路拿不到',
+      bullets: [
+        '✨ 儲蓄之神 — 完成存錢任務',
+        '✨ 預算守護者 — 完成預算任務',
+        '✨ 投資冒險家 — 完成全部 12 關',
+      ],
+    },
+    {
+      emoji: '📬',
+      title: '家長雙軌通知',
+      desc: '不用追問孩子,進度自動同步到爸媽手上',
+      bullets: [
+        '📊 每週 Email 進度報告',
+        '🎉 LINE 即時里程碑通知',
+        '⚠️ 任務卡關自動提醒',
+      ],
+    },
+  ],
+
+  faqs: [
+    {
+      q: '適合幾歲的孩子?',
+      a: '6 歲到 15 歲都有對應的任務分齡。系統會根據孩子年齡自動推薦合適的關卡,小小孩從「認識錢」開始,大孩子可以挑戰投資模擬。',
+    },
+    {
+      q: '怎麼開始使用?',
+      a: '完成報名後,我們會用 LINE 與你聯繫,協助你開啟孩子的第一個任務。整個系統手機就能用,不需要安裝任何 App。',
+    },
+    {
+      q: '如果孩子做一半放棄了怎麼辦?',
+      a: '系統會在卡關 3 天後自動發 LINE 通知家長,你可以選擇陪孩子繼續、或暫停這關先試其他關。沒有時間壓力。',
+    },
+    {
+      q: '退費政策?',
+      a: '報名後 7 天內如不滿意,可聯繫客服全額退款。詳細條款會在加入後一併寄送。',
+    },
+    {
+      q: 'UNI 沙龍的客戶有特別優惠嗎?',
+      a: '有的 ✨ UNI 老客戶可享專屬推薦碼,享有額外點數回饋與貓貓獨家造型。詳情請洽 LINE 官方帳號。',
+    },
+  ],
+};
+
+/* ═══════════════════════════════════════════════
+   L2 邏輯層:渲染 + 互動
+   ═══════════════════════════════════════════════ */
+
+// ─── 渲染 Hero 副標 ─────────────────────────
+document.getElementById('hero-sub-text').textContent = TEXTS.heroSub;
+
+// ─── 渲染 痛點區 ─────────────────────────
+document.getElementById('painpoint-list').innerHTML = TEXTS.painpoints.map(p => `
+  <div class="painpoint-card">
+    <span class="painpoint-icon">${p.icon}</span>
+    <h3 class="painpoint-title">${p.title}</h3>
+    <p class="painpoint-desc">${p.desc}</p>
+  </div>
+`).join('');
+
+// ─── 渲染 產品特色區 ─────────────────────────
+document.getElementById('features-list').innerHTML = TEXTS.features.map((f, i) => {
+  // 第二張卡(親子貓)用圖片版
+  if (i === 1) {
+    return `
+      <div class="feature-card has-image">
+        <div class="feature-card-image"></div>
+        <div class="feature-card-content">
+          <h3 class="feature-title">${f.title}</h3>
+          <p class="feature-desc">${f.desc}</p>
+          <ul class="feature-list">
+            ${f.bullets.map(b => `<li>${b}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="feature-card">
+      <div class="feature-emoji">${f.emoji}</div>
+      <h3 class="feature-title">${f.title}</h3>
+      <p class="feature-desc">${f.desc}</p>
+      <ul class="feature-list">
+        ${f.bullets.map(b => `<li>${b}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+}).join('');
+
+// ─── 渲染 12 關清單 ─────────────────────────
+document.getElementById('quest-list').innerHTML = BUSINESS_CONFIG.quests.map(q => `
+  <div class="quest-item">
+    <div class="quest-num">${q.num}</div>
+    <div>
+      <div class="quest-name">${q.name}</div>
+      <div class="quest-name-en">${q.en}</div>
+    </div>
+  </div>
+`).join('');
+
+// ─── 12 關地圖 lightbox ─────────────────────────
+const lightbox = document.getElementById('lightbox');
+const questMapImg = document.getElementById('questMapImg');
+const lightboxClose = document.getElementById('lightboxClose');
+questMapImg.addEventListener('click', () => lightbox.classList.add('show'));
+lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+lightboxClose.addEventListener('click', (e) => {
+  e.stopPropagation();
+  lightbox.classList.remove('show');
+});
+
+// ─── 渲染 價值堆疊區 ─────────────────────────
+document.getElementById('value-list').innerHTML = BUSINESS_CONFIG.valueStack.map(v => `
+  <div class="value-item">
+    <div class="value-item-name">
+      <span class="value-item-emoji">${v.emoji}</span>
+      <span>${v.name}</span>
+    </div>
+    <div class="value-item-price">NT$ ${v.price.toLocaleString()}</div>
+  </div>
+`).join('');
+document.getElementById('total-original').textContent = `NT$ ${BUSINESS_CONFIG.totalValue.toLocaleString()}`;
+document.getElementById('total-now').textContent = `NT$ ${BUSINESS_CONFIG.earlyBirdPrice.toLocaleString()}`;
+
+// ─── 渲染 三階段定價區 ─────────────────────────
+document.getElementById('pricing-list').innerHTML = BUSINESS_CONFIG.pricing.map(p => {
+  const progress = p.featured ? `
+    <div class="progress-wrap">
+      <div class="progress-bar" style="width:${(p.taken/p.total)*100}%"></div>
+    </div>
+    <div class="progress-text">已加入 ${p.taken} / ${p.total} 名</div>
+  ` : '';
+  return `
+    <div class="pricing-card ${p.featured ? 'featured' : ''}">
+      <div class="pricing-stage">${p.stage}</div>
+      <div class="pricing-name">${p.name}</div>
+      <div class="pricing-price"><span class="currency">NT$</span>${p.price.toLocaleString()}</div>
+      <div class="pricing-note">${p.note}</div>
+      ${progress}
+    </div>
+  `;
+}).join('');
+
+// 更新 Hero 早鳥剩餘名額
+const earlybird = BUSINESS_CONFIG.pricing[0];
+document.getElementById('stat-spots').textContent = earlybird.total - earlybird.taken;
+
+// ─── 渲染 FAQ 區 ─────────────────────────
+document.getElementById('faq-list').innerHTML = TEXTS.faqs.map((f, i) => `
+  <div class="faq-item" data-idx="${i}">
+    <div class="faq-question">${f.q}</div>
+    <div class="faq-answer">${f.a}</div>
+  </div>
+`).join('');
+
+// FAQ 展開互動
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-question').addEventListener('click', () => {
+    item.classList.toggle('active');
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   L3 行為層:UTM 追蹤 + 表單提交
+   ═══════════════════════════════════════════════ */
+
+// ─── UTM 追蹤埋點 ─────────────────────────
+function getUTMParams() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    src: p.get('src') || 'direct',         // 來源:line_vote / richmenu / qrcode / direct
+    medium: p.get('medium') || '',          // 媒介:flex / banner / push
+    campaign: p.get('campaign') || '',      // 活動:earlybird / vote_winner
+    referrer: document.referrer || '',
+  };
+}
+
+const utmData = getUTMParams();
+console.log('[UTM]', utmData);
+
+// 把 UTM 暫存,送出表單時一併傳
+sessionStorage.setItem('ma_utm', JSON.stringify(utmData));
+
+// ─── 表單提交 ─────────────────────────
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  const name = document.getElementById('f-name').value.trim();
+  const contact = document.getElementById('f-contact').value.trim();
+  const age = document.getElementById('f-age').value;
+
+  if (!name || !contact) {
+    alert('請填寫姓名與聯絡方式');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '送出中...';
+
+  const payload = {
+    name,
+    contact,
+    age,
+    utm: JSON.parse(sessionStorage.getItem('ma_utm') || '{}'),
+    timestamp: new Date().toISOString(),
+    page: 'money-adventurer',
+  };
+
+  try {
+    if (CONFIG.submitEndpoint) {
+      // 下棒接 GAS 用
+      await fetch(CONFIG.submitEndpoint + '?action=earlyBirdSignup&data=' + encodeURIComponent(JSON.stringify(payload)));
+    } else {
+      // 暫存 localStorage(本棒先這樣,下棒接 GAS)
+      const list = JSON.parse(localStorage.getItem('ma_signups') || '[]');
+      list.push(payload);
+      localStorage.setItem('ma_signups', JSON.stringify(list));
+      console.log('[Signup saved to localStorage]', payload);
+    }
+
+    // 顯示成功訊息
+    document.getElementById('form-wrap').style.display = 'none';
+    document.getElementById('form-success').classList.add('show');
+
+    // 滾到成功訊息
+    document.getElementById('form-success').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (err) {
+    console.error('[Submit error]', err);
+    alert('送出失敗,請稍後再試或直接 LINE 聯繫我們');
+    btn.disabled = false;
+    btn.textContent = '🚀 我要搶先體驗';
+  }
+});
+
+// ─── 浮動 CTA 顯示 ─────────────────────────
+const floatCta = document.getElementById('floatCta');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 600 && window.scrollY < document.body.scrollHeight - 1000) {
+    floatCta.classList.add('show');
+  } else {
+    floatCta.classList.remove('show');
+  }
+});
+
+console.log('[錢途冒險者落地頁 v1.2] Ready ✅');
+</script>
+
+</body>
+</html>
