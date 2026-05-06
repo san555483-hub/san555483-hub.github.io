@@ -333,6 +333,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('cdb')" id="tab-btn-cdb">📇 顧客資料庫</button>
        <button class="tab-btn" onclick="switchTab('template')" id="tab-btn-template">📝 訊息範本</button>
       <button class="tab-btn" onclick="switchTab('cancelwarn')" id="tab-btn-cancelwarn">⚠️ 取消預警</button>
+      <!-- ═══ 2026/05/06 新增品牌投票 tab(回滾:刪除這行 + pane-vote + JS 即可)═══ -->
+      <button class="tab-btn" onclick="switchTab('vote')" id="tab-btn-vote">🗳️ 品牌投票</button>
     </div>
   </div>
 
@@ -1174,7 +1176,37 @@ tr:hover td{background:rgba(61,43,31,.03);}
                   <span id="profile-texts-status" style="font-size:.65rem;color:var(--mid);"></span>
                 </div>
 
-                <style>@media(max-width:640px){.profile-text-grid{grid-template-columns:1fr !important;}}</style>
+                <style>
+/* ═══ 🗳️ 品牌投票 Tab 樣式 v1.0 (2026/05/06) ═══ */
+.vote-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem;}
+.vote-stats .stat-card{background:linear-gradient(135deg,var(--rose-lt),var(--gold-lt));border:1px solid var(--border);border-radius:6px;padding:.85rem .5rem;text-align:center;}
+.vote-stats .stat-num{font-size:1.3rem;font-weight:700;color:var(--bark);font-family:'Playfair Display',serif;}
+.vote-stats .stat-label{font-size:.62rem;color:var(--mid);margin-top:3px;font-family:'Noto Sans TC',sans-serif;}
+.vote-board{background:#fff;border:1px solid var(--border);border-radius:6px;padding:.75rem;}
+.vote-row{display:flex;align-items:center;gap:.5rem;padding:.45rem 0;border-bottom:1px solid var(--sand);}
+.vote-row:last-child{border-bottom:none;}
+.vote-rank{width:24px;height:24px;border-radius:50%;background:var(--bark);color:#fff;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Noto Sans TC',sans-serif;}
+.vote-rank.r1{background:var(--gold);}
+.vote-rank.r2{background:#aaa;}
+.vote-rank.r3{background:var(--rose);}
+.vote-name{flex:1;font-size:.72rem;min-width:0;}
+.vote-name .zh{font-weight:700;color:var(--bark);}
+.vote-name .en{font-size:.55rem;color:var(--mid);margin-left:4px;font-family:'Noto Sans TC',sans-serif;}
+.vote-name .star{color:var(--gold);margin-left:3px;}
+.vote-bar{flex:1.5;height:5px;background:var(--sand);border-radius:3px;overflow:hidden;min-width:60px;}
+.vote-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--rose));border-radius:3px;transition:.5s;}
+.vote-pct{font-size:.68rem;color:var(--bark);font-weight:700;width:40px;text-align:right;font-family:'Noto Sans TC',sans-serif;}
+.vote-cnt{font-size:.6rem;color:var(--mid);width:36px;text-align:right;font-family:'Noto Sans TC',sans-serif;}
+.waitlist-row{display:grid;grid-template-columns:60px 1fr 90px 1fr;gap:.4rem;padding:.35rem 0;border-bottom:1px solid var(--sand);font-size:.68rem;align-items:center;}
+.waitlist-row:last-child{border-bottom:none;}
+.waitlist-row .time{color:var(--mid);font-size:.58rem;font-family:'Noto Sans TC',sans-serif;}
+.waitlist-row .name{font-weight:500;color:var(--bark);}
+.waitlist-row .phone{color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-size:.62rem;}
+.waitlist-row .vote-for{color:var(--rose);font-size:.62rem;font-weight:600;}
+@media(max-width:640px){.waitlist-row{grid-template-columns:50px 1fr;}.waitlist-row .phone,.waitlist-row .vote-for{grid-column:span 2;font-size:.58rem;}}
+/* ═══ 投票樣式 END ═══ */
+</style>
+<style>@media(max-width:640px){.profile-text-grid{grid-template-columns:1fr !important;}}</style>
               </div>
               <!-- ═══ B1.5 END ═══ -->
 
@@ -1534,6 +1566,50 @@ tr:hover td{background:rgba(61,43,31,.03);}
   </div>
   <!-- ═══ v5新增 END ═══ -->
 
+  <!-- ═══════════ 🗳️ 品牌投票 pane v1.0 (2026/05/06) ═══════════ -->
+  <!-- 回滾:刪除整個 <div class="tab-pane" id="pane-vote"> ... </div> -->
+  <div class="tab-pane" id="pane-vote">
+    <div class="pane-inner">
+      <div class="card">
+        <div class="card-head">
+          <h3>🗳️ 品牌投票管理</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn" style="background:var(--gold);color:#fff;" onclick="voteRefresh()">🔄 重新整理</button>
+            <button class="btn" style="background:var(--moss);color:#fff;" onclick="voteExportWaitlist()">📥 匯出等候名單</button>
+          </div>
+        </div>
+
+        <div class="vote-stats">
+          <div class="stat-card">
+            <div class="stat-num" id="vote-total">0</div>
+            <div class="stat-label">總投票數</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="vote-waitlist">0</div>
+            <div class="stat-label">等候名單</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="vote-leader" style="font-size:1rem;">-</div>
+            <div class="stat-label">目前領先</div>
+          </div>
+        </div>
+
+        <div class="vote-board" id="vote-board">
+          <div style="text-align:center;color:#aaa;padding:24px;">載入中...</div>
+        </div>
+
+        <div style="margin-top:1rem;">
+          <h4 style="font-size:.85rem;color:var(--bark);margin-bottom:.5rem;">📋 等候名單(投票後自動進入)</h4>
+          <div id="vote-waitlist-list">
+            <div style="text-align:center;color:#aaa;padding:16px;font-size:.7rem;">載入中...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- ═══════════ 🗳️ 品牌投票 pane END ═══════════ -->
+
 </div>
 
 <div class="dash-modal-mask" id="dash-modal">
@@ -1597,7 +1673,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh};
   if(map[name])map[name]();
 }
 
@@ -4828,6 +4904,104 @@ async function cdbMigrate(){
     }
   }catch(e){ showToast('❌ 網路錯誤'); }
 }
+
+// ═══════════ 🗳️ 品牌投票管理 v1.0 (2026/05/06) ═══════════
+async function voteRefresh(){
+  document.getElementById('vote-board').innerHTML = '<div style="text-align:center;color:#aaa;padding:24px;">載入中...</div>';
+  document.getElementById('vote-waitlist-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:16px;font-size:.7rem;">載入中...</div>';
+  try{
+    const [results, waitlist] = await Promise.all([
+      fetch(GAS + '?action=vote_get_results&t=' + Date.now()).then(r=>r.json()),
+      fetch(GAS + '?action=vote_get_waitlist&t=' + Date.now()).then(r=>r.json())
+    ]);
+    voteRenderResults(results);
+    voteRenderWaitlist(waitlist);
+  }catch(e){
+    showToast('投票資料載入失敗:' + e.message);
+    document.getElementById('vote-board').innerHTML = '<div style="text-align:center;color:#c00;padding:24px;">載入失敗</div>';
+  }
+}
+
+function voteRenderResults(d){
+  if(!d || !d.ok){
+    document.getElementById('vote-board').innerHTML = '<div style="text-align:center;color:#aaa;padding:24px;">無資料</div>';
+    document.getElementById('vote-total').textContent = '0';
+    document.getElementById('vote-leader').textContent = '-';
+    return;
+  }
+  document.getElementById('vote-total').textContent = d.total || 0;
+  if(!d.results || d.results.length === 0){
+    document.getElementById('vote-board').innerHTML = '<div style="text-align:center;color:#aaa;padding:24px;">尚無投票</div>';
+    document.getElementById('vote-leader').textContent = '-';
+    return;
+  }
+  const sorted = [...d.results].sort((a,b)=>(b.votes||0)-(a.votes||0));
+  const leader = sorted[0];
+  document.getElementById('vote-leader').textContent = (leader && leader.votes>0) ? (leader.zh || '-') : '-';
+  const max = Math.max(...sorted.map(r=>r.votes||0), 1);
+  const html = sorted.map((r,i)=>{
+    const rankCls = i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const pctNum = max>0 ? Math.round((r.votes||0)/max*100) : 0;
+    return `<div class="vote-row">
+      <div class="vote-rank ${rankCls}">${i+1}</div>
+      <div class="vote-name">
+        <span class="zh">${escHtml(r.zh||'')}</span>
+        <span class="en">${escHtml(r.en||'')}</span>
+        ${r.recommend?'<span class="star">⭐</span>':''}
+      </div>
+      <div class="vote-bar"><div class="vote-bar-fill" style="width:${pctNum}%"></div></div>
+      <div class="vote-pct">${escHtml(r.percent||'0%')}</div>
+      <div class="vote-cnt">${r.votes||0} 票</div>
+    </div>`;
+  }).join('');
+  document.getElementById('vote-board').innerHTML = html;
+}
+
+function voteRenderWaitlist(d){
+  if(!d || !d.ok){ document.getElementById('vote-waitlist').textContent = '0'; return; }
+  document.getElementById('vote-waitlist').textContent = d.count || 0;
+  if(!d.list || d.list.length === 0){
+    document.getElementById('vote-waitlist-list').innerHTML = '<div style="text-align:center;color:#aaa;padding:16px;font-size:.7rem;">尚無名單</div>';
+    return;
+  }
+  const html = d.list.slice(0,50).map(r=>{
+    let t = '-';
+    try{ t = r.time ? new Date(r.time).toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit'}) : '-'; }catch(_){}
+    return `<div class="waitlist-row">
+      <div class="time">${t}</div>
+      <div class="name">${escHtml(r.name||'-')}</div>
+      <div class="phone">${escHtml(r.phone||'-')}</div>
+      <div class="vote-for">${escHtml(r.candidate||'-')}</div>
+    </div>`;
+  }).join('');
+  const more = d.list.length>50 ? `<div style="text-align:center;color:#aaa;font-size:.6rem;padding:.5rem;">僅顯示前 50 筆,完整名單請點匯出</div>` : '';
+  document.getElementById('vote-waitlist-list').innerHTML = html + more;
+}
+
+function voteExportWaitlist(){
+  fetch(GAS + '?action=vote_get_waitlist&t=' + Date.now())
+    .then(r=>r.json())
+    .then(d=>{
+      if(!d.ok || !d.list || !d.list.length){ showToast('無資料可匯出'); return; }
+      const rows = d.list.map(r=>{
+        let t = '';
+        try{ t = r.time ? new Date(r.time).toLocaleString('zh-TW') : ''; }catch(_){}
+        const safe = (s)=>String(s||'').replace(/"/g,'""');
+        return `"${safe(t)}","${safe(r.name)}","${safe(r.phone)}","${safe(r.candidate)}","${safe(r.tag)}"`;
+      });
+      const csv = '\ufeff加入時間,姓名,電話,投票候選,標籤\n' + rows.join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `品牌投票_等候名單_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('已匯出 ' + d.list.length + ' 筆名單');
+    })
+    .catch(e=>showToast('匯出失敗:' + e.message));
+}
+// ═══════════ 🗳️ 品牌投票管理 END ═══════════
 </script>
 <!-- ═══ 三模組擴充 JS END ═══ -->
 </body>
