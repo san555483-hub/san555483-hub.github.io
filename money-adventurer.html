@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <style>
 /* ═══════════════════════════════════════════════
-   錢途冒險者 落地頁 v1.2.2
+   錢途冒險者 落地頁 v1.3.1
    ═══════════════════════════════════════════════ */
 
 /* ── 設計 Token ──────────────────────────── */
@@ -156,10 +156,25 @@ button { font-family: inherit; cursor: pointer; border: none; }
 .hero-inner {
   position: relative;
   z-index: 2;
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
-  text-align: center;
+  width: 100%;
   color: white;
+  display: flex;
+  justify-content: flex-end;
+}
+.hero-content {
+  width: 55%;
+  text-align: left;
+  padding-right: 20px;
+}
+@media (max-width: 968px) {
+  .hero-inner { justify-content: center; }
+  .hero-content {
+    width: 100%;
+    text-align: center;
+    padding-right: 0;
+  }
 }
 .hero-badge {
   display: inline-block;
@@ -226,27 +241,35 @@ button { font-family: inherit; cursor: pointer; border: none; }
   margin-top: 4px;
 }
 
-/* Hero 主視覺背景圖(A 版寫實) */
+/* Hero 主視覺背景圖(電影海報式) */
 .hero-bg-image {
   position: absolute;
   inset: 0;
   background-image: url('hero-main.png');
   background-size: cover;
-  background-position: center 30%;
+  background-position: center;
   background-repeat: no-repeat;
   z-index: 0;
-  opacity: 0.85;
 }
 .hero-bg-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    180deg,
-    rgba(27, 38, 59, 0.5) 0%,
+    90deg,
+    rgba(27, 38, 59, 0.1) 0%,
     rgba(27, 38, 59, 0.3) 40%,
-    rgba(27, 38, 59, 0.85) 100%
+    rgba(27, 38, 59, 0.75) 100%
   );
   z-index: 1;
+}
+@media (max-width: 968px) {
+  .hero-bg-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(27, 38, 59, 0.4) 0%,
+      rgba(27, 38, 59, 0.7) 100%
+    );
+  }
 }
 
 /* B 版過渡橫幅 — 內頁第二大張 */
@@ -319,17 +342,25 @@ button { font-family: inherit; cursor: pointer; border: none; }
 }
 
 /* ═══════════════════════════════════════
-   Hero 頂部 Logo
+   Hero 頂部 Logo(夜空融入版)
    ═══════════════════════════════════════ */
-.hero-logo {
-  width: 140px;
-  height: auto;
-  margin: 0 auto 24px;
-  filter: drop-shadow(0 4px 20px rgba(244, 162, 97, 0.4));
+.hero-logo-wrap {
   display: block;
+  margin: 0 auto 28px;
+  max-width: 280px;
+  text-align: center;
+  position: relative;
+}
+.hero-logo {
+  width: 100%;
+  height: auto;
+  max-width: 260px;
+  display: block;
+  margin: 0 auto;
 }
 @media (max-width: 768px) {
-  .hero-logo { width: 110px; }
+  .hero-logo-wrap { max-width: 220px; margin-bottom: 20px; }
+  .hero-logo { max-width: 200px; }
 }
 
 /* ═══════════════════════════════════════
@@ -341,29 +372,23 @@ button { font-family: inherit; cursor: pointer; border: none; }
 }
 .feature-card-image {
   width: 100%;
-  height: 240px;
-  background: #FFF8E7;
+  height: 280px;
   border-bottom: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
   position: relative;
 }
 .feature-card-image img {
-  max-width: 90%;
-  max-height: 220px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 .feature-card.has-image .feature-card-content {
   padding: 28px 32px 36px;
 }
 @media (max-width: 768px) {
-  .feature-card-image { height: 200px; }
-  .feature-card-image img { max-height: 180px; }
+  .feature-card-image { height: 220px; }
 }
 
 /* ═══════════════════════════════════════
@@ -1080,32 +1105,33 @@ button { font-family: inherit; cursor: pointer; border: none; }
   <div class="hero-bg-overlay"></div>
 
   <div class="hero-inner">
-    <img src="logo.png" alt="錢途冒險者 Money Adventurer" class="hero-logo">
-    <div class="hero-badge">🗺️ 親子理財冒險 × 限量早鳥開放中</div>
-    <h1>
-      孩子的<span class="highlight">第一張</span><br>
-      理財地圖
-    </h1>
-    <p class="hero-sub" id="hero-sub-text">
-      <!-- 由 TEXTS 注入 -->
-    </p>
-    <div class="hero-cta-group">
-      <a href="#signup" class="btn btn-primary">🎯 早鳥搶先體驗</a>
-      <a href="#features" class="btn btn-secondary" style="background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.3);">了解更多</a>
-    </div>
+    <div class="hero-content">
+      <div class="hero-badge">🗺️ 親子理財冒險 × 限量早鳥開放中</div>
+      <h1>
+        孩子的<span class="highlight">第一張</span><br>
+        理財地圖
+      </h1>
+      <p class="hero-sub" id="hero-sub-text">
+        <!-- 由 TEXTS 注入 -->
+      </p>
+      <div class="hero-cta-group">
+        <a href="#signup" class="btn btn-primary">🎯 早鳥搶先體驗</a>
+        <a href="#features" class="btn btn-secondary" style="background:rgba(255,255,255,0.1);color:white;border-color:rgba(255,255,255,0.3);">了解更多</a>
+      </div>
 
-    <div class="hero-stats">
-      <div class="hero-stat-item">
-        <span class="hero-stat-num">12</span>
-        <span class="hero-stat-label">關親子任務</span>
-      </div>
-      <div class="hero-stat-item">
-        <span class="hero-stat-num">3</span>
-        <span class="hero-stat-label">隻親子限定貓</span>
-      </div>
-      <div class="hero-stat-item">
-        <span class="hero-stat-num" id="stat-spots">30</span>
-        <span class="hero-stat-label">早鳥限額</span>
+      <div class="hero-stats">
+        <div class="hero-stat-item">
+          <span class="hero-stat-num">12</span>
+          <span class="hero-stat-label">關親子任務</span>
+        </div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-num">3</span>
+          <span class="hero-stat-label">隻親子限定貓</span>
+        </div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-num" id="stat-spots">30</span>
+          <span class="hero-stat-label">早鳥限額</span>
+        </div>
       </div>
     </div>
   </div>
@@ -1330,7 +1356,7 @@ button { font-family: inherit; cursor: pointer; border: none; }
 
 <script>
 /* ═══════════════════════════════════════════════
-   錢途冒險者 落地頁 v1.2.2 - 邏輯層
+   錢途冒險者 落地頁 v1.3.1 - 邏輯層
    架構:CONFIG / BUSINESS_CONFIG / TEXTS 三層分離
    ═══════════════════════════════════════════════ */
 
@@ -1670,7 +1696,7 @@ window.addEventListener('scroll', () => {
   }
 });
 
-console.log('[錢途冒險者落地頁 v1.2.2] Ready ✅');
+console.log('[錢途冒險者落地頁 v1.3.1] Ready ✅');
 </script>
 
 </body>
