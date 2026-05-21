@@ -170,30 +170,26 @@
         <div class="hint">月結對帳款項將匯入此帳戶</div>
       </div>
       <div class="field">
-        <label class="label">LINE Pay 手機轉帳號碼</label>
+        <label class="label">LINE Pay 收款手機號碼</label>
         <input type="text" id="linepay" placeholder="例：0912-345-678">
-        <div class="hint">UNI 將優先以 LINE Pay 轉帳以節省雙方手續費</div>
+        <div class="hint">UNI 將優先以 LINE Pay 轉帳節省雙方手續費</div>
       </div>
       <div class="field">
         <label class="label">其他收款方式</label>
-        <input type="text" id="pay_other" placeholder="例：Apple Pay、街口支付、現金、其他">
+        <input type="text" id="pay_other" placeholder="例：Apple Pay、街口支付、現金">
       </div>
       <div class="field">
         <label class="label">財務備註</label>
-        <textarea id="pay_note" placeholder="收款偏好、結算特殊需求、發票開立方式..."></textarea>
+        <textarea id="pay_note" placeholder="收款偏好、結算特殊需求..."></textarea>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title">品牌與商品</div>
+      <div class="section-title">品牌介紹</div>
       <div class="field">
         <label class="label">品牌介紹</label>
-        <textarea id="brand_intro" placeholder="簡述貴公司品牌特色、主打商品類型..."></textarea>
-      </div>
-      <div class="field">
-        <label class="label">初步上架商品清單</label>
-        <textarea id="init_products" placeholder="例：&#10;1. 護髮油 200ml NT$800&#10;2. 修護精華液 100ml NT$1200&#10;（每行一個商品，含名稱、規格、售價）"></textarea>
-        <div class="hint">送審後仍需逐一審查方可正式上架</div>
+        <textarea id="brand_intro" placeholder="簡述貴公司品牌特色、主打商品類型、合作期待..."></textarea>
+        <div class="hint">合作核准後，請至廠商後台逐一申請商品上架</div>
       </div>
     </div>
 
@@ -239,7 +235,7 @@ function submitForm() {
   data.pay_other = document.getElementById('pay_other').value.trim();
   data.pay_note = document.getElementById('pay_note').value.trim();
   data.brand_intro = document.getElementById('brand_intro').value.trim();
-  data.init_products = document.getElementById('init_products').value.trim();
+  data.init_products = '';
   
   // Email 格式驗證
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
