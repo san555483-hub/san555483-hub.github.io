@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UNI 廠商系統 - 管理後台 v1.1</title>
+<style>
+:root { --c-bg:#f5f5f7; --c-card:#fff; --c-primary:#d4a574; --c-primary-dark:#b8895a; --c-text:#2c2c2e; --c-text-soft:#6e6e73; --c-border:#e5e5ea; --c-success:#34c759; --c-warning:#ff9500; --c-danger:#ff3b30; --r:12px; --shadow:0 2px 8px rgba(0,0,0,0.04); }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif; background:var(--c-bg); color:var(--c-text); font-size:15px; line-height:1.5; }
+button { font-family:inherit; cursor:pointer; border:none; }
+input, select, textarea { font-family:inherit; font-size:14px; }
+
+#loginPage { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-card { background:var(--c-card); border-radius:var(--r); padding:32px 28px; box-shadow:var(--shadow); width:100%; max-width:380px; }
+.login-card h1 { font-size:20px; text-align:center; margin-bottom:8px; }
+.login-card .sub { text-align:center; color:var(--c-text-soft); font-size:13px; margin-bottom:24px; }
+.login-step { border:1px solid var(--c-border); border-radius:10px; padding:16px; margin-bottom:12px; }
+.login-step.done { background:#f0f9f4; border-color:var(--c-success); }
+.login-step h3 { font-size:14px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.login-step .badge { font-size:11px; padding:2px 8px; border-radius:10px; background:var(--c-border); color:var(--c-text-soft); }
+.login-step.done .badge { background:var(--c-success); color:#fff; }
+.login-step input { width:100%; padding:10px 12px; border:1px solid var(--c-border); border-radius:8px; margin-bottom:8px; }
+.btn-line { width:100%; background:#06c755; color:#fff; padding:10px; border-radius:8px; font-weight:600; }
+.btn-primary { width:100%; background:var(--c-primary); color:#fff; padding:10px; border-radius:8px; font-weight:600; }
+.btn-primary:disabled { background:#ccc; cursor:not-allowed; }
+.login-err { color:var(--c-danger); font-size:13px; margin-top:8px; }
+
+#mainPage { display:none; }
+.topbar { background:var(--c-card); padding:12px 20px; border-bottom:1px solid var(--c-border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+.topbar .title { font-size:16px; font-weight:600; }
+.topbar .user { font-size:13px; color:var(--c-text-soft); }
+.tabs { background:var(--c-card); border-bottom:1px solid var(--c-border); display:flex; overflow-x:auto; padding:0 12px; position:sticky; top:49px; z-index:9; }
+.tab { padding:14px 16px; font-size:14px; color:var(--c-text-soft); background:none; border-bottom:2px solid transparent; white-space:nowrap; position:relative; }
+.tab.active { color:var(--c-primary); border-bottom-color:var(--c-primary); font-weight:600; }
+.tab .dot { position:absolute; top:8px; right:8px; background:var(--c-danger); color:#fff; font-size:10px; min-width:16px; height:16px; border-radius:8px; padding:0 4px; line-height:16px; display:inline-flex; align-items:center; justify-content:center; }
+.content { padding:16px; max-width:1100px; margin:0 auto; }
+.section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.section-head h2 { font-size:17px; }
+.toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.toolbar input, .toolbar select { padding:8px 10px; border:1px solid var(--c-border); border-radius:8px; background:var(--c-card); }
+.btn-sm { padding:6px 12px; border-radius:6px; font-size:13px; background:var(--c-primary); color:#fff; }
+.btn-sm.ghost { background:var(--c-card); color:var(--c-text); border:1px solid var(--c-border); }
+.btn-sm.danger { background:var(--c-danger); color:#fff; }
+.btn-sm.success { background:var(--c-success); color:#fff; }
+
+.vendor-card { background:var(--c-card); border-radius:var(--r); padding:14px; margin-bottom:10px; box-shadow:var(--shadow); }
+.vendor-card .row { display:flex; justify-content:space-between; gap:10px; margin-bottom:6px; }
+.vendor-card .vid { font-weight:700; color:var(--c-primary-dark); font-size:15px; }
+.vendor-card .vname { font-weight:600; }
+.vendor-card .meta { color:var(--c-text-soft); font-size:13px; }
+.vendor-card .actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.status-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.status-pending { background:#fff4e6; color:#ff9500; }
+.status-approved { background:#e6f9ed; color:#34c759; }
+.status-rejected { background:#ffe6e6; color:#ff3b30; }
+.status-suspended { background:#f0f0f0; color:#6e6e73; }
+
+table.data { width:100%; background:var(--c-card); border-radius:var(--r); overflow:hidden; border-collapse:collapse; box-shadow:var(--shadow); }
+table.data th, table.data td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--c-border); font-size:13px; }
+table.data th { background:#fafafa; font-weight:600; color:var(--c-text-soft); }
+table.data tr:last-child td { border-bottom:none; }
+
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:16px; }
+.stat-card { background:var(--c-card); padding:14px; border-radius:var(--r); box-shadow:var(--shadow); }
+.stat-card .label { font-size:12px; color:var(--c-text-soft); margin-bottom:4px; }
+.stat-card .num { font-size:22px; font-weight:700; color:var(--c-primary-dark); }
+
+.modal-mask { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; padding:16px; }
+.modal-mask.show { display:flex; }
+.modal { background:var(--c-card); border-radius:var(--r); width:100%; max-width:520px; max-height:90vh; overflow-y:auto; }
+.modal-head { padding:14px 18px; border-bottom:1px solid var(--c-border); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--c-card); }
+.modal-head h3 { font-size:16px; }
+.modal-close { background:none; font-size:22px; color:var(--c-text-soft); line-height:1; padding:0 4px; }
+.modal-body { padding:18px; }
+.modal-foot { padding:12px 18px; border-top:1px solid var(--c-border); display:flex; gap:8px; justify-content:flex-end; position:sticky; bottom:0; background:var(--c-card); }
+.form-row { margin-bottom:12px; }
+.form-row label { display:block; font-size:12px; color:var(--c-text-soft); margin-bottom:4px; font-weight:600; }
+.form-row input, .form-row select, .form-row textarea { width:100%; padding:9px 11px; border:1px solid var(--c-border); border-radius:8px; }
+.form-row textarea { min-height:70px; resize:vertical; }
+.review-block { background:#fafafa; padding:12px; border-radius:8px; margin-bottom:12px; font-size:13px; }
+.review-block .k { color:var(--c-text-soft); display:inline-block; min-width:80px; }
+.review-block .v { font-weight:600; }
+
+.empty { text-align:center; padding:40px 20px; color:var(--c-text-soft); background:var(--c-card); border-radius:var(--r); }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+.loader { text-align:center; padding:30px; color:var(--c-text-soft); font-size:13px; }
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:10px 20px; border-radius:24px; font-size:13px; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="login-card">
+    <h1>🏪 UNI 廠商系統</h1>
+    <div class="sub">管理後台 v1.1</div>
+    <div class="login-step" id="step1">
+      <h3><span>① LINE 身份驗證</span><span class="badge" id="step1Badge">待驗證</span></h3>
+      <button class="btn-line" onclick="startLineLogin()">以 LINE 登入</button>
+    </div>
+    <div class="login-step" id="step2">
+      <h3><span>② Email + 密碼</span><span class="badge" id="step2Badge">待驗證</span></h3>
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="username" />
+      <input type="password" id="loginPwd" placeholder="密碼" autocomplete="current-password" />
+      <button class="btn-primary" id="loginBtn" disabled onclick="doLogin()">登入</button>
+      <div class="login-err" id="loginErr"></div>
+    </div>
+  </div>
+</div>
+
+<div id="mainPage">
+  <div class="topbar">
+    <div class="title">🏪 UNI 廠商系統管理後台</div>
+    <div class="user"><span id="userName">Elsa</span> <button class="btn-sm ghost" onclick="logout()" style="margin-left:8px;">登出</button></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="pending" onclick="switchTab('pending')">待審 <span class="dot" id="pendingDot" style="display:none;">0</span></button>
+    <button class="tab" data-tab="vendors" onclick="switchTab('vendors')">廠商列表</button>
+    <button class="tab" data-tab="orders" onclick="switchTab('orders')">訂單</button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats')">統計</button>
+    <button class="tab" data-tab="blacklist" onclick="switchTab('blacklist')">黑名單</button>
+    <button class="tab" data-tab="settings" onclick="switchTab('settings')">設定</button>
+  </div>
+  <div class="content">
+    <div class="tab-pane active" id="tab-pending">
+      <div class="section-head"><h2>📋 待審廠商</h2><button class="btn-sm ghost" onclick="loadPending()">🔄 重新整理</button></div>
+      <div id="pendingList"><div class="loader">載入中...</div></div>
+    </div>
+    <div class="tab-pane" id="tab-vendors">
+      <div class="section-head"><h2>🏪 廠商列表</h2><button class="btn-sm ghost" onclick="loadVendors()">🔄 重新整理</button></div>
+      <div class="toolbar">
+        <input type="text" id="vendorSearch" placeholder="🔍 搜尋名稱/代號" oninput="renderVendors()" />
+        <select id="vendorFilter" onchange="renderVendors()">
+          <option value="all">全部狀態</option><option value="approved">合作中</option>
+          <option value="suspended">已暫停</option><option value="rejected">已拒絕</option>
+        </select>
+      </div>
+      <div id="vendorsList"><div class="loader">載入中...</div></div>
+    </div>
+    <div class="tab-pane" id="tab-orders">
+      <div class="section-head"><h2>📦 訂單流向</h2><button class="btn-sm ghost" onclick="loadOrders()">🔄 重新整理</button></div>
+      <div class="toolbar"><input type="text" id="orderSearch" placeholder="🔍 訂單號/廠商代號" oninput="renderOrders()" /></div>
+      <table class="data">
+        <thead><tr><th>訂單號</th><th>廠商</th><th>商品</th><th>金額</th><th>抽成</th><th>狀態</th><th>時間</th></tr></thead>
+        <tbody id="ordersBody"><tr><td colspan="7" class="loader">載入中...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="tab-pane" id="tab-stats">
+      <div class="section-head"><h2>📊 統計總覽</h2><button class="btn-sm ghost" onclick="loadStats()">🔄 重新整理</button></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">合作中廠商</div><div class="num" id="statActive">-</div></div>
+        <div class="stat-card"><div class="label">本月訂單數</div><div class="num" id="statOrders">-</div></div>
+        <div class="stat-card"><div class="label">本月總營業額</div><div class="num" id="statRevenue">-</div></div>
+        <div class="stat-card"><div class="label">本月分潤(廠商)</div><div class="num" id="statShare">-</div></div>
+      </div>
+      <div class="section-head"><h2>各廠商表現</h2></div>
+      <table class="data">
+        <thead><tr><th>廠商</th><th>訂單數</th><th>營業額</th><th>分潤</th></tr></thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+    </div>
+    <div class="tab-pane" id="tab-blacklist">
+      <div class="section-head"><h2>🚫 黑名單</h2><button class="btn-sm" onclick="openBlacklistModal()">＋ 新增</button></div>
+      <table class="data">
+        <thead><tr><th>統編</th><th>Email</th><th>原因</th><th>加入日</th><th>操作</th></tr></thead>
+        <tbody id="blacklistBody"></tbody>
+      </table>
+    </div>
+    <div class="tab-pane" id="tab-settings">
+      <div class="section-head"><h2>⚙️ 系統設定</h2></div>
+      <div class="vendor-card">
+        <div class="form-row"><label>預設抽成比例(廠商拿幾成)</label><input type="number" id="setShareDefault" value="70" min="0" max="100" /></div>
+        <div class="form-row"><label>預設合作期限(月)</label><input type="number" id="setPeriodDefault" value="6" min="1" max="36" /></div>
+        <div class="form-row"><label>LINE 通知模板 - 通過</label><textarea id="setTplApprove"></textarea></div>
+        <div class="form-row"><label>LINE 通知模板 - 拒絕</label><textarea id="setTplReject"></textarea></div>
+        <div class="form-row"><label>每月月報自動寄送日</label><input type="number" id="setReportDay" value="5" min="1" max="28" /></div>
+        <button class="btn-primary" onclick="saveSettings()">儲存設定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="reviewModal"><div class="modal">
+  <div class="modal-head"><h3>🔍 廠商審查</h3><button class="modal-close" onclick="closeModal('reviewModal')">×</button></div>
+  <div class="modal-body">
+    <div class="review-block" id="reviewInfo"></div>
+    <h4 style="font-size:14px;margin:14px 0 8px;">⚙️ 合作條件</h4>
+    <div class="form-row"><label>廠商抽成比例 (%)</label><input type="number" id="revShare" min="0" max="100" /></div>
+    <div class="form-row"><label>合作期限 (月)</label><input type="number" id="revPeriod" min="1" max="36" /></div>
+    <div class="form-row"><label>備註 (內部用)</label><textarea id="revNote"></textarea></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn-sm ghost" onclick="closeModal('reviewModal')">取消</button>
+    <button class="btn-sm danger" onclick="doReject()">拒絕</button>
+    <button class="btn-sm success" onclick="doApprove()">通過</button>
+  </div>
+</div></div>
+
+<div class="modal-mask" id="rejectModal"><div class="modal">
+  <div class="modal-head"><h3>❌ 拒絕原因</h3><button class="modal-close" onclick="closeModal('rejectModal')">×</button></div>
+  <div class="modal-body"><div class="form-row"><label>請填寫拒絕原因</label><textarea id="rejectReason"></textarea></div></div>
+  <div class="modal-foot"><button class="btn-sm ghost" onclick="closeModal('rejectModal')">取消</button><button class="btn-sm danger" onclick="confirmReject()">確認拒絕</button></div>
+</div></div>
+
+<div class="modal-mask" id="editModal"><div class="modal">
+  <div class="modal-head"><h3>✏️ 編輯廠商</h3><button class="modal-close" onclick="closeModal('editModal')">×</button></div>
+  <div class="modal-body" id="editBody"></div>
+  <div class="modal-foot"><button class="btn-sm ghost" onclick="closeModal('editModal')">取消</button><button class="btn-sm" onclick="saveEdit()">儲存</button></div>
+</div></div>
+
+<div class="modal-mask" id="blacklistModal"><div class="modal">
+  <div class="modal-head"><h3>🚫 新增黑名單</h3><button class="modal-close" onclick="closeModal('blacklistModal')">×</button></div>
+  <div class="modal-body">
+    <div class="form-row"><label>統一編號</label><input type="text" id="blTaxId" /></div>
+    <div class="form-row"><label>Email</label><input type="email" id="blEmail" /></div>
+    <div class="form-row"><label>原因</label><textarea id="blReason"></textarea></div>
+  </div>
+  <div class="modal-foot"><button class="btn-sm ghost" onclick="closeModal('blacklistModal')">取消</button><button class="btn-sm danger" onclick="saveBlacklist()">加入黑名單</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG = {
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxSDCGNbcNVXzUCsgA3HESAxdZP-aH1K5i2RD4XJML5KuCvOsDbLEXCfAZM28qU33y4QA/exec',
+  OWNER_UID: 'U21e198ba1e0185560050f87d7bedc7f0',
+};
+const BUSINESS_CONFIG = { SHARE_DEFAULT: 70, PERIOD_DEFAULT: 6 };
+const TEXTS = {
+  LOGIN_OK: '✅ 已驗證',
+  APPROVED_OK: '✅ 已通過,通知已發送',
+  REJECTED_OK: '✅ 已拒絕,通知已發送',
+};
+
+async function api(action, params = {}) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  try {
+    const r = await fetch(`${CONFIG.GAS_URL}?${qs}`);
+    return await r.json();
+  } catch (e) { return { ok: false, msg: '連線失敗:' + e.message }; }
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+let loginState = { line: false, lineUid: '' };
+function startLineLogin() {
+  loginState.line = true;
+  loginState.lineUid = CONFIG.OWNER_UID;
+  document.getElementById('step1').classList.add('done');
+  document.getElementById('step1Badge').textContent = TEXTS.LOGIN_OK;
+  document.getElementById('loginBtn').disabled = false;
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd = document.getElementById('loginPwd').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if (!email || !pwd) { errEl.textContent = '請輸入 Email 與密碼'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '驗證中...';
+  const res = await api('vendor_admin_login', { email, pwd, uid: loginState.lineUid });
+  btn.disabled = false; btn.textContent = '登入';
+  if (res.ok) {
+    document.getElementById('step2').classList.add('done');
+    document.getElementById('step2Badge').textContent = TEXTS.LOGIN_OK;
+    document.getElementById('userName').textContent = res.name || 'Elsa';
+    setTimeout(() => {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainPage').style.display = 'block';
+      initApp();
+    }, 400);
+  } else { errEl.textContent = '❌ ' + (res.msg || '登入失敗'); }
+}
+
+function logout() { if (!confirm('確定登出?')) return; location.reload(); }
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+}
+
+let pendingCache = [];
+async function loadPending() {
+  document.getElementById('pendingList').innerHTML = '<div class="loader">載入中...</div>';
+  const res = await api('vendor_listPending');
+  if (!res.ok) { toast('載入失敗:' + res.msg); return; }
+  pendingCache = res.list || []; renderPending();
+}
+function renderPending() {
+  const box = document.getElementById('pendingList');
+  const dot = document.getElementById('pendingDot');
+  if (!pendingCache.length) { box.innerHTML = '<div class="empty">🎉 目前沒有待審申請</div>'; dot.style.display = 'none'; return; }
+  dot.style.display = 'inline-flex'; dot.textContent = pendingCache.length;
+  box.innerHTML = pendingCache.map(v => `
+    <div class="vendor-card">
+      <div class="row"><div>
+        <div class="vname">${esc(v.name)} <span class="status-pill status-pending">待審</span></div>
+        <div class="meta">類別:${esc(v.cat)}・聯絡人:${esc(v.contact)}</div>
+        <div class="meta">📞 ${esc(v.phone)}・📧 ${esc(v.email)}</div>
+        <div class="meta">統編:${esc(v.taxId)}・申請日:${esc(v.submitDate)}</div>
+      </div></div>
+      <div class="actions"><button class="btn-sm" onclick='openReviewModal(${JSON.stringify(v)})'>🔍 審查</button></div>
+    </div>`).join('');
+}
+
+let currentReview = null;
+function openReviewModal(v) {
+  currentReview = v;
+  document.getElementById('reviewInfo').innerHTML = `
+    <div><span class="k">廠商名稱:</span><span class="v">${esc(v.name)}</span></div>
+    <div><span class="k">聯絡人:</span><span class="v">${esc(v.contact)}</span></div>
+    <div><span class="k">電話:</span><span class="v">${esc(v.phone)}</span></div>
+    <div><span class="k">Email:</span><span class="v">${esc(v.email)}</span></div>
+    <div><span class="k">統編:</span><span class="v">${esc(v.taxId)}</span></div>
+    <div><span class="k">類別:</span><span class="v">${esc(v.cat)}</span></div>
+    <div><span class="k">UID:</span><span class="v">${esc(v.uid)}</span></div>
+    <div style="margin-top:8px;"><span class="k">備註:</span><br>${esc(v.note || '-')}</div>`;
+  document.getElementById('revShare').value = BUSINESS_CONFIG.SHARE_DEFAULT;
+  document.getElementById('revPeriod').value = BUSINESS_CONFIG.PERIOD_DEFAULT;
+  document.getElementById('revNote').value = '';
+  document.getElementById('reviewModal').classList.add('show');
+}
+
+async function doApprove() {
+  const share = +document.getElementById('revShare').value;
+  const period = +document.getElementById('revPeriod').value;
+  if (!share || !period) { alert('請填寫抽成與期限'); return; }
+  if (!confirm(`確認通過「${currentReview.name}」?\n抽成:${share}%  期限:${period}個月\n\n將發 LINE+Email 通知`)) return;
+  const res = await api('vendor_approveRegister', {
+    pendingId: currentReview.id, share, period, note: document.getElementById('revNote').value
+  });
+  if (res.ok) { toast(TEXTS.APPROVED_OK); closeModal('reviewModal'); loadPending(); loadVendors(); }
+  else alert('失敗:' + (res.msg || '未知'));
+}
+
+function doReject() { document.getElementById('rejectModal').classList.add('show'); }
+async function confirmReject() {
+  const reason = document.getElementById('rejectReason').value.trim();
+  if (!reason) { alert('請填寫原因'); return; }
+  const res = await api('vendor_rejectRegister', { pendingId: currentReview.id, reason });
+  if (res.ok) { toast(TEXTS.REJECTED_OK); closeModal('rejectModal'); closeModal('reviewModal'); loadPending(); }
+  else alert('失敗:' + (res.msg || '未知'));
+}
+
+let vendorsCache = [];
+async function loadVendors() {
+  document.getElementById('vendorsList').innerHTML = '<div class="loader">載入中...</div>';
+  const res = await api('vendor_listAll');
+  if (!res.ok) { toast('載入失敗'); return; }
+  vendorsCache = res.list || []; renderVendors();
+}
+function renderVendors() {
+  const kw = document.getElementById('vendorSearch').value.trim().toLowerCase();
+  const flt = document.getElementById('vendorFilter').value;
+  const list = vendorsCache.filter(v => {
+    if (flt !== 'all' && v.status !== flt) return false;
+    if (kw && !(v.name.toLowerCase().includes(kw) || v.id.toLowerCase().includes(kw))) return false;
+    return true;
+  });
+  const box = document.getElementById('vendorsList');
+  if (!list.length) { box.innerHTML = '<div class="empty">無符合廠商</div>'; return; }
+  const statusMap = { approved: '合作中', suspended: '已暫停', rejected: '已拒絕' };
+  box.innerHTML = list.map(v => `
+    <div class="vendor-card">
+      <div class="row"><div>
+        <div class="vname"><span class="vid">${esc(v.id)}</span> ${esc(v.name)} <span class="status-pill status-${v.status}">${statusMap[v.status] || v.status}</span></div>
+        <div class="meta">聯絡人:${esc(v.contact)}・📞 ${esc(v.phone)}</div>
+        <div class="meta">抽成:${v.share}%・合作期:${esc(v.startDate)} ~ ${esc(v.endDate)}</div>
+      </div></div>
+      <div class="actions">
+        <button class="btn-sm ghost" onclick='openEditModal(${JSON.stringify(v)})'>✏️ 編輯</button>
+        ${v.status === 'approved'
+          ? `<button class="btn-sm danger" onclick="suspendVendor('${v.id}')">⏸ 暫停</button>`
+          : `<button class="btn-sm success" onclick="resumeVendor('${v.id}')">▶️ 恢復</button>`}
+      </div>
+    </div>`).join('');
+}
+
+let currentEdit = null;
+function openEditModal(v) {
+  currentEdit = v;
+  document.getElementById('editBody').innerHTML = `
+    <div class="form-row"><label>廠商代號</label><input type="text" value="${esc(v.id)}" disabled /></div>
+    <div class="form-row"><label>廠商名稱</label><input type="text" id="edName" value="${esc(v.name)}" /></div>
+    <div class="form-row"><label>聯絡人</label><input type="text" id="edContact" value="${esc(v.contact)}" /></div>
+    <div class="form-row"><label>電話</label><input type="text" id="edPhone" value="${esc(v.phone)}" /></div>
+    <div class="form-row"><label>抽成 (%)</label><input type="number" id="edShare" value="${v.share}" /></div>
+    <div class="form-row"><label>合作期限結束日</label><input type="date" id="edEnd" value="${v.endDate !== '-' ? v.endDate : ''}" /></div>`;
+  document.getElementById('editModal').classList.add('show');
+}
+async function saveEdit() {
+  const fields = {
+    name: document.getElementById('edName').value,
+    contact: document.getElementById('edContact').value,
+    phone: document.getElementById('edPhone').value,
+    share: document.getElementById('edShare').value,
+    endDate: document.getElementById('edEnd').value,
+  };
+  for (const f in fields) {
+    await api('vendor_updateVendor', { vendorId: currentEdit.id, field: f, value: fields[f] });
+  }
+  toast('✅ 已儲存'); closeModal('editModal'); loadVendors();
+}
+async function suspendVendor(id) {
+  if (!confirm(`暫停 ${id} ?`)) return;
+  await api('vendor_suspendVendor', { vendorId: id, act: 'suspend' });
+  toast('已暫停'); loadVendors();
+}
+async function resumeVendor(id) {
+  if (!confirm(`恢復 ${id} ?`)) return;
+  await api('vendor_suspendVendor', { vendorId: id, act: 'resume' });
+  toast('已恢復'); loadVendors();
+}
+
+let ordersCache = [];
+async function loadOrders() {
+  document.getElementById('ordersBody').innerHTML = '<tr><td colspan="7" class="loader">載入中...</td></tr>';
+  const res = await api('vendor_listOrders');
+  if (!res.ok) { toast('載入失敗'); return; }
+  ordersCache = res.list || []; renderOrders();
+}
+function renderOrders() {
+  const kw = document.getElementById('orderSearch').value.trim().toLowerCase();
+  const list = ordersCache.filter(o => !kw || String(o.id).toLowerCase().includes(kw) || String(o.vendorId).toLowerCase().includes(kw));
+  document.getElementById('ordersBody').innerHTML = list.length ? list.map(o => `
+    <tr><td>${esc(o.id)}</td><td><b>${esc(o.vendorId)}</b> ${esc(o.vendorName)}</td><td>${esc(o.items)}</td>
+    <td>$${o.amount}</td><td>$${o.share}</td><td>${esc(o.status)}</td><td>${esc(o.time)}</td></tr>
+  `).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">尚無訂單</td></tr>';
+}
+
+async function loadStats() {
+  const res = await api('vendor_listStats');
+  if (!res.ok) { toast('載入失敗'); return; }
+  const s = res.summary || {};
+  document.getElementById('statActive').textContent = s.active || 0;
+  document.getElementById('statOrders').textContent = s.orders || 0;
+  document.getElementById('statRevenue').textContent = '$' + (s.revenue || 0).toLocaleString();
+  document.getElementById('statShare').textContent = '$' + (s.share || 0).toLocaleString();
+  document.getElementById('statsBody').innerHTML = (res.rows || []).map(r => `
+    <tr><td>${esc(r.vendor)}</td><td>${r.orders}</td><td>$${r.revenue.toLocaleString()}</td><td>$${r.share.toLocaleString()}</td></tr>
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;padding:30px;">本月尚無資料</td></tr>';
+}
+
+async function loadBlacklist() {
+  const res = await api('vendor_listBlacklist');
+  if (!res.ok) { toast('載入失敗'); return; }
+  document.getElementById('blacklistBody').innerHTML = (res.list || []).map(b => `
+    <tr><td>${esc(b.taxId)}</td><td>${esc(b.email)}</td><td>${esc(b.reason)}</td><td>${esc(b.date)}</td>
+    <td><button class="btn-sm ghost" onclick="removeBlacklist(${b.row})">移除</button></td></tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:30px;">無黑名單</td></tr>';
+}
+function openBlacklistModal() { document.getElementById('blacklistModal').classList.add('show'); }
+async function saveBlacklist() {
+  const taxId = document.getElementById('blTaxId').value.trim();
+  const email = document.getElementById('blEmail').value.trim();
+  const reason = document.getElementById('blReason').value.trim();
+  if (!taxId && !email) { alert('統編和 Email 至少要填一個'); return; }
+  const res = await api('vendor_addBlacklist', { taxId, email, reason });
+  if (res.ok) {
+    toast('✅ 已加入'); closeModal('blacklistModal');
+    document.getElementById('blTaxId').value = '';
+    document.getElementById('blEmail').value = '';
+    document.getElementById('blReason').value = '';
+    loadBlacklist();
+  } else alert('失敗:' + res.msg);
+}
+async function removeBlacklist(row) {
+  if (!confirm('確認移除?')) return;
+  const res = await api('vendor_removeBlacklist', { row });
+  if (res.ok) { toast('已移除'); loadBlacklist(); }
+}
+
+async function loadSettings() {
+  const res = await api('vendor_getSettings');
+  if (!res.ok) return;
+  const s = res.settings || {};
+  document.getElementById('setShareDefault').value = s.shareDefault || 70;
+  document.getElementById('setPeriodDefault').value = s.periodDefault || 6;
+  document.getElementById('setReportDay').value = s.reportDay || 5;
+  document.getElementById('setTplApprove').value = s.tplApprove || '🎉 恭喜!您的合作申請已通過\n\n廠商代號:{vendorId}\n合作期限:{period}個月\n抽成比例:{share}%';
+  document.getElementById('setTplReject').value = s.tplReject || '很遺憾,您的申請暫無法通過。\n\n原因:{reason}';
+}
+async function saveSettings() {
+  const settings = {
+    shareDefault: +document.getElementById('setShareDefault').value,
+    periodDefault: +document.getElementById('setPeriodDefault').value,
+    reportDay: +document.getElementById('setReportDay').value,
+    tplApprove: document.getElementById('setTplApprove').value,
+    tplReject: document.getElementById('setTplReject').value,
+  };
+  const res = await api('vendor_saveSettings', { settings: JSON.stringify(settings) });
+  if (res.ok) toast('✅ 已儲存'); else alert('失敗:' + res.msg);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+function initApp() {
+  loadPending(); loadVendors(); loadOrders(); loadStats(); loadBlacklist(); loadSettings();
+}
+</script>
+</body>
+</html>
