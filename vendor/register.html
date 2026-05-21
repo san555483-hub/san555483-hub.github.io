@@ -157,10 +157,6 @@
         <input type="email" id="email" placeholder="用於接收審查結果與系統通知">
       </div>
       <div class="field">
-        <label class="label">LINE UID（選填）</label>
-        <input type="text" id="line_uid" placeholder="若有提供，將同步推送 LINE 通知">
-      </div>
-      <div class="field">
         <label class="label">公司地址</label>
         <input type="text" id="address">
       </div>
@@ -172,6 +168,19 @@
         <label class="label">收款銀行帳號</label>
         <input type="text" id="bank" placeholder="例：台新銀行 (812) 1234567890">
         <div class="hint">月結對帳款項將匯入此帳戶</div>
+      </div>
+      <div class="field">
+        <label class="label">LINE Pay 手機轉帳號碼</label>
+        <input type="text" id="linepay" placeholder="例：0912-345-678">
+        <div class="hint">UNI 將優先以 LINE Pay 轉帳以節省雙方手續費</div>
+      </div>
+      <div class="field">
+        <label class="label">其他收款方式</label>
+        <input type="text" id="pay_other" placeholder="例：Apple Pay、街口支付、現金、其他">
+      </div>
+      <div class="field">
+        <label class="label">財務備註</label>
+        <textarea id="pay_note" placeholder="收款偏好、結算特殊需求、發票開立方式..."></textarea>
       </div>
     </div>
 
@@ -223,9 +232,12 @@ function submitForm() {
     data[key] = val;
   }
   
-  data.line_uid = document.getElementById('line_uid').value.trim();
+  data.line_uid = ''; // 核准後透過 LINE OA 加好友自動綁
   data.address = document.getElementById('address').value.trim();
   data.bank = document.getElementById('bank').value.trim();
+  data.linepay = document.getElementById('linepay').value.trim();
+  data.pay_other = document.getElementById('pay_other').value.trim();
+  data.pay_note = document.getElementById('pay_note').value.trim();
   data.brand_intro = document.getElementById('brand_intro').value.trim();
   data.init_products = document.getElementById('init_products').value.trim();
   
