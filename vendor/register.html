@@ -52,7 +52,7 @@
     color: #5c4a3a;
   }
   .label .required { color: #c9352e; margin-left: 4px; }
-  input, textarea {
+  input[type=text], input[type=email], input[type=number], textarea {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #d4c4b0;
@@ -67,8 +67,84 @@
     border-color: #c9a87c;
     background: #fff;
   }
-  textarea { min-height: 80px; resize: vertical; }
+  textarea { min-height: 70px; resize: vertical; }
   .hint { font-size: 11px; color: #998877; margin-top: 4px; }
+  
+  .checkbox-field {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: #faf6f0;
+    border: 1px solid #d4c4b0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .checkbox-field input { margin-right: 10px; width: 18px; height: 18px; cursor: pointer; }
+  .checkbox-field label { font-size: 14px; color: #3a2f25; cursor: pointer; flex: 1; }
+  
+  .input-with-copy { position: relative; }
+  .input-with-copy input { padding-right: 60px; }
+  .copy-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 10px;
+    background: #c9a87c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { background: #b8946b; }
+  .copy-btn.copied { background: #6b9b6e; }
+  
+  .product-card {
+    background: #faf6f0;
+    border: 1px solid #e0d4c4;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .product-card .pc-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #5c4a3a;
+    margin-bottom: 12px;
+  }
+  .product-card .remove-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #c9352e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .product-card .remove-btn:hover { opacity: 0.85; }
+  .product-card input, .product-card textarea {
+    background: #fff;
+  }
+  
+  .add-product-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 2px dashed #c9a87c;
+    border-radius: 8px;
+    color: #5c4a3a;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .add-product-btn:hover { background: #faf6f0; }
+  
   .submit-btn {
     width: 100%;
     padding: 14px;
@@ -84,6 +160,7 @@
   }
   .submit-btn:hover { opacity: 0.9; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  
   .notice {
     background: #fff8ed;
     border: 1px solid #f0d896;
@@ -94,6 +171,18 @@
     margin-bottom: 20px;
     line-height: 1.6;
   }
+  
+  .star-hint {
+    background: #fdf2e9;
+    border-left: 4px solid #d4884a;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #8a5230;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+  
   .success-screen {
     text-align: center;
     padding: 60px 24px;
@@ -110,6 +199,7 @@
     font-size: 13px; 
     color: #3a2f25; 
     font-family: monospace;
+    white-space: pre-wrap;
   }
 </style>
 </head>
@@ -124,13 +214,13 @@
   <div id="formScreen" class="form">
     <div class="notice">
       <strong>📋 申請須知</strong><br>
-      • 請完整填寫以下資訊，UNI 職人髮品坊 將於 3 個工作天內審查<br>
+      • UNI 職人髮品坊 將於 3 個工作天內審查您的申請<br>
       • 審查結果將透過 Email 通知您<br>
       • 帶 <span style="color:#c9352e">*</span> 為必填欄位
     </div>
 
     <div class="section">
-      <div class="section-title">公司資訊</div>
+      <div class="section-title">🏢 公司資訊</div>
       <div class="field">
         <label class="label">公司全名 <span class="required">*</span></label>
         <input type="text" id="company_full" placeholder="例：XX生技股份有限公司">
@@ -147,10 +237,22 @@
     </div>
 
     <div class="section">
-      <div class="section-title">聯絡資訊</div>
+      <div class="section-title">📞 聯絡資訊</div>
       <div class="field">
         <label class="label">聯絡人姓名 <span class="required">*</span></label>
         <input type="text" id="contact">
+      </div>
+      <div class="field">
+        <label class="label">聯絡電話 <span class="required">*</span></label>
+        <input type="text" id="phone" placeholder="例：0912-345-678">
+      </div>
+      <div class="field">
+        <label class="label">LINE ID <span class="required">*</span></label>
+        <div class="input-with-copy">
+          <input type="text" id="line_id" placeholder="您的 LINE 帳號 ID">
+          <button type="button" class="copy-btn" id="lineCopyBtn" onclick="copyLineId()">複製</button>
+        </div>
+        <div class="hint">UNI 將透過此 LINE ID 直接聯繫您</div>
       </div>
       <div class="field">
         <label class="label">聯絡 Email <span class="required">*</span></label>
@@ -163,16 +265,17 @@
     </div>
 
     <div class="section">
-      <div class="section-title">財務資訊</div>
+      <div class="section-title">💰 財務資訊</div>
       <div class="field">
         <label class="label">收款銀行帳號</label>
         <input type="text" id="bank" placeholder="例：台新銀行 (812) 1234567890">
         <div class="hint">月結對帳款項將匯入此帳戶</div>
       </div>
       <div class="field">
-        <label class="label">LINE Pay 收款手機號碼</label>
-        <input type="text" id="linepay" placeholder="例：0912-345-678">
-        <div class="hint">UNI 將優先以 LINE Pay 轉帳節省雙方手續費</div>
+        <div class="checkbox-field">
+          <input type="checkbox" id="linepay_ok">
+          <label for="linepay_ok">☑ 可 LINE Pay 手機轉帳（節省雙方手續費）</label>
+        </div>
       </div>
       <div class="field">
         <label class="label">其他收款方式</label>
@@ -185,12 +288,15 @@
     </div>
 
     <div class="section">
-      <div class="section-title">品牌介紹</div>
-      <div class="field">
-        <label class="label">品牌介紹</label>
-        <textarea id="brand_intro" placeholder="簡述貴公司品牌特色、主打商品類型、合作期待..."></textarea>
-        <div class="hint">合作核准後，請至廠商後台逐一申請商品上架</div>
+      <div class="section-title">📦 申請上架商品</div>
+      <div class="star-hint">
+        ⭐ 請優先列出您的<strong>主打明星商品</strong>，UNI 將依此進行合作審查。<br>
+        每個商品都需 UNI 職人髮品坊 個別審核通過才會正式上架。
       </div>
+      
+      <div id="productList"></div>
+      
+      <button type="button" class="add-product-btn" onclick="addProduct()">+ 新增商品</button>
     </div>
 
     <button class="submit-btn" id="submitBtn" onclick="submitForm()">送出申請</button>
@@ -214,40 +320,130 @@
 <script>
 const VENDOR_API = 'https://script.google.com/macros/s/AKfycbxkUfzwSStUmGm52mvbd7ww-ZS4gG8fXGKSWNoYZe8AY-eB17mLfyuhxTQp4CRYZkLyxQ/exec';
 
+let productIdx = 0;
+
+function addProduct() {
+  productIdx++;
+  const idx = productIdx;
+  const num = document.querySelectorAll('.product-card').length + 1;
+  const html = `
+    <div class="product-card" id="product_${idx}">
+      <div class="pc-title">商品 ${num}</div>
+      <button type="button" class="remove-btn" onclick="removeProduct(${idx})">刪除</button>
+      <div class="field">
+        <label class="label">商品名稱 <span class="required">*</span></label>
+        <input type="text" class="p_name" placeholder="例：保濕修護髮膜">
+      </div>
+      <div class="field">
+        <label class="label">售價 <span class="required">*</span></label>
+        <input type="number" class="p_price" placeholder="NT$">
+      </div>
+      <div class="field">
+        <label class="label">容量規格 <span class="required">*</span></label>
+        <input type="text" class="p_capacity" placeholder="例：200ml / 50g / 12 入">
+      </div>
+      <div class="field">
+        <label class="label">商品圖網址（選填）</label>
+        <input type="text" class="p_image" placeholder="https://...">
+        <div class="hint">合作核准後可補上</div>
+      </div>
+      <div class="field">
+        <label class="label">描述／成分</label>
+        <textarea class="p_desc" placeholder="主要功效、適用髮質、特色成分..."></textarea>
+      </div>
+    </div>
+  `;
+  document.getElementById('productList').insertAdjacentHTML('beforeend', html);
+}
+
+function removeProduct(idx) {
+  const card = document.getElementById('product_' + idx);
+  if (card) card.remove();
+  renumber();
+}
+
+function renumber() {
+  document.querySelectorAll('.product-card .pc-title').forEach((el, i) => {
+    el.textContent = '商品 ' + (i + 1);
+  });
+}
+
+function copyLineId() {
+  const val = document.getElementById('line_id').value.trim();
+  if (!val) { alert('請先填寫 LINE ID'); return; }
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById('lineCopyBtn');
+    btn.textContent = '✓ 已複製';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '複製';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
 function submitForm() {
-  const required = ['company_full', 'display_name', 'tax_id', 'contact', 'email'];
-  const data = {};
+  const required = {
+    'company_full': '公司全名',
+    'display_name': '品牌簡稱',
+    'tax_id': '統一編號',
+    'contact': '聯絡人姓名',
+    'phone': '聯絡電話',
+    'line_id': 'LINE ID',
+    'email': '聯絡 Email'
+  };
   
-  for (const key of required) {
+  const data = {};
+  for (const key in required) {
     const val = document.getElementById(key).value.trim();
     if (!val) {
-      alert('請填寫：' + document.querySelector('label[class="label"]').textContent);
+      alert('請填寫：' + required[key]);
       document.getElementById(key).focus();
       return;
     }
     data[key] = val;
   }
   
-  data.line_uid = ''; // 核准後透過 LINE OA 加好友自動綁
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    alert('Email 格式不正確'); return;
+  }
+  if (!/^\d{8}$/.test(data.tax_id)) {
+    alert('統一編號需為 8 碼數字'); return;
+  }
+  
   data.address = document.getElementById('address').value.trim();
   data.bank = document.getElementById('bank').value.trim();
-  data.linepay = document.getElementById('linepay').value.trim();
+  data.linepay_ok = document.getElementById('linepay_ok').checked ? '可接受' : '不接受';
   data.pay_other = document.getElementById('pay_other').value.trim();
   data.pay_note = document.getElementById('pay_note').value.trim();
-  data.brand_intro = document.getElementById('brand_intro').value.trim();
-  data.init_products = '';
   
-  // Email 格式驗證
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-    alert('Email 格式不正確');
-    return;
+  const cards = document.querySelectorAll('.product-card');
+  if (cards.length === 0) {
+    alert('請至少新增 1 個申請上架的商品'); return;
   }
   
-  // 統編 8 碼
-  if (!/^\d{8}$/.test(data.tax_id)) {
-    alert('統一編號需為 8 碼數字');
-    return;
+  const products = [];
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i];
+    const name = c.querySelector('.p_name').value.trim();
+    const price = c.querySelector('.p_price').value.trim();
+    const capacity = c.querySelector('.p_capacity').value.trim();
+    
+    if (!name || !price || !capacity) {
+      alert('商品 ' + (i+1) + ' 的「名稱／售價／容量」為必填');
+      return;
+    }
+    
+    products.push({
+      name: name,
+      price: price,
+      capacity: capacity,
+      image: c.querySelector('.p_image').value.trim(),
+      desc: c.querySelector('.p_desc').value.trim()
+    });
   }
+  
+  data.init_products = JSON.stringify(products);
   
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -263,7 +459,8 @@ function submitForm() {
         document.getElementById('formScreen').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
         document.getElementById('applyInfo').textContent = 
-          '申請編號：' + res.apply_id + '\n預計廠商代號：' + res.vendor_id;
+          '申請編號：' + res.apply_id + '\n預計廠商代號：' + res.vendor_id + '\n申請商品數：' + products.length;
+        window.scrollTo(0, 0);
       } else {
         alert('送出失敗：' + (res.msg || '未知錯誤'));
         btn.disabled = false;
@@ -276,6 +473,8 @@ function submitForm() {
       btn.textContent = '送出申請';
     });
 }
+
+addProduct();
 </script>
 
 </body>
