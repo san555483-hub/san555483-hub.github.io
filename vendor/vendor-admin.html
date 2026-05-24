@@ -50,7 +50,8 @@ input, select, textarea { font-family:inherit; font-size:14px; }
 .vendor-card .vname { font-weight:600; }
 .vendor-card .meta { color:var(--c-text-soft); font-size:13px; }
 .vendor-card .actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-.prod-thumb { width:54px; height:54px; border-radius:8px; object-fit:cover; border:1px solid var(--c-border); float:right; margin-left:10px; }
+.prod-thumb { width:72px; height:72px; border-radius:8px; object-fit:contain; background:#f8f5f0; border:1px solid var(--c-border); float:right; margin-left:10px; cursor:zoom-in; }
+.prod-thumb:hover { box-shadow:0 0 0 2px var(--c-accent,#b8895a); }
 .status-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
 .status-pending { background:#fff4e6; color:#ff9500; }
 .status-approved { background:#e6f9ed; color:#34c759; }
@@ -331,7 +332,7 @@ function renderPendingProducts() {
   dot.style.display = 'inline-flex'; dot.textContent = pendingProducts.length;
   box.innerHTML = pendingProducts.map(p => `
     <div class="vendor-card">
-      ${p.imageUrl ? `<img class="prod-thumb" src="${esc(p.imageUrl)}" onerror="this.style.display='none'" />` : ''}
+      ${p.imageUrl ? `<img class="prod-thumb" src="${esc(p.imageUrl)}" title="點圖放大檢視" onclick="window.open('${esc(p.imageUrl)}','_blank')" onerror="this.style.display='none'" />` : ''}
       <div class="vname">${esc(p.name)} <span class="status-pill status-pending">待審</span></div>
       <div class="meta">廠商:<b>${esc(p.vendorId)}</b>・售價:NT$${esc(p.price)}・容量:${esc(p.capacity || '-')}</div>
       ${p.description ? `<div class="meta" style="margin-top:4px;">${esc(p.description)}</div>` : ''}

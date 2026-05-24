@@ -148,7 +148,7 @@ table.data tr:last-child td { border-bottom:none; }
         <div class="frow">
           <label>商品照片(選填)</label>
           <input type="file" id="apImageFile" accept="image/*" onchange="handleImageUpload(this)" />
-          <div class="hint" id="apImageHint">從相簿選一張即可,系統會自動轉成商城規格(正方·乾淨白底)</div>
+          <div class="hint" id="apImageHint">從相簿選一張即可,系統會自動處理成商城規格(與自家商品一致)</div>
           <img id="apImagePreview" style="display:none;max-width:130px;border-radius:8px;margin-top:8px;border:1px solid var(--c-border);" />
           <input type="hidden" id="apImageUrl" />
         </div>
@@ -290,7 +290,7 @@ async function handleImageUpload(input) {
   const hint = document.getElementById('apImageHint');
   hint.textContent = '⏳ 處理中,請稍候...';
   try {
-    const dataUrl = await resizeImage(file, SHOP_IMG_SIZE, 0.85);
+    const dataUrl = await resizeImage(file, SHOP_IMG_MAX, 0.85);
     const base64 = dataUrl.split(',')[1];
     const res = await fetch(CONFIG.SHOP_GAS_URL, {
       method: 'POST',
@@ -309,32 +309,25 @@ async function handleImageUpload(input) {
   } catch (e) { hint.textContent = '❌ 上傳失敗:' + e.message; }
 }
 
-// 🎯 轉成 UNI 商城商品圖規格:正方形 + 商城底色(#f8f5f0) + 等比置中不裁切(對應商城 object-fit:contain)
-// 廠商隨手拍任何尺寸/比例,都會被轉成跟 Elsa 自家商品一致的乾淨方圖,擺進商城無縫融合
-const SHOP_IMG_SIZE = 800;        // 商城圖邊長(對齊 Elsa 自家壓縮 800px)
-const SHOP_IMG_BG   = '#f8f5f0';  // 商城商品格底色(.prod-img-wrap background)
-function resizeImage(file, size, quality) {
-  size = size || SHOP_IMG_SIZE;
+// 🎯 商城圖片規格:與 Elsa 自家商品「完全相同」的處理 —— 原始比例壓到 800px。
+// 商城本身就是 object-fit:contain + 米底自動置中,所以圖只要原比例壓好,擺進去就跟自家商品一致(不再多套方框,避免雙重縮放變小)。
+const SHOP_IMG_MAX = 800;  // 最長邊上限,對齊 Elsa 自家 compressImage(800)
+function resizeImage(file, maxSize, quality) {
+  maxSize = maxSize || SHOP_IMG_MAX;
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
+        let w = img.width, h = img.height;
+        // 等比縮放:最長邊不超過 maxSize,維持原始比例(跟商城 contain 顯示一致)
+        if (w > maxSize || h > maxSize) {
+          if (w >= h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else        { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
         const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        // 1) 鋪商城底色(等同商城格子的米底,留白處無縫)
-        ctx.fillStyle = SHOP_IMG_BG;
-        ctx.fillRect(0, 0, size, size);
-        // 2) 等比縮放「contain」置中,完全不裁切(對齊商城 object-fit:contain)
-        const pad   = Math.round(size * 0.06);          // 6% 留白,對應商城 padding:6px
-        const avail = size - pad * 2;
-        const scale = Math.min(avail / img.width, avail / img.height);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const x = Math.round((size - w) / 2);
-        const y = Math.round((size - h) / 2);
-        ctx.drawImage(img, x, y, w, h);
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', quality || 0.85));
       };
       img.onerror = reject;
@@ -373,7 +366,7 @@ async function submitApply() {
     document.getElementById('apImageFile').value = '';
     document.getElementById('apImageUrl').value = '';
     document.getElementById('apImagePreview').style.display = 'none';
-    document.getElementById('apImageHint').textContent = '從相簿選一張即可,系統會自動轉成商城規格(正方·乾淨白底)';
+    document.getElementById('apImageHint').textContent = '從相簿選一張即可,系統會自動處理成商城規格(與自家商品一致)';
   } else {
     err.textContent = '❌ ' + (res.msg || '送出失敗');
   }
