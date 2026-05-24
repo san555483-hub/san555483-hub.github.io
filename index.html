@@ -2213,7 +2213,9 @@ async function goToPayment(method){
 
   // 寫 GAS + Firestore
   const noteWithCredit = (document.getElementById('inp-note').value.trim() + (shopCreditDeduct>0?` [購物金折抵$${shopCreditDeduct}]`:'')).trim();
-  submitOrderToSheet(currentOrderNum, finalTotal, itemsText, giftVal, phone, shipping.value, document.getElementById('inp-address').value.trim(), noteWithCredit, method);
+  // 🦅 Phase 5:結構化購物車(含 product_id),供後端分廠商
+  const cartJson = JSON.stringify(cart.map(x=>({product_id:x.id, product_name:x.name, qty:Number(x.qty)||0, price:Number(x.price)||0})));
+  submitOrderToSheet(currentOrderNum, finalTotal, itemsText, giftVal, phone, shipping.value, document.getElementById('inp-address').value.trim(), noteWithCredit, method, cartJson);
   if(typeof saveOrderToFirestore==='function') saveOrderToFirestore(currentOrderNum, finalTotal, itemsText, giftVal);
 
   // 顯示成功彈窗
@@ -2240,13 +2242,13 @@ async function showTransferInfo(){
   el.style.display='block';
 }
 
-function submitOrderToSheet(orderNum,total,items,gift,phone,shipping,address,note,method){
+function submitOrderToSheet(orderNum,total,items,gift,phone,shipping,address,note,method,cart){
   const lineName  = window._lineUser ? window._lineUser.displayName : (sessionStorage.getItem('line_name')||'未登入');
   const lineUserId= window._lineUser ? window._lineUser.userId : (sessionStorage.getItem('line_userId')||'');
   const lineUid   = lineUserId ? ('line_'+lineUserId) : '';
   const isVoucher = items.includes('服務券')||items.includes('套餐');
   const payStr    = method==='jko'?'街口':method==='ipass'?'iPASS':'轉帳';
-  const params    = new URLSearchParams({action:'saveOrder', orderNum, time:new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}), items, total, gift:gift||'無', lineName, lineUid, phone, shipping, address, note, payMethod:payStr, isVoucher:String(isVoucher)});
+  const params    = new URLSearchParams({action:'saveOrder', cart: cart||'[]', orderNum, time:new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'}), items, total, gift:gift||'無', lineName, lineUid, phone, shipping, address, note, payMethod:payStr, isVoucher:String(isVoucher)});
   fetch(GAS_URL+'?'+params.toString()).catch(()=>{});
 
   // ── 結帳時同步綁定 UID 到主系統顧客表 + 尊爵 Sheet ──
