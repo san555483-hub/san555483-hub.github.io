@@ -134,33 +134,17 @@ table.data tr:last-child td { border-bottom:none; }
       </div>
       <div class="apply-form">
         <div class="frow">
-          <label>商品名稱 <span class="req">*</span></label>
-          <input type="text" id="apName" placeholder="例:保濕修護髮膜" />
-        </div>
-        <div class="frow">
-          <label>品牌名稱 <span class="req">*</span></label>
+          <label>品牌名稱 <span class="req">*</span>(整批共用)</label>
           <input type="text" id="apBrand" placeholder="例:CACLEE / 卡碧兒(會顯示在商城品牌頁籤)" />
         </div>
         <div class="frow">
-          <label>售價 (NT$) <span class="req">*</span></label>
-          <input type="number" id="apPrice" placeholder="例:680" />
+          <label>商品照片(可一次多選,每張 = 一筆商品)</label>
+          <input type="file" id="apFiles" accept="image/*" multiple onchange="handleBatchFiles(this)" />
+          <div class="hint" id="apFilesHint">一次選多張照片,每張會變成一筆可編輯的商品。系統自動轉成商城規格;解析度太低的會自動略過並提示。</div>
         </div>
-        <div class="frow">
-          <label>容量規格 <span class="req">*</span></label>
-          <input type="text" id="apCapacity" placeholder="例:200ml / 50g / 12 入" />
-        </div>
-        <div class="frow">
-          <label>商品照片(選填)</label>
-          <input type="file" id="apImageFile" accept="image/*" onchange="handleImageUpload(this)" />
-          <div class="hint" id="apImageHint">從相簿選一張即可,系統會自動處理成商城規格(與自家商品一致)</div>
-          <img id="apImagePreview" style="display:none;max-width:130px;border-radius:8px;margin-top:8px;border:1px solid var(--c-border);" />
-          <input type="hidden" id="apImageUrl" />
-        </div>
-        <div class="frow">
-          <label>描述 / 成分 / 適用髮質(選填)</label>
-          <textarea id="apDesc" placeholder="主要功效、適用髮質、特色成分..."></textarea>
-        </div>
-        <button class="btn-primary" id="apSubmit" onclick="submitApply()">送出上架申請</button>
+        <div id="apRows"></div>
+        <button id="apAddMore" onclick="document.getElementById('apFiles').click()" style="display:none;margin-top:8px;width:100%;padding:10px;border:1.5px dashed var(--c-border,#ccc);background:none;border-radius:8px;cursor:pointer;color:var(--c-muted,#777);">➕ 再加照片</button>
+        <button class="btn-primary" id="apSubmit" onclick="submitBatch()" style="display:none;margin-top:8px;">送出全部(0 筆)</button>
         <div class="err-msg" id="apErr"></div>
       </div>
     </div>
@@ -288,55 +272,87 @@ async function loadOrders() {
   `).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">尚無訂單</td></tr>';
 }
 
-// 🎯 商城圖片規格門檻(可調):解析度太低擋下不給上傳;比例極端只提醒不擋(直立瓶身仍可用)
+// 🎯 商城圖片規格門檻(可調):解析度太低自動略過;比例極端只提醒(直立瓶身仍可用)
 const SHOP_IMG_MIN_SIDE = 500;   // 最短邊至少 500px,否則商城放大會糊
 const SHOP_IMG_MAX_RATIO = 2.2;  // 長邊/短邊 超過此值 → 提醒(不擋)
-let apImageRejected = false;     // 圖片是否未通過規格(送出時 gate 用)
+let apRowSeq = 0;                // 批次商品列流水號
+let apRows = [];                 // 批次商品列 [{id, url}]
 
-async function handleImageUpload(input) {
-  const file = input.files && input.files[0];
-  if (!file) return;
-  const hint = document.getElementById('apImageHint');
-  const pv = document.getElementById('apImagePreview');
-  apImageRejected = false;
-  document.getElementById('apImageUrl').value = '';
-  pv.style.display = 'none';
-  hint.textContent = '⏳ 檢查圖片規格中...';
-  try {
-    // ── 先驗規格:讀原圖尺寸 ──
-    const meta = await readImageMeta(file);
-    const shortSide = Math.min(meta.w, meta.h);
-    const ratio = Math.max(meta.w, meta.h) / Math.max(1, Math.min(meta.w, meta.h));
-    if (shortSide < SHOP_IMG_MIN_SIDE) {
-      apImageRejected = true;
-      hint.innerHTML = '❌ 圖片解析度太低(' + meta.w + '×' + meta.h + '),商城放大會糊。<br>請換一張至少 ' + SHOP_IMG_MIN_SIDE + 'px 的清晰商品照。';
-      input.value = '';
-      return;
-    }
-    if (ratio > SHOP_IMG_MAX_RATIO) {
-      hint.innerHTML = '⚠️ 圖片偏長(比例 ' + ratio.toFixed(1) + ':1),商城會自動置中留白。<br>建議用接近正方的商品照更好看 — 仍可繼續上傳。';
-    } else {
-      hint.textContent = '⏳ 處理中,請稍候...';
-    }
-    const dataUrl = await resizeImage(file, SHOP_IMG_MAX, 0.85);
-    const base64 = dataUrl.split(',')[1];
-    const res = await fetch(CONFIG.SHOP_GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'uploadImage', base64: base64, mimeType: 'image/jpeg', filename: 'vp_' + Date.now() + '.jpg' })
-    });
-    const json = await res.json();
-    if (json.ok && json.url) {
-      document.getElementById('apImageUrl').value = json.url;
-      pv.src = dataUrl; pv.style.display = 'block';
-      // 比例提醒保留,否則顯示已上傳
-      if (!hint.innerHTML.includes('偏長')) hint.textContent = '✅ 圖片已上傳(符合商城規格)';
-      else hint.innerHTML += '<br>✅ 已上傳';
-    } else {
-      apImageRejected = true;
-      hint.textContent = '❌ 上傳失敗:' + (json.msg || '請重試一次');
-    }
-  } catch (e) { apImageRejected = true; hint.textContent = '❌ 上傳失敗:' + e.message; }
+// 上傳單張:驗規格 → 轉商城規格 → 上傳 🔵 → 回 {ok,url,dataUrl,ratioWarn} 或 {ok:false,msg}
+async function uploadOneImage(file) {
+  const meta = await readImageMeta(file);
+  const shortSide = Math.min(meta.w, meta.h);
+  const ratio = Math.max(meta.w, meta.h) / Math.max(1, Math.min(meta.w, meta.h));
+  if (shortSide < SHOP_IMG_MIN_SIDE) {
+    return { ok: false, msg: '解析度太低(' + meta.w + '×' + meta.h + '),需至少 ' + SHOP_IMG_MIN_SIDE + 'px' };
+  }
+  const dataUrl = await resizeImage(file, SHOP_IMG_MAX, 0.85);
+  const base64 = dataUrl.split(',')[1];
+  const res = await fetch(CONFIG.SHOP_GAS_URL, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'uploadImage', base64: base64, mimeType: 'image/jpeg', filename: 'vp_' + Date.now() + '.jpg' })
+  });
+  const json = await res.json();
+  if (json.ok && json.url) return { ok: true, url: json.url, dataUrl: dataUrl, ratioWarn: ratio > SHOP_IMG_MAX_RATIO };
+  return { ok: false, msg: json.msg || '上傳失敗' };
+}
+
+// 多選照片 → 逐張驗證+上傳 → 每張建立一筆可編輯商品列
+async function handleBatchFiles(input) {
+  const files = Array.from(input.files || []);
+  input.value = '';  // 清空,讓「再加照片」可重複選
+  if (!files.length) return;
+  const hint = document.getElementById('apFilesHint');
+  const err = document.getElementById('apErr'); err.textContent = '';
+  let added = 0; const skipped = [];
+  for (let i = 0; i < files.length; i++) {
+    hint.textContent = '⏳ 處理第 ' + (i + 1) + ' / ' + files.length + ' 張...';
+    try {
+      const r = await uploadOneImage(files[i]);
+      if (r.ok) { addRow(r.url, r.dataUrl, r.ratioWarn); added++; }
+      else skipped.push(files[i].name + ':' + r.msg);
+    } catch (e) { skipped.push(files[i].name + ':' + e.message); }
+  }
+  hint.textContent = '一次選多張照片,每張會變成一筆可編輯的商品。';
+  if (skipped.length) err.innerHTML = '⚠️ 下列 ' + skipped.length + ' 張未加入(規格不符):<br>' + skipped.map(x => '・' + x).join('<br>');
+  if (added) toast('✅ 已加入 ' + added + ' 筆,請填名稱/售價/容量');
+  updateBatchUI();
+}
+
+// 新增一筆商品列(同頁編輯)
+function addRow(url, dataUrl, ratioWarn) {
+  const id = 'aprow' + (++apRowSeq);
+  apRows.push({ id: id, url: url });
+  const div = document.createElement('div');
+  div.id = id;
+  div.style.cssText = 'border:1px solid var(--c-border,#e5ddd2);border-radius:10px;padding:10px;margin-top:10px;display:flex;gap:10px;align-items:flex-start;';
+  div.innerHTML =
+    '<img src="' + dataUrl + '" style="width:72px;height:72px;object-fit:contain;background:#f8f5f0;border-radius:8px;flex-shrink:0;" />' +
+    '<div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">' +
+      (ratioWarn ? '<div style="font-size:12px;color:#c08a3e;">⚠️ 圖偏長,商城會置中留白</div>' : '') +
+      '<input class="ap-name" placeholder="商品名稱 *" style="padding:8px;border:1px solid var(--c-border,#ddd);border-radius:6px;" />' +
+      '<div style="display:flex;gap:6px;">' +
+        '<input class="ap-price" type="number" placeholder="售價 *" style="flex:1;min-width:0;padding:8px;border:1px solid var(--c-border,#ddd);border-radius:6px;" />' +
+        '<input class="ap-cap" placeholder="容量 *" style="flex:1;min-width:0;padding:8px;border:1px solid var(--c-border,#ddd);border-radius:6px;" />' +
+      '</div>' +
+      '<input class="ap-desc" placeholder="描述(選填)" style="padding:8px;border:1px solid var(--c-border,#ddd);border-radius:6px;" />' +
+      '<div class="ap-status" style="font-size:12px;"></div>' +
+    '</div>' +
+    '<button onclick="removeRow(\'' + id + '\')" style="background:none;border:none;color:#c00;font-size:18px;cursor:pointer;flex-shrink:0;line-height:1;">✕</button>';
+  document.getElementById('apRows').appendChild(div);
+}
+
+function removeRow(id) {
+  apRows = apRows.filter(r => r.id !== id);
+  const el = document.getElementById(id); if (el) el.remove();
+  updateBatchUI();
+}
+
+function updateBatchUI() {
+  const n = apRows.length;
+  document.getElementById('apSubmit').style.display = n ? 'block' : 'none';
+  document.getElementById('apAddMore').style.display = n ? 'block' : 'none';
+  document.getElementById('apSubmit').textContent = '送出全部(' + n + ' 筆)';
 }
 
 // 讀圖片原始尺寸(驗規格用)
@@ -383,45 +399,58 @@ function resizeImage(file, maxSize, quality) {
   });
 }
 
-async function submitApply() {
-  const name = document.getElementById('apName').value.trim();
+// 一次送出全部商品列(共用品牌;每列獨立驗證;失敗的留著可重送)
+async function submitBatch() {
   const brand = document.getElementById('apBrand').value.trim();
-  const price = document.getElementById('apPrice').value.trim();
-  const capacity = document.getElementById('apCapacity').value.trim();
   const err = document.getElementById('apErr'); err.textContent = '';
-  if (!name) { err.textContent = '請填寫商品名稱'; return; }
   if (!brand) { err.textContent = '請填寫品牌名稱'; return; }
-  if (!price || Number(price) <= 0) { err.textContent = '請填寫正確售價'; return; }
-  if (!capacity) { err.textContent = '請填寫容量規格'; return; }
-  // 🎯 圖片規格 gate:選了不符規格的圖 → 擋下,要求換圖或移除
-  if (apImageRejected) { err.textContent = '商品照片不符規格,請換一張清晰的(或清除後再送出)'; return; }
-  const btn = document.getElementById('apSubmit');
-  btn.disabled = true; btn.textContent = '送出中...';
-  const res = await api('vp_submitProductApply', {
-    vid: session.vid,
-    product_name: name,
-    brand: brand,
-    price: price,
-    capacity: capacity,
-    image_url: document.getElementById('apImageUrl').value,
-    description: document.getElementById('apDesc').value.trim()
-  });
-  btn.disabled = false; btn.textContent = '送出上架申請';
-  if (res.ok) {
-    toast('✅ 申請已送出,等待 UNI 審核');
-    document.getElementById('apName').value = '';
-    document.getElementById('apBrand').value = '';
-    apImageRejected = false;
-    document.getElementById('apPrice').value = '';
-    document.getElementById('apCapacity').value = '';
-    document.getElementById('apDesc').value = '';
-    document.getElementById('apImageFile').value = '';
-    document.getElementById('apImageUrl').value = '';
-    document.getElementById('apImagePreview').style.display = 'none';
-    document.getElementById('apImageHint').textContent = '從相簿選一張即可,系統會自動處理成商城規格(與自家商品一致)';
-  } else {
-    err.textContent = '❌ ' + (res.msg || '送出失敗');
+  if (!apRows.length) { err.textContent = '請先選照片加入商品'; return; }
+
+  // 收集+驗證每列
+  const items = [];
+  for (const r of apRows) {
+    const el = document.getElementById(r.id);
+    const name = el.querySelector('.ap-name').value.trim();
+    const price = el.querySelector('.ap-price').value.trim();
+    const cap = el.querySelector('.ap-cap').value.trim();
+    const desc = el.querySelector('.ap-desc').value.trim();
+    const st = el.querySelector('.ap-status');
+    if (!name || !price || Number(price) <= 0 || !cap) {
+      st.style.color = 'crimson'; st.textContent = '❌ 名稱/售價/容量必填';
+      err.textContent = '有商品未填完整,請補齊紅字那筆再送出';
+      return;
+    }
+    st.style.color = ''; st.textContent = '';
+    items.push({ rowId: r.id, name: name, price: price, cap: cap, desc: desc, url: r.url, st: st });
   }
+
+  const btn = document.getElementById('apSubmit');
+  btn.disabled = true;
+  let ok = 0, fail = 0;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    btn.textContent = '送出中 ' + (i + 1) + ' / ' + items.length + '...';
+    it.st.style.color = '#888'; it.st.textContent = '送出中...';
+    const res = await api('vp_submitProductApply', {
+      vid: session.vid, brand: brand, product_name: it.name,
+      price: it.price, capacity: it.cap, image_url: it.url, description: it.desc
+    });
+    if (res.ok) { ok++; it.ok = true; it.st.style.color = 'green'; it.st.textContent = '✅ 已送出'; }
+    else { fail++; it.ok = false; it.st.style.color = 'crimson'; it.st.textContent = '❌ ' + (res.msg || '失敗'); }
+  }
+  btn.disabled = false;
+
+  if (fail === 0) {
+    toast('✅ 全部 ' + ok + ' 筆已送出,等待審核');
+    apRows = [];
+    document.getElementById('apRows').innerHTML = '';
+    document.getElementById('apBrand').value = '';
+  } else {
+    err.textContent = '完成:成功 ' + ok + ' 筆、失敗 ' + fail + ' 筆。失敗的請看該列紅字,修正後可再按送出。';
+    // 移除已成功的列,只留失敗的供重送
+    items.forEach(it => { if (it.ok) removeRow(it.rowId); });
+  }
+  updateBatchUI();
 }
 
 async function loadExposure() {

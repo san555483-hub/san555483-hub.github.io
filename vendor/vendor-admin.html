@@ -185,6 +185,15 @@ table.data tr:last-child td { border-bottom:none; }
         <div class="form-row"><label>每月月報自動寄送日</label><input type="number" id="setReportDay" value="5" min="1" max="28" /></div>
         <button class="btn-primary" onclick="saveSettings()">儲存設定</button>
       </div>
+
+      <div class="section-head" style="margin-top:24px;"><h2>🔑 修改管理員密碼</h2></div>
+      <div class="vendor-card">
+        <div class="form-row"><label>目前密碼</label><input type="password" id="pwdOld" placeholder="輸入目前密碼" autocomplete="current-password" /></div>
+        <div class="form-row"><label>新密碼(至少 4 碼)</label><input type="password" id="pwdNew" placeholder="輸入新密碼" autocomplete="new-password" /></div>
+        <div class="form-row"><label>確認新密碼</label><input type="password" id="pwdNew2" placeholder="再輸入一次新密碼" autocomplete="new-password" /></div>
+        <button class="btn-primary" onclick="changeAdminPwd()">更新密碼</button>
+        <div class="err-msg" id="pwdMsg" style="margin-top:8px;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -256,7 +265,7 @@ function toast(msg) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-let loginState = { line: false, lineUid: '' };
+let loginState = { line: false, lineUid: '', email: '' };
 function startLineLogin() {
   loginState.line = true;
   loginState.lineUid = CONFIG.OWNER_UID;
@@ -276,6 +285,7 @@ async function doLogin() {
   const res = await api('vendor_admin_login', { email, pwd, uid: loginState.lineUid });
   btn.disabled = false; btn.textContent = '登入';
   if (res.ok) {
+    loginState.email = email;
     document.getElementById('step2').classList.add('done');
     document.getElementById('step2Badge').textContent = TEXTS.LOGIN_OK;
     document.getElementById('userName').textContent = res.name || 'Elsa';
@@ -285,6 +295,30 @@ async function doLogin() {
       initApp();
     }, 400);
   } else { errEl.textContent = '❌ ' + (res.msg || '登入失敗'); }
+}
+
+async function changeAdminPwd() {
+  const oldPwd = document.getElementById('pwdOld').value;
+  const newPwd = document.getElementById('pwdNew').value;
+  const newPwd2 = document.getElementById('pwdNew2').value;
+  const msg = document.getElementById('pwdMsg'); msg.style.color = ''; msg.textContent = '';
+  if (!oldPwd || !newPwd) { msg.textContent = '請填目前密碼與新密碼'; return; }
+  if (newPwd.length < 4) { msg.textContent = '新密碼至少 4 碼'; return; }
+  if (newPwd !== newPwd2) { msg.textContent = '兩次新密碼不一致'; return; }
+  msg.style.color = 'var(--c-muted,#888)'; msg.textContent = '更新中...';
+  const res = await api('vendor_admin_changePwd', {
+    email: loginState.email, oldPwd: oldPwd, uid: loginState.lineUid, newPwd: newPwd
+  });
+  if (res.ok) {
+    msg.style.color = 'green';
+    msg.textContent = '✅ 密碼已更新,下次登入請用新密碼';
+    document.getElementById('pwdOld').value = '';
+    document.getElementById('pwdNew').value = '';
+    document.getElementById('pwdNew2').value = '';
+  } else {
+    msg.style.color = 'crimson';
+    msg.textContent = '❌ ' + (res.msg || '更新失敗');
+  }
 }
 
 function logout() { if (!confirm('確定登出?')) return; location.reload(); }
