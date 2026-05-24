@@ -334,7 +334,7 @@ function renderPendingProducts() {
     <div class="vendor-card">
       ${p.imageUrl ? `<img class="prod-thumb" src="${esc(p.imageUrl)}" title="點圖放大檢視" onclick="window.open('${esc(p.imageUrl)}','_blank')" onerror="this.style.display='none'" />` : ''}
       <div class="vname">${esc(p.name)} <span class="status-pill status-pending">待審</span></div>
-      <div class="meta">廠商:<b>${esc(p.vendorId)}</b>・售價:NT$${esc(p.price)}・容量:${esc(p.capacity || '-')}</div>
+      <div class="meta">品牌:<b>${esc(p.brand || '-')}</b>・廠商:<b>${esc(p.vendorId)}</b>・售價:NT$${esc(p.price)}・容量:${esc(p.capacity || '-')}</div>
       ${p.description ? `<div class="meta" style="margin-top:4px;">${esc(p.description)}</div>` : ''}
       <div class="meta">申請時間:${esc(p.time)}</div>
       <div class="actions">

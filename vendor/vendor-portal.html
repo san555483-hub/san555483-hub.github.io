@@ -138,6 +138,10 @@ table.data tr:last-child td { border-bottom:none; }
           <input type="text" id="apName" placeholder="例:保濕修護髮膜" />
         </div>
         <div class="frow">
+          <label>品牌名稱 <span class="req">*</span></label>
+          <input type="text" id="apBrand" placeholder="例:CACLEE / 卡碧兒(會顯示在商城品牌頁籤)" />
+        </div>
+        <div class="frow">
           <label>售價 (NT$) <span class="req">*</span></label>
           <input type="number" id="apPrice" placeholder="例:680" />
         </div>
@@ -284,12 +288,36 @@ async function loadOrders() {
   `).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">尚無訂單</td></tr>';
 }
 
+// 🎯 商城圖片規格門檻(可調):解析度太低擋下不給上傳;比例極端只提醒不擋(直立瓶身仍可用)
+const SHOP_IMG_MIN_SIDE = 500;   // 最短邊至少 500px,否則商城放大會糊
+const SHOP_IMG_MAX_RATIO = 2.2;  // 長邊/短邊 超過此值 → 提醒(不擋)
+let apImageRejected = false;     // 圖片是否未通過規格(送出時 gate 用)
+
 async function handleImageUpload(input) {
   const file = input.files && input.files[0];
   if (!file) return;
   const hint = document.getElementById('apImageHint');
-  hint.textContent = '⏳ 處理中,請稍候...';
+  const pv = document.getElementById('apImagePreview');
+  apImageRejected = false;
+  document.getElementById('apImageUrl').value = '';
+  pv.style.display = 'none';
+  hint.textContent = '⏳ 檢查圖片規格中...';
   try {
+    // ── 先驗規格:讀原圖尺寸 ──
+    const meta = await readImageMeta(file);
+    const shortSide = Math.min(meta.w, meta.h);
+    const ratio = Math.max(meta.w, meta.h) / Math.max(1, Math.min(meta.w, meta.h));
+    if (shortSide < SHOP_IMG_MIN_SIDE) {
+      apImageRejected = true;
+      hint.innerHTML = '❌ 圖片解析度太低(' + meta.w + '×' + meta.h + '),商城放大會糊。<br>請換一張至少 ' + SHOP_IMG_MIN_SIDE + 'px 的清晰商品照。';
+      input.value = '';
+      return;
+    }
+    if (ratio > SHOP_IMG_MAX_RATIO) {
+      hint.innerHTML = '⚠️ 圖片偏長(比例 ' + ratio.toFixed(1) + ':1),商城會自動置中留白。<br>建議用接近正方的商品照更好看 — 仍可繼續上傳。';
+    } else {
+      hint.textContent = '⏳ 處理中,請稍候...';
+    }
     const dataUrl = await resizeImage(file, SHOP_IMG_MAX, 0.85);
     const base64 = dataUrl.split(',')[1];
     const res = await fetch(CONFIG.SHOP_GAS_URL, {
@@ -300,13 +328,30 @@ async function handleImageUpload(input) {
     const json = await res.json();
     if (json.ok && json.url) {
       document.getElementById('apImageUrl').value = json.url;
-      const pv = document.getElementById('apImagePreview');
       pv.src = dataUrl; pv.style.display = 'block';
-      hint.textContent = '✅ 圖片已上傳';
+      // 比例提醒保留,否則顯示已上傳
+      if (!hint.innerHTML.includes('偏長')) hint.textContent = '✅ 圖片已上傳(符合商城規格)';
+      else hint.innerHTML += '<br>✅ 已上傳';
     } else {
+      apImageRejected = true;
       hint.textContent = '❌ 上傳失敗:' + (json.msg || '請重試一次');
     }
-  } catch (e) { hint.textContent = '❌ 上傳失敗:' + e.message; }
+  } catch (e) { apImageRejected = true; hint.textContent = '❌ 上傳失敗:' + e.message; }
+}
+
+// 讀圖片原始尺寸(驗規格用)
+function readImageMeta(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // 🎯 商城圖片規格:與 Elsa 自家商品「完全相同」的處理 —— 原始比例壓到 800px。
@@ -340,17 +385,22 @@ function resizeImage(file, maxSize, quality) {
 
 async function submitApply() {
   const name = document.getElementById('apName').value.trim();
+  const brand = document.getElementById('apBrand').value.trim();
   const price = document.getElementById('apPrice').value.trim();
   const capacity = document.getElementById('apCapacity').value.trim();
   const err = document.getElementById('apErr'); err.textContent = '';
   if (!name) { err.textContent = '請填寫商品名稱'; return; }
+  if (!brand) { err.textContent = '請填寫品牌名稱'; return; }
   if (!price || Number(price) <= 0) { err.textContent = '請填寫正確售價'; return; }
   if (!capacity) { err.textContent = '請填寫容量規格'; return; }
+  // 🎯 圖片規格 gate:選了不符規格的圖 → 擋下,要求換圖或移除
+  if (apImageRejected) { err.textContent = '商品照片不符規格,請換一張清晰的(或清除後再送出)'; return; }
   const btn = document.getElementById('apSubmit');
   btn.disabled = true; btn.textContent = '送出中...';
   const res = await api('vp_submitProductApply', {
     vid: session.vid,
     product_name: name,
+    brand: brand,
     price: price,
     capacity: capacity,
     image_url: document.getElementById('apImageUrl').value,
@@ -360,6 +410,8 @@ async function submitApply() {
   if (res.ok) {
     toast('✅ 申請已送出,等待 UNI 審核');
     document.getElementById('apName').value = '';
+    document.getElementById('apBrand').value = '';
+    apImageRejected = false;
     document.getElementById('apPrice').value = '';
     document.getElementById('apCapacity').value = '';
     document.getElementById('apDesc').value = '';
