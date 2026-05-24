@@ -69,7 +69,7 @@
   }
   textarea { min-height: 70px; resize: vertical; }
   .hint { font-size: 11px; color: #998877; margin-top: 4px; }
-  
+
   .checkbox-field {
     display: flex;
     align-items: center;
@@ -81,7 +81,7 @@
   }
   .checkbox-field input { margin-right: 10px; width: 18px; height: 18px; cursor: pointer; }
   .checkbox-field label { font-size: 14px; color: #3a2f25; cursor: pointer; flex: 1; }
-  
+
   .input-with-copy { position: relative; }
   .input-with-copy input { padding-right: 60px; }
   .copy-btn {
@@ -99,7 +99,7 @@
   }
   .copy-btn:hover { background: #b8946b; }
   .copy-btn.copied { background: #6b9b6e; }
-  
+
   .product-card {
     background: #faf6f0;
     border: 1px solid #e0d4c4;
@@ -130,7 +130,7 @@
   .product-card input, .product-card textarea {
     background: #fff;
   }
-  
+
   .add-product-btn {
     width: 100%;
     padding: 12px;
@@ -144,7 +144,7 @@
     margin-top: 8px;
   }
   .add-product-btn:hover { background: #faf6f0; }
-  
+
   .submit-btn {
     width: 100%;
     padding: 14px;
@@ -160,7 +160,7 @@
   }
   .submit-btn:hover { opacity: 0.9; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  
+
   .notice {
     background: #fff8ed;
     border: 1px solid #f0d896;
@@ -171,7 +171,7 @@
     margin-bottom: 20px;
     line-height: 1.6;
   }
-  
+
   .star-hint {
     background: #fdf2e9;
     border-left: 4px solid #d4884a;
@@ -182,7 +182,20 @@
     margin-bottom: 12px;
     line-height: 1.6;
   }
-  
+
+  /* 🦅 連線健檢提示條(URL 沒填/連不上時才顯示) */
+  .conn-warn {
+    display: none;
+    background: #fdecea;
+    border: 1px solid #f5b7b1;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    color: #922b21;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
   .success-screen {
     text-align: center;
     padding: 60px 24px;
@@ -191,13 +204,13 @@
   .success-icon { font-size: 56px; margin-bottom: 16px; }
   .success-title { font-size: 18px; color: #3a2f25; margin-bottom: 12px; font-weight: bold; }
   .success-msg { font-size: 13px; color: #6b5530; line-height: 1.8; }
-  .success-apply { 
-    background: #f5e6d3; 
-    border-radius: 8px; 
-    padding: 12px; 
-    margin: 20px 0; 
-    font-size: 13px; 
-    color: #3a2f25; 
+  .success-apply {
+    background: #f5e6d3;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: #3a2f25;
     font-family: monospace;
     white-space: pre-wrap;
   }
@@ -212,6 +225,11 @@
   </div>
 
   <div id="formScreen" class="form">
+    <div class="conn-warn" id="connWarn">
+      ⚠️ 系統連線尚未就緒,送出可能失敗。<br>
+      （若您是 UNI 管理者看到此訊息:請確認 register.html 第一行 VENDOR_API 已填入「現行」🟡 廠商 GAS /exec 網址。）
+    </div>
+
     <div class="notice">
       <strong>📋 申請須知</strong><br>
       • UNI 職人髮品坊 將於 3 個工作天內審查您的申請<br>
@@ -293,9 +311,9 @@
         ⭐ 請優先列出您的<strong>主打明星商品</strong>，UNI 將依此進行合作審查。<br>
         每個商品都需 UNI 職人髮品坊 個別審核通過才會正式上架。
       </div>
-      
+
       <div id="productList"></div>
-      
+
       <button type="button" class="add-product-btn" onclick="addProduct()">+ 新增商品</button>
     </div>
 
@@ -318,9 +336,32 @@
 </div>
 
 <script>
-const VENDOR_API = 'https://script.google.com/macros/s/AKfycbxkUfzwSStUmGm52mvbd7ww-ZS4gG8fXGKSWNoYZe8AY-eB17mLfyuhxTQp4CRYZkLyxQ/exec';
+/* ════════════════════════════════════════════════════════════════
+   🔧 唯一要改的地方 ▼▼▼  把下面這串換成「現行」🟡 廠商 GAS /exec
+   取得方式:🟡 廠商 GAS → 管理部署 → 複製「目前使用中」的網頁應用程式 URL
+   (同一支 = @267vmceg Webhook 用的那支)
+   ──────────────────────────────────────────────────────────────
+   🦅 回滾:若新 URL 出問題,把 VENDOR_API 改回註解裡的舊值即可
+   舊(已失效,勿用):AKfycbxkUfzwSStUmGm52mvbd7ww-ZS4gG8fXGKSWNoYZe8AY-eB17mLfyuhxTQp4CRYZkLyxQ
+   ════════════════════════════════════════════════════════════════ */
+const VENDOR_API = 'https://script.google.com/macros/s/AKfycbwFrgxIZo9gWeHkakxYDBaOxHxeVruN2UhEExTTDe5b0Q8WFWWQx6gGzXVdajMc2Zd9iA/exec';
 
 let productIdx = 0;
+
+/* 🦅 載入時靜默健檢:URL 沒換 / 連不上 → 顯示提示條 */
+(function connCheck() {
+  if (VENDOR_API.indexOf('【') >= 0) { showWarn(); return; } // 還沒換 URL
+  try {
+    fetch(VENDOR_API + '?action=ping')
+      .then(r => r.json())
+      .then(res => { if (!res || !res.ok) showWarn(); })
+      .catch(() => showWarn());
+  } catch (e) { showWarn(); }
+})();
+function showWarn() {
+  var w = document.getElementById('connWarn');
+  if (w) w.style.display = 'block';
+}
 
 function addProduct() {
   productIdx++;
@@ -383,6 +424,12 @@ function copyLineId() {
 }
 
 function submitForm() {
+  /* 🦅 送出前再守一道:URL 還沒換就直接擋,不讓廠商白填 */
+  if (VENDOR_API.indexOf('【') >= 0) {
+    alert('系統尚未設定完成（VENDOR_API 未填），請聯繫 UNI。');
+    return;
+  }
+
   const required = {
     'company_full': '公司全名',
     'display_name': '品牌簡稱',
@@ -392,7 +439,7 @@ function submitForm() {
     'line_id': 'LINE ID',
     'email': '聯絡 Email'
   };
-  
+
   const data = {};
   for (const key in required) {
     const val = document.getElementById(key).value.trim();
@@ -403,37 +450,37 @@ function submitForm() {
     }
     data[key] = val;
   }
-  
+
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
     alert('Email 格式不正確'); return;
   }
   if (!/^\d{8}$/.test(data.tax_id)) {
     alert('統一編號需為 8 碼數字'); return;
   }
-  
+
   data.address = document.getElementById('address').value.trim();
   data.bank = document.getElementById('bank').value.trim();
   data.linepay_ok = document.getElementById('linepay_ok').checked ? '可接受' : '不接受';
   data.pay_other = document.getElementById('pay_other').value.trim();
   data.pay_note = document.getElementById('pay_note').value.trim();
-  
+
   const cards = document.querySelectorAll('.product-card');
   if (cards.length === 0) {
     alert('請至少新增 1 個申請上架的商品'); return;
   }
-  
+
   const products = [];
   for (let i = 0; i < cards.length; i++) {
     const c = cards[i];
     const name = c.querySelector('.p_name').value.trim();
     const price = c.querySelector('.p_price').value.trim();
     const capacity = c.querySelector('.p_capacity').value.trim();
-    
+
     if (!name || !price || !capacity) {
       alert('商品 ' + (i+1) + ' 的「名稱／售價／容量」為必填');
       return;
     }
-    
+
     products.push({
       name: name,
       price: price,
@@ -442,23 +489,23 @@ function submitForm() {
       desc: c.querySelector('.p_desc').value.trim()
     });
   }
-  
+
   data.init_products = JSON.stringify(products);
-  
+
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.textContent = '送出中...';
-  
+
   const params = new URLSearchParams({ action: 'submitRegister' });
   Object.keys(data).forEach(k => params.append(k, data[k]));
-  
+
   fetch(VENDOR_API + '?' + params.toString())
     .then(r => r.json())
     .then(res => {
       if (res.ok) {
         document.getElementById('formScreen').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
-        document.getElementById('applyInfo').textContent = 
+        document.getElementById('applyInfo').textContent =
           '申請編號：' + res.apply_id + '\n預計廠商代號：' + res.vendor_id + '\n申請商品數：' + products.length;
         window.scrollTo(0, 0);
       } else {
