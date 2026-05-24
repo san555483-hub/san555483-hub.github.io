@@ -398,6 +398,8 @@ header{background:var(--bark);position:sticky;top:0;z-index:200;box-shadow:0 2px
 /* 首頁商品直覽分類Tab */
 .home-cat-tab{padding:8px 18px;border:1.5px solid var(--border);border-radius:20px;font-size:.75rem;font-family:'Noto Sans TC',sans-serif;background:#fff;color:var(--mid);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;}
 .home-cat-tab.active,.home-cat-tab:hover{background:var(--bark);color:#fff;border-color:var(--bark);}
+.home-cat-tab.brand-tab{border-color:var(--gold);color:var(--gold);}
+.home-cat-tab.brand-tab.active,.home-cat-tab.brand-tab:hover{background:var(--gold);color:#fff;border-color:var(--gold);}
 #home-cat-tabs::-webkit-scrollbar{display:none;}
 @media(min-width:500px){.cat-grid{grid-template-columns:repeat(3,1fr);}}
 .cat-card{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:22px 12px;text-align:center;cursor:pointer;transition:all .28s;position:relative;overflow:hidden;}
@@ -1475,7 +1477,8 @@ let selectedCategory = null;
 // ════════════════════════════════════════════════════════════
 // 🏠 首頁商品直覽（一格一格全攤開，分類Tab篩選）
 // ════════════════════════════════════════════════════════════
-let _homeCurPage = -1; // -1 = 全部
+let _homeCurPage = -1; // -1 = 全部；-100 起算 = 品牌頁籤
+let _brandTabs = []; // 品牌頁籤清單(廠商商品 category 去重)
 
 // ══ 頁籤名稱編輯（店家版） ══
 function openPageConfigModal() {
@@ -1557,9 +1560,24 @@ function renderHomeCatTabs() {
     tabs.push({ label: cfg.name, idx: i, count: counts[i]||0 });
   });
 
+  // 🎯 品牌頁籤：自廠商商品(vendorId 非空)的 category 收集不重複品牌,各自一個 tab(idx 用 -100 起算)
+  _brandTabs = [];
+  const brandCount = {};
+  allProducts.forEach(p => {
+    if (p.vendorId && String(p.vendorId).trim() && p.category && String(p.category).trim()) {
+      const b = String(p.category).trim();
+      if (_brandTabs.indexOf(b) === -1) _brandTabs.push(b);
+      brandCount[b] = (brandCount[b]||0) + 1;
+    }
+  });
+  const brandTabsHtml = _brandTabs.map((b, i) => {
+    const bidx = -100 - i;
+    return `<button class="home-cat-tab brand-tab ${_homeCurPage===bidx?'active':''}" onclick="switchHomeCat(${bidx})">🏷️ ${b}<span style="font-size:.65rem;opacity:.55;margin-left:3px;">${brandCount[b]}</span></button>`;
+  }).join('');
+
   bar.innerHTML = tabs.map(t =>
     `<button class="home-cat-tab ${_homeCurPage===t.idx?'active':''}" onclick="switchHomeCat(${t.idx})">${t.label}${t.idx>=0?`<span style="font-size:.65rem;opacity:.55;margin-left:3px;">${t.count}</span>`:''}</button>`
-  ).join('');
+  ).join('') + brandTabsHtml;
 
   // 店家版：加「✏️ 編輯頁籤名稱」按鈕
   if(isOwner) {
@@ -1588,9 +1606,16 @@ function renderHomeProducts() {
   if(!wrap) return;
   const isOwner = document.body.classList.contains('owner-mode');
 
-  const prods = _homeCurPage === -1
-    ? allProducts
-    : allProducts.filter(p => Number(p.page) === _homeCurPage);
+  let prods;
+  if (_homeCurPage <= -100) {
+    // 品牌頁籤:篩該品牌的廠商商品
+    const brand = _brandTabs[-100 - _homeCurPage];
+    prods = allProducts.filter(p => p.vendorId && String(p.category||'').trim() === brand);
+  } else if (_homeCurPage === -1) {
+    prods = allProducts;
+  } else {
+    prods = allProducts.filter(p => Number(p.page) === _homeCurPage);
+  }
 
   const grid = document.createElement('div');
   grid.className = 'product-grid';
