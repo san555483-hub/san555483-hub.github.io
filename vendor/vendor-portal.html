@@ -146,9 +146,11 @@ table.data tr:last-child td { border-bottom:none; }
           <input type="text" id="apCapacity" placeholder="例:200ml / 50g / 12 入" />
         </div>
         <div class="frow">
-          <label>商品圖網址(選填)</label>
-          <input type="text" id="apImage" placeholder="https://..." />
-          <div class="hint">沒有也沒關係,核准後可再補</div>
+          <label>商品照片(選填)</label>
+          <input type="file" id="apImageFile" accept="image/*" onchange="handleImageUpload(this)" />
+          <div class="hint" id="apImageHint">直接從手機相簿選一張即可,系統會自動壓縮上傳</div>
+          <img id="apImagePreview" style="display:none;max-width:130px;border-radius:8px;margin-top:8px;border:1px solid var(--c-border);" />
+          <input type="hidden" id="apImageUrl" />
         </div>
         <div class="frow">
           <label>描述 / 成分 / 適用髮質(選填)</label>
@@ -218,6 +220,7 @@ table.data tr:last-child td { border-bottom:none; }
 <script>
 const CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbwFrgxIZo9gWeHkakxYDBaOxHxeVruN2UhEExTTDe5b0Q8WFWWQx6gGzXVdajMc2Zd9iA/exec',
+  SHOP_GAS_URL: 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec', // 🔵 購物 GAS(圖片上傳用)
 };
 
 async function api(action, params = {}) {
@@ -281,6 +284,55 @@ async function loadOrders() {
   `).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">尚無訂單</td></tr>';
 }
 
+async function handleImageUpload(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const hint = document.getElementById('apImageHint');
+  hint.textContent = '⏳ 處理中,請稍候...';
+  try {
+    const dataUrl = await resizeImage(file, 1000, 0.85);
+    const base64 = dataUrl.split(',')[1];
+    const res = await fetch(CONFIG.SHOP_GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'uploadImage', base64: base64, mimeType: 'image/jpeg', filename: 'vp_' + Date.now() + '.jpg' })
+    });
+    const json = await res.json();
+    if (json.ok && json.url) {
+      document.getElementById('apImageUrl').value = json.url;
+      const pv = document.getElementById('apImagePreview');
+      pv.src = dataUrl; pv.style.display = 'block';
+      hint.textContent = '✅ 圖片已上傳';
+    } else {
+      hint.textContent = '❌ 上傳失敗:' + (json.msg || '請重試一次');
+    }
+  } catch (e) { hint.textContent = '❌ 上傳失敗:' + e.message; }
+}
+
+function resizeImage(file, maxSize, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitApply() {
   const name = document.getElementById('apName').value.trim();
   const price = document.getElementById('apPrice').value.trim();
@@ -296,7 +348,7 @@ async function submitApply() {
     product_name: name,
     price: price,
     capacity: capacity,
-    image_url: document.getElementById('apImage').value.trim(),
+    image_url: document.getElementById('apImageUrl').value,
     description: document.getElementById('apDesc').value.trim()
   });
   btn.disabled = false; btn.textContent = '送出上架申請';
@@ -305,8 +357,11 @@ async function submitApply() {
     document.getElementById('apName').value = '';
     document.getElementById('apPrice').value = '';
     document.getElementById('apCapacity').value = '';
-    document.getElementById('apImage').value = '';
     document.getElementById('apDesc').value = '';
+    document.getElementById('apImageFile').value = '';
+    document.getElementById('apImageUrl').value = '';
+    document.getElementById('apImagePreview').style.display = 'none';
+    document.getElementById('apImageHint').textContent = '直接從手機相簿選一張即可,系統會自動壓縮上傳';
   } else {
     err.textContent = '❌ ' + (res.msg || '送出失敗');
   }
