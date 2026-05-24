@@ -53,6 +53,16 @@ table.data tr:last-child td { border-bottom:none; }
 .info-row .v { flex:1; font-weight:600; font-size:14px; }
 .info-row .edit { color:var(--c-primary); font-size:13px; cursor:pointer; background:none; border:none; }
 
+/* 申請上架表單 */
+.apply-form { background:var(--c-card); border-radius:var(--r); padding:18px; box-shadow:var(--shadow); }
+.apply-form .frow { margin-bottom:14px; }
+.apply-form label { display:block; font-size:13px; color:var(--c-soft); margin-bottom:5px; font-weight:600; }
+.apply-form label .req { color:var(--c-danger); margin-left:3px; }
+.apply-form input, .apply-form textarea { width:100%; padding:10px 12px; border:1px solid var(--c-border); border-radius:8px; }
+.apply-form textarea { min-height:64px; resize:vertical; }
+.apply-form .hint { font-size:11px; color:var(--c-soft); margin-top:4px; }
+.apply-note { background:#fff8ed; border:1px solid #f0d896; border-radius:8px; padding:11px 13px; font-size:12px; color:#6b5530; line-height:1.7; margin-bottom:14px; }
+
 .empty { text-align:center; padding:40px 20px; color:var(--c-soft); background:var(--c-card); border-radius:var(--r); }
 .tab-pane { display:none; }
 .tab-pane.active { display:block; }
@@ -65,8 +75,8 @@ table.data tr:last-child td { border-bottom:none; }
 .modal-head { padding:14px 18px; border-bottom:1px solid var(--c-border); display:flex; justify-content:space-between; align-items:center; }
 .modal-head h3 { font-size:16px; }
 .modal-close { background:none; font-size:22px; color:var(--c-soft); line-height:1; padding:0 4px; border:none; cursor:pointer; }
-.modal-body { padding:18px; }
 .modal-foot { padding:12px 18px; border-top:1px solid var(--c-border); display:flex; gap:8px; justify-content:flex-end; }
+.modal-body { padding:18px; }
 .modal-body input, .modal-body textarea { width:100%; padding:9px 11px; border:1px solid var(--c-border); border-radius:8px; margin-top:4px; }
 .modal-body label { font-size:12px; color:var(--c-soft); font-weight:600; }
 </style>
@@ -101,6 +111,7 @@ table.data tr:last-child td { border-bottom:none; }
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="orders" onclick="switchTab('orders')">訂單</button>
+    <button class="tab" data-tab="apply" onclick="switchTab('apply')">申請上架</button>
     <button class="tab" data-tab="exposure" onclick="switchTab('exposure')">曝光</button>
     <button class="tab" data-tab="statement" onclick="switchTab('statement')">對帳</button>
     <button class="tab" data-tab="info" onclick="switchTab('info')">我的資料</button>
@@ -113,6 +124,39 @@ table.data tr:last-child td { border-bottom:none; }
         <thead><tr><th>訂單號</th><th>商品</th><th>金額</th><th>我的分潤</th><th>狀態</th><th>時間</th></tr></thead>
         <tbody id="ordersBody"><tr><td colspan="6" class="loader">載入中...</td></tr></tbody>
       </table>
+    </div>
+
+    <div class="tab-pane" id="tab-apply">
+      <div class="section-head"><h2>📤 申請商品上架</h2></div>
+      <div class="apply-note">
+        💡 填寫後送出 → UNI 審查 → 通過即自動上架到購物商城,訂單分潤自動計入。<br>
+        每件商品都需 UNI 個別審核,結果會以 LINE / Email 通知您。
+      </div>
+      <div class="apply-form">
+        <div class="frow">
+          <label>商品名稱 <span class="req">*</span></label>
+          <input type="text" id="apName" placeholder="例:保濕修護髮膜" />
+        </div>
+        <div class="frow">
+          <label>售價 (NT$) <span class="req">*</span></label>
+          <input type="number" id="apPrice" placeholder="例:680" />
+        </div>
+        <div class="frow">
+          <label>容量規格 <span class="req">*</span></label>
+          <input type="text" id="apCapacity" placeholder="例:200ml / 50g / 12 入" />
+        </div>
+        <div class="frow">
+          <label>商品圖網址(選填)</label>
+          <input type="text" id="apImage" placeholder="https://..." />
+          <div class="hint">沒有也沒關係,核准後可再補</div>
+        </div>
+        <div class="frow">
+          <label>描述 / 成分 / 適用髮質(選填)</label>
+          <textarea id="apDesc" placeholder="主要功效、適用髮質、特色成分..."></textarea>
+        </div>
+        <button class="btn-primary" id="apSubmit" onclick="submitApply()">送出上架申請</button>
+        <div class="err-msg" id="apErr"></div>
+      </div>
     </div>
 
     <div class="tab-pane" id="tab-exposure">
@@ -193,10 +237,7 @@ function toast(msg) {
 let session = { vid: '', vname: '', uid: '' };
 
 function lineAuth() {
-  // 簡化版:目前用「廠商代號自動關聯 UID」(在 vp_login_ 後端驗證 UID)
-  // 廠商按這個鈕等於確認「我會用我綁定的 LINE 帳號」
-  // 後端會檢查 UID 是否跟廠商代號對應
-  session.uid = 'LINE_AUTH_OK'; // placeholder,後端會用廠商代號去 🔑 廠商密碼 撈真實 UID 驗證
+  session.uid = 'LINE_AUTH_OK';
   document.getElementById('step1Area').style.display = 'none';
   document.getElementById('step1Done').style.display = 'block';
   document.getElementById('step2Area').style.display = 'block';
@@ -208,20 +249,10 @@ async function doLogin() {
   const err = document.getElementById('errMsg');
   err.textContent = '';
   if (!vid || !pwd) { err.textContent = '請輸入廠商代號與密碼'; return; }
-
-  // 取廠商註冊時的 UID(從 🔑 廠商密碼 Sheet)
-  // 但要先有 UID 才能登入...雞生蛋問題
-  // 解法:第一次登入時,UID 從 Sheet 撈出來自動帶入
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.textContent = '驗證中...';
-
-  // 先用 vid 取 uid(假設廠商已設密碼,UID 已在 Sheet)
-  // 簡化:後端 vp_login_ 直接用 vid+pwd 驗證,UID 從 Sheet 取
-  // 修改後端讓 UID 從 Sheet 取(因為廠商可能不知道自己 UID)
-
-  const res = await api('vp_login', { vid, pwd, uid: 'AUTO' }); // AUTO = 用 Sheet 裡的 UID
+  const res = await api('vp_login', { vid, pwd, uid: 'AUTO' });
   btn.disabled = false; btn.textContent = '登入';
-
   if (res.ok) {
     session.vid = res.vid; session.vname = res.vname;
     document.getElementById('topVid').textContent = res.vid;
@@ -248,6 +279,37 @@ async function loadOrders() {
   document.getElementById('ordersBody').innerHTML = list.length ? list.map(o => `
     <tr><td>${esc(o.id)}</td><td>${esc(o.items)}</td><td>$${o.amount}</td><td>$${o.share}</td><td>${esc(o.status)}</td><td>${esc(o.time)}</td></tr>
   `).join('') : '<tr><td colspan="6" style="text-align:center;color:#999;padding:30px;">尚無訂單</td></tr>';
+}
+
+async function submitApply() {
+  const name = document.getElementById('apName').value.trim();
+  const price = document.getElementById('apPrice').value.trim();
+  const capacity = document.getElementById('apCapacity').value.trim();
+  const err = document.getElementById('apErr'); err.textContent = '';
+  if (!name) { err.textContent = '請填寫商品名稱'; return; }
+  if (!price || Number(price) <= 0) { err.textContent = '請填寫正確售價'; return; }
+  if (!capacity) { err.textContent = '請填寫容量規格'; return; }
+  const btn = document.getElementById('apSubmit');
+  btn.disabled = true; btn.textContent = '送出中...';
+  const res = await api('vp_submitProductApply', {
+    vid: session.vid,
+    product_name: name,
+    price: price,
+    capacity: capacity,
+    image_url: document.getElementById('apImage').value.trim(),
+    description: document.getElementById('apDesc').value.trim()
+  });
+  btn.disabled = false; btn.textContent = '送出上架申請';
+  if (res.ok) {
+    toast('✅ 申請已送出,等待 UNI 審核');
+    document.getElementById('apName').value = '';
+    document.getElementById('apPrice').value = '';
+    document.getElementById('apCapacity').value = '';
+    document.getElementById('apImage').value = '';
+    document.getElementById('apDesc').value = '';
+  } else {
+    err.textContent = '❌ ' + (res.msg || '送出失敗');
+  }
 }
 
 async function loadExposure() {

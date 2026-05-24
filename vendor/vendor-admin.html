@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UNI 廠商系統 - 管理後台 v1.1</title>
+<title>UNI 廠商系統 - 管理後台 v1.2</title>
 <style>
 :root { --c-bg:#f5f5f7; --c-card:#fff; --c-primary:#d4a574; --c-primary-dark:#b8895a; --c-text:#2c2c2e; --c-text-soft:#6e6e73; --c-border:#e5e5ea; --c-success:#34c759; --c-warning:#ff9500; --c-danger:#ff3b30; --r:12px; --shadow:0 2px 8px rgba(0,0,0,0.04); }
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -50,6 +50,7 @@ input, select, textarea { font-family:inherit; font-size:14px; }
 .vendor-card .vname { font-weight:600; }
 .vendor-card .meta { color:var(--c-text-soft); font-size:13px; }
 .vendor-card .actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.prod-thumb { width:54px; height:54px; border-radius:8px; object-fit:cover; border:1px solid var(--c-border); float:right; margin-left:10px; }
 .status-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
 .status-pending { background:#fff4e6; color:#ff9500; }
 .status-approved { background:#e6f9ed; color:#34c759; }
@@ -95,7 +96,7 @@ table.data tr:last-child td { border-bottom:none; }
 <div id="loginPage">
   <div class="login-card">
     <h1>🏪 UNI 廠商系統</h1>
-    <div class="sub">管理後台 v1.1</div>
+    <div class="sub">管理後台 v1.2</div>
     <div class="login-step" id="step1">
       <h3><span>① LINE 身份驗證</span><span class="badge" id="step1Badge">待驗證</span></h3>
       <button class="btn-line" onclick="startLineLogin()">以 LINE 登入</button>
@@ -117,6 +118,7 @@ table.data tr:last-child td { border-bottom:none; }
   </div>
   <div class="tabs">
     <button class="tab active" data-tab="pending" onclick="switchTab('pending')">待審 <span class="dot" id="pendingDot" style="display:none;">0</span></button>
+    <button class="tab" data-tab="products" onclick="switchTab('products')">商品審核 <span class="dot" id="prodDot" style="display:none;">0</span></button>
     <button class="tab" data-tab="vendors" onclick="switchTab('vendors')">廠商列表</button>
     <button class="tab" data-tab="orders" onclick="switchTab('orders')">訂單</button>
     <button class="tab" data-tab="stats" onclick="switchTab('stats')">統計</button>
@@ -127,6 +129,10 @@ table.data tr:last-child td { border-bottom:none; }
     <div class="tab-pane active" id="tab-pending">
       <div class="section-head"><h2>📋 待審廠商</h2><button class="btn-sm ghost" onclick="loadPending()">🔄 重新整理</button></div>
       <div id="pendingList"><div class="loader">載入中...</div></div>
+    </div>
+    <div class="tab-pane" id="tab-products">
+      <div class="section-head"><h2>📤 待審商品上架</h2><button class="btn-sm ghost" onclick="loadPendingProducts()">🔄 重新整理</button></div>
+      <div id="productList"><div class="loader">載入中...</div></div>
     </div>
     <div class="tab-pane" id="tab-vendors">
       <div class="section-head"><h2>🏪 廠商列表</h2><button class="btn-sm ghost" onclick="loadVendors()">🔄 重新整理</button></div>
@@ -308,6 +314,48 @@ function renderPending() {
       </div></div>
       <div class="actions"><button class="btn-sm" onclick='openReviewModal(${JSON.stringify(v)})'>🔍 審查</button></div>
     </div>`).join('');
+}
+
+/* ===== 📤 商品上架審核 ===== */
+let pendingProducts = [];
+async function loadPendingProducts() {
+  document.getElementById('productList').innerHTML = '<div class="loader">載入中...</div>';
+  const res = await api('vendor_listPendingProducts');
+  if (!res.ok) { toast('載入失敗:' + (res.msg || '')); return; }
+  pendingProducts = res.list || []; renderPendingProducts();
+}
+function renderPendingProducts() {
+  const box = document.getElementById('productList');
+  const dot = document.getElementById('prodDot');
+  if (!pendingProducts.length) { box.innerHTML = '<div class="empty">🎉 目前沒有待審商品</div>'; dot.style.display = 'none'; return; }
+  dot.style.display = 'inline-flex'; dot.textContent = pendingProducts.length;
+  box.innerHTML = pendingProducts.map(p => `
+    <div class="vendor-card">
+      ${p.imageUrl ? `<img class="prod-thumb" src="${esc(p.imageUrl)}" onerror="this.style.display='none'" />` : ''}
+      <div class="vname">${esc(p.name)} <span class="status-pill status-pending">待審</span></div>
+      <div class="meta">廠商:<b>${esc(p.vendorId)}</b>・售價:NT$${esc(p.price)}・容量:${esc(p.capacity || '-')}</div>
+      ${p.description ? `<div class="meta" style="margin-top:4px;">${esc(p.description)}</div>` : ''}
+      <div class="meta">申請時間:${esc(p.time)}</div>
+      <div class="actions">
+        <button class="btn-sm success" onclick="approveProduct('${esc(p.id)}','${esc(p.name)}')">✅ 通過上架</button>
+        <button class="btn-sm danger" onclick="rejectProduct('${esc(p.id)}','${esc(p.name)}')">❌ 拒絕</button>
+      </div>
+    </div>`).join('');
+}
+async function approveProduct(applyId, name) {
+  if (!confirm(`確認通過「${name}」?\n\n通過後會自動上架到購物商城,並通知廠商。`)) return;
+  toast('上架中...');
+  const res = await api('vendor_approveProduct', { applyId });
+  if (res.ok) { toast('✅ 已上架,通知已發送'); loadPendingProducts(); }
+  else alert('失敗:' + (res.msg || '未知'));
+}
+async function rejectProduct(applyId, name) {
+  const reason = prompt(`拒絕「${name}」的原因:`);
+  if (reason === null) return;
+  if (!reason.trim()) { alert('請填寫拒絕原因'); return; }
+  const res = await api('vendor_rejectProduct', { applyId, reason: reason.trim() });
+  if (res.ok) { toast('✅ 已拒絕,通知已發送'); loadPendingProducts(); }
+  else alert('失敗:' + (res.msg || '未知'));
 }
 
 let currentReview = null;
@@ -506,7 +554,7 @@ function esc(s) {
 }
 
 function initApp() {
-  loadPending(); loadVendors(); loadOrders(); loadStats(); loadBlacklist(); loadSettings();
+  loadPending(); loadPendingProducts(); loadVendors(); loadOrders(); loadStats(); loadBlacklist(); loadSettings();
 }
 </script>
 </body>
