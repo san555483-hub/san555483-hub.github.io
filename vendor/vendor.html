@@ -9,7 +9,7 @@
 /* ════════════════════════════════════════════
    🟡 UNI 廠商專區 — 四合一精靈
    輸 email → 自動判斷階段 → 帶廠商走對的路
-   涵蓋:註冊 / 查進度 / 設密碼 / 登入
+   涵蓋:註冊 / 查進度 / 設密碼 / 登入 / 綁定通知
 ════════════════════════════════════════════ */
 :root{
   --bark:#3d2b1f;--bark2:#5c3d2e;--linen:#faf6f1;--sand:#ede5d8;
@@ -91,7 +91,7 @@ input:focus{border-color:var(--rose);background:#fff;}
 .btn-line{
   width:100%;padding:13px;border:none;border-radius:9px;background:#06c755;color:#fff;
   font-family:'Noto Sans TC',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;
-  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;
 }
 .btn-line:hover{background:#05b34b;}
 
@@ -116,6 +116,20 @@ input:focus{border-color:var(--rose);background:#fff;}
 
 .spinner{width:38px;height:38px;border:3px solid var(--sand);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:30px auto;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* 綁定通知步驟 */
+.bind-code{
+  display:block;font-family:'Noto Sans TC',sans-serif;font-size:1.6rem;font-weight:700;
+  letter-spacing:.12em;color:var(--bark);background:var(--gold-lt);
+  padding:12px;border-radius:10px;text-align:center;margin:6px 0 4px;
+}
+.qr-box{text-align:center;margin:14px 0 6px;}
+.qr-box img{width:160px;height:160px;border:6px solid #fff;border-radius:12px;box-shadow:0 6px 18px -8px var(--shadow);}
+.qr-box .qr-cap{font-family:'Noto Sans TC',sans-serif;font-size:.68rem;color:var(--mid);margin-top:6px;}
+.bind-steps{text-align:left;font-family:'Noto Sans TC',sans-serif;font-size:.78rem;color:var(--bark2);line-height:1.85;background:var(--linen);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:12px 0;}
+.bind-steps b{color:var(--bark);}
+.btn-copy{display:inline-block;margin-top:4px;padding:8px 18px;border:1.5px solid var(--gold);border-radius:8px;background:#fff;color:var(--gold);font-family:'Noto Sans TC',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-copy:hover{background:var(--gold);color:#fff;}
 
 .foot{text-align:center;font-family:'Noto Sans TC',sans-serif;font-size:.66rem;color:var(--mid);margin-top:20px;letter-spacing:.04em;}
 </style>
@@ -150,6 +164,7 @@ const CONFIG = {
   GAS_URL:      'https://script.google.com/macros/s/AKfycbwFrgxIZo9gWeHkakxYDBaOxHxeVruN2UhEExTTDe5b0Q8WFWWQx6gGzXVdajMc2Zd9iA/exec',
   REGISTER_URL: 'https://san555483-hub.github.io/vendor/register.html',
   PORTAL_URL:   'https://san555483-hub.github.io/vendor/vendor-portal.html',
+  OA_ADD_FRIEND:'https://line.me/R/ti/p/@267vmceg',   // 🦅 @267vmceg 廠商通知 OA 加好友連結(有 lin.ee 短連結可換更穩)
 };
 
 let curEmail = '';
@@ -252,8 +267,61 @@ async function doSetPwd(){
   if(p1!==p2){ msg.innerHTML='<div class="msg err">兩次密碼不一致</div>'; return; }
   const btn=document.getElementById('setBtn'); btn.disabled=true; btn.textContent='設定中...';
   const res=await api('vp_selfSetPassword',{ email:curEmail, vid:curVid, pwd:p1 });
-  if(res.ok){ curVid=res.vid||curVid; screenDone(); }
+  if(res.ok){ curVid=res.vid||curVid; screenBind(); }   // 🦅 設密碼成功 → 先進綁定通知
   else{ btn.disabled=false; btn.textContent='設定密碼並完成 →'; msg.innerHTML=`<div class="msg err">❌ ${esc(res.msg)}</div>`; }
+}
+
+// ════════ 畫面 3.5:綁定通知 OA(自動判斷手機/桌機,加 @267vmceg 好友 + 送代號) ════════
+const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+function screenBind(){
+  showSteps(true); setSteps(4);
+  const qrBox = `
+    <div class="qr-box">
+      <img src="data:image/png;base64,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" alt="加好友 QR" />
+      <div class="qr-cap">用手機 LINE 掃這個 QR 加好友</div>
+    </div>`;
+  const addBtn = `<a class="btn-line" href="${CONFIG.OA_ADD_FRIEND}">＋ 點這裡加 LINE 好友</a>`;
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box" style="padding-bottom:2px;">
+      <div class="ico">🔔</div>
+      <h2>最後一步:綁定通知</h2>
+      <p style="margin-bottom:6px;">加好友才收得到<strong>訂單與審核通知</strong>。</p>
+    </div>
+
+    <div class="bind-steps">
+      <div><b>①</b> 先複製你的廠商代號</div>
+      <span class="bind-code">${esc(curVid)}</span>
+      <div style="text-align:center;"><button class="btn-copy" id="copyBtn" onclick="copyCode()">📋 複製代號</button></div>
+      <div style="margin-top:12px;"><b>②</b> ${IS_MOBILE ? '點下方按鈕加好友' : '用手機掃右邊 QR 加好友'},在聊天室<b>貼上代號送出</b></div>
+    </div>
+
+    ${IS_MOBILE ? addBtn : qrBox}
+
+    <button class="btn" id="bindBtn" onclick="checkBind()" style="margin-top:14px;"><b>③</b> 我已送出代號 → 檢查並完成</button>
+    <button class="back" onclick="screenDone()">先跳過,稍後再綁定 →</button>
+    <div id="msg"></div>`;
+}
+function copyCode(){
+  const code = curVid || '';
+  const btn = document.getElementById('copyBtn');
+  const done = ()=>{ if(btn){ btn.textContent='✓ 已複製'; setTimeout(()=>{ if(btn) btn.textContent='📋 複製代號'; },1500); } };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(done).catch(()=>fallbackCopy(code,done));
+  } else { fallbackCopy(code,done); }
+}
+function fallbackCopy(text,cb){
+  const t=document.createElement('textarea'); t.value=text; t.style.position='fixed'; t.style.opacity='0';
+  document.body.appendChild(t); t.focus(); t.select();
+  try{ document.execCommand('copy'); cb&&cb(); }catch(e){}
+  document.body.removeChild(t);
+}
+async function checkBind(){
+  const btn=document.getElementById('bindBtn'); const msg=document.getElementById('msg'); msg.innerHTML='';
+  btn.disabled=true; btn.textContent='檢查中...';
+  const res=await api('chkVendorBind',{ vid:curVid });
+  btn.disabled=false; btn.innerHTML='<b>③</b> 我已送出代號 → 檢查並完成';
+  if(res.ok && res.bound){ screenDone(); }
+  else{ msg.innerHTML='<div class="msg err">尚未收到綁定。請確認已加好友,並在 LINE 聊天室貼上代號 '+esc(curVid)+' 送出,再按一次檢查。</div>'; }
 }
 
 // ════════ 畫面 4:完成 ════════
@@ -266,7 +334,7 @@ function screenDone(){
       <div class="ico">✅</div>
       <h2>全部完成!</h2>
       <div class="vid-chip">廠商代號:${esc(curVid)}</div>
-      <p>密碼已設定成功。<br>以後請用「<strong>${esc(curVid)} + 您的密碼</strong>」登入後台,<br>即可查看您的訂單與分潤。</p>
+      <p>以後請用「<strong>${esc(curVid)} + 您的密碼</strong>」登入後台,<br>即可查看您的訂單與分潤。</p>
       <button class="btn" onclick="location.href='${CONFIG.PORTAL_URL}'">前往廠商後台登入 →</button>
     </div>`;
 }
