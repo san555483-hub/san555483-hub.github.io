@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>UNI 職人髮品坊｜廠商專區</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════
+   🟡 UNI 廠商專區 — 四合一精靈
+   輸 email → 自動判斷階段 → 帶廠商走對的路
+   涵蓋:註冊 / 查進度 / 設密碼 / 登入
+════════════════════════════════════════════ */
+:root{
+  --bark:#3d2b1f;--bark2:#5c3d2e;--linen:#faf6f1;--sand:#ede5d8;
+  --rose:#c9897a;--rose-lt:#f5e8e4;--gold:#b8895a;--gold-lt:#e8d0b0;
+  --moss:#7a8c6e;--ink:#2a1f1a;--mid:#7a6a60;--border:#ddd0c4;
+  --shadow:rgba(61,43,31,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  font-family:'Noto Serif TC',serif;
+  background:var(--linen);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 15% 0%,rgba(184,137,90,.10) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%,rgba(201,137,122,.08) 0%,transparent 55%);
+  color:var(--ink);min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:24px 16px;
+}
+.wrap{width:100%;max-width:440px;}
+
+/* 品牌頭 */
+.brand{text-align:center;margin-bottom:22px;}
+.brand .eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  color:var(--gold);font-family:'Noto Sans TC',sans-serif;
+  font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;margin-bottom:12px;
+}
+.brand .eyebrow::before,.brand .eyebrow::after{content:'';width:22px;height:1px;background:var(--gold);opacity:.5;}
+.brand h1{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:500;color:var(--bark);letter-spacing:.02em;}
+.brand h1 em{font-style:italic;color:var(--gold);}
+.brand .sub{font-family:'Noto Sans TC',sans-serif;font-size:.76rem;color:var(--mid);margin-top:8px;}
+
+/* 卡片 */
+.card{
+  background:#fff;border:1px solid var(--border);border-radius:14px;
+  box-shadow:0 16px 48px -16px var(--shadow);overflow:hidden;
+  animation:rise .5s ease;
+}
+@keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.card-body{padding:26px 24px 28px;}
+
+/* 進度條 */
+.steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:22px;}
+.step-dot{
+  width:30px;height:30px;border-radius:50%;background:var(--sand);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Sans TC',sans-serif;font-size:.72rem;font-weight:700;color:var(--mid);
+  border:2px solid var(--sand);transition:all .3s;flex-shrink:0;
+}
+.step-dot.active{background:var(--gold);border-color:var(--gold);color:#fff;}
+.step-dot.done{background:var(--moss);border-color:var(--moss);color:#fff;}
+.step-line{width:30px;height:2px;background:var(--sand);transition:background .3s;}
+.step-line.done{background:var(--moss);}
+
+/* 文字/輸入 */
+.lead{font-family:'Noto Sans TC',sans-serif;font-size:.84rem;color:var(--bark2);line-height:1.8;margin-bottom:16px;text-align:center;}
+.lead strong{color:var(--bark);}
+input{
+  width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:9px;
+  font-family:'Noto Serif TC',serif;font-size:.92rem;color:var(--ink);
+  background:var(--linen);outline:none;transition:border-color .2s,background .2s;margin-bottom:11px;
+}
+input:focus{border-color:var(--rose);background:#fff;}
+
+.btn{
+  width:100%;padding:14px;border:none;border-radius:9px;
+  background:linear-gradient(135deg,var(--gold),var(--bark2));color:#fff;
+  font-family:'Noto Serif TC',serif;font-size:.92rem;letter-spacing:.08em;font-weight:600;
+  cursor:pointer;transition:all .25s;box-shadow:0 6px 18px -6px rgba(184,137,90,.5);
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px -6px rgba(184,137,90,.6);}
+.btn:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{
+  width:100%;padding:13px;border:1.5px solid var(--border);border-radius:9px;
+  background:#fff;color:var(--bark2);font-family:'Noto Serif TC',serif;font-size:.88rem;
+  cursor:pointer;transition:all .2s;margin-top:10px;
+}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-line{
+  width:100%;padding:13px;border:none;border-radius:9px;background:#06c755;color:#fff;
+  font-family:'Noto Sans TC',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-line:hover{background:#05b34b;}
+
+.msg{padding:11px 13px;border-radius:9px;margin-top:12px;font-family:'Noto Sans TC',sans-serif;font-size:.78rem;line-height:1.7;}
+.msg.err{background:#ffe6e6;color:#c0392b;}
+.msg.ok{background:rgba(122,140,110,.12);color:var(--moss);}
+
+/* 狀態畫面 */
+.stage-box{text-align:center;padding:14px 4px;}
+.stage-box .ico{font-size:3rem;margin-bottom:12px;}
+.stage-box h2{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--bark);margin-bottom:10px;}
+.stage-box .vid-chip{
+  display:inline-block;font-family:'Noto Sans TC',sans-serif;font-size:.8rem;font-weight:600;
+  background:var(--rose-lt);color:var(--bark);padding:5px 16px;border-radius:20px;margin-bottom:14px;letter-spacing:.04em;
+}
+.stage-box p{font-family:'Noto Sans TC',sans-serif;font-size:.82rem;color:var(--mid);line-height:1.9;margin-bottom:16px;}
+.back{display:inline-block;margin-top:8px;background:none;border:none;color:var(--gold);font-family:'Noto Sans TC',sans-serif;font-size:.78rem;text-decoration:underline;cursor:pointer;}
+
+.tip{font-family:'Noto Sans TC',sans-serif;font-size:.7rem;color:var(--mid);line-height:1.6;margin-bottom:14px;}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-size:.7rem;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.spinner{width:38px;height:38px;border:3px solid var(--sand);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:30px auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.foot{text-align:center;font-family:'Noto Sans TC',sans-serif;font-size:.66rem;color:var(--mid);margin-top:20px;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="eyebrow">Vendor Portal</div>
+    <h1>UNI 職人髮品坊 <em>廠商專區</em></h1>
+    <div class="sub">輸入 Email,系統會自動帶您到下一步</div>
+  </div>
+
+  <div class="card">
+    <div class="card-body" id="body">
+      <!-- 進度條 -->
+      <div class="steps" id="steps">
+        <div class="step-dot active" id="d1">1</div><div class="step-line" id="l1"></div>
+        <div class="step-dot" id="d2">2</div><div class="step-line" id="l2"></div>
+        <div class="step-dot" id="d3">3</div><div class="step-line" id="l3"></div>
+        <div class="step-dot" id="d4">4</div>
+      </div>
+      <div id="content"></div>
+    </div>
+  </div>
+
+  <div class="foot">UNI 職人髮品坊 · 廠商合作專區　|　遇到問題請聯繫 UNI</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+const CONFIG = {
+  GAS_URL:      'https://script.google.com/macros/s/AKfycbwFrgxIZo9gWeHkakxYDBaOxHxeVruN2UhEExTTDe5b0Q8WFWWQx6gGzXVdajMc2Zd9iA/exec',
+  REGISTER_URL: 'https://san555483-hub.github.io/vendor/register.html',
+  PORTAL_URL:   'https://san555483-hub.github.io/vendor/vendor-portal.html',
+};
+
+let curEmail = '';
+let curVid   = '';
+
+async function api(action, p = {}) {
+  const qs = new URLSearchParams({ action, ...p }).toString();
+  try { const r = await fetch(`${CONFIG.GAS_URL}?${qs}`); return await r.json(); }
+  catch (e) { return { ok: false, msg: '連線失敗:' + e.message }; }
+}
+function esc(s){ if(s==null) return ''; return String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'})[c]); }
+
+// 進度條:step = 1~4
+function setSteps(step){
+  for(let i=1;i<=4;i++){
+    const d=document.getElementById('d'+i);
+    d.classList.remove('active','done');
+    if(i<step) d.classList.add('done');
+    else if(i===step) d.classList.add('active');
+  }
+  for(let i=1;i<=3;i++){
+    const l=document.getElementById('l'+i);
+    l.classList.toggle('done', i<step);
+  }
+}
+function showSteps(show){ document.getElementById('steps').style.display = show?'flex':'none'; }
+
+// ════════ 畫面 1:輸 email 入口 ════════
+function screenStart(){
+  showSteps(true); setSteps(1);
+  document.getElementById('content').innerHTML = `
+    <div class="lead">您好!請輸入您的 <strong>Email</strong>,<br>系統會自動為您查詢狀態並帶您前往下一步。</div>
+    <input type="email" id="email" placeholder="您的 Email" autocomplete="email" />
+    <button class="btn" id="goBtn" onclick="checkStage()">開始 →</button>
+    <div class="divider">還沒申請過?</div>
+    <button class="btn-ghost" onclick="location.href='${CONFIG.REGISTER_URL}'">📋 我是新廠商,前往申請</button>
+    <div id="msg"></div>`;
+  const inp = document.getElementById('email');
+  if(curEmail) inp.value = curEmail;
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') checkStage(); });
+}
+
+// 查階段
+async function checkStage(){
+  const email = document.getElementById('email').value.trim();
+  const msg = document.getElementById('msg'); msg.innerHTML='';
+  if(!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)){ msg.innerHTML='<div class="msg err">請輸入正確的 Email</div>'; return; }
+  curEmail = email;
+  const btn = document.getElementById('goBtn'); btn.disabled=true; btn.textContent='查詢中...';
+  const res = await api('vp_selfCheck', { email });
+  btn.disabled=false; btn.textContent='開始 →';
+  if(!res.ok){ msg.innerHTML=`<div class="msg err">❌ ${esc(res.msg)}</div>`; return; }
+  curVid = res.vid || '';
+  routeStage(res);
+}
+
+function routeStage(res){
+  switch(res.stage){
+    case 'approved':  screenSetPwd(res); break;
+    case 'pending':   screenPending();   break;
+    case 'rejected':  screenRejected(res.reason); break;
+    case 'suspended': screenSuspended();  break;
+    default:          screenNotFound();
+  }
+}
+
+// ════════ 畫面 2:審核中 ════════
+function screenPending(){
+  showSteps(true); setSteps(2);
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box">
+      <div class="ico">⏳</div>
+      <h2>審核中</h2>
+      ${curVid?`<div class="vid-chip">廠商代號:${esc(curVid)}</div>`:''}
+      <p>您的申請已送達,UNI 正在審核中。<br>審核通常 3 個工作天內完成,<br>通過後會以 <strong>Email</strong> 通知您,<br>再回到本頁即可設定密碼。</p>
+      <button class="back" onclick="screenStart()">← 用其他 Email 查詢</button>
+    </div>`;
+}
+
+// ════════ 畫面 3:已通過 → 設密碼 ════════
+function screenSetPwd(res){
+  showSteps(true); setSteps(3);
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box" style="padding-bottom:4px;">
+      <div class="ico">🎉</div>
+      <h2>恭喜!已通過審核</h2>
+      <div class="vid-chip">廠商代號:${esc(res.vid||curVid)}</div>
+    </div>
+    <div class="tip">請設定一組登入密碼(至少 6 碼),<br>之後用「廠商代號 + 密碼」登入後台。</div>
+    <input type="password" id="pwd1" placeholder="設定密碼(至少 6 碼)" autocomplete="new-password" />
+    <input type="password" id="pwd2" placeholder="再次輸入密碼" autocomplete="new-password" />
+    <button class="btn" id="setBtn" onclick="doSetPwd()">設定密碼並完成 →</button>
+    <button class="back" onclick="screenStart()">← 返回</button>
+    <div id="msg"></div>`;
+}
+async function doSetPwd(){
+  const p1=document.getElementById('pwd1').value, p2=document.getElementById('pwd2').value;
+  const msg=document.getElementById('msg'); msg.innerHTML='';
+  if(p1.length<6){ msg.innerHTML='<div class="msg err">密碼至少 6 碼</div>'; return; }
+  if(p1!==p2){ msg.innerHTML='<div class="msg err">兩次密碼不一致</div>'; return; }
+  const btn=document.getElementById('setBtn'); btn.disabled=true; btn.textContent='設定中...';
+  const res=await api('vp_selfSetPassword',{ email:curEmail, vid:curVid, pwd:p1 });
+  if(res.ok){ curVid=res.vid||curVid; screenDone(); }
+  else{ btn.disabled=false; btn.textContent='設定密碼並完成 →'; msg.innerHTML=`<div class="msg err">❌ ${esc(res.msg)}</div>`; }
+}
+
+// ════════ 畫面 4:完成 ════════
+function screenDone(){
+  showSteps(true); setSteps(4);
+  for(let i=1;i<=4;i++) document.getElementById('d'+i).classList.add('done');
+  for(let i=1;i<=3;i++) document.getElementById('l'+i).classList.add('done');
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box">
+      <div class="ico">✅</div>
+      <h2>全部完成!</h2>
+      <div class="vid-chip">廠商代號:${esc(curVid)}</div>
+      <p>密碼已設定成功。<br>以後請用「<strong>${esc(curVid)} + 您的密碼</strong>」登入後台,<br>即可查看您的訂單與分潤。</p>
+      <button class="btn" onclick="location.href='${CONFIG.PORTAL_URL}'">前往廠商後台登入 →</button>
+    </div>`;
+}
+
+// ════════ 拒絕 / 中止 / 查無 ════════
+function screenRejected(reason){
+  showSteps(false);
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box">
+      <div class="ico">📋</div>
+      <h2>申請未通過</h2>
+      <p>很抱歉,您的申請目前未通過審查。${reason?'<br>原因:'+esc(reason):''}<br>如有疑問,歡迎聯繫 UNI 了解詳情。</p>
+      <button class="btn-ghost" onclick="location.href='${CONFIG.REGISTER_URL}'">重新提出申請</button>
+      <button class="back" onclick="screenStart()">← 返回</button>
+    </div>`;
+}
+function screenSuspended(){
+  showSteps(false);
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box">
+      <div class="ico">⏸</div>
+      <h2>帳號已停用</h2>
+      ${curVid?`<div class="vid-chip">廠商代號:${esc(curVid)}</div>`:''}
+      <p>您的廠商帳號目前已停用。<br>如需恢復合作,請聯繫 UNI。</p>
+      <button class="back" onclick="screenStart()">← 返回</button>
+    </div>`;
+}
+function screenNotFound(){
+  showSteps(false);
+  document.getElementById('content').innerHTML = `
+    <div class="stage-box">
+      <div class="ico">🔍</div>
+      <h2>查無申請紀錄</h2>
+      <p>找不到此 Email 的申請。<br>請確認是否與申請時填寫的 Email 相同,<br>或您尚未提出申請。</p>
+      <button class="btn" onclick="location.href='${CONFIG.REGISTER_URL}'">📋 前往申請</button>
+      <button class="back" onclick="screenStart()">← 用其他 Email 查詢</button>
+    </div>`;
+}
+
+// 啟動
+screenStart();
+</script>
+</body>
+</html>
