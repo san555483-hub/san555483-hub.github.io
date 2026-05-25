@@ -454,26 +454,26 @@ async function loadPending(){
           <span style="font-size:11px;color:var(--text2);font-weight:600;margin-left:6px;">現金券 ${it.cash} ／ 購物券 ${it.shop}</span></div>
         <div style="font-size:11px;color:var(--text2);margin:4px 0 10px;">${escHtml(it.date)}　${escHtml(it.note)}</div>
         <div class="form-grid">
-          <div><label>客人電話 *</label><input type="tel" id="pend-phone-${it.row}" placeholder="09xxxxxxxx" value="${escHtml(it.phone||'')}"></div>
-          <div><label>姓名</label><input type="text" id="pend-name-${it.row}" placeholder="顧客姓名" value="${escHtml(it.name||'')}"></div>
+          <div><label>客人電話 *</label><input type="tel" id="pend-phone-${it.recordId}" placeholder="09xxxxxxxx" value="${escHtml(it.phone||'')}"></div>
+          <div><label>姓名</label><input type="text" id="pend-name-${it.recordId}" placeholder="顧客姓名" value="${escHtml(it.name||'')}"></div>
         </div>
-        <div id="pend-msg-${it.row}"></div>
-        <button class="btn btn-gold btn-full" style="margin-top:8px;" onclick="confirmTopup(${it.row})">✅ 確認收款並開通券</button>
+        <div id="pend-msg-${it.recordId}"></div>
+        <button class="btn btn-gold btn-full" style="margin-top:8px;" onclick="confirmTopup('${it.recordId}')">✅ 確認收款並開通券</button>
       </div>`).join('');
   }catch(e){el.innerHTML='<div class="alert alert-error">連線失敗</div>';}
 }
 
-async function confirmTopup(row){
-  const phone=(document.getElementById('pend-phone-'+row).value||'').trim();
-  const name=(document.getElementById('pend-name-'+row).value||'').trim();
-  if(!phone){showMsg('pend-msg-'+row,'請先填客人電話（餘額靠電話綁定）','error');return;}
+async function confirmTopup(recId){
+  const phone=(document.getElementById('pend-phone-'+recId).value||'').trim();
+  const name=(document.getElementById('pend-name-'+recId).value||'').trim();
+  if(!phone){showMsg('pend-msg-'+recId,'請先填客人電話（餘額靠電話綁定）','error');return;}
   if(!confirm('確認這筆已收款？將把券開通綁到電話 '+phone))return;
-  showMsg('pend-msg-'+row,'<span class="spin"></span>處理中…','info');
+  showMsg('pend-msg-'+recId,'<span class="spin"></span>處理中…','info');
   try{
-    const r=await callGAS('topup_confirmPayment',{row,phone,name});
-    if(r.ok){showMsg('pend-msg-'+row,`✅ 已開通：現金券 ${r.cashCoupon} ／ 購物券 ${r.shopCoupon}（綁定 ${r.phone}）`,'success');setTimeout(loadPending,1300);}
-    else showMsg('pend-msg-'+row,'❌ '+(r.error||'失敗'),'error');
-  }catch(e){showMsg('pend-msg-'+row,'連線失敗','error');}
+    const r=await callGAS('topup_confirmPayment',{recordId:recId,phone,name});
+    if(r.ok){showMsg('pend-msg-'+recId,`✅ 已開通：現金券 ${r.cashCoupon} ／ 購物券 ${r.shopCoupon}（綁定 ${r.phone}）`,'success');setTimeout(loadPending,1300);}
+    else showMsg('pend-msg-'+recId,'❌ '+(r.error||'失敗'),'error');
+  }catch(e){showMsg('pend-msg-'+recId,'連線失敗','error');}
 }
 
 async function loadProducts(){
