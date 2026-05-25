@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UNI 廠商系統 - 管理後台 v1.2</title>
+<title>UNI 廠商系統 - 管理後台 v1.3</title>
 <style>
 :root { --c-bg:#f5f5f7; --c-card:#fff; --c-primary:#d4a574; --c-primary-dark:#b8895a; --c-text:#2c2c2e; --c-text-soft:#6e6e73; --c-border:#e5e5ea; --c-success:#34c759; --c-warning:#ff9500; --c-danger:#ff3b30; --r:12px; --shadow:0 2px 8px rgba(0,0,0,0.04); }
 * { box-sizing:border-box; margin:0; padding:0; }
@@ -97,7 +97,7 @@ table.data tr:last-child td { border-bottom:none; }
 <div id="loginPage">
   <div class="login-card">
     <h1>🏪 UNI 廠商系統</h1>
-    <div class="sub">管理後台 v1.2</div>
+    <div class="sub">管理後台 v1.3</div>
     <div class="login-step" id="step1">
       <h3><span>① LINE 身份驗證</span><span class="badge" id="step1Badge">待驗證</span></h3>
       <button class="btn-line" onclick="startLineLogin()">以 LINE 登入</button>
@@ -462,8 +462,27 @@ function renderVendors() {
         ${v.status === 'approved'
           ? `<button class="btn-sm danger" onclick="suspendVendor('${v.id}')">⏸ 暫停</button>`
           : `<button class="btn-sm success" onclick="resumeVendor('${v.id}')">▶️ 恢復</button>`}
+        ${String(v.id).toUpperCase() === 'V01'
+          ? ''
+          : `<button class="btn-sm ghost" style="color:var(--c-danger);border-color:var(--c-danger);" onclick="deleteVendor('${esc(v.id)}','${esc(v.name)}')">🗑 刪除</button>`}
       </div>
     </div>`).join('');
+}
+
+/* ===== 🗑 刪除廠商:搬到「🗑 已刪廠商」分頁,兩段確認防手滑 ===== */
+async function deleteVendor(id, name) {
+  // 第一段:一般確認
+  if (!confirm(`要刪除廠商「${id} ${name}」嗎?\n\n資料會搬到 Sheet 的「🗑 已刪廠商」分頁保留,列表上不再顯示。\n之後要救回,可從該分頁把那列剪回「🏪 廠商主表」。`)) return;
+  // 第二段:輸入代號二次確認(防誤刪)
+  const typed = prompt(`再次確認:請輸入廠商代號「${id}」以完成刪除:`);
+  if (typed === null) return;
+  if (String(typed).trim().toUpperCase() !== String(id).trim().toUpperCase()) {
+    alert('輸入的代號不符,已取消刪除。');
+    return;
+  }
+  const res = await api('vendor_deleteVendor', { vendorId: id });
+  if (res.ok) { toast('🗑 已搬到垃圾桶分頁'); loadVendors(); }
+  else alert('刪除失敗:' + (res.msg || '未知'));
 }
 
 let currentEdit = null;
