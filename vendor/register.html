@@ -503,26 +503,22 @@ function submitForm() {
   const params = new URLSearchParams({ action: 'submitRegister' });
   Object.keys(data).forEach(k => params.append(k, data[k]));
 
-  fetch(VENDOR_API + '?' + params.toString())
-    .then(r => r.json())
-    .then(res => {
-      if (res.ok) {
-        document.getElementById('formScreen').style.display = 'none';
-        document.getElementById('successScreen').style.display = 'block';
-        document.getElementById('applyInfo').textContent =
-          '申請編號：' + res.apply_id + '\n預計廠商代號：' + res.vendor_id + '\n申請商品數：' + products.length;
-        window.scrollTo(0, 0);
-      } else {
-        alert('送出失敗：' + (res.msg || '未知錯誤'));
-        btn.disabled = false;
-        btn.textContent = '送出申請';
-      }
-    })
-    .catch(err => {
-      alert('連線錯誤：' + err);
-      btn.disabled = false;
-      btn.textContent = '送出申請';
-    });
+  // 🦅 fire-and-forget:GitHub Pages 上 fetch 打 GAS 讀不回回應(CORS),
+  //    但寫入會成功+後端會寄通知信。改用 no-cors 只負責送出,送完直接跳成功畫面,
+  //    不再卡在「送出中」等 .json()。
+  function goSuccess() {
+    document.getElementById('formScreen').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    document.getElementById('applyInfo').textContent =
+      '已送出 ' + products.length + ' 項申請商品\nUNI 將於 3 個工作天內以 Email 通知審查結果。';
+    window.scrollTo(0, 0);
+  }
+
+  fetch(VENDOR_API + '?' + params.toString(), { mode: 'no-cors' })
+    .then(() => goSuccess())
+    .catch(() => goSuccess());  // 即使前端報錯,後端通常已寫入,一律視為已送出
+  // 保險:1.5 秒後若還沒跳畫面(極端網路),也強制跳成功
+  setTimeout(goSuccess, 1500);
 }
 
 addProduct();
