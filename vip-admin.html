@@ -125,6 +125,11 @@ tr:hover td{background:var(--cream);}
 
 <div class="section" id="sec-credit">
   <div class="card">
+    <div class="card-header"><div class="card-title"><div class="line"></div>🕐 待收款確認（LINE 線上加值）</div>
+      <button class="btn btn-outline btn-sm" onclick="loadPending()">重新整理</button></div>
+    <div id="pending-list"><div class="empty" style="padding:16px;">點「重新整理」載入待收款清單</div></div>
+  </div>
+  <div class="card">
     <div class="card-header"><div class="card-title"><div class="line"></div>查詢餘額</div></div>
     <div class="search-bar"><input type="tel" id="credit-query-phone" placeholder="輸入電話號碼"><button class="btn btn-gold" onclick="queryBalance()">查詢</button></div>
     <div id="credit-balance-result"></div><div id="credit-list-result"></div>
@@ -380,6 +385,7 @@ function switchTab(name){
   if(name==='blacklist')loadBlacklist();
   if(name==='settings')loadSettings();
   if(name==='purchase_log')loadProductsForSelect();
+  if(name==='credit')loadPending();
   if(name==='coupon'){loadCouponTypesVip();loadCouponsVip();}
 }
 
@@ -433,6 +439,41 @@ async function deleteCredit(rowIndex){
   if(!confirm('確定刪除這筆紀錄？'))return;
   try{const r=await callGAS('deleteCredit',{rowIndex});if(r.success){const phone=document.getElementById('credit-query-phone').value.trim();if(phone)queryBalance();}else alert('刪除失敗：'+r.message);}
   catch(e){alert('連線失敗');}
+}
+
+async function loadPending(){
+  const el=document.getElementById('pending-list');
+  el.innerHTML='<div class="alert alert-info"><span class="spin"></span>載入中…</div>';
+  try{
+    const r=await callGAS('topup_listPending',{});
+    if(!r.ok){el.innerHTML='<div class="alert alert-error">❌ '+(r.error||'載入失敗')+'</div>';return;}
+    if(!r.list||!r.list.length){el.innerHTML='<div class="empty" style="padding:16px;">目前沒有待收款 🎉</div>';return;}
+    el.innerHTML=r.list.map(it=>`
+      <div class="card" style="border:1.5px solid var(--gold);margin-bottom:10px;padding:14px;">
+        <div style="font-size:14px;font-weight:800;color:var(--dark2);">💰 儲值 $${Number(it.amount||0).toLocaleString()}
+          <span style="font-size:11px;color:var(--text2);font-weight:600;margin-left:6px;">現金券 ${it.cash} ／ 購物券 ${it.shop}</span></div>
+        <div style="font-size:11px;color:var(--text2);margin:4px 0 10px;">${escHtml(it.date)}　${escHtml(it.note)}</div>
+        <div class="form-grid">
+          <div><label>客人電話 *</label><input type="tel" id="pend-phone-${it.row}" placeholder="09xxxxxxxx" value="${escHtml(it.phone||'')}"></div>
+          <div><label>姓名</label><input type="text" id="pend-name-${it.row}" placeholder="顧客姓名" value="${escHtml(it.name||'')}"></div>
+        </div>
+        <div id="pend-msg-${it.row}"></div>
+        <button class="btn btn-gold btn-full" style="margin-top:8px;" onclick="confirmTopup(${it.row})">✅ 確認收款並開通券</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="alert alert-error">連線失敗</div>';}
+}
+
+async function confirmTopup(row){
+  const phone=(document.getElementById('pend-phone-'+row).value||'').trim();
+  const name=(document.getElementById('pend-name-'+row).value||'').trim();
+  if(!phone){showMsg('pend-msg-'+row,'請先填客人電話（餘額靠電話綁定）','error');return;}
+  if(!confirm('確認這筆已收款？將把券開通綁到電話 '+phone))return;
+  showMsg('pend-msg-'+row,'<span class="spin"></span>處理中…','info');
+  try{
+    const r=await callGAS('topup_confirmPayment',{row,phone,name});
+    if(r.ok){showMsg('pend-msg-'+row,`✅ 已開通：現金券 ${r.cashCoupon} ／ 購物券 ${r.shopCoupon}（綁定 ${r.phone}）`,'success');setTimeout(loadPending,1300);}
+    else showMsg('pend-msg-'+row,'❌ '+(r.error||'失敗'),'error');
+  }catch(e){showMsg('pend-msg-'+row,'連線失敗','error');}
 }
 
 async function loadProducts(){
