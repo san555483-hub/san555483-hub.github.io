@@ -403,6 +403,16 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .priority-title { font-size: 13px; font-weight: 500; line-height: 1.4; }
 .priority-price { font-size: 12px; color: var(--gold-dark); margin-top: 2px; }
 .priority-desc { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.voucher-i { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; border:1px solid var(--gold); color:var(--gold-dark); font-size:11px; font-style:italic; font-weight:600; line-height:1; margin-left:6px; cursor:pointer; vertical-align:middle; }
+.voucher-mask { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; padding:24px; }
+.voucher-mask.show { display:flex; }
+.voucher-card { background:var(--surface,#fff); border-radius:16px; max-width:340px; width:100%; padding:24px 22px; box-shadow:0 12px 40px rgba(0,0,0,.2); text-align:center; }
+.voucher-card .vc-icon { font-size:30px; margin-bottom:10px; }
+.voucher-card .vc-title { font-size:15px; font-weight:600; color:var(--gold-dark); margin-bottom:12px; letter-spacing:.5px; }
+.voucher-card .vc-body { font-size:13px; line-height:1.9; color:var(--text,#444); text-align:left; }
+.voucher-card .vc-close { margin-top:18px; width:100%; padding:11px; border:none; border-radius:10px; background:var(--gold); color:#fff; font-size:13px; cursor:pointer; }
+.success-voucher { margin-top:18px; padding:16px; border:1px solid var(--gold); border-radius:12px; background:rgba(212,175,90,.06); font-size:13px; line-height:1.9; color:var(--gold-dark); text-align:left; }
+.success-voucher .sv-title { font-weight:600; margin-bottom:6px; }
 .notice-box { background: #fdf8f0; border: 1px solid #e8d5b0; border-radius: 10px; padding: 14px; margin-bottom: 20px; }
 .notice-title { font-size: 12px; font-weight: 500; color: var(--gold-dark); margin-bottom: 6px; }
 .notice-text { font-size: 11px; color: #7a6a55; line-height: 1.8; }
@@ -602,7 +612,7 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
       <div class="priority-header">
         <div class="priority-checkbox" id="priorityCheck"></div>
         <div>
-          <div class="priority-title">加價指定時段全程服務</div>
+          <div class="priority-title">加價指定時段全程服務<span class="voucher-i" onclick="event.stopPropagation();openVoucherInfo()">i</span></div>
           <div class="priority-price" id="priorityPriceLabel">會員 $250 ／ 非會員 $350</div>
         </div>
       </div>
@@ -671,6 +681,19 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
       <div class="success-title">預約登記完成！</div>
       <div class="success-desc" id="successDesc"></div>
     </div>
+  </div>
+</div>
+
+<div class="voucher-mask" id="voucherMask" onclick="if(event.target===this)closeVoucherInfo()">
+  <div class="voucher-card">
+    <div class="vc-icon">🎁</div>
+    <div class="vc-title">指定預約・現金禮券</div>
+    <div class="vc-body">
+      完成指定預約，將為您獻上 $200 現金禮券作為心意。<br><br>
+      可折抵部分美髮服務項目，或兌換兒童玩具。<br><br>
+      已享優惠之項目恕無法折抵，詳情由 Elsa 現場為您說明。
+    </div>
+    <button class="vc-close" onclick="closeVoucherInfo()">我了解了</button>
   </div>
 </div>
 <script>
@@ -1386,9 +1409,19 @@ function showSuccess(bookingId) {
     '📅 ' + dateStr + ' ' + state.time + '<br>' +
     '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
     '<strong style="color:#e65100">✨ 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</strong><br><br>' +
-    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊';
+    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊' +
+    (state.priority ?
+      '<div class="success-voucher">' +
+        '<div class="sv-title">🎁 指定預約・現金禮券</div>' +
+        '完成指定預約，將為您獻上 $200 現金禮券作為心意。<br>' +
+        '可折抵部分美髮服務項目，或兌換兒童玩具。<br>' +
+        '已享優惠之項目恕無法折抵，詳情由 Elsa 現場為您說明。' +
+      '</div>' : '');
   for (let i = 1; i <= 4; i++) document.getElementById('step' + i).className = 'step done';
 }
+
+function openVoucherInfo() { document.getElementById('voucherMask').classList.add('show'); }
+function closeVoucherInfo() { document.getElementById('voucherMask').classList.remove('show'); }
 
 function renderPaymentButtons() {
   const list = document.getElementById('paymentList');
