@@ -16,12 +16,13 @@
 @media (min-width: 1024px) {
   body.bkg2-enabled .bkg2-layout {
     display: grid;
-    grid-template-columns: 340px 1fr;
+    grid-template-columns: 340px minmax(0, 600px);
     gap: 48px;
-    max-width: 1200px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 32px 24px;
     align-items: start;
+    justify-content: center;
   }
   body.bkg2-enabled .bkg2-profile {
     position: sticky;
