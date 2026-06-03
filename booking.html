@@ -704,6 +704,18 @@ const BUSINESS_HOURS = {
   0: ALL_SLOTS, 1: ALL_SLOTS, 2: ALL_SLOTS, 3: ALL_SLOTS, 4: ALL_SLOTS, 5: ALL_SLOTS, 6: ALL_SLOTS,
 };
 function isPaidSlot(t) { return PAID_SLOTS.indexOf(normalizeTime(t)) !== -1; }
+// 【2026-06-03】今天已過或3小時內的時段 → 視為不可約
+function isPastSlot(date, t) {
+  try {
+    const now = new Date();
+    const sameDay = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+    if (!sameDay) return false;            // 非今天不受限
+    const p = normalizeTime(t).split(':');
+    const slotMins = parseInt(p[0],10)*60 + parseInt(p[1]||'0',10);
+    const nowMins = now.getHours()*60 + now.getMinutes();
+    return slotMins < nowMins + 180;       // 現在起 3 小時內（含已過）都擋
+  } catch(_) { return false; }
+}
 const DAY_NAMES   = ['日','一','二','三','四','五','六'];
 const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 let allServices = [], schedule = [], lockedInfoMap = {};
@@ -1141,7 +1153,9 @@ function renderTimeSlotsMulti(date, slotInfoMap) {
   slots.forEach(function(t) {
     const nt = normalizeTime(t);
     const info = slotInfoMap[nt];
-    if (info) {
+    if (isPastSlot(date, nt)) {
+      html += '<div class="time-slot taken-base taken-general" style="opacity:.5">' + nt + '<br><span style="font-size:9px">已過時段</span></div>';
+    } else if (info) {
       const cssClass = 'time-slot taken-base taken-' + info.type;
       html += '<div class="' + cssClass + '">' + nt + '<br><span style="font-size:9px">' + info.label + '</span></div>';
     } else if (isPaidSlot(nt)) {
@@ -1162,7 +1176,8 @@ function renderTimeSlotsLegacy(date, booked) {
     const isBooked = booked.has(nt);
     const lockNote = lockedInfoMap[nt] || '';
     const isNotice = isBooked && lockNote.includes('訂製化溝通');
-    if (isNotice) { html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>'; }
+    if (isPastSlot(date, nt)) { html += '<div class="time-slot taken-base taken-general" style="opacity:.5">' + nt + '<br><span style="font-size:9px">已過時段</span></div>'; }
+    else if (isNotice) { html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>'; }
     else if (isBooked) { html += '<div class="time-slot taken-base taken-general">' + nt + '<br><span style="font-size:9px">已預約</span></div>'; }
     else if (isPaidSlot(nt)) { html += '<div class="time-slot paid-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '<br><span style="font-size:9px">指定付費</span></div>'; }
     else { html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>'; }
