@@ -297,7 +297,7 @@ $('#btnSave').onclick=async()=>{
   const btn=$('#btnSave');btn.disabled=true;btn.textContent='儲存中…';
   try{
     const r=await fetch(withKey(url)).then(x=>x.json());
-    if(r.ok){toast('✅ 已記一筆 '+fmt(amt));$('#amt').value='';$('#note').value='';loadRecent();}
+    if(r.ok){Object.keys(sumCache).forEach(k=>delete sumCache[k]);toast('✅ 已記一筆 '+fmt(amt));$('#amt').value='';$('#note').value='';loadRecent();}
     else toast('❌ '+(r.error||'失敗'));
   }catch(e){toast('❌ 連線失敗');}
   btn.disabled=false;btn.textContent='記 一 筆';
@@ -316,17 +316,33 @@ async function loadRecent(){
     }).join('');
   }catch(e){$('#recentBox').innerHTML='<div class="loading">載入失敗</div>';}
 }
-/* 開機：記住的密碼自動登入 */
+/* 開機：有記住密碼→秒進，背景驗證，失敗才踢回鎖屏 */
 (async ()=>{
   const k = getKey();
-  if(k && await tryLogin(k)) unlock();
+  if(!k) return;
+  unlock();
+  if(!(await tryLogin(k))){
+    localStorage.removeItem(KEY_STORE);
+    const lk=document.getElementById('lock');
+    lk.classList.remove('hide'); lk.style.display='flex';
+  }
 })();
+
+/* summary 快取：切頁不重抓，記新帳才更新 */
+const sumCache = {};
+async function getSummary(){
+  const y = $('#yearSel').value;
+  if(sumCache[y]) return sumCache[y];
+  const r = await fetch(withKey(`${GAS_URL}?action=getSummary&year=${y}`)).then(x=>x.json());
+  if(r.ok) sumCache[y]=r;
+  return r;
+}
 
 /* 月結 */
 async function loadMonthly(){
   $('#monthlyBox').innerHTML='<div class="loading">計算中…</div>';
   try{
-    const r=await fetch(withKey(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`)).then(x=>x.json());
+    const r=await getSummary();
     if(!r.ok)throw 0;
     let html='<table><tr><th>月</th><th>收入</th><th>支出</th><th>淨利</th><th>可領薪</th></tr>';
     r.months.forEach(m=>{
@@ -345,7 +361,7 @@ async function loadMonthly(){
 async function loadDash(){
   $('#dashBox').innerHTML='<div class="loading">計算中…</div>';
   try{
-    const r=await fetch(withKey(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`)).then(x=>x.json());
+    const r=await getSummary();
     if(!r.ok)throw 0;
     const t=r.totals;
     let html=`<div class="kpis">
