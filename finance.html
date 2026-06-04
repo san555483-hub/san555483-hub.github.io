@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UNI 家店財務</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F1E8; --card:#FFFFFF; --ink:#2F4034; --ink2:#6B7A6E;
+  --green:#5B7560; --green-dk:#41553F; --line:#E3E0D4;
+  --gold:#C9A35C; --red:#C0564F; --good:#3E7A4E; --warn:#C9802E;
+  --r:16px; --shadow:0 2px 12px rgba(47,64,52,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);
+  background-image:radial-gradient(circle at 20% 0%,rgba(91,117,96,.06),transparent 50%);
+  min-height:100vh;padding-bottom:90px}
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px}
+
+/* 頂部 */
+header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+h1{font-family:'Noto Serif TC',serif;font-size:22px;letter-spacing:1px}
+h1 small{font-size:12px;color:var(--ink2);font-family:'Noto Sans TC';letter-spacing:2px;display:block;margin-top:2px}
+#yearSel{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px;font-size:14px;color:var(--ink)}
+
+/* 分段切換 */
+.seg{display:flex;background:#E9E5D8;border-radius:14px;padding:4px;margin-bottom:16px}
+.seg button{flex:1;border:0;background:transparent;padding:10px 0;border-radius:11px;font-size:14px;font-weight:700;color:var(--ink2);transition:.2s}
+.seg button.on{background:var(--green);color:#fff;box-shadow:var(--shadow)}
+
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px 16px;margin-bottom:14px;border:1px solid var(--line)}
+.card h2{font-family:'Noto Serif TC',serif;font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* 記帳表單 */
+.typeRow{display:flex;gap:8px;margin-bottom:14px}
+.typeRow button{flex:1;border:1.5px solid var(--line);background:#FAF8F0;border-radius:12px;padding:12px 0;font-size:14px;font-weight:700;color:var(--ink2);transition:.15s}
+.typeRow button.on{border-color:var(--green);background:#EDF2EC;color:var(--green-dk)}
+label{font-size:12px;color:var(--ink2);font-weight:700;letter-spacing:1px;display:block;margin:10px 0 6px}
+input,select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px 12px;font-size:16px;background:#FCFBF6;color:var(--ink);font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--green)}
+#amt{font-size:26px;font-weight:700;text-align:center;letter-spacing:1px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1.5px solid var(--line);background:#FAF8F0;border-radius:999px;padding:8px 14px;font-size:13px;color:var(--ink2)}
+.chips button.on{border-color:var(--gold);background:#FBF3E2;color:#8A6A2D;font-weight:700}
+.ioRow{display:flex;gap:8px}
+.ioRow button{flex:1;border:1.5px solid var(--line);background:#FAF8F0;border-radius:12px;padding:10px 0;font-weight:700;color:var(--ink2)}
+.ioRow button.on{border-color:var(--red);background:#F9ECEA;color:var(--red)}
+.ioRow button:first-child.on{border-color:var(--good);background:#EAF3EC;color:var(--good)}
+.submit{width:100%;margin-top:18px;border:0;background:var(--green);color:#fff;font-size:17px;font-weight:700;padding:16px 0;border-radius:14px;letter-spacing:3px;box-shadow:0 4px 14px rgba(91,117,96,.35);transition:.15s}
+.submit:active{transform:scale(.98)}
+.submit:disabled{opacity:.5}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 22px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:99;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* 月結表 */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--ink2);font-weight:700;padding:8px 4px;border-bottom:2px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:9px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+td:first-child{text-align:left;font-weight:700;color:var(--ink2)}
+td.neg{color:var(--red)} td.sal{color:var(--good);font-weight:700}
+tr.total td{font-weight:700;border-top:2px solid var(--green);border-bottom:0;padding-top:10px}
+
+/* 儀表板 */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:#FAF8F0;border:1px solid var(--line);border-radius:14px;padding:14px 12px}
+.kpi .l{font-size:11px;color:var(--ink2);letter-spacing:1px;font-weight:700}
+.kpi .v{font-size:21px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi.hero{grid-column:1/-1;background:linear-gradient(135deg,#41553F,#5B7560);border:0;color:#fff}
+.kpi.hero .l{color:rgba(255,255,255,.75)}
+.kpi.hero .v{font-size:30px;color:#F5E5C0;font-family:'Noto Serif TC',serif}
+.alerts{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.alert{border-radius:12px;padding:11px 14px;font-size:14px;font-weight:500}
+.alert.green{background:#EAF3EC;color:var(--good)}
+.alert.red{background:#F9ECEA;color:var(--red)}
+.alert.orange{background:#FBF3E2;color:var(--warn)}
+
+/* 最近紀錄 */
+.recent{font-size:13px}
+.recent .row{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px solid var(--line)}
+.recent .row span:last-child{font-weight:700;font-variant-numeric:tabular-nums}
+
+.loading{text-align:center;color:var(--ink2);padding:30px 0;font-size:14px}
+.hide{display:none}
+footer{text-align:center;font-size:11px;color:#B6B2A2;margin-top:24px;letter-spacing:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>UNI 家店財務<small>FAMILY ＆ SALON LEDGER</small></h1>
+    <select id="yearSel"></select>
+  </header>
+
+  <div class="seg">
+    <button class="on" data-view="entry">✏️ 記帳</button>
+    <button data-view="monthly">📅 月結</button>
+    <button data-view="dash">📊 儀表板</button>
+  </div>
+
+  <!-- ===== 記帳 ===== -->
+  <div id="v-entry">
+    <div class="card">
+      <div class="typeRow">
+        <button class="on" data-t="inc">💰 店收入</button>
+        <button data-t="exp">💸 店支出</button>
+        <button data-t="home">🏠 家帳</button>
+      </div>
+
+      <div id="ioWrap" class="hide">
+        <label>收支</label>
+        <div class="ioRow">
+          <button class="on" data-io="收入">收入</button>
+          <button data-io="支出">支出</button>
+        </div>
+      </div>
+
+      <label>金額 NT$</label>
+      <input id="amt" type="number" inputmode="numeric" placeholder="0">
+
+      <label>分類</label>
+      <div class="chips" id="chips"></div>
+
+      <label>日期</label>
+      <input id="date" type="date">
+
+      <label id="noteLabel">備註</label>
+      <input id="note" type="text" placeholder="選填">
+
+      <div id="payWrap">
+        <label>付款方式</label>
+        <div class="chips" id="payChips"></div>
+      </div>
+
+      <button class="submit" id="btnSave">記 一 筆</button>
+    </div>
+
+    <div class="card">
+      <h2>🕐 最近紀錄</h2>
+      <div class="recent" id="recentBox"><div class="loading">載入中…</div></div>
+    </div>
+  </div>
+
+  <!-- ===== 月結 ===== -->
+  <div id="v-monthly" class="hide">
+    <div class="card">
+      <h2>👩 店月結 · 安全薪水反推</h2>
+      <div id="monthlyBox"><div class="loading">載入中…</div></div>
+    </div>
+  </div>
+
+  <!-- ===== 儀表板 ===== -->
+  <div id="v-dash" class="hide">
+    <div class="card">
+      <h2>📊 年度總覽</h2>
+      <div id="dashBox"><div class="loading">載入中…</div></div>
+    </div>
+  </div>
+
+  <footer>UNI HAIR DESIGN · 財務獨立模組 v1.0</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 部署設定：貼上妳的 GAS 部署網址 ===== */
+const GAS_URL = '貼上GAS部署網址/exec';
+
+/* ===== 分類 ===== */
+const CATS = {
+  inc:  ['剪髮','造型','燙髮','染髮','漂髮','結構式護髮','頭皮養護','養護金儲值','商品銷售','數位產品','其他'],
+  exp:  ['房租','水電瓦斯','網路電話','進貨-藥水','進貨-商品','耗材用品','行銷廣告','設備購置','稅金規費','軟體訂閱','雜支','其他'],
+  homeIn:  ['店發薪水','其他收入','紅包/補助','退款回沖'],
+  homeOut: ['飲食','居住','交通','教育','醫療','保險','孝親','子女','娛樂','儲蓄/投資','其他']
+};
+const PAYS = ['現金','刷卡','轉帳','LINE Pay','儲值扣抵'];
+const FIXS = ['變動費','固定費'];
+
+let type='inc', io='收入', cat='', pay='';
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const fmt=n=>Number(n||0).toLocaleString('zh-TW');
+
+/* 年份選單 */
+(function(){
+  const y=(new Date()).getFullYear(), sel=$('#yearSel');
+  for(let i=y;i>=y-2;i--){const o=document.createElement('option');o.value=i;o.textContent=i;sel.appendChild(o);}
+  sel.onchange=()=>{loadMonthly();loadDash();};
+})();
+$('#date').value=new Date().toISOString().slice(0,10);
+
+/* 視圖切換 */
+$$('.seg button').forEach(b=>b.onclick=()=>{
+  $$('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  ['entry','monthly','dash'].forEach(v=>$('#v-'+v).classList.toggle('hide',v!==b.dataset.view));
+  if(b.dataset.view==='monthly')loadMonthly();
+  if(b.dataset.view==='dash')loadDash();
+});
+
+/* 類型切換 */
+$$('.typeRow button').forEach(b=>b.onclick=()=>{
+  $$('.typeRow button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  type=b.dataset.t;renderChips();
+  $('#ioWrap').classList.toggle('hide',type!=='home');
+  $('#payWrap').classList.toggle('hide',type==='home');
+  $('#noteLabel').textContent = type==='inc'?'客人/備註':(type==='exp'?'廠商/品項':'備註');
+  loadRecent();
+});
+$$('.ioRow button').forEach(b=>b.onclick=()=>{
+  $$('.ioRow button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  io=b.dataset.io;renderChips();
+});
+
+function renderChips(){
+  const list = type==='inc'?CATS.inc : type==='exp'?CATS.exp : (io==='收入'?CATS.homeIn:CATS.homeOut);
+  cat=list[0];
+  $('#chips').innerHTML=list.map((c,i)=>`<button class="${i===0?'on':''}" data-c="${c}">${c}</button>`).join('');
+  $$('#chips button').forEach(b=>b.onclick=()=>{
+    $$('#chips button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cat=b.dataset.c;
+  });
+  const pays = type==='exp'?FIXS:PAYS;
+  pay=pays[0];
+  $('#payChips').innerHTML=pays.map((c,i)=>`<button class="${i===0?'on':''}" data-c="${c}">${c}</button>`).join('');
+  $$('#payChips button').forEach(b=>b.onclick=()=>{
+    $$('#payChips button').forEach(x=>x.classList.remove('on'));b.classList.add('on');pay=b.dataset.c;
+  });
+}
+renderChips();
+
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200);}
+
+/* 送出 */
+$('#btnSave').onclick=async()=>{
+  const amt=Number($('#amt').value);
+  if(!amt||amt<=0){toast('請輸入金額');return;}
+  const d=$('#date').value.replaceAll('-','/');
+  const note=encodeURIComponent($('#note').value||'');
+  const c=encodeURIComponent(cat);
+  let url;
+  if(type==='inc') url=`${GAS_URL}?action=addIncome&date=${d}&cat=${c}&amt=${amt}&note=${note}&pay=${encodeURIComponent(pay)}`;
+  else if(type==='exp') url=`${GAS_URL}?action=addExpense&date=${d}&cat=${c}&amt=${amt}&note=${note}&fix=${encodeURIComponent(pay)}`;
+  else url=`${GAS_URL}?action=addHome&date=${d}&io=${encodeURIComponent(io)}&cat=${c}&amt=${amt}&note=${note}`;
+  const btn=$('#btnSave');btn.disabled=true;btn.textContent='儲存中…';
+  try{
+    const r=await fetch(url).then(x=>x.json());
+    if(r.ok){toast('✅ 已記一筆 '+fmt(amt));$('#amt').value='';$('#note').value='';loadRecent();}
+    else toast('❌ '+(r.error||'失敗'));
+  }catch(e){toast('❌ 連線失敗');}
+  btn.disabled=false;btn.textContent='記 一 筆';
+};
+
+/* 最近紀錄 */
+async function loadRecent(){
+  $('#recentBox').innerHTML='<div class="loading">載入中…</div>';
+  try{
+    const r=await fetch(`${GAS_URL}?action=getRecent&tab=${type}&n=8`).then(x=>x.json());
+    if(!r.rows.length){$('#recentBox').innerHTML='<div class="loading">還沒有紀錄</div>';return;}
+    $('#recentBox').innerHTML=r.rows.map(row=>{
+      const amt = type==='home'?row[3]:row[2];
+      const lab = type==='home'?`${row[0]} ${row[1]}·${row[2]}`:`${row[0]} ${row[1]}`;
+      return `<div class="row"><span>${lab}</span><span>$${fmt(amt)}</span></div>`;
+    }).join('');
+  }catch(e){$('#recentBox').innerHTML='<div class="loading">載入失敗</div>';}
+}
+loadRecent();
+
+/* 月結 */
+async function loadMonthly(){
+  $('#monthlyBox').innerHTML='<div class="loading">計算中…</div>';
+  try{
+    const r=await fetch(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`).then(x=>x.json());
+    if(!r.ok)throw 0;
+    let html='<table><tr><th>月</th><th>收入</th><th>支出</th><th>淨利</th><th>可領薪</th></tr>';
+    r.months.forEach(m=>{
+      html+=`<tr><td>${m.month}月</td><td>${fmt(m.income)}</td><td>${fmt(m.expense)}</td>
+        <td class="${m.net<0?'neg':''}">${fmt(m.net)}</td><td class="sal">${fmt(m.salary)}</td></tr>`;
+    });
+    const t=r.totals;
+    html+=`<tr class="total"><td>合計</td><td>${fmt(t.income)}</td><td>${fmt(t.expense)}</td>
+      <td class="${t.net<0?'neg':''}">${fmt(t.net)}</td><td class="sal">${fmt(t.safeSalary)}</td></tr></table>`;
+    html+=`<div style="margin-top:10px;font-size:12px;color:var(--ink2)">緩衝目標：固定成本 ${fmt(r.settings.fixed)} × ${r.settings.reserve} 個月 ＝ ${fmt(r.settings.fixed*r.settings.reserve)}。現金不足緩衝時薪水自動歸零，先保店。</div>`;
+    $('#monthlyBox').innerHTML=html;
+  }catch(e){$('#monthlyBox').innerHTML='<div class="loading">載入失敗，確認 GAS 網址</div>';}
+}
+
+/* 儀表板 */
+async function loadDash(){
+  $('#dashBox').innerHTML='<div class="loading">計算中…</div>';
+  try{
+    const r=await fetch(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`).then(x=>x.json());
+    if(!r.ok)throw 0;
+    const t=r.totals;
+    let html=`<div class="kpis">
+      <div class="kpi hero"><div class="l">建議全年可安全領薪</div><div class="v">$ ${fmt(t.safeSalary)}</div></div>
+      <div class="kpi"><div class="l">店總收入</div><div class="v">${fmt(t.income)}</div></div>
+      <div class="kpi"><div class="l">店總支出</div><div class="v">${fmt(t.expense)}</div></div>
+      <div class="kpi"><div class="l">店淨利</div><div class="v" style="color:${t.net<0?'var(--red)':'var(--ink)'}">${fmt(t.net)}</div></div>
+      <div class="kpi"><div class="l">年底店現金</div><div class="v">${fmt(t.endCash)}</div></div>
+      <div class="kpi"><div class="l">家庭收入（含領薪）</div><div class="v">${fmt(t.homeIn)}</div></div>
+      <div class="kpi"><div class="l">家庭支出</div><div class="v">${fmt(t.homeOut)}</div></div>
+      <div class="kpi" style="grid-column:1/-1"><div class="l">家庭結餘</div>
+        <div class="v" style="color:${t.homeBalance<0?'var(--red)':'var(--good)'}">${fmt(t.homeBalance)}</div></div>
+    </div>
+    <div class="alerts">${r.alerts.map(a=>`<div class="alert ${a.level}">${a.text}</div>`).join('')}</div>`;
+    $('#dashBox').innerHTML=html;
+  }catch(e){$('#dashBox').innerHTML='<div class="loading">載入失敗，確認 GAS 網址</div>';}
+}
+</script>
+</body>
+</html>
