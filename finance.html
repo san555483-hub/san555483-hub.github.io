@@ -95,6 +95,7 @@ footer{text-align:center;font-size:11px;color:#B6B2A2;margin-top:24px;letter-spa
 .lockCard input{text-align:center;font-size:22px;letter-spacing:8px}
 .lockCard .submit{margin-top:14px;letter-spacing:6px}
 .lockErr{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;font-weight:700}
+.lock.hide{display:none}
 </style>
 </head>
 <body>
@@ -199,7 +200,9 @@ async function tryLogin(k){
   }catch(e){ return false; }
 }
 function unlock(){
-  document.getElementById('lock').classList.add('hide');
+  const lk=document.getElementById('lock');
+  lk.classList.add('hide');
+  lk.style.display='none';
   loadRecent();
 }
 document.getElementById('btnLogin').onclick = async ()=>{
