@@ -85,9 +85,29 @@ tr.total td{font-weight:700;border-top:2px solid var(--green);border-bottom:0;pa
 .loading{text-align:center;color:var(--ink2);padding:30px 0;font-size:14px}
 .hide{display:none}
 footer{text-align:center;font-size:11px;color:#B6B2A2;margin-top:24px;letter-spacing:2px}
+
+/* 鎖屏 */
+.lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
+.lockCard{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:34px 26px;width:100%;max-width:340px;text-align:center}
+.lockCard .ic{font-size:38px}
+.lockCard h2{font-family:'Noto Serif TC',serif;font-size:19px;margin:10px 0 4px}
+.lockCard p{font-size:12px;color:var(--ink2);margin-bottom:18px;letter-spacing:1px}
+.lockCard input{text-align:center;font-size:22px;letter-spacing:8px}
+.lockCard .submit{margin-top:14px;letter-spacing:6px}
+.lockErr{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;font-weight:700}
 </style>
 </head>
 <body>
+<div class="lock" id="lock">
+  <div class="lockCard">
+    <div class="ic">🔒</div>
+    <h2>UNI 家店財務</h2>
+    <p>請輸入系統密碼</p>
+    <input id="pw" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+    <button class="submit" id="btnLogin">進 入</button>
+    <div class="lockErr" id="lockErr"></div>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <h1>UNI 家店財務<small>FAMILY ＆ SALON LEDGER</small></h1>
@@ -167,6 +187,37 @@ footer{text-align:center;font-size:11px;color:#B6B2A2;margin-top:24px;letter-spa
 /* ===== 部署設定：貼上妳的 GAS 部署網址 ===== */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx9faWKWobOwN-zdTbK3K_JoLVKECAFHTCTBw_w-xizhhBmXBh0LxV991LPJpsSsuS9ng/exec';
 
+/* ===== 🔒 密碼機制：後端驗證，登入成功後本機只記住密碼方便下次免輸入（資料本身全存雲端 Sheet）===== */
+const KEY_STORE = 'uni_fin_key';
+const getKey = () => localStorage.getItem(KEY_STORE) || '';
+const withKey = u => u + '&key=' + encodeURIComponent(getKey());
+
+async function tryLogin(k){
+  try{
+    const r = await fetch(`${GAS_URL}?action=login&key=${encodeURIComponent(k)}`).then(x=>x.json());
+    return !!r.ok;
+  }catch(e){ return false; }
+}
+function unlock(){
+  document.getElementById('lock').classList.add('hide');
+  loadRecent();
+}
+document.getElementById('btnLogin').onclick = async ()=>{
+  const k = document.getElementById('pw').value.trim();
+  const err = document.getElementById('lockErr');
+  if(!k){ err.textContent='請輸入密碼'; return; }
+  err.textContent='驗證中…';
+  if(await tryLogin(k)){
+    localStorage.setItem(KEY_STORE, k);
+    err.textContent='';
+    unlock();
+  }else{
+    err.textContent='密碼錯誤';
+  }
+};
+document.getElementById('pw').addEventListener('keyup', e=>{ if(e.key==='Enter') document.getElementById('btnLogin').click(); });
+
+
 /* ===== 分類 ===== */
 const CATS = {
   inc:  ['剪髮','造型','燙髮','染髮','漂髮','結構式護髮','頭皮養護','養護金儲值','商品銷售','數位產品','其他'],
@@ -242,7 +293,7 @@ $('#btnSave').onclick=async()=>{
   else url=`${GAS_URL}?action=addHome&date=${d}&io=${encodeURIComponent(io)}&cat=${c}&amt=${amt}&note=${note}`;
   const btn=$('#btnSave');btn.disabled=true;btn.textContent='儲存中…';
   try{
-    const r=await fetch(url).then(x=>x.json());
+    const r=await fetch(withKey(url)).then(x=>x.json());
     if(r.ok){toast('✅ 已記一筆 '+fmt(amt));$('#amt').value='';$('#note').value='';loadRecent();}
     else toast('❌ '+(r.error||'失敗'));
   }catch(e){toast('❌ 連線失敗');}
@@ -253,7 +304,7 @@ $('#btnSave').onclick=async()=>{
 async function loadRecent(){
   $('#recentBox').innerHTML='<div class="loading">載入中…</div>';
   try{
-    const r=await fetch(`${GAS_URL}?action=getRecent&tab=${type}&n=8`).then(x=>x.json());
+    const r=await fetch(withKey(`${GAS_URL}?action=getRecent&tab=${type}&n=8`)).then(x=>x.json());
     if(!r.rows.length){$('#recentBox').innerHTML='<div class="loading">還沒有紀錄</div>';return;}
     $('#recentBox').innerHTML=r.rows.map(row=>{
       const amt = type==='home'?row[3]:row[2];
@@ -262,13 +313,17 @@ async function loadRecent(){
     }).join('');
   }catch(e){$('#recentBox').innerHTML='<div class="loading">載入失敗</div>';}
 }
-loadRecent();
+/* 開機：記住的密碼自動登入 */
+(async ()=>{
+  const k = getKey();
+  if(k && await tryLogin(k)) unlock();
+})();
 
 /* 月結 */
 async function loadMonthly(){
   $('#monthlyBox').innerHTML='<div class="loading">計算中…</div>';
   try{
-    const r=await fetch(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`).then(x=>x.json());
+    const r=await fetch(withKey(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`)).then(x=>x.json());
     if(!r.ok)throw 0;
     let html='<table><tr><th>月</th><th>收入</th><th>支出</th><th>淨利</th><th>可領薪</th></tr>';
     r.months.forEach(m=>{
@@ -287,7 +342,7 @@ async function loadMonthly(){
 async function loadDash(){
   $('#dashBox').innerHTML='<div class="loading">計算中…</div>';
   try{
-    const r=await fetch(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`).then(x=>x.json());
+    const r=await fetch(withKey(`${GAS_URL}?action=getSummary&year=${$('#yearSel').value}`)).then(x=>x.json());
     if(!r.ok)throw 0;
     const t=r.totals;
     let html=`<div class="kpis">
