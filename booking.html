@@ -554,6 +554,33 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .line-logged-in-content { flex: 1; line-height: 1.5; }
 .line-logged-in-name { font-weight: 500; }
 .line-logged-in-hint { font-size: 11px; color: #607868; margin-top: 2px; }
+/* ═══ 2026/06/08 v8：我的預約 / 自助取消面板 ═══
+   回滾：刪除 .mybk-* CSS、#myBookingsBox HTML、loadMyBookings/doSelfCancel JS 即可 */
+.mybk-box { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.mybk-head { background: #fdf6ee; padding: 12px 14px; font-size: 13px; font-weight: 500; color: var(--gold-dark); display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
+.mybk-body { padding: 8px 14px 14px; }
+.mybk-loading { font-size: 12px; color: var(--muted); padding: 12px 0; text-align: center; }
+.mybk-empty { font-size: 12px; color: var(--muted); padding: 12px 0; line-height: 1.7; }
+.mybk-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+.mybk-item:first-child { margin-top: 8px; }
+.mybk-item-date { font-size: 14px; font-weight: 500; color: var(--text); }
+.mybk-item-svc { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+.mybk-cancel-btn { margin-top: 10px; width: 100%; padding: 9px; border: 1px solid var(--red); border-radius: 8px; background: var(--surface); color: var(--red); font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.mybk-cancel-btn:hover { background: #fdf0ee; }
+.mybk-cancel-btn:disabled { opacity: 0.5; cursor: default; }
+.mybk-note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.7; padding-top: 10px; border-top: 1px dashed var(--border); }
+.mybk-warn { font-size: 11px; color: var(--gold-dark); background: #fdf8f0; border: 1px solid #e8d5b0; border-radius: 8px; padding: 9px 11px; margin-top: 8px; line-height: 1.7; }
+/* 確認彈窗 */
+.mybk-confirm-mask { position: fixed; inset: 0; background: rgba(42,36,32,0.45); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 24px; }
+.mybk-confirm-mask.show { display: flex; }
+.mybk-confirm-card { background: var(--surface); border-radius: 16px; max-width: 340px; width: 100%; padding: 22px 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+.mybk-confirm-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.mybk-confirm-detail { font-size: 13px; color: var(--muted); line-height: 1.7; background: #fdf6ee; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.mybk-confirm-btns { display: flex; gap: 10px; }
+.mybk-confirm-btns button { flex: 1; padding: 11px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; border: none; }
+.mybk-confirm-yes { background: var(--red); color: #fff; }
+.mybk-confirm-no { background: var(--light); color: var(--text); }
+/* ═══ 結束 ═══ */
 .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
 </style>
 </head>
@@ -619,6 +646,15 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
           <div class="line-logged-in-hint">預約資料將自動帶入</div>
         </div>
       </div>
+      <!-- ═══ 2026/06/08 v8：我的預約 / 自助取消面板（登入後才顯示）═══
+           回滾：刪除此 div + loadMyBookings/doSelfCancel JS + .mybk-* CSS -->
+      <div class="mybk-box" id="myBookingsBox" style="display:none">
+        <div class="mybk-head">🗓 我的預約</div>
+        <div class="mybk-body" id="myBookingsBody">
+          <div class="mybk-loading">載入您的預約中...</div>
+        </div>
+      </div>
+      <!-- ═══ 結束 ═══ -->
     </div>
     <!-- ═══ 2026/06/08 新增：預約簿故障・救火求助按鈕 ═══
          回滾：刪除此 div + 下方 requestRescue() 函式 + .rescue-* CSS 即可 -->
@@ -1539,7 +1575,7 @@ function _verifyLoginState(returned) {
 
 /* ═══ 2026/06/08 新增：救火求助 — 先記錄再跳轉 LINE 帶入引導訊息 ═══ */
 /* ═══ 2026/06/08：救火求助 v2 — 提示框+一鍵複製+穩定跳轉 ═══ */
-const RESCUE_LINE_URL = 'https://lin.ee/g29DKXj';  // 官方帳號穩定連結（手機瀏覽器可靠喚起）
+const RESCUE_LINE_URL = 'https://line.me/R/ti/p/@261bhcyh';  // 直接開聊天室（避免 lin.ee 跳加好友條碼頁）
 const RESCUE_PREFILL =
   '您好，我想預約 Elsa 小幫手 ✨\n' +
   '預約簿目前無法登入，想請小幫手協助安排。\n' +
@@ -1593,8 +1629,17 @@ async function copyAndGoLine() {
                 '&source=booking.html&t=' + Date.now(),
                 { cache: 'no-store' });
   } catch (_) {}
-  // 3) 跳轉官方帳號（穩定連結）
-  setTimeout(function(){ window.location.href = RESCUE_LINE_URL; }, 400);
+  // 3) 智慧跳轉：優先直接開聊天室，800ms 內若頁面還在（App 未喚起）則退回 lin.ee 加好友連結
+  const direct   = 'https://line.me/R/ti/p/@261bhcyh';  // 直接進聊天室
+  const fallback = 'https://lin.ee/g29DKXj';            // 退路：官方加好友連結
+  const t0 = Date.now();
+  setTimeout(function(){
+    // 若仍停留在本頁（跳轉未成功），改走 fallback
+    if (!document.hidden && (Date.now() - t0) < 1500) {
+      window.location.href = fallback;
+    }
+  }, 800);
+  window.location.href = direct;
 }
 
 function startLineLogin() {
@@ -1638,6 +1683,7 @@ async function handleLineLoginReturn() {
     const box = document.getElementById('lineLoggedInBox');
     box.style.display = 'flex';
     document.getElementById('loggedInName').textContent = state.displayName || '';
+    if (typeof loadMyBookings === 'function') loadMyBookings();   // v8：載入我的預約面板
     if (d.knownCustomer) {
       state.name  = d.knownCustomer.name || state.displayName;
       state.phone = d.knownCustomer.phone;
@@ -1686,6 +1732,108 @@ function _cleanUrl() {
   } catch(_) {}
 }
 
+// ═══ 2026/06/08 v8：我的預約 / 自助取消 JS ═══
+// 回滾：刪除這整段 + #myBookingsBox HTML + .mybk-* CSS + 登入成功處的 loadMyBookings() 一行
+let _myBkPendingCancel = null;   // 暫存待確認取消的那筆
+
+async function loadMyBookings() {
+  if (!state.uid) return;
+  const box  = document.getElementById('myBookingsBox');
+  const body = document.getElementById('myBookingsBody');
+  if (!box || !body) return;
+  box.style.display = 'block';
+  body.innerHTML = '<div class="mybk-loading">載入您的預約中...</div>';
+  try {
+    const r = await fetch(GAS_URL + '?action=getMyBookings&uid=' + encodeURIComponent(state.uid) + '&t=' + Date.now(), { cache: 'no-store' });
+    const d = await r.json();
+
+    // 開關關閉 → 整個面板不顯示
+    if (d && d.enabled === false) { box.style.display = 'none'; return; }
+
+    if (!d || !d.ok) {
+      body.innerHTML = '<div class="mybk-empty">目前無法載入預約資料，稍後再試或於下方直接預約即可 🙏</div>';
+      return;
+    }
+    if (d.noPhone) {
+      body.innerHTML = '<div class="mybk-empty">系統尚未對應到您的預約紀錄。<br>若需查詢或取消既有預約，<br>可直接於 LINE 回覆「我要找Elsa」由 Elsa 為您協助 💕</div>';
+      return;
+    }
+    const list = d.bookings || [];
+    if (list.length === 0) {
+      body.innerHTML = '<div class="mybk-empty">目前沒有即將到來的預約唷 ✨<br>於下方挑選理想時段即可預約 💕</div>';
+      return;
+    }
+
+    let html = '';
+    list.forEach(function (b, i) {
+      html += '<div class="mybk-item">' +
+                '<div class="mybk-item-date">📅 ' + b.date + ' ' + b.time + '</div>' +
+                '<div class="mybk-item-svc">📋 ' + (b.service || '美髮服務') + '</div>' +
+                '<button class="mybk-cancel-btn" onclick="askSelfCancel(' + i + ')">取消這筆預約</button>' +
+              '</div>';
+    });
+    // 三振溫馨提醒（唯讀顯示，不影響取消）
+    if (d.blocked) {
+      html += '<div class="mybk-warn">小提醒：近 90 天內取消次數較多，後續想預約時，再麻煩您直接與 Elsa 聯繫，由我們為您現場安排唷 🙏</div>';
+    }
+    html += '<div class="mybk-note">取消後若想重新安排，於下方挑選時段即可重約。<br>為了讓每位客人都能順利預約，近期多次取消可能會影響線上預約方式唷 🌿</div>';
+    body.innerHTML = html;
+    window._myBkList = list;   // 暫存供確認用
+  } catch (ex) {
+    body.innerHTML = '<div class="mybk-empty">載入連線異常，稍後再試或直接 LINE 留言給 Elsa 🙏</div>';
+  }
+}
+
+function askSelfCancel(idx) {
+  const list = window._myBkList || [];
+  const b = list[idx];
+  if (!b) return;
+  _myBkPendingCancel = b;
+  document.getElementById('mybkConfirmDetail').innerHTML =
+    '📅 ' + b.date + ' ' + b.time + '<br>📋 ' + (b.service || '美髮服務');
+  document.getElementById('mybkConfirmMask').classList.add('show');
+}
+
+function closeMybkConfirm() {
+  document.getElementById('mybkConfirmMask').classList.remove('show');
+  _myBkPendingCancel = null;
+}
+
+async function confirmSelfCancel() {
+  const b = _myBkPendingCancel;
+  if (!b || !state.uid) { closeMybkConfirm(); return; }
+  const yesBtn = document.getElementById('mybkConfirmYes');
+  yesBtn.disabled = true; yesBtn.textContent = '處理中...';
+  try {
+    const r = await fetch(GAS_URL + '?action=selfCancelBooking&uid=' + encodeURIComponent(state.uid) +
+                          '&bookingId=' + encodeURIComponent(b.id) + '&t=' + Date.now(), { cache: 'no-store' });
+    const d = await r.json();
+    closeMybkConfirm();
+    if (d && d.ok) {
+      let msg = '已為您取消預約 🌿\n\n📅 ' + b.date + ' ' + b.time + '\n📋 ' + (b.service || '美髮服務');
+      if (d.blocked) {
+        msg += '\n\n小提醒：近 90 天取消次數較多，\n後續想預約時，再麻煩您直接與 Elsa 聯繫 🙏';
+      } else {
+        msg += '\n\n期待下次再為您服務 💕';
+      }
+      alert(msg);
+      loadMyBookings();   // 重新整理清單
+    } else {
+      const code = d && d.code;
+      if (code === 'notyours')      alert('這筆預約已不在有效清單中，可能已被取消或調整 🙏');
+      else if (code === 'disabled') alert('網頁自助取消目前暫停服務，請於 LINE 回覆「取消預約」或「我要找Elsa」🙏');
+      else if (code === 'nophone')  alert('系統尚未對應到您的預約資料，請於 LINE 回覆「我要找Elsa」🙏');
+      else                          alert('取消時發生問題，為確保正確，請於 LINE 回覆「我要找Elsa」由 Elsa 為您處理 🙏');
+    }
+  } catch (ex) {
+    closeMybkConfirm();
+    alert('連線異常，請稍後再試或直接 LINE 留言給 Elsa 🙏');
+  } finally {
+    yesBtn.disabled = false; yesBtn.textContent = '確定取消';
+  }
+}
+// ═══ 結束 ═══
+
 function _fillStep3IfLoggedIn() {
   if (state.name) {
     const inp = document.getElementById('inputName');
@@ -1711,5 +1859,17 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </div><!-- bkg2-main END -->
 </div><!-- bkg2-layout END -->
+<!-- ═══ 2026/06/08 v8：取消確認彈窗 ═══ -->
+<div class="mybk-confirm-mask" id="mybkConfirmMask">
+  <div class="mybk-confirm-card">
+    <div class="mybk-confirm-title">確定要取消這筆預約嗎？</div>
+    <div class="mybk-confirm-detail" id="mybkConfirmDetail"></div>
+    <div class="mybk-confirm-btns">
+      <button class="mybk-confirm-no" onclick="closeMybkConfirm()">先不要</button>
+      <button class="mybk-confirm-yes" id="mybkConfirmYes" onclick="confirmSelfCancel()">確定取消</button>
+    </div>
+  </div>
+</div>
+<!-- ═══ 結束 ═══ -->
 </body>
 </html>
