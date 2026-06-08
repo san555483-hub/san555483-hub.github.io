@@ -751,6 +751,19 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <button class="vc-close" onclick="closeVoucherInfo()">我了解了</button>
   </div>
 </div>
+<!-- ═══ 2026/06/08 新增：救火求助提示框 ═══ -->
+<div class="voucher-mask" id="rescueMask" onclick="if(event.target===this)closeRescue()">
+  <div class="voucher-card" style="max-width:360px">
+    <div class="vc-icon">💁‍♀️</div>
+    <div class="vc-title">找 Elsa 小幫手協助預約</div>
+    <div class="vc-body" style="text-align:center;margin-bottom:6px">
+      請複製以下內容，於 LINE 聊天室貼上並填寫，<br>小幫手將盡快為您安排 🙏
+    </div>
+    <div id="rescueMsgBox" style="text-align:left;font-size:13px;line-height:2;color:#5c4a3e;background:#faf8f5;border-left:3px solid #c4a882;border-radius:8px;padding:14px 16px;margin:14px 0;white-space:pre-line"></div>
+    <button class="vc-close" id="rescueCopyBtn" onclick="copyAndGoLine()" style="background:linear-gradient(135deg,#c4a882,#b89668)">📋 複製內容並前往 LINE</button>
+    <button class="vc-close" onclick="closeRescue()" style="margin-top:8px;background:transparent;color:#8a7d72;border:1px solid #e8e0d5">取消</button>
+  </div>
+</div>
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
 const GAS_VIP_URL = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
@@ -1525,32 +1538,63 @@ function _verifyLoginState(returned) {
 }
 
 /* ═══ 2026/06/08 新增：救火求助 — 先記錄再跳轉 LINE 帶入引導訊息 ═══ */
-const RESCUE_LINE_ID = '@261bhcyh';
+/* ═══ 2026/06/08：救火求助 v2 — 提示框+一鍵複製+穩定跳轉 ═══ */
+const RESCUE_LINE_URL = 'https://lin.ee/g29DKXj';  // 官方帳號穩定連結（手機瀏覽器可靠喚起）
 const RESCUE_PREFILL =
   '您好，我想預約 Elsa 小幫手 ✨\n' +
   '預約簿目前無法登入，想請小幫手協助安排。\n' +
-  '以下提供我的預約資訊：\n' +
+  '以下是我的預約資訊：\n' +
   '🔸服務項目：\n' +
   '🔸希望日期：\n' +
   '🔸希望時段：\n' +
   '🔸姓名：\n' +
   '🔸電話：';
 
-async function requestRescue() {
-  const btn = document.querySelector('.btn-rescue');
-  if (btn) { btn.disabled = true; btn.textContent = '正在為您開啟 LINE...'; }
-  // 1) 記錄到 Sheet（fire-and-forget，失敗也不擋跳轉，確保不漏客）
+function requestRescue() {
+  const box = document.getElementById('rescueMsgBox');
+  if (box) box.textContent = RESCUE_PREFILL;
+  const btn = document.getElementById('rescueCopyBtn');
+  if (btn) btn.textContent = '📋 複製內容並前往 LINE';
+  document.getElementById('rescueMask').classList.add('show');
+}
+
+function closeRescue() {
+  document.getElementById('rescueMask').classList.remove('show');
+}
+
+async function copyAndGoLine() {
+  const btn = document.getElementById('rescueCopyBtn');
+  // 1) 複製訊息到剪貼簿（多重備援，確保各裝置都能複製）
+  let copied = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(RESCUE_PREFILL);
+      copied = true;
+    }
+  } catch (_) {}
+  if (!copied) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = RESCUE_PREFILL;
+      ta.style.position = 'fixed'; ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copied = true;
+    } catch (_) {}
+  }
+  if (btn) btn.textContent = copied ? '✓ 已複製，正在前往 LINE...' : '正在前往 LINE...';
+  // 2) 記錄到 Sheet（fire-and-forget，失敗不擋跳轉）
   try {
     const u = encodeURIComponent(state.uid || '');
     const dn = encodeURIComponent(state.displayName || '');
     await fetch(GAS_URL + '?action=logRescue&uid=' + u + '&displayName=' + dn +
                 '&source=booking.html&t=' + Date.now(),
                 { cache: 'no-store' });
-  } catch (_) { /* 記錄失敗不影響跳轉 */ }
-  // 2) 跳轉 LINE，自動帶入引導訊息（顧客直接送出即可）
-  const url = 'https://line.me/R/oaMessage/' + encodeURIComponent(RESCUE_LINE_ID) +
-              '/?' + encodeURIComponent(RESCUE_PREFILL);
-  window.location.href = url;
+  } catch (_) {}
+  // 3) 跳轉官方帳號（穩定連結）
+  setTimeout(function(){ window.location.href = RESCUE_LINE_URL; }, 400);
 }
 
 function startLineLogin() {
