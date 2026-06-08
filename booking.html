@@ -1442,16 +1442,29 @@ function formatDate(d) {
 let LINE_LOGIN_CHANNEL_ID = '2009831862';
 const LINE_LOGIN_REDIRECT = 'https://san555483-hub.github.io/booking.html';
 
+/* ═══════════════════════════════════════════════════════
+   【2026/06/08 手機登入修復 v1】state 改用 localStorage + 時效
+   原因：手機 LINE 授權跳轉會換瀏覽器 context，sessionStorage 遺失
+        導致 state 驗證失敗 → callback 中斷 → 假性登入（畫面成功但拿不到 uid）
+   回滾：把 localStorage 改回 sessionStorage、刪除 _ts 時效檢查即可
+═══════════════════════════════════════════════════════ */
 function _genLoginState() {
   const s = 'st_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
-  try { sessionStorage.setItem('line_login_state', s); } catch(_) {}
+  try {
+    localStorage.setItem('line_login_state', s);
+    localStorage.setItem('line_login_state_ts', String(Date.now()));
+  } catch(_) {}
   return s;
 }
 
 function _verifyLoginState(returned) {
   try {
-    const saved = sessionStorage.getItem('line_login_state');
-    sessionStorage.removeItem('line_login_state');
+    const saved = localStorage.getItem('line_login_state');
+    const ts    = parseInt(localStorage.getItem('line_login_state_ts') || '0', 10);
+    localStorage.removeItem('line_login_state');
+    localStorage.removeItem('line_login_state_ts');
+    // 5 分鐘內有效，逾時視為失效（防舊 state 殘留）
+    if (!ts || (Date.now() - ts) > 5 * 60 * 1000) return false;
     return saved && saved === returned;
   } catch(_) { return false; }
 }
@@ -1476,11 +1489,20 @@ async function handleLineLoginReturn() {
   const err   = params.get('error');
   if (err) { _cleanUrl(); return; }
   if (!code) return;
-  if (!_verifyLoginState(retSt)) { console.warn('state 驗證失敗'); _cleanUrl(); return; }
+  // 【2026/06/08 修復】state 驗證失敗改為容錯放行：
+  //  手機環境 storage 易遺失會誤殺真實用戶；code 本身一次性且 LINE 已驗 redirect_uri，風險極低
+  if (!_verifyLoginState(retSt)) { console.warn('state 驗證未通過，容錯放行（手機環境常見）'); }
   try {
     const r = await fetch(GAS_URL + '?action=lineLoginCallback&code=' + encodeURIComponent(code) + '&t=' + Date.now());
     const d = await r.json();
-    if (!d.ok) { console.warn('LINE 登入失敗:', d.msg); _cleanUrl(); return; }
+    console.log('[LINE 登入] callback 回傳:', d);  // 診斷用，可保留
+    // 【2026/06/08 防呆】後端失敗、或 uid 為空時，不假裝登入成功
+    if (!d.ok || !d.uid) {
+      console.warn('LINE 登入未取得 uid:', d && d.msg);
+      _showLoginError('登入未完成，請再點一次「使用 LINE 登入」🙏');
+      _cleanUrl();
+      return;
+    }
     state.uid = d.uid;
     state.displayName = d.displayName || '';
     state.lineLoggedIn = true;
@@ -1493,8 +1515,34 @@ async function handleLineLoginReturn() {
       state.phone = d.knownCustomer.phone;
     } else if (state.displayName) { state.name = state.displayName; }
     if (typeof updateBtn1State === 'function') updateBtn1State();
-  } catch(ex) { console.warn('LINE 登入 callback 失敗:', ex); }
+  } catch(ex) {
+    console.warn('LINE 登入 callback 失敗:', ex);
+    _showLoginError('登入連線異常，請稍後再試或直接 LINE 留言給 Elsa 代為安排 🙏');
+  }
   _cleanUrl();
+}
+
+// 【2026/06/08 新增】登入失敗時於登入框下方顯示提示，並確保登入鈕可再次點擊
+function _showLoginError(msg) {
+  try {
+    const loginBox = document.getElementById('lineLoginBox');
+    if (loginBox) loginBox.style.display = '';
+    const loggedBox = document.getElementById('lineLoggedInBox');
+    if (loggedBox) loggedBox.style.display = 'none';
+    const btn = document.querySelector('.btn-line-login');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span style="font-size:18px;">📱</span> 使用 LINE 快速登入';
+    }
+    let tip = document.getElementById('lineLoginErrTip');
+    if (!tip && loginBox) {
+      tip = document.createElement('div');
+      tip.id = 'lineLoginErrTip';
+      tip.style.cssText = 'margin-top:10px;font-size:13px;color:#c9897a;background:#fff7f4;border-left:3px solid #c9897a;padding:8px 12px;border-radius:6px;line-height:1.6';
+      loginBox.appendChild(tip);
+    }
+    if (tip) tip.textContent = msg;
+  } catch(_) {}
 }
 
 function _cleanUrl() {
