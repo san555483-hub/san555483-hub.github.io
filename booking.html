@@ -480,6 +480,52 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 }
 .btn-line-login:hover { background: #05a847; }
 .btn-line-login:disabled { background: #aaa; cursor: not-allowed; }
+/* ═══ 2026/06/08 新增：救火求助按鈕（沙龍語感）═══ */
+.rescue-box {
+  margin: 14px 0 4px;
+  padding: 16px 18px;
+  background: #faf8f5;
+  border: 1px solid #ecdfd2;
+  border-left: 3px solid #c4a882;
+  border-radius: 10px;
+  text-align: center;
+}
+.rescue-text {
+  font-size: 13px;
+  color: #8a7d72;
+  font-family: 'Noto Sans TC', sans-serif;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.btn-rescue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: linear-gradient(135deg, #c4a882, #b89668);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Noto Sans TC', sans-serif;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 4px 14px -4px rgba(184,150,104,.5);
+  transition: all 0.25s;
+}
+.btn-rescue:hover { background: linear-gradient(135deg, #b89668, #a8855a); transform: translateY(-1px); }
+.btn-rescue:active { transform: translateY(0); }
+.btn-rescue:disabled { opacity: 0.6; cursor: wait; }
+.rescue-hint {
+  font-size: 11.5px;
+  color: #a89a8c;
+  margin-top: 9px;
+  line-height: 1.6;
+  font-family: 'Noto Sans TC', sans-serif;
+}
 .line-logged-in {
   background: #f0f9f0;
   border: 1.5px solid #06c755;
@@ -573,6 +619,15 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
           <div class="line-logged-in-hint">預約資料將自動帶入</div>
         </div>
       </div>
+    </div>
+    <!-- ═══ 2026/06/08 新增：預約簿故障・救火求助按鈕 ═══
+         回滾：刪除此 div + 下方 requestRescue() 函式 + .rescue-* CSS 即可 -->
+    <div class="rescue-box" id="rescueBox">
+      <div class="rescue-text">預約簿無法登入或操作有問題嗎？</div>
+      <button type="button" class="btn-rescue" onclick="requestRescue()">
+        🆘 預約簿故障？請按我，找 Elsa 小幫手預約
+      </button>
+      <div class="rescue-hint">點擊後將為您開啟 LINE，由小幫手協助完成預約 🙏</div>
     </div>
     <div id="selectedTagsArea" class="selected-tags"></div>
     <div id="serviceList"></div>
@@ -1467,6 +1522,35 @@ function _verifyLoginState(returned) {
     if (!ts || (Date.now() - ts) > 5 * 60 * 1000) return false;
     return saved && saved === returned;
   } catch(_) { return false; }
+}
+
+/* ═══ 2026/06/08 新增：救火求助 — 先記錄再跳轉 LINE 帶入引導訊息 ═══ */
+const RESCUE_LINE_ID = '@261bhcyh';
+const RESCUE_PREFILL =
+  '您好，我想預約 Elsa 小幫手 ✨\n' +
+  '預約簿目前無法登入，想請小幫手協助安排。\n' +
+  '以下提供我的預約資訊：\n' +
+  '🔸服務項目：\n' +
+  '🔸希望日期：\n' +
+  '🔸希望時段：\n' +
+  '🔸姓名：\n' +
+  '🔸電話：';
+
+async function requestRescue() {
+  const btn = document.querySelector('.btn-rescue');
+  if (btn) { btn.disabled = true; btn.textContent = '正在為您開啟 LINE...'; }
+  // 1) 記錄到 Sheet（fire-and-forget，失敗也不擋跳轉，確保不漏客）
+  try {
+    const u = encodeURIComponent(state.uid || '');
+    const dn = encodeURIComponent(state.displayName || '');
+    await fetch(GAS_URL + '?action=logRescue&uid=' + u + '&displayName=' + dn +
+                '&source=booking.html&t=' + Date.now(),
+                { cache: 'no-store' });
+  } catch (_) { /* 記錄失敗不影響跳轉 */ }
+  // 2) 跳轉 LINE，自動帶入引導訊息（顧客直接送出即可）
+  const url = 'https://line.me/R/oaMessage/' + encodeURIComponent(RESCUE_LINE_ID) +
+              '/?' + encodeURIComponent(RESCUE_PREFILL);
+  window.location.href = url;
 }
 
 function startLineLogin() {
