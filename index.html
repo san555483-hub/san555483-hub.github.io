@@ -653,6 +653,25 @@ body.owner-mode .product-card:hover{border-color:var(--rose);}
 
 footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padding:18px 16px;font-size:.65rem;letter-spacing:.05em;font-family:'Noto Sans TC',sans-serif;}
 
+/* 🆕 救火求助按鈕 2026/06/12（沙龍語感・購物頁色系）*/
+.shop-rescue-box{margin:18px 0 4px;padding:16px 18px;background:var(--linen);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;text-align:center;font-family:'Noto Sans TC',sans-serif;}
+.shop-rescue-text{font-size:.8rem;color:var(--mid);margin-bottom:10px;letter-spacing:.02em;}
+.shop-btn-rescue{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;background:var(--gold);color:#fff;border:none;border-radius:8px;padding:13px 16px;font-size:.86rem;font-weight:500;font-family:'Noto Sans TC',sans-serif;letter-spacing:.03em;cursor:pointer;transition:all .25s;}
+.shop-btn-rescue:hover{background:#a6794d;transform:translateY(-1px);}
+.shop-btn-rescue:active{transform:translateY(0);}
+.shop-btn-rescue:disabled{opacity:.6;cursor:wait;}
+.shop-rescue-hint{font-size:.7rem;color:var(--mid);margin-top:9px;line-height:1.6;opacity:.85;}
+.shop-rescue-mask{position:fixed;inset:0;background:rgba(42,31,26,.55);display:none;align-items:center;justify-content:center;z-index:3000;padding:20px;font-family:'Noto Sans TC',sans-serif;}
+.shop-rescue-mask.show{display:flex;}
+.shop-rescue-card{background:var(--linen);border-radius:16px;padding:24px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 12px 40px -8px rgba(0,0,0,.4);}
+.shop-rescue-card-icon{font-size:2.2rem;margin-bottom:8px;}
+.shop-rescue-card-title{font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:10px;}
+.shop-rescue-card-body{font-size:.8rem;color:var(--mid);line-height:1.7;margin-bottom:6px;}
+.shop-rescue-msg-box{text-align:left;font-size:.8rem;line-height:2;color:var(--bark2);background:#fff;border-left:3px solid var(--gold);border-radius:8px;padding:14px 16px;margin:14px 0;white-space:pre-line;}
+.shop-rescue-copy-btn{width:100%;background:var(--gold);color:#fff;border:none;border-radius:8px;padding:13px;font-size:.86rem;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .2s;}
+.shop-rescue-copy-btn:hover{background:#a6794d;}
+.shop-rescue-cancel-btn{width:100%;margin-top:8px;background:transparent;color:var(--mid);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:.86rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+
 /* ── 影音區塊 ── */
 .video-section{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
 .video-section-inner{max-width:900px;margin:0 auto;padding:0 16px 40px;}
@@ -1154,6 +1173,13 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
         <div id="transfer-info-block"></div>
       </div>
     </div>
+
+    <!-- 🆕 救火求助按鈕 2026/06/12（回滾：刪此 shop-rescue-box + 提示框 + JS三函式 + .shop-rescue-* CSS）-->
+    <div class="shop-rescue-box" id="shopRescueBox">
+      <div class="shop-rescue-text">結帳或下單遇到問題嗎？</div>
+      <button type="button" class="shop-btn-rescue" onclick="shopRequestRescue()">🆘 下單故障？請按我，找小幫手協助購買</button>
+      <div class="shop-rescue-hint">點擊後將為您開啟 LINE，由小幫手協助完成下單 🙏</div>
+    </div>
   </div>
 </div>
 
@@ -1393,6 +1419,18 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
 
 <footer>© UNI髮型設計｜職人選品 髮品坊 · 專業護髮 · 親子美髮</footer>
 <div class="toast" id="toast"></div>
+
+<!-- 🆕 救火求助提示框 2026/06/12 -->
+<div class="shop-rescue-mask" id="shopRescueMask" onclick="if(event.target===this)shopCloseRescue()">
+  <div class="shop-rescue-card">
+    <div class="shop-rescue-card-icon">💁‍♀️</div>
+    <div class="shop-rescue-card-title">找小幫手協助下單</div>
+    <div class="shop-rescue-card-body">請複製以下內容，於 LINE 聊天室貼上並填寫，<br>小幫手將盡快為您處理 🙏</div>
+    <div id="shopRescueMsgBox" class="shop-rescue-msg-box"></div>
+    <button class="shop-rescue-copy-btn" id="shopRescueCopyBtn" onclick="shopCopyAndGoLine()">📋 複製內容並前往 LINE</button>
+    <button class="shop-rescue-cancel-btn" onclick="shopCloseRescue()">取消</button>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════
      主要 JavaScript
@@ -2961,6 +2999,56 @@ renderSampleSeriesSelect();
 loadVideos();
 _loadSettingsFromCloud(); // 從 GAS Sheet「系統設定」載入贈品 & 折扣
 loadMarqueeBanner();      // 📢 廣播跑馬燈（撈 site=shop 啟用者）
+
+// 🆕 [救火求助 v1.0 2026/06/12] 購物頁版，記錄打主GS，跳購物LINE
+const SHOP_RESCUE_PREFILL =
+  '您好，我想購買 UNI 髮品 ✨\n' +
+  '購物頁結帳時遇到問題，想請小幫手協助下單。\n' +
+  '以下是我的購買資訊：\n' +
+  '🔸想買的商品：\n' +
+  '🔸數量：\n' +
+  '🔸姓名：\n' +
+  '🔸電話：\n' +
+  '🔸取貨方式：';
+const SHOP_RESCUE_MAIN_GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+
+function shopRequestRescue(){
+  const box=document.getElementById('shopRescueMsgBox');
+  if(box) box.textContent=SHOP_RESCUE_PREFILL;
+  const btn=document.getElementById('shopRescueCopyBtn');
+  if(btn){ btn.textContent='📋 複製內容並前往 LINE'; btn.disabled=false; }
+  document.getElementById('shopRescueMask').classList.add('show');
+}
+function shopCloseRescue(){
+  document.getElementById('shopRescueMask').classList.remove('show');
+}
+async function shopCopyAndGoLine(){
+  const btn=document.getElementById('shopRescueCopyBtn');
+  let copied=false;
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(SHOP_RESCUE_PREFILL); copied=true; }
+  }catch(_){}
+  if(!copied){
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=SHOP_RESCUE_PREFILL; ta.style.position='fixed'; ta.style.top='-9999px';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta); copied=true;
+    }catch(_){}
+  }
+  if(btn){ btn.textContent=copied?'✓ 已複製，正在前往 LINE...':'正在前往 LINE...'; btn.disabled=true; }
+  try{
+    const u=encodeURIComponent((window._lineUser&&window._lineUser.userId)?('line_'+window._lineUser.userId):'');
+    const dn=encodeURIComponent((window._lineUser&&window._lineUser.displayName)||'');
+    await fetch(SHOP_RESCUE_MAIN_GAS+'?action=logRescue&uid='+u+'&displayName='+dn+'&source=index.html&t='+Date.now(),{cache:'no-store'});
+  }catch(_){}
+  const direct='https://lin.ee/28G2WHE';
+  const t0=Date.now();
+  setTimeout(function(){
+    if(!document.hidden&&(Date.now()-t0)<1500) window.location.href='https://lin.ee/28G2WHE';
+  },800);
+  window.location.href=direct;
+}
 </script>
 </body>
 </html>
