@@ -412,6 +412,7 @@ async function searchCustomer() {
     if (res.success) {
       state.customer = res.customer;
       state.phone = phone;
+      _vipDetailLoaded = false;
       renderVipCard();
       goStep(2);
       loadSlots();
@@ -751,15 +752,21 @@ async function loadVipMarquee() {
 // ===== RESET =====
 function resetAll() {
   state.customer = null;
+  state.phone = '';
   state.selectedDate = '';
   state.selectedTime = '';
+  state.isPaidSlot = false;
+  state.priorityFee = 0;
   state.selectedServices = [];
+  _vipDetailLoaded = false;
   document.getElementById('phoneInput').value = '';
   document.getElementById('phoneError').innerHTML = '';
   document.getElementById('noteInput').value = '';
   document.getElementById('slotCard').style.display = 'none';
   document.getElementById('nextToService').style.display = 'none';
   document.getElementById('panelSuccess').classList.remove('active');
+  const dWrap = document.getElementById('vipDetailWrap');
+  if (dWrap) { dWrap.style.display = 'none'; dWrap.innerHTML = ''; }
   goStep(1);
 }
 </script>
