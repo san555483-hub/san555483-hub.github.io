@@ -98,6 +98,17 @@ input[type=tel] { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-a
 .time-btn.selected { background: var(--dark); border-color: var(--gold); color: var(--gold); }
 .time-btn.booked { background: var(--cream2); color: var(--border); cursor: not-allowed; text-decoration: line-through; font-weight: 400; }
 .time-btn:not(.booked):not(.selected):hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+/* 🆕 指定付費時段：金虛線（對齊 booking.html）2026/06/12 */
+.time-btn.paid:not(.booked):not(.selected) {
+  background: #fffaf0; border-color: var(--gold);
+  border-style: dashed; color: #a07820;
+}
+.time-btn.paid.selected {
+  background: var(--gold); border-color: var(--gold);
+  border-style: solid; color: #3D2416;
+}
+.time-btn.paid small { color: #a07820; opacity: .85; }
+.time-btn.paid.selected small { color: #3D2416; opacity: .9; }
 .svc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
 .svc-btn {
   border: 1.5px solid var(--border); border-radius: 10px; padding: 13px 10px;
@@ -324,9 +335,17 @@ const state = {
   phone: '',
   selectedDate: '',
   selectedTime: '',
+  isPaidSlot: false,
+  priorityFee: 0,
   selectedServices: [],
   services: [],
 };
+
+// 🆕 [指定付費時段 v1.0 2026/06/12] 與 booking.html 同一份規則
+// 次要時段(09:00–10:00、19:30–21:00)為指定付費，尊爵會員固定加價 $250
+const PAID_SLOTS = ['09:00','09:30','20:00','20:30','21:00'];
+const VIP_PRIORITY_FEE = 250;
+function isPaidSlot(t) { return PAID_SLOTS.indexOf(String(t).trim()) !== -1; }
 
 // ===== GAS 呼叫 =====
 async function callGAS(fn, params = {}) {
@@ -560,10 +579,11 @@ async function loadSlots() {
     grid.innerHTML = allSlots.map(t => {
       const isBooked  = bookedSet.has(t);
       const isSelected = state.selectedTime === t;
+      const paid = isPaidSlot(t);
       return `
-        <button class="time-btn ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}"
+        <button class="time-btn ${paid ? 'paid' : ''} ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}"
           ${isBooked ? '' : `onclick="selectTime('${t}')"`}>
-          ${t}${isBooked ? '<br><small style="font-size:9px;">已約</small>' : ''}
+          ${t}${isBooked ? '<br><small style="font-size:9px;">已約</small>' : (paid ? '<br><small style="font-size:9px;">指定付費 $'+VIP_PRIORITY_FEE+'</small>' : '')}
         </button>`;
     }).join('');
 
@@ -576,6 +596,15 @@ async function loadSlots() {
 
 function selectTime(t) {
   state.selectedTime = t;
+  // 🆕 付費時段：帶 $250 標記 + 輕提示
+  if (isPaidSlot(t)) {
+    state.isPaidSlot = true;
+    state.priorityFee = VIP_PRIORITY_FEE;
+    alert('您選擇的是「指定付費時段」（主要營業時間 10:00–19:30 以外）。\n\n此時段尊爵會員加價 $' + VIP_PRIORITY_FEE + '，Elsa 將專程到店為您服務 🙏');
+  } else {
+    state.isPaidSlot = false;
+    state.priorityFee = 0;
+  }
   loadSlots();
   document.getElementById('nextToService').style.display = 'block';
 }
@@ -632,6 +661,7 @@ function goConfirm() {
     <div class="confirm-row"><span class="confirm-label">✂️ 服務</span><span class="confirm-value">${selected.map(s=>s.name).join('<br>')}</span></div>
     <div class="confirm-row"><span class="confirm-label">⏱ 預估時間</span><span class="confirm-value">約 ${dur} 分鐘</span></div>
     <div class="confirm-row"><span class="confirm-label">💰 費用</span><span class="confirm-value" style="font-size:20px;color:#C9A84C;">$${total.toLocaleString()}</span></div>
+    ${state.isPaidSlot ? `<div class="confirm-row"><span class="confirm-label">⭐ 指定付費</span><span class="confirm-value" style="color:#a07820;">指定時段加價 $${VIP_PRIORITY_FEE}</span></div>` : ''}
     ${note ? `<div class="confirm-row"><span class="confirm-label">📝 備註</span><span class="confirm-value">${note}</span></div>` : ''}
   `;
   goStep(4);
@@ -645,6 +675,12 @@ async function doSubmit() {
   btn.textContent = '送出中…'; btn.disabled = true;
   const selected = state.services.filter(s => state.selectedServices.includes(s.id));
   const total    = selected.reduce((s,x) => s + x.price, 0);
+  // 🆕 指定付費：把 $250 標記寫進備註欄（尊爵GAS不用改，Elsa收通知看得到）
+  let finalNote = document.getElementById('noteInput').value || '';
+  if (state.isPaidSlot) {
+    const paidTag = '【⭐指定付費時段・加價 $' + state.priorityFee + '】';
+    finalNote = finalNote ? (paidTag + ' ' + finalNote) : paidTag;
+  }
   const payload = {
     customerId:    state.customer.id,
     customerName:  state.customer.name,
@@ -655,7 +691,9 @@ async function doSubmit() {
     time:          state.selectedTime,
     services:      selected.map(s => s.name),
     totalPrice:    total,
-    note:          document.getElementById('noteInput').value,
+    isPaidSlot:    state.isPaidSlot ? 1 : 0,
+    priorityFee:   state.priorityFee || 0,
+    note:          finalNote,
   };
   try {
     const res = await callGAS('submitBooking', payload);
