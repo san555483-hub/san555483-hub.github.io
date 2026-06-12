@@ -155,6 +155,41 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
 .vip-marquee-text { font-size: 15px; font-weight: 700; color: var(--gold-light); letter-spacing: .05em; padding: 0 40px; }
 .vip-marquee-sep { color: var(--gold); font-size: 12px; padding: 0 6px; opacity: .6; }
 @media(max-width:480px){ .vip-marquee-text{ font-size:13px; padding:0 24px; } }
+
+/* 🆕 明細查詢樣式 2026/06/12 */
+.btn-detail {
+  width: 100%; margin-top: 14px; padding: 13px;
+  background: linear-gradient(135deg, var(--dark2), var(--dark3));
+  color: var(--gold-light); border: 1px solid var(--gold);
+  border-radius: var(--radius); font-size: 15px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; transition: all .2s;
+}
+.btn-detail:hover { background: var(--dark3); }
+.btn-detail:disabled { opacity: .6; cursor: default; }
+#vipDetailBox { margin-top: 12px; }
+.detail-sec {
+  background: var(--cream); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+}
+.detail-sec-title {
+  font-size: 14px; font-weight: 800; color: var(--text2);
+  letter-spacing: .04em; margin-bottom: 10px;
+  padding-bottom: 8px; border-bottom: 1px dashed var(--border);
+}
+.detail-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid rgba(212,184,150,.35);
+}
+.detail-row:last-child { border-bottom: none; }
+.dr-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+.dr-main { flex: 1; min-width: 0; }
+.dr-title { font-size: 14px; font-weight: 700; color: var(--text); word-break: break-all; }
+.dr-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.dr-amt { font-size: 15px; font-weight: 800; color: var(--gold); flex-shrink: 0; }
+.detail-empty {
+  font-size: 13px; color: var(--text2); text-align: center;
+  padding: 14px; opacity: .8;
+}
 </style>
 </head>
 <body>
@@ -203,6 +238,7 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
   <div class="panel" id="panel2">
     <div class="nav-back" onclick="goStep(1)"><span>‹</span> 返回</div>
     <div class="vip-card" id="vipCard"></div>
+    <div id="vipDetailWrap" style="display:none;"></div>
     <div class="card">
       <div class="card-title"><div class="ct-line"></div>選擇預約日期</div>
       <input type="date" id="dateInput" onchange="loadSlots()" />
@@ -265,6 +301,9 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
 // =============================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
 
+// 🆕 主系統 GAS（明細查詢用：撈尊爵消費/購物明細，唯讀）2026/06/12
+const MAIN_GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+
 // =============================================
 //  ★ 預設時段（GAS 載入失敗時的備用）
 //  與 booking.html 完全相同，依星期幾設定
@@ -282,6 +321,7 @@ const DEFAULT_BUSINESS_HOURS = {
 // ===== STATE =====
 const state = {
   customer: null,
+  phone: '',
   selectedDate: '',
   selectedTime: '',
   selectedServices: [],
@@ -352,6 +392,7 @@ async function searchCustomer() {
     const res = await callGAS('getCustomerByPhone', { phone });
     if (res.success) {
       state.customer = res.customer;
+      state.phone = phone;
       renderVipCard();
       goStep(2);
       loadSlots();
@@ -383,6 +424,97 @@ function renderVipCard() {
     </div>
     ${c.hairNote ? `<div class="hair-note-box"><div class="hn-label">💆 髮質備註</div>${c.hairNote}</div>` : ''}
   `;
+  // 🆕 明細查詢入口（卡片下方）
+  const dWrap = document.getElementById('vipDetailWrap');
+  if (dWrap) {
+    dWrap.style.display = 'block';
+    dWrap.innerHTML = `
+      <button class="btn-detail" id="detailBtn" onclick="loadVipDetail()">📋 查看我的消費・購物明細</button>
+      <div id="vipDetailBox"></div>
+    `;
+  }
+}
+
+// 🆕 [明細查詢 v1.0 2026/06/12] 打主GS撈消費+購物明細並渲染
+let _vipDetailLoaded = false;
+async function loadVipDetail() {
+  const box = document.getElementById('vipDetailBox');
+  const btn = document.getElementById('detailBtn');
+  if (!box) return;
+  // 已載入 → 切換收合/展開
+  if (_vipDetailLoaded) {
+    const open = box.style.display !== 'none';
+    box.style.display = open ? 'none' : 'block';
+    if (btn) btn.textContent = open ? '📋 查看我的消費・購物明細' : '🔼 收合明細';
+    return;
+  }
+  if (!state.phone) { box.innerHTML = '<div class="detail-empty">查無身份資料，請重新確認身份</div>'; box.style.display='block'; return; }
+  if (btn) { btn.textContent = '載入中…'; btn.disabled = true; }
+  try {
+    const url = MAIN_GAS_URL + '?action=getVipDetailLogs&phone=' + encodeURIComponent(state.phone) + '&t=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || '查詢失敗');
+    box.innerHTML = renderVipDetail(data.consume || [], data.purchase || []);
+    box.style.display = 'block';
+    _vipDetailLoaded = true;
+    if (btn) btn.textContent = '🔼 收合明細';
+  } catch (e) {
+    box.innerHTML = '<div class="detail-empty">明細載入失敗，請稍後再試</div>';
+    box.style.display = 'block';
+    if (btn) btn.textContent = '📋 重新載入明細';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// 🆕 渲染明細（消費時間軸 + 購物清單）
+function renderVipDetail(consume, purchase) {
+  let html = '';
+  // 消費明細（時間軸）
+  html += '<div class="detail-sec"><div class="detail-sec-title">💇 美髮・尊爵消費</div>';
+  if (consume.length === 0) {
+    html += '<div class="detail-empty">尚無消費紀錄</div>';
+  } else {
+    consume.forEach(it => {
+      html += `
+        <div class="detail-row">
+          <div class="dr-icon">${it.icon || '💇'}</div>
+          <div class="dr-main">
+            <div class="dr-title">${esc(it.title || '')}</div>
+            <div class="dr-sub">${esc(it.date || '')}${it.sub ? '　'+esc(it.sub) : ''}</div>
+          </div>
+          <div class="dr-amt">$${(Number(it.amount)||0).toLocaleString()}</div>
+        </div>`;
+    });
+  }
+  html += '</div>';
+  // 購物明細
+  html += '<div class="detail-sec"><div class="detail-sec-title">🛍️ 購物紀錄</div>';
+  if (purchase.length === 0) {
+    html += '<div class="detail-empty">尚無購物紀錄</div>';
+  } else {
+    purchase.forEach(it => {
+      const qtyTxt = it.qty ? ' ×' + it.qty : '';
+      const priceLine = (it.unitPrice && it.qty) ? ('單價 $'+Number(it.unitPrice).toLocaleString()) : '';
+      html += `
+        <div class="detail-row">
+          <div class="dr-icon">🛍️</div>
+          <div class="dr-main">
+            <div class="dr-title">${esc(it.productName || '')}${qtyTxt}</div>
+            <div class="dr-sub">${esc(it.date || '')}${priceLine ? '　'+priceLine : ''}${it.payMethod ? '　💳 '+esc(it.payMethod) : ''}</div>
+          </div>
+          <div class="dr-amt">$${(Number(it.subtotal)||0).toLocaleString()}</div>
+        </div>`;
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
+// 🆕 HTML 轉義（防內容破版）
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
 // ===== STEP 2：時段（★ 動態從 GAS 抓，依星期幾顯示不同時段）=====
