@@ -984,6 +984,13 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
     <div id="home-product-wrap">
       <div class="loading-wrap"><div class="loading-spinner"></div><p style="font-size:.8rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif">載入商品中…</p></div>
     </div>
+
+    <!-- 🆕 首頁救火求助按鈕 2026/06/12（客人卡在登入/進不去時，一進首頁就看得到。共用既有 .shop-btn-rescue CSS + shopRequestRescue() JS。回滾：刪此 shop-rescue-box 整段即可） -->
+    <div class="shop-rescue-box" id="shopRescueBoxHome" style="max-width:520px;margin:20px auto 4px;">
+      <div class="shop-rescue-text">無法登入或下單遇到問題嗎？</div>
+      <button type="button" class="shop-btn-rescue" onclick="shopRequestRescue()">🆘 操作卡住？請按我，找小幫手協助購買</button>
+      <div class="shop-rescue-hint">點擊後將為您開啟 LINE，由小幫手協助完成下單 🙏</div>
+    </div>
   </div>
 
   <div class="features-section">
