@@ -1519,6 +1519,12 @@ function showSuccess(bookingId) {
     '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
     '<strong style="color:#e65100">✨ 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</strong><br><br>' +
     'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊' +
+    '<div class="line-follow-box" style="margin-top:20px;padding:18px;border:1px solid var(--gold);border-radius:12px;background:rgba(196,168,130,.07);text-align:center;">' +
+      '<div style="font-family:\'Noto Serif TC\',serif;font-size:15px;font-weight:500;color:var(--gold-dark);margin-bottom:6px;">🔔 加入官方 LINE，接收預約確認</div>' +
+      '<div style="font-size:12.5px;color:var(--muted);line-height:1.8;margin-bottom:14px;">為確保您順利收到 Elsa 的確認與提醒通知<br>請加入官方 LINE 好友 🙏</div>' +
+      '<a href="https://line.me/R/ti/p/@261bhcyh" target="_blank" rel="noopener" style="display:inline-block;background:var(--gold);color:#fff;text-decoration:none;padding:11px 28px;border-radius:8px;font-size:14px;font-weight:500;letter-spacing:.03em;">加入官方 LINE</a>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;">若按鈕未開啟，請點 <a href="https://lin.ee/g29DKXj" target="_blank" rel="noopener" style="color:var(--gold-dark);">這裡</a></div>' +
+    '</div>' +
     (state.priority ?
       '<div class="success-voucher">' +
         '<div class="sv-title">🎁 指定預約・現金禮券</div>' +
