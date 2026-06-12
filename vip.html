@@ -201,6 +201,52 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
   font-size: 13px; color: var(--text2); text-align: center;
   padding: 14px; opacity: .8;
 }
+
+/* 🆕 救火求助按鈕 2026/06/12（沙龍語感・金色系）*/
+.rescue-box {
+  margin: 14px 0 4px; padding: 16px 18px;
+  background: var(--cream); border: 1px solid var(--border);
+  border-left: 3px solid var(--gold); border-radius: 10px; text-align: center;
+}
+.rescue-text { font-size: 13px; color: var(--text2); margin-bottom: 10px; letter-spacing: .02em; }
+.btn-rescue {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; background: var(--gold); color: #2C1810; border: none;
+  border-radius: 8px; padding: 13px 16px; font-size: 14px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; font-family: inherit; transition: all .25s;
+}
+.btn-rescue:hover { background: #b8973f; transform: translateY(-1px); }
+.btn-rescue:active { transform: translateY(0); }
+.btn-rescue:disabled { opacity: .6; cursor: wait; }
+.rescue-hint { font-size: 11.5px; color: var(--text2); margin-top: 9px; line-height: 1.6; opacity: .85; }
+.rescue-mask {
+  position: fixed; inset: 0; background: rgba(26,15,8,.55);
+  display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+}
+.rescue-mask.show { display: flex; }
+.rescue-card {
+  background: var(--cream); border-radius: var(--radius); padding: 24px 20px;
+  max-width: 360px; width: 100%; text-align: center; box-shadow: 0 12px 40px -8px rgba(0,0,0,.4);
+}
+.rescue-card-icon { font-size: 36px; margin-bottom: 8px; }
+.rescue-card-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.rescue-card-body { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 6px; }
+.rescue-msg-box {
+  text-align: left; font-size: 13px; line-height: 2; color: var(--text2);
+  background: #fff; border-left: 3px solid var(--gold); border-radius: 8px;
+  padding: 14px 16px; margin: 14px 0; white-space: pre-line;
+}
+.rescue-copy-btn {
+  width: 100%; background: var(--gold); color: #2C1810; border: none;
+  border-radius: 8px; padding: 13px; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.rescue-copy-btn:hover { background: #b8973f; }
+.rescue-cancel-btn {
+  width: 100%; margin-top: 8px; background: transparent; color: var(--text2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 11px;
+  font-size: 14px; cursor: pointer; font-family: inherit;
+}
 </style>
 </head>
 <body>
@@ -243,6 +289,12 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
       <button class="btn btn-gold" id="searchBtn" onclick="searchCustomer()">確認身份 →</button>
     </div>
     <div class="alert alert-info">🔐 本頁面為尊爵會員專屬預約服務。<br>請輸入您的登記手機號碼。</div>
+    <!-- 🆕 救火求助按鈕 2026/06/12（回滾：刪此 rescue-box + 提示框 + requestRescue/closeRescue/copyAndGoLine + .rescue-* CSS）-->
+    <div class="rescue-box" id="rescueBox">
+      <div class="rescue-text">頁面無法登入或操作有問題嗎？</div>
+      <button type="button" class="btn-rescue" onclick="requestRescue()">🆘 預約頁故障？請按我，找 Elsa 小幫手預約</button>
+      <div class="rescue-hint">點擊後將為您開啟 LINE，由小幫手協助完成預約 🙏</div>
+    </div>
   </div>
 
   <!-- STEP 2 -->
@@ -303,6 +355,18 @@ textarea:focus { outline: none; border-color: var(--gold); background: white; bo
       <div class="alert alert-info">📌 如需更改或取消，請直接透過 LINE 聯繫 ELSA</div>
       <button class="btn btn-gold" onclick="resetAll()" style="margin-top:16px;">再次預約</button>
     </div>
+  </div>
+</div>
+
+<!-- 🆕 救火求助提示框 2026/06/12 -->
+<div class="rescue-mask" id="rescueMask" onclick="if(event.target===this)closeRescue()">
+  <div class="rescue-card">
+    <div class="rescue-card-icon">💁‍♀️</div>
+    <div class="rescue-card-title">找 Elsa 小幫手協助預約</div>
+    <div class="rescue-card-body">請複製以下內容，於 LINE 聊天室貼上並填寫，<br>小幫手將盡快為您安排 🙏</div>
+    <div id="rescueMsgBox" class="rescue-msg-box"></div>
+    <button class="rescue-copy-btn" id="rescueCopyBtn" onclick="copyAndGoLine()">📋 複製內容並前往 LINE</button>
+    <button class="rescue-cancel-btn" onclick="closeRescue()">取消</button>
   </div>
 </div>
 
@@ -768,6 +832,68 @@ function resetAll() {
   const dWrap = document.getElementById('vipDetailWrap');
   if (dWrap) { dWrap.style.display = 'none'; dWrap.innerHTML = ''; }
   goStep(1);
+}
+
+// 🆕 [救火求助 v1.0 2026/06/12] 沿用 booking 機制，標尊爵，記錄打主GS
+const RESCUE_PREFILL =
+  '您好，我是尊爵會員，想預約 Elsa ✨\n' +
+  '預約頁目前無法登入，想請小幫手協助安排。\n' +
+  '以下是我的預約資訊：\n' +
+  '🔸服務項目：\n' +
+  '🔸希望日期：\n' +
+  '🔸希望時段：\n' +
+  '🔸姓名：\n' +
+  '🔸電話：';
+
+function requestRescue() {
+  const box = document.getElementById('rescueMsgBox');
+  if (box) box.textContent = RESCUE_PREFILL;
+  const btn = document.getElementById('rescueCopyBtn');
+  if (btn) { btn.textContent = '📋 複製內容並前往 LINE'; btn.disabled = false; }
+  document.getElementById('rescueMask').classList.add('show');
+}
+
+function closeRescue() {
+  document.getElementById('rescueMask').classList.remove('show');
+}
+
+async function copyAndGoLine() {
+  const btn = document.getElementById('rescueCopyBtn');
+  // 1) 複製到剪貼簿（多重備援）
+  let copied = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(RESCUE_PREFILL);
+      copied = true;
+    }
+  } catch (_) {}
+  if (!copied) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = RESCUE_PREFILL;
+      ta.style.position = 'fixed'; ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copied = true;
+    } catch (_) {}
+  }
+  if (btn) { btn.textContent = copied ? '✓ 已複製，正在前往 LINE...' : '正在前往 LINE...'; btn.disabled = true; }
+  // 2) 記錄到主GS（fire-and-forget，標尊爵來源，失敗不擋跳轉）
+  try {
+    const phoneTyped = encodeURIComponent((document.getElementById('phoneInput').value || '').trim());
+    await fetch(MAIN_GAS_URL + '?action=logRescue&uid=&displayName=' + phoneTyped +
+                '&source=vip.html&t=' + Date.now(), { cache: 'no-store' });
+  } catch (_) {}
+  // 3) 智慧跳轉：先開聊天室，800ms 未喚起 App 則退回加好友連結
+  const direct   = 'https://line.me/R/ti/p/@261bhcyh';
+  const fallback = 'https://lin.ee/g29DKXj';
+  const t0 = Date.now();
+  setTimeout(function(){
+    if (!document.hidden && (Date.now() - t0) < 1500) window.location.href = fallback;
+  }, 800);
+  window.location.href = direct;
 }
 </script>
 </body>
