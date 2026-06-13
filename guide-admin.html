@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNI 使用指南 · 後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f2ea; --card:#ffffff; --ink:#2a1f1a; --brown:#3a2c23;
+    --gold:#c4a882; --gold-dark:#a08660; --gold-soft:#e8dcc8;
+    --muted:#9a8f82; --line:#ece3d6; --danger:#b5523f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased;padding-bottom:48px;}
+
+  .hero{background:linear-gradient(160deg,#2a1f1a,#3a2c23);color:#fff;padding:34px 24px 28px;text-align:center;position:relative;overflow:hidden;}
+  .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(196,168,130,.18),transparent 60%);}
+  .hero-mark{font-family:'Noto Serif TC',serif;font-size:12px;letter-spacing:.42em;color:var(--gold);margin-bottom:10px;position:relative;}
+  .hero-title{font-family:'Noto Serif TC',serif;font-size:23px;font-weight:600;letter-spacing:.06em;position:relative;}
+  .hero-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:8px;position:relative;}
+
+  .wrap{max-width:540px;margin:0 auto;padding:24px 18px 0;}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 2px 14px rgba(58,44,35,.05);}
+  .panel-title{font-family:'Noto Serif TC',serif;font-size:16px;font-weight:600;color:var(--brown);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+  label{display:block;font-size:12.5px;color:var(--gold-dark);font-weight:500;margin:14px 0 6px;letter-spacing:.03em;}
+  input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:14px;color:var(--ink);background:#fdfbf7;transition:border .2s;}
+  input[type=text]:focus,textarea:focus{outline:none;border-color:var(--gold);}
+  textarea{resize:vertical;min-height:54px;}
+
+  /* 選圖區 */
+  .pick{border:1.5px dashed var(--gold);border-radius:11px;padding:22px;text-align:center;cursor:pointer;background:rgba(196,168,130,.06);transition:background .2s;}
+  .pick:active{background:rgba(196,168,130,.14);}
+  .pick-ico{font-size:30px;}
+  .pick-text{font-size:13px;color:var(--gold-dark);margin-top:6px;}
+  .pick-hint{font-size:11px;color:var(--muted);margin-top:3px;}
+  #fileInput{display:none;}
+  .preview{margin-top:14px;display:none;}
+  .preview img{width:100%;border-radius:9px;border:1px solid var(--line);}
+  .preview .up-state{font-size:12px;text-align:center;margin-top:8px;color:var(--muted);}
+
+  .btn{width:100%;border:none;border-radius:9px;padding:13px;font-family:inherit;font-size:14.5px;font-weight:500;letter-spacing:.04em;cursor:pointer;transition:all .2s;margin-top:18px;}
+  .btn-main{background:var(--ink);color:var(--gold);border:1px solid var(--gold-dark);}
+  .btn-main:active{transform:translateY(1px);}
+  .btn-main:disabled{opacity:.45;cursor:not-allowed;}
+
+  .msg{font-size:13px;text-align:center;margin-top:12px;padding:10px;border-radius:8px;display:none;}
+  .msg.ok{display:block;background:rgba(125,160,110,.12);color:#5a7548;}
+  .msg.err{display:block;background:rgba(181,82,63,.1);color:var(--danger);}
+
+  /* 現有列表 */
+  .glist-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .glist-item:last-child{border-bottom:none;}
+  .glist-thumb{width:46px;height:46px;flex:none;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#f0e8da;}
+  .glist-meta{flex:1;min-width:0;}
+  .glist-name{font-size:13.5px;font-weight:500;color:var(--brown);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .glist-desc{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .glist-del{flex:none;background:none;border:1px solid var(--line);color:var(--danger);border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer;font-family:inherit;}
+  .glist-del:active{background:rgba(181,82,63,.08);}
+  .glist-loading{text-align:center;color:var(--muted);font-size:12.5px;padding:18px;}
+
+  .lock-note{font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7;}
+</style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-mark">UNI HAIR DESIGN</div>
+    <h1 class="hero-title">使用指南 · 後台</h1>
+    <div class="hero-sub">上傳教學圖，自動同步到指南頁</div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- 新增 -->
+    <div class="panel">
+      <div class="panel-title">➕ 新增一則指南</div>
+
+      <div class="pick" id="pickBox" onclick="document.getElementById('fileInput').click()">
+        <div class="pick-ico">🖼️</div>
+        <div class="pick-text">點此選擇教學圖</div>
+        <div class="pick-hint">建議直式長圖（與現有指南同規格）</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*">
+
+      <div class="preview" id="preview">
+        <img id="previewImg" alt="預覽">
+        <div class="up-state" id="upState"></div>
+      </div>
+
+      <label>標題</label>
+      <input type="text" id="title" placeholder="例：染後居家保養指南">
+
+      <label>小說明（選填）</label>
+      <input type="text" id="desc" placeholder="例：染後 · 五步驟鎖色教學">
+
+      <button class="btn btn-main" id="submitBtn" onclick="submitGuide()" disabled>送出新增</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <!-- 現有列表 -->
+    <div class="panel">
+      <div class="panel-title">📋 目前的指南</div>
+      <div id="glist"><div class="glist-loading">載入中…</div></div>
+    </div>
+
+    <div class="lock-note">此頁僅供 Elsa 管理使用<br>請勿外流網址</div>
+  </div>
+
+  <script>
+    // ===== 設定 =====
+    var GAS_URL    = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+    var TOKEN      = 'uni_guide_2026';
+    var CLOUD_NAME = 'dvti8ug8s';
+    var PRESET     = 'uni_hair';   // unsigned upload preset
+
+    var uploadedUrl = '';
+
+    // ===== 選圖 + 上傳 Cloudinary =====
+    document.getElementById('fileInput').addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+      var pv = document.getElementById('preview');
+      var pvImg = document.getElementById('previewImg');
+      var st = document.getElementById('upState');
+      var btn = document.getElementById('submitBtn');
+
+      pvImg.src = URL.createObjectURL(file);
+      pv.style.display = 'block';
+      st.textContent = '⏳ 上傳中…';
+      st.style.color = '#9a8f82';
+      uploadedUrl = '';
+      btn.disabled = true;
+
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', PRESET);
+
+      fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/image/upload', {method:'POST', body:fd})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.secure_url){
+            uploadedUrl = d.secure_url;
+            st.textContent = '✅ 圖片已上傳';
+            st.style.color = '#5a7548';
+            btn.disabled = false;
+          } else {
+            st.textContent = '❌ 上傳失敗：' + (d.error && d.error.message ? d.error.message : '請重試');
+            st.style.color = '#b5523f';
+          }
+        })
+        .catch(function(){
+          st.textContent = '❌ 上傳失敗，請檢查網路後重試';
+          st.style.color = '#b5523f';
+        });
+    });
+
+    // ===== 送出新增（寫進 Sheet）=====
+    function submitGuide(){
+      var title = document.getElementById('title').value.trim();
+      var desc  = document.getElementById('desc').value.trim();
+      var msg   = document.getElementById('msg');
+      var btn   = document.getElementById('submitBtn');
+
+      if(!uploadedUrl){ showMsg('請先選擇並上傳圖片', false); return; }
+      if(!title){ showMsg('請填寫標題', false); return; }
+
+      btn.disabled = true; btn.textContent = '送出中…';
+
+      var url = GAS_URL + '?action=saveGuide'
+        + '&token=' + encodeURIComponent(TOKEN)
+        + '&img='   + encodeURIComponent(uploadedUrl)
+        + '&title=' + encodeURIComponent(title)
+        + '&desc='  + encodeURIComponent(desc)
+        + '&t=' + Date.now();
+
+      fetch(url, {cache:'no-store'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          btn.textContent = '送出新增';
+          if(d && d.ok){
+            showMsg('✅ 已新增！指南頁已同步更新', true);
+            resetForm();
+            loadList();
+          } else {
+            showMsg('❌ 新增失敗：' + (d && d.msg ? d.msg : '請重試'), false);
+            btn.disabled = false;
+          }
+        })
+        .catch(function(){
+          btn.textContent = '送出新增';
+          showMsg('❌ 連線失敗，請重試', false);
+          btn.disabled = false;
+        });
+    }
+
+    function resetForm(){
+      uploadedUrl = '';
+      document.getElementById('title').value = '';
+      document.getElementById('desc').value = '';
+      document.getElementById('preview').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('submitBtn').disabled = true;
+    }
+
+    function showMsg(t, ok){
+      var m = document.getElementById('msg');
+      m.textContent = t;
+      m.className = 'msg ' + (ok ? 'ok' : 'err');
+      if(ok) setTimeout(function(){ m.className = 'msg'; }, 4000);
+    }
+
+    // ===== 現有列表 + 刪除 =====
+    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+    function loadList(){
+      var box = document.getElementById('glist');
+      fetch(GAS_URL + '?action=getGuides&t=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(!d || !d.ok || !d.guides.length){
+            box.innerHTML = '<div class="glist-loading">目前尚無指南</div>';
+            return;
+          }
+          var html = '';
+          d.guides.forEach(function(g){
+            html += '<div class="glist-item">'
+              + '<img class="glist-thumb" src="'+esc(g.img)+'" alt="">'
+              + '<div class="glist-meta">'
+              +   '<div class="glist-name">'+esc(g.title)+'</div>'
+              +   '<div class="glist-desc">'+esc(g.desc||'')+'</div>'
+              + '</div>'
+              + '<button class="glist-del" onclick="delGuide('+g.order+', this)">刪除</button>'
+              + '</div>';
+          });
+          box.innerHTML = html;
+        })
+        .catch(function(){ box.innerHTML = '<div class="glist-loading">載入失敗</div>'; });
+    }
+
+    function delGuide(order, btn){
+      if(!confirm('確定刪除這則指南？')) return;
+      btn.textContent = '刪除中…'; btn.disabled = true;
+      fetch(GAS_URL + '?action=deleteGuide&token=' + encodeURIComponent(TOKEN) + '&order=' + order + '&t=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d && d.ok){ loadList(); }
+          else { alert('刪除失敗：' + (d && d.msg ? d.msg : '請重試')); btn.textContent='刪除'; btn.disabled=false; }
+        })
+        .catch(function(){ alert('連線失敗'); btn.textContent='刪除'; btn.disabled=false; });
+    }
+
+    loadList();
+  </script>
+
+</body>
+</html>
