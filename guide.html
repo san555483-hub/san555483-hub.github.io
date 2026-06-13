@@ -63,7 +63,11 @@
     display:flex; align-items:center; gap:12px;
     padding:17px 20px; border-bottom:1px solid var(--line);
     background:linear-gradient(90deg,rgba(196,168,130,.08),transparent);
+    cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;
+    transition:background .2s;
   }
+  .guide.open .guide-head{background:linear-gradient(90deg,rgba(196,168,130,.16),transparent);}
+  .guide-head:active{background:linear-gradient(90deg,rgba(196,168,130,.2),transparent);}
   .guide-icon{
     width:38px; height:38px; flex:none; border-radius:10px;
     background:var(--ink); color:var(--gold);
@@ -75,6 +79,20 @@
     color:var(--brown); letter-spacing:.03em;
   }
   .guide-tag{font-size:11.5px; color:var(--muted); margin-top:2px; letter-spacing:.03em;}
+
+  .guide-arrow{
+    flex:none; width:22px; height:22px; color:var(--gold-dark);
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .28s ease; font-size:13px;
+  }
+  .guide.open .guide-arrow{transform:rotate(180deg);}
+
+  /* 摺疊：預設收合，open 才展開 */
+  .guide-body{
+    max-height:0; overflow:hidden;
+    transition:max-height .35s ease;
+  }
+  .guide.open .guide-body{max-height:3000px;}
 
   .guide-img-wrap{padding:14px 14px 4px;}
   .guide-img{
@@ -91,6 +109,11 @@
   .guide-foot{
     padding:12px 20px 18px; font-size:12.5px; color:var(--muted);
     line-height:1.8; text-align:center;
+  }
+
+  .guide-loading,.guide-empty{
+    text-align:center; color:var(--muted); font-size:13px;
+    padding:40px 20px; letter-spacing:.05em;
   }
 
   /* ===== Footer ===== */
@@ -126,43 +149,12 @@
       點開圖片即可看完整步驟 🙏
     </p>
 
-    <!-- ===== 指南 1：尊爵系統操作 ===== -->
-    <section class="guide">
-      <div class="guide-head">
-        <div class="guide-icon">📱</div>
-        <div class="guide-meta">
-          <div class="guide-name">尊爵系統操作指南</div>
-          <div class="guide-tag">四步驟 · 預約・查明細・選時段</div>
-        </div>
-      </div>
-      <div class="guide-img-wrap">
-        <img class="guide-img" src="https://res.cloudinary.com/dvti8ug8s/image/upload/v1781328309/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8813%E6%97%A5_%E4%B8%8B%E5%8D%8801_23_58.png" alt="尊爵系統操作指南 四步驟" loading="lazy">
-      </div>
-      <div class="guide-foot">
-        從 LINE 選單點開尊爵預約頁 → 輸入手機確認身份<br>
-        → 查看消費購物明細 → 選時段送出預約
-      </div>
-    </section>
+    <!-- ===== 指南卡片：開頁由 getGuides 動態渲染 ===== -->
+    <div id="guideList">
+      <div class="guide-loading" id="guideLoading">指南載入中…</div>
+    </div>
 
-    <!-- ===== 指南 2：髮品使用 ===== -->
-    <section class="guide">
-      <div class="guide-head">
-        <div class="guide-icon">💧</div>
-        <div class="guide-meta">
-          <div class="guide-name">髮品居家使用指南</div>
-          <div class="guide-tag">女神油 · 八步驟保養教學</div>
-        </div>
-      </div>
-      <div class="guide-img-wrap">
-        <img class="guide-img" src="https://res.cloudinary.com/dvti8ug8s/image/upload/q_auto/f_auto/v1781328064/63505.jpg" alt="髮品居家使用指南 女神油八步驟" loading="lazy">
-      </div>
-      <div class="guide-foot">
-        洗後濕髮 → 女神油推勻從髮尾塗抹 → 吹至八分乾<br>
-        → 補抗熱油 → 再吹乾，柔順發光 ✨
-      </div>
-    </section>
-
-    <!-- 新增指南：複製上面任一 section 區塊，改 icon／名稱／圖片網址即可 -->
+    <!-- 新增指南：請用 guide-admin.html 上傳，會自動出現在這裡，免改碼 -->
 
     <footer class="foot">
       <div class="foot-line"></div>
@@ -174,6 +166,60 @@
       <div class="foot-brand">UNI HAIR DESIGN</div>
     </footer>
   </div>
+
+  <script>
+    // 主GS部署網址（讀 getGuides）
+    var GUIDE_GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+
+    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+    function renderGuides(list){
+      var box = document.getElementById('guideList');
+      if(!list || !list.length){
+        box.innerHTML = '<div class="guide-empty">目前尚無使用指南 🙏</div>';
+        return;
+      }
+      var icons = ['📱','💧','📖','✨','💇','🎨'];
+      var html = '';
+      list.forEach(function(g, i){
+        var icon = icons[i % icons.length];
+        html += ''
+          + '<section class="guide">'
+          +   '<div class="guide-head" onclick="toggleGuide(this)">'
+          +     '<div class="guide-icon">'+icon+'</div>'
+          +     '<div class="guide-meta">'
+          +       '<div class="guide-name">'+esc(g.title)+'</div>'
+          +       (g.desc ? '<div class="guide-tag">'+esc(g.desc)+'</div>' : '')
+          +     '</div>'
+          +     '<div class="guide-arrow">▼</div>'
+          +   '</div>'
+          +   '<div class="guide-body">'
+          +     '<div class="guide-img-wrap">'
+          +       '<img class="guide-img" src="'+esc(g.img)+'" alt="'+esc(g.title)+'" loading="lazy">'
+          +     '</div>'
+          +   '</div>'
+          + '</section>';
+      });
+      box.innerHTML = html;
+    }
+
+    // 點標題列：展開/收合該項（可多個同時展開）
+    function toggleGuide(head){
+      head.parentNode.classList.toggle('open');
+    }
+
+    (function loadGuides(){
+      fetch(GUIDE_GAS_URL + '?action=getGuides&t=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d && d.ok){ renderGuides(d.guides); }
+          else { document.getElementById('guideList').innerHTML = '<div class="guide-empty">指南載入失敗，請稍後再試 🙏</div>'; }
+        })
+        .catch(function(){
+          document.getElementById('guideList').innerHTML = '<div class="guide-empty">指南載入失敗，請稍後再試 🙏</div>';
+        });
+    })();
+  </script>
 
 </body>
 </html>
