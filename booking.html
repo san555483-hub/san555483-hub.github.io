@@ -583,6 +583,49 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .mybk-confirm-no { background: var(--light); color: var(--text); }
 /* ═══ 結束 ═══ */
 .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+/* ═══════════════════════════════════════════════════════
+   🟣 染前期望對齊精靈 v1.0（2026/06/14）
+   回滾：刪除此 CSS + HTML(#bleachWizard) + JS(BLEACH_WIZARD 區) 三段
+   Flag：window.BLEACH_WIZARD_ENABLED = false 即停用（不攔截、不跳窗）
+═══════════════════════════════════════════════════════ */
+.bw-mask{position:fixed;inset:0;background:rgba(40,28,20,.55);backdrop-filter:blur(3px);z-index:9999;display:none;align-items:center;justify-content:center;padding:18px}
+.bw-mask.show{display:flex}
+.bw-card{background:#fffdfb;border-radius:18px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(60,40,25,.28);position:relative}
+.bw-head{padding:22px 24px 14px;text-align:center;border-bottom:1px solid #f0e8de}
+.bw-head-tag{display:inline-block;font-size:11px;letter-spacing:2px;color:#a88;background:#f7f0ea;border-radius:20px;padding:4px 14px;margin-bottom:10px}
+.bw-head-title{font-family:'Noto Serif TC',serif;font-size:19px;color:#3d2b1f;font-weight:600;line-height:1.5}
+.bw-progress{display:flex;gap:6px;justify-content:center;padding:14px 0 0}
+.bw-dot{width:7px;height:7px;border-radius:50%;background:#e3d8cc;transition:.3s}
+.bw-dot.on{background:#c4a882;width:20px;border-radius:4px}
+.bw-body{padding:20px 26px 8px;min-height:180px}
+.bw-step{display:none;animation:bwFade .35s ease}
+.bw-step.active{display:block}
+@keyframes bwFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bw-icon{font-size:38px;text-align:center;margin-bottom:12px}
+.bw-h{font-family:'Noto Serif TC',serif;font-size:17px;color:#3d2b1f;font-weight:600;text-align:center;margin-bottom:12px;line-height:1.5}
+.bw-p{font-size:14px;line-height:1.95;color:#5c4a3e;text-align:center}
+.bw-info-toggle{display:inline-flex;align-items:center;gap:5px;margin-top:14px;font-size:12px;color:#b08d57;cursor:pointer;border:1px solid #e8dcc8;border-radius:20px;padding:5px 14px;background:#fdfaf5}
+.bw-info-box{display:none;margin-top:12px;font-size:13px;line-height:1.9;color:#6b5a4d;background:#faf6f0;border-left:3px solid #c4a882;border-radius:8px;padding:12px 14px;text-align:left}
+.bw-info-box.show{display:block;animation:bwFade .3s ease}
+.bw-img{width:100%;border-radius:12px;margin-top:14px;background:#f4ede4;min-height:120px;display:flex;align-items:center;justify-content:center;color:#a89685;font-size:13px;line-height:1.8;text-align:center;padding:24px}
+.bw-img img{width:100%;border-radius:12px;display:block}
+.bw-sign-wrap{margin-top:6px}
+.bw-sign-label{font-size:13px;color:#5c4a3e;line-height:1.9;margin-bottom:10px;text-align:left;background:#faf6f0;border-radius:10px;padding:14px 16px;border:1px solid #efe5d8}
+.bw-sign-name{width:100%;border:1.5px solid #e3d8cc;border-radius:10px;padding:11px 14px;font-size:15px;color:#3d2b1f;margin-bottom:10px;box-sizing:border-box;font-family:inherit}
+.bw-sign-name:focus{outline:none;border-color:#c4a882}
+.bw-canvas-box{position:relative;border:1.5px dashed #c4a882;border-radius:12px;background:#fffdf9;overflow:hidden}
+.bw-canvas-box canvas{display:block;width:100%;height:160px;touch-action:none}
+.bw-canvas-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c9bba9;font-size:13px;pointer-events:none}
+.bw-canvas-clear{position:absolute;top:8px;right:10px;font-size:12px;color:#b08d57;background:#fff;border:1px solid #e8dcc8;border-radius:16px;padding:3px 12px;cursor:pointer}
+.bw-foot{padding:14px 24px 22px;border-top:1px solid #f0e8de}
+.bw-btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.bw-btn-main{background:linear-gradient(135deg,#c4a882,#b08d57);color:#fff}
+.bw-btn-main:disabled{background:#e3d8cc;color:#fff;cursor:not-allowed}
+.bw-btn-main:active:not(:disabled){transform:scale(.98)}
+.bw-err{color:#c0392b;font-size:13px;text-align:center;margin-top:10px;display:none}
+.bw-loading{text-align:center;color:#8a7d72;font-size:13px;padding:8px}
+
 </style>
 </head>
 <body>
@@ -1357,6 +1400,11 @@ function selectMember(type) {
 }
 
 function goStep(n) {
+  // === 染前精靈攔截：要進 step2(選時段)前，含漂/染服務且未簽 → 跳精靈擋住 ===
+  if (n === 2 && typeof bwShouldIntercept === 'function' && bwShouldIntercept()) {
+    bwOpen();
+    return;
+  }
   if (n === 4) {
     const name = document.getElementById('inputName').value.trim();
     const phone = document.getElementById('inputPhone').value.trim();
@@ -1861,6 +1909,209 @@ document.addEventListener('DOMContentLoaded', () => {
     observer.observe(sec3, { attributes: true, attributeFilter: ['class'] });
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// 🟣 染前期望對齊精靈 v1.0 — JS 模組（2026/06/14）
+// 回滾：刪除本整段 + goStep 內4行攔截 + HTML#bleachWizard + CSS
+// Flag：window.BLEACH_WIZARD_ENABLED = false → 完全停用（不攔不跳）
+// 簽名走 POST no-cors fire-and-forget（base64 過大不能走 GET）
+// ═══════════════════════════════════════════════════════════
+window.BLEACH_WIZARD_ENABLED = (typeof window.BLEACH_WIZARD_ENABLED === 'undefined') ? true : window.BLEACH_WIZARD_ENABLED;
+
+// 觸發關鍵字：服務名含「漂」或「染」
+const BW_KEYWORDS = ['漂', '染'];
+// 本次 session 是否已簽（每次預約都簽 → 用 flag，刷新頁面就重置）
+let _bwSigned = false;
+let _bwStep = 0;
+let _bwCanvasInited = false;
+let _bwHasDrawn = false;
+
+// 是否該攔截：精靈啟用 + 還沒簽 + 已選服務含漂/染
+function bwShouldIntercept() {
+  if (!window.BLEACH_WIZARD_ENABLED) return false;
+  if (_bwSigned) return false;
+  if (!state.services || state.services.length === 0) return false;
+  return state.services.some(s => {
+    const nm = String(s.name || '');
+    return BW_KEYWORDS.some(k => nm.indexOf(k) !== -1);
+  });
+}
+
+// 開啟精靈
+function bwOpen() {
+  _bwStep = 0;
+  _bwHasDrawn = false;
+  document.getElementById('bwInfoBox').classList.remove('show');
+  document.getElementById('bwErr').style.display = 'none';
+  document.getElementById('bwSubmitLoading').style.display = 'none';
+  bwRenderStep();
+  bwLoadGuideImages();
+  document.getElementById('bleachWizard').classList.add('show');
+}
+
+function bwClose() {
+  document.getElementById('bleachWizard').classList.remove('show');
+}
+
+// 卡片切換顯示
+function bwRenderStep() {
+  document.querySelectorAll('#bleachWizard .bw-step').forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.step) === _bwStep);
+  });
+  document.querySelectorAll('#bleachWizard .bw-dot').forEach(el => {
+    el.classList.toggle('on', Number(el.dataset.d) === _bwStep);
+  });
+  const btn = document.getElementById('bwNextBtn');
+  if (_bwStep < 4) {
+    btn.textContent = '我了解，繼續';
+    btn.disabled = false;
+    btn.onclick = bwNext;
+  } else {
+    // 最後一卡：簽名
+    btn.textContent = '簽名並送出，解鎖預約';
+    btn.onclick = bwSubmit;
+    setTimeout(bwInitCanvas, 50);
+    bwCheckSign();
+  }
+}
+
+function bwNext() {
+  if (_bwStep < 4) { _bwStep++; bwRenderStep(); window.scrollTo(0,0); }
+}
+
+// 卡1 的 ⓘ 展開
+function bwToggleInfo() {
+  document.getElementById('bwInfoBox').classList.toggle('show');
+}
+
+// ── 卡4 圖解：動態讀 Sheet（與使用指南同架構，先抓 BLEACH 類別圖）──
+async function bwLoadGuideImages() {
+  const area = document.getElementById('bwGuideImgArea');
+  try {
+    const r = await fetch(GAS_URL + '?action=getImageConfig&block=BLEACH&enabledOnly=true&t=' + Date.now());
+    const data = await r.json();
+    const imgs = (data && data.images) ? data.images : [];
+    if (imgs.length === 0) {
+      area.innerHTML = '<div class="bw-img">（圖解尚未設定，Elsa 可於後台上傳）<br>※ 不影響簽署流程</div>';
+      return;
+    }
+    area.innerHTML = imgs.map(im =>
+      '<div class="bw-img"><img src="' + (im.url || im.imageUrl || '') + '" alt="染前圖解"></div>'
+    ).join('');
+  } catch (e) {
+    area.innerHTML = '<div class="bw-img">（圖解暫無法載入）<br>※ 不影響簽署流程</div>';
+  }
+}
+
+// ── 簽名 canvas ──
+function bwInitCanvas() {
+  const canvas = document.getElementById('bwCanvas');
+  if (!canvas) return;
+  // 依顯示寬度設定畫布實際解析度
+  const rect = canvas.getBoundingClientRect();
+  if (canvas.width !== rect.width) {
+    canvas.width = rect.width || 360;
+    canvas.height = 160;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#3d2b1f';
+
+  if (_bwCanvasInited) return;
+  _bwCanvasInited = true;
+
+  let drawing = false;
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+  function start(e) {
+    e.preventDefault();
+    drawing = true;
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    document.getElementById('bwCanvasHint').style.display = 'none';
+  }
+  function move(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    _bwHasDrawn = true;
+    bwCheckSign();
+  }
+  function end() { drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('mouseleave', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+}
+
+function bwClearCanvas() {
+  const canvas = document.getElementById('bwCanvas');
+  if (!canvas) return;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  _bwHasDrawn = false;
+  document.getElementById('bwCanvasHint').style.display = 'flex';
+  bwCheckSign();
+}
+
+// 姓名+簽名 都齊才可送出
+function bwCheckSign() {
+  const name = (document.getElementById('bwSignName').value || '').trim();
+  const btn = document.getElementById('bwNextBtn');
+  const ok = name.length >= 1 && _bwHasDrawn;
+  if (_bwStep === 4) btn.disabled = !ok;
+}
+
+// ── 送出：寫 Sheet + 寄信留底（POST no-cors）→ 解鎖排程 ──
+function bwSubmit() {
+  const name = (document.getElementById('bwSignName').value || '').trim();
+  if (name.length < 1 || !_bwHasDrawn) {
+    document.getElementById('bwErr').style.display = 'block';
+    return;
+  }
+  document.getElementById('bwErr').style.display = 'none';
+  document.getElementById('bwSubmitLoading').style.display = 'block';
+  document.getElementById('bwNextBtn').disabled = true;
+
+  const canvas = document.getElementById('bwCanvas');
+  const sigBase64 = canvas.toDataURL('image/png');
+  const services = (state.services || []).map(s => s.name).join('、');
+
+  const body = new URLSearchParams();
+  body.append('action', 'saveBleachConsent');
+  body.append('uid', state.uid || '');
+  body.append('name', name);
+  body.append('displayName', state.displayName || '');
+  body.append('services', services);
+  body.append('signature', sigBase64);
+
+  // no-cors fire-and-forget：留底是記錄類，不需回應
+  fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString()
+  }).catch(function(){});
+
+  // 解鎖：標記已簽，關精靈，放行進 step2
+  setTimeout(function () {
+    _bwSigned = true;
+    bwClose();
+    document.getElementById('bwSubmitLoading').style.display = 'none';
+    goStep(2);  // 已簽，這次 bwShouldIntercept() 會回 false，正常進入
+  }, 700);
+}
+
 </script>
 </div><!-- bkg2-main END -->
 </div><!-- bkg2-layout END -->
@@ -1876,5 +2127,96 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <!-- ═══ 結束 ═══ -->
+
+<!-- ═══════════════════════════════════════════════════════
+     🟣 染前期望對齊精靈 v1.0 — 彈窗 HTML
+     回滾：刪除整個 #bleachWizard 區塊即可
+═══════════════════════════════════════════════════════ -->
+<div class="bw-mask" id="bleachWizard">
+  <div class="bw-card">
+    <div class="bw-head">
+      <div class="bw-head-tag">UNI 染前溝通</div>
+      <div class="bw-head-title">在預約前，想先與您對齊期望 🌿</div>
+      <div class="bw-progress">
+        <div class="bw-dot on" data-d="0"></div>
+        <div class="bw-dot" data-d="1"></div>
+        <div class="bw-dot" data-d="2"></div>
+        <div class="bw-dot" data-d="3"></div>
+        <div class="bw-dot" data-d="4"></div>
+      </div>
+    </div>
+
+    <div class="bw-body">
+      <!-- 卡1：定位聲明 -->
+      <div class="bw-step active" data-step="0">
+        <div class="bw-icon">🎯</div>
+        <div class="bw-h">UNI 僅提供「白髮共存特殊染」</div>
+        <div class="bw-p">我們專注於白髮族群的特殊染髮，<br>協助白髮自然融入髮色、減少突兀感。<br>並非一般時尚漂染沙龍。</div>
+        <div style="text-align:center">
+          <span class="bw-info-toggle" onclick="bwToggleInfo()">ⓘ 什麼是白髮共存特殊染？</span>
+        </div>
+        <div class="bw-info-box" id="bwInfoBox">
+          白髮共存特殊染，是以「讓白髮與染色和諧並存」為目標的技術，<br>
+          重點在於修飾、柔化白髮的顯眼度，營造自然層次，<br>
+          而非追求全頭均勻無瑕的時尚色或高明度漂髮。<br><br>
+          因此成色會保留髮絲原本的個別差異，<br>這是此服務的特性，也是它溫柔的地方。
+        </div>
+      </div>
+
+      <!-- 卡2：模擬≠保證 -->
+      <div class="bw-step" data-step="1">
+        <div class="bw-icon">🖼️</div>
+        <div class="bw-h">參考圖是溝通，不是成品保證</div>
+        <div class="bw-p">您提供或我們討論的參考圖，<br>是用來對齊「方向與感覺」的橋樑。<br><br>每個人的髮質、底色、過往染燙不同，<br>成色會因人而異，<br>無法保證與參考圖完全一致。</div>
+      </div>
+
+      <!-- 卡3：變色是過程 -->
+      <div class="bw-step" data-step="2">
+        <div class="bw-icon">⏳</div>
+        <div class="bw-h">變色，是一段化學過程</div>
+        <div class="bw-p">漂與染是真實的化學反應，<br>受到您原本的髮況、底色、健康度影響。<br><br>它需要時間，有時需要耐心等待，<br>過程中的顏色變化是正常現象，<br>請您理解並與我們一起完成。</div>
+      </div>
+
+      <!-- 卡4：圖解（動態讀 Sheet，先文字佔位）-->
+      <div class="bw-step" data-step="3">
+        <div class="bw-icon">📖</div>
+        <div class="bw-h">染前圖解說明</div>
+        <div class="bw-p" style="font-size:13px">以下為染髮過程與成色的視覺說明，<br>幫助您建立合理的期待。</div>
+        <div id="bwGuideImgArea">
+          <div class="bw-img">（圖解載入中…）</div>
+        </div>
+      </div>
+
+      <!-- 卡5：同意書 + 簽名 -->
+      <div class="bw-step" data-step="4">
+        <div class="bw-icon">🖊️</div>
+        <div class="bw-h">期望對齊同意書</div>
+        <div class="bw-sign-wrap">
+          <div class="bw-sign-label">
+            本人已閱讀並理解上述說明：<br>
+            ① UNI 僅提供白髮共存特殊染<br>
+            ② 參考圖不等於成品保證<br>
+            ③ 成色受原髮況影響、是化學過程<br><br>
+            我同意在理解以上前提下進行預約。
+          </div>
+          <input type="text" class="bw-sign-name" id="bwSignName" placeholder="請輸入您的姓名" oninput="bwCheckSign()">
+          <div class="bw-canvas-box">
+            <canvas id="bwCanvas"></canvas>
+            <div class="bw-canvas-hint" id="bwCanvasHint">請於此處手寫簽名</div>
+            <span class="bw-canvas-clear" onclick="bwClearCanvas()">清除重簽</span>
+          </div>
+        </div>
+        <div class="bw-loading" id="bwSubmitLoading" style="display:none">送出中，請稍候…</div>
+        <div class="bw-err" id="bwErr">請輸入姓名並完成簽名 🙏</div>
+      </div>
+    </div>
+
+    <div class="bw-foot">
+      <button class="bw-btn bw-btn-main" id="bwNextBtn" onclick="bwNext()">我了解，繼續</button>
+    </div>
+  </div>
+</div>
+<!-- ═══ 染前精靈 HTML 結束 ═══ -->
+
 </body>
 </html>
