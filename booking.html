@@ -625,6 +625,8 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .bw-btn-main:active:not(:disabled){transform:scale(.98)}
 .bw-err{color:#c0392b;font-size:13px;text-align:center;margin-top:10px;display:none}
 .bw-loading{text-align:center;color:#8a7d72;font-size:13px;padding:8px}
+.bw-line-btn{display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;background:#06C755;color:#fff;font-size:14.5px;font-weight:600;border-radius:12px;padding:13px;margin-top:12px;line-height:1.4}
+.bw-line-btn:active{transform:scale(.98)}
 
 </style>
 </head>
@@ -1987,19 +1989,33 @@ function bwToggleInfo() {
 // ── 卡4 圖解：動態讀 Sheet（與使用指南同架構，先抓 BLEACH 類別圖）──
 async function bwLoadGuideImages() {
   const area = document.getElementById('bwGuideImgArea');
+  // 佔位：兩組對照（出圖前先顯示文字框，不影響流程）
+  const ph1 =
+    '<div class="bw-p" style="font-size:12px;color:#5c4a3e;font-weight:600;margin-top:12px">對照 1　白髮新生時</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">' +
+      '<div class="bw-img" style="min-height:110px;font-size:11.5px">染暗色<br>白髮明顯</div>' +
+      '<div class="bw-img" style="min-height:110px;font-size:11.5px">染亮色・共存<br>自然融入</div>' +
+    '</div>';
+  const ph2 =
+    '<div class="bw-p" style="font-size:12px;color:#5c4a3e;font-weight:600;margin-top:16px">對照 2　會亮到什麼程度</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">' +
+      '<div class="bw-img" style="min-height:110px;font-size:11.5px">一般習慣的髮色</div>' +
+      '<div class="bw-img" style="min-height:110px;font-size:11.5px">白髮共存的亮度</div>' +
+    '</div>';
+  const placeholder = ph1 + ph2;
   try {
     const r = await fetch(GAS_URL + '?action=getImageConfig&block=BLEACH&enabledOnly=true&t=' + Date.now());
     const data = await r.json();
     const imgs = (data && data.images) ? data.images : [];
-    if (imgs.length === 0) {
-      area.innerHTML = '<div class="bw-img">（圖解尚未設定，Elsa 可於後台上傳）<br>※ 不影響簽署流程</div>';
-      return;
-    }
-    area.innerHTML = imgs.map(im =>
-      '<div class="bw-img"><img src="' + (im.url || im.imageUrl || '') + '" alt="染前圖解"></div>'
-    ).join('');
+    if (imgs.length === 0) { area.innerHTML = placeholder; return; }
+    // 有圖：依上傳順序排（第1張＝對照1、第2張＝對照2）
+    const labels = ['對照 1　白髮新生時', '對照 2　會亮到什麼程度'];
+    area.innerHTML = '<div style="margin-top:12px">' + imgs.map((im, i) =>
+      (labels[i] ? '<div class="bw-p" style="font-size:12px;color:#5c4a3e;font-weight:600;margin-top:' + (i===0?'0':'16') + 'px">' + labels[i] + '</div>' : '') +
+      '<div class="bw-img" style="margin-top:8px"><img src="' + (im.url || im.imageUrl || '') + '" alt="染前對照"></div>'
+    ).join('') + '</div>';
   } catch (e) {
-    area.innerHTML = '<div class="bw-img">（圖解暫無法載入）<br>※ 不影響簽署流程</div>';
+    area.innerHTML = placeholder;
   }
 }
 
@@ -2179,12 +2195,30 @@ function bwSubmit() {
 
       <!-- 卡4：圖解（動態讀 Sheet，先文字佔位）-->
       <div class="bw-step" data-step="3">
-        <div class="bw-icon">📖</div>
-        <div class="bw-h">染前圖解說明</div>
-        <div class="bw-p" style="font-size:13px">以下為染髮過程與成色的視覺說明，<br>幫助您建立合理的期待。</div>
-        <div id="bwGuideImgArea">
-          <div class="bw-img">（圖解載入中…）</div>
+        <div class="bw-icon">🎨</div>
+        <div class="bw-h">預約前，想先與您聊聊<br>我們的染髮特色</div>
+        <div class="bw-p" style="font-size:13.5px">我們專注於「<b style="color:#3d2b1f">白髮共存</b>」——<br>會將您的髮色提亮到一定的明度，<br>讓日後新生的白髮能溫柔地融入髮色，<br>不顯得突兀，自然而協調。</div>
+
+        <div style="background:#f7f0ea;border-radius:12px;padding:14px 16px;margin-top:16px">
+          <div class="bw-p" style="font-size:13.5px;color:#5b4636">在這裡，想先邀請您一起想一件事：<br>這樣的明度，<b style="color:#b0894f">會比您平常習慣的髮色更明亮一些</b>。<br>有些人很喜歡這份明亮帶來的輕盈感，<br>也有些人需要一點時間慢慢適應。</div>
         </div>
+
+        <!-- 對照圖區（動態讀後台 block=BLEACH；建議上2張＝對照1、對照2）-->
+        <div class="bw-p" style="font-size:11.5px;color:#a89685;letter-spacing:1px;margin-top:18px">— 讓您先有個畫面 —</div>
+        <div id="bwGuideImgArea">
+          <div class="bw-img">（對照圖載入中…）</div>
+        </div>
+
+        <div style="border:1.5px solid #d8c9b4;border-radius:12px;padding:15px 16px;margin-top:18px;background:#fffdf9">
+          <div class="bw-p" style="font-size:14.5px;color:#3d2b1f;font-weight:600;line-height:1.85">這樣的明亮，<br>是您會喜歡、<br>也能自在接受的嗎？</div>
+        </div>
+
+        <div class="bw-p" style="font-size:13px;color:#5c4a3e;margin-top:16px;line-height:1.95">若是可以，它還有一個很實際的貼心之處：<br>白髮新生之後，<b style="color:#3d2b1f">約 3～6 個月不需要急著補染髮根</b>，<br>因為底層已經提亮，與新生的白髮較為接近。<br>之後想不想補色，我們都可以再依您的心意決定。</div>
+
+        <div class="bw-p" style="font-size:13px;color:#5c4a3e;margin-top:18px;line-height:1.95">髮況需要當面評估，<br>誠摯邀請您預約方便的時間來店，<br>Elsa 會親自為您細細規劃 🌿</div>
+        <a href="https://line.me/R/ti/p/@261bhcyh" target="_blank" rel="noopener" class="bw-line-btn">
+          <span style="font-size:18px;line-height:1">💬</span> 立即預約來店，與 Elsa 當面溝通
+        </a>
       </div>
 
       <!-- 卡5：同意書 + 簽名 -->
