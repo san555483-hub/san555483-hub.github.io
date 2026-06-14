@@ -2019,7 +2019,7 @@ async function bwLoadGuideImages() {
     '</div>';
   const placeholder = ph1 + ph2;
   try {
-    const r = await fetch(GAS_URL + '?action=getImageConfig&block=BLEACH&enabledOnly=true&t=' + Date.now());
+    const r = await fetch(GAS_URL + '?action=getBleachImgs&t=' + Date.now());
     const data = await r.json();
     const imgs = (data && data.images) ? data.images : [];
     if (imgs.length === 0) { area.innerHTML = placeholder; return; }
