@@ -618,8 +618,10 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 .bw-canvas-box canvas{display:block;width:100%;height:160px;touch-action:none}
 .bw-canvas-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#c9bba9;font-size:13px;pointer-events:none}
 .bw-canvas-clear{position:absolute;top:8px;right:10px;font-size:12px;color:#b08d57;background:#fff;border:1px solid #e8dcc8;border-radius:16px;padding:3px 12px;cursor:pointer}
-.bw-foot{padding:14px 24px 22px;border-top:1px solid #f0e8de}
-.bw-btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.bw-foot{padding:14px 24px 22px;border-top:1px solid #f0e8de;display:flex;gap:10px}
+.bw-btn{flex:1;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.bw-btn-back{background:#f3ede4;color:#8a7d72;flex:0 0 33%}
+.bw-btn-back:active{transform:scale(.98)}
 .bw-btn-main{background:linear-gradient(135deg,#c4a882,#b08d57);color:#fff}
 .bw-btn-main:disabled{background:#e3d8cc;color:#fff;cursor:not-allowed}
 .bw-btn-main:active:not(:disabled){transform:scale(.98)}
@@ -1964,21 +1966,34 @@ function bwRenderStep() {
     el.classList.toggle('on', Number(el.dataset.d) === _bwStep);
   });
   const btn = document.getElementById('bwNextBtn');
+  const back = document.getElementById('bwBackBtn');
+  // 上一步：第1卡與完成卡不顯示
+  back.style.display = (_bwStep >= 1 && _bwStep <= 4) ? '' : 'none';
+
   if (_bwStep < 4) {
     btn.textContent = '我了解，繼續';
     btn.disabled = false;
     btn.onclick = bwNext;
-  } else {
-    // 最後一卡：簽名
-    btn.textContent = '簽名並送出，解鎖預約';
+    btn.style.display = '';
+  } else if (_bwStep === 4) {
+    // 簽名卡
+    btn.textContent = '簽名並送出';
     btn.onclick = bwSubmit;
+    btn.style.display = '';
     setTimeout(bwInitCanvas, 50);
     bwCheckSign();
+  } else {
+    // 完成卡(step5)：只留關閉，主鈕隱藏(LINE引導在卡內)
+    btn.style.display = 'none';
   }
 }
 
 function bwNext() {
   if (_bwStep < 4) { _bwStep++; bwRenderStep(); window.scrollTo(0,0); }
+}
+
+function bwBack() {
+  if (_bwStep >= 1) { _bwStep--; bwRenderStep(); window.scrollTo(0,0); }
 }
 
 // 卡1 的 ⓘ 展開
@@ -2119,13 +2134,20 @@ function bwSubmit() {
     body: body.toString()
   }).catch(function(){});
 
-  // 解鎖：標記已簽，關精靈，放行進 step2
+  // 簽署完成：標記已簽 → 跳到卡6(完成頁/LINE引導)，不直接關閉
   setTimeout(function () {
     _bwSigned = true;
-    bwClose();
     document.getElementById('bwSubmitLoading').style.display = 'none';
-    goStep(2);  // 已簽，這次 bwShouldIntercept() 會回 false，正常進入
+    _bwStep = 5;
+    bwRenderStep();
+    window.scrollTo(0, 0);
   }, 700);
+}
+
+// 卡6「繼續選時段」：關精靈、放行進 step2
+function bwFinish() {
+  bwClose();
+  goStep(2);  // 已簽，bwShouldIntercept() 回 false，正常進入選時段
 }
 
 </script>
@@ -2159,6 +2181,7 @@ function bwSubmit() {
         <div class="bw-dot" data-d="2"></div>
         <div class="bw-dot" data-d="3"></div>
         <div class="bw-dot" data-d="4"></div>
+        <div class="bw-dot" data-d="5"></div>
       </div>
     </div>
 
@@ -2215,10 +2238,7 @@ function bwSubmit() {
 
         <div class="bw-p" style="font-size:13px;color:#5c4a3e;margin-top:16px;line-height:1.95">若是可以，它還有一個很實際的貼心之處：<br>白髮新生之後，<b style="color:#3d2b1f">約 3～6 個月不需要急著補染髮根</b>，<br>因為底層已經提亮，與新生的白髮較為接近。<br>之後想不想補色，我們都可以再依您的心意決定。</div>
 
-        <div class="bw-p" style="font-size:13px;color:#5c4a3e;margin-top:18px;line-height:1.95">髮況需要當面評估，<br>誠摯邀請您預約方便的時間來店，<br>Elsa 會親自為您細細規劃 🌿</div>
-        <a href="https://line.me/R/ti/p/@261bhcyh" target="_blank" rel="noopener" class="bw-line-btn">
-          <span style="font-size:18px;line-height:1">💬</span> 立即預約來店，與 Elsa 當面溝通
-        </a>
+        <div class="bw-p" style="font-size:13px;color:#5c4a3e;margin-top:18px;line-height:1.95">髮況需要當面評估，<br>稍後完成同意後，<br>會邀請您預約方便的時間來店，<br>Elsa 會親自為您細細規劃 🌿</div>
       </div>
 
       <!-- 卡5：同意書 + 簽名 -->
@@ -2243,9 +2263,24 @@ function bwSubmit() {
         <div class="bw-loading" id="bwSubmitLoading" style="display:none">送出中，請稍候…</div>
         <div class="bw-err" id="bwErr">請輸入姓名並完成簽名 🙏</div>
       </div>
+
+      <!-- 卡6：簽署完成 → LINE 引導預約 -->
+      <div class="bw-step" data-step="5">
+        <div class="bw-icon">🌿</div>
+        <div class="bw-h">謝謝您的理解與信任</div>
+        <div class="bw-p" style="font-size:14px;margin-top:6px">您已完成染前期望對齊，<br>我們已收到您的同意紀錄。</div>
+        <div style="background:#f7f0ea;border-radius:12px;padding:15px 16px;margin-top:16px">
+          <div class="bw-p" style="font-size:13.5px;color:#5b4636;line-height:1.95">由於每個人的髮況不同，<br>誠摯邀請您預約方便的時間來店，<br>讓 Elsa 當面為您評估與規劃，<br>一起找到最適合您的方案 💛</div>
+        </div>
+        <a href="https://line.me/R/ti/p/@261bhcyh" target="_blank" rel="noopener" class="bw-line-btn" style="margin-top:18px">
+          <span style="font-size:18px;line-height:1">💬</span> 立即 LINE 預約來店，與 Elsa 溝通
+        </a>
+        <button class="bw-btn" onclick="bwFinish()" style="width:100%;background:#3d2b1f;color:#fffdfb;margin-top:10px;flex:none">我知道了，繼續選時段</button>
+      </div>
     </div>
 
     <div class="bw-foot">
+      <button class="bw-btn bw-btn-back" id="bwBackBtn" onclick="bwBack()" style="display:none">上一步</button>
       <button class="bw-btn bw-btn-main" id="bwNextBtn" onclick="bwNext()">我了解，繼續</button>
     </div>
   </div>
