@@ -151,6 +151,14 @@
     color: var(--text-mute);
     font-size: 12px;
   }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .logout-btn {
+    padding: 6px 12px;
+    border-radius: 14px;
+    background: var(--bg-elev);
+    color: var(--text-mute);
+    font-size: 12px;
+  }
 
   /* ════════════════════════════════════════════════════════════════
      畫面切換動畫
@@ -623,7 +631,10 @@
   <div class="topbar">
     <button class="back-btn" id="backBtn" style="display:none;" aria-label="返回">←</button>
     <h1 id="topTitle">UNI 點數樂園</h1>
-    <button class="theme-btn" id="themeBtn" aria-label="切換主題">A</button>
+    <div class="topbar-right">
+      <button class="logout-btn" id="logoutBtn" aria-label="切換帳號">切換帳號</button>
+      <button class="theme-btn" id="themeBtn" aria-label="切換主題">A</button>
+    </div>
   </div>
 
   <!-- ████████████ #home 主選單 ████████████ -->
@@ -955,6 +966,23 @@ function toggleTheme() {
   const next = cur === 'auto' ? 'soft' : (cur === 'soft' ? 'dark' : 'auto');
   applyTheme(next);
   showToast({ auto: '主題:跟系統', soft: '主題:柔粉', dark: '主題:深色' }[next]);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   登出 / 切換帳號(防共用裝置殘留)
+══════════════════════════════════════════════════════════════════ */
+function doLogout() {
+  openConfirm('切換帳號', '要登出目前帳號嗎?下次需重新用 LINE 登入 🐾', () => {
+    // 只清登入相關,主題設定保留
+    localStorage.removeItem('uni_pg_uid');
+    sessionStorage.removeItem('uni_pg_code_done');
+    sessionStorage.removeItem('uni_pg_state');
+    window.__lineExchanging = false;
+    STATE.uid = '';
+    STATE.loginMethod = '';
+    // 重整回乾淨網址,確保不殘留任何狀態
+    location.replace(location.pathname);
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1334,6 +1362,7 @@ function bindEvents() {
   $('backBtn').addEventListener('click', () => go('home'));
   // 主題
   $('themeBtn').addEventListener('click', toggleTheme);
+  $('logoutBtn').addEventListener('click', doLogout);
   // 抽獎
   $('drawBtn').addEventListener('click', () => {
     openConfirm(TEXTS.CONFIRM_DRAW_TITLE, TEXTS.CONFIRM_DRAW_MSG, doDraw);
