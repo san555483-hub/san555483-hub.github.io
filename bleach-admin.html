@@ -1,269 +1,181 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UNI 染前對照圖 · 後台</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<title>🟣 染前對照圖後台 ｜ UNI</title>
 <style>
   :root{
-    --bg:#f7f2ea; --card:#ffffff; --ink:#2a1f1a; --brown:#3a2c23;
-    --gold:#c4a882; --gold-dark:#a08660; --gold-soft:#e8dcc8;
-    --muted:#9a8f82; --line:#ece3d6; --danger:#b5523f;
+    --bg:#1a120b; --card:#2a1d12; --line:#4a3526;
+    --gold:#c9a55c; --txt:#f3e9da; --sub:#a8927a;
+    --ok:#4caf7d; --warn:#d98a3d; --del:#c25b4e;
   }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased;padding-bottom:48px;}
-
-  .hero{background:linear-gradient(160deg,#2a1f1a,#3a2c23);color:#fff;padding:34px 24px 28px;text-align:center;position:relative;overflow:hidden;}
-  .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(196,168,130,.18),transparent 60%);}
-  .hero-mark{font-family:'Noto Serif TC',serif;font-size:12px;letter-spacing:.42em;color:var(--gold);margin-bottom:10px;position:relative;}
-  .hero-title{font-family:'Noto Serif TC',serif;font-size:23px;font-weight:600;letter-spacing:.06em;position:relative;}
-  .hero-sub{font-size:12px;color:rgba(255,255,255,.6);margin-top:8px;position:relative;}
-
-  .wrap{max-width:540px;margin:0 auto;padding:24px 18px 0;}
-
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 2px 14px rgba(58,44,35,.05);}
-  .panel-title{font-family:'Noto Serif TC',serif;font-size:16px;font-weight:600;color:var(--brown);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-
-  .tip{background:rgba(196,168,130,.1);border:1px solid var(--gold-soft);border-radius:11px;padding:13px 15px;font-size:12.5px;color:var(--gold-dark);line-height:1.85;margin-bottom:20px;}
-  .tip b{color:var(--brown);}
-
-  label{display:block;font-size:12.5px;color:var(--gold-dark);font-weight:500;margin:14px 0 6px;letter-spacing:.03em;}
-  input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:14px;color:var(--ink);background:#fdfbf7;transition:border .2s;}
-  input[type=text]:focus,textarea:focus{outline:none;border-color:var(--gold);}
-  textarea{resize:vertical;min-height:54px;}
-
-  /* 選圖區 */
-  .pick{border:1.5px dashed var(--gold);border-radius:11px;padding:22px;text-align:center;cursor:pointer;background:rgba(196,168,130,.06);transition:background .2s;}
-  .pick:active{background:rgba(196,168,130,.14);}
-  .pick-ico{font-size:30px;}
-  .pick-text{font-size:13px;color:var(--gold-dark);margin-top:6px;}
-  .pick-hint{font-size:11px;color:var(--muted);margin-top:3px;}
-  #fileInput{display:none;}
-  .preview{margin-top:14px;display:none;}
-  .preview img{width:100%;border-radius:9px;border:1px solid var(--line);}
-  .preview .up-state{font-size:12px;text-align:center;margin-top:8px;color:var(--muted);}
-
-  .btn{width:100%;border:none;border-radius:9px;padding:13px;font-family:inherit;font-size:14.5px;font-weight:500;letter-spacing:.04em;cursor:pointer;transition:all .2s;margin-top:18px;}
-  .btn-main{background:var(--ink);color:var(--gold);border:1px solid var(--gold-dark);}
-  .btn-main:active{transform:translateY(1px);}
-  .btn-main:disabled{opacity:.45;cursor:not-allowed;}
-
-  .msg{font-size:13px;text-align:center;margin-top:12px;padding:10px;border-radius:8px;display:none;}
-  .msg.ok{display:block;background:rgba(125,160,110,.12);color:#5a7548;}
-  .msg.err{display:block;background:rgba(181,82,63,.1);color:var(--danger);}
-
-  /* 現有列表 */
-  .glist-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
-  .glist-item:last-child{border-bottom:none;}
-  .glist-thumb{width:46px;height:46px;flex:none;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#f0e8da;}
-  .glist-meta{flex:1;min-width:0;}
-  .glist-name{font-size:13.5px;font-weight:500;color:var(--brown);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .glist-desc{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .glist-del{flex:none;background:none;border:1px solid var(--line);color:var(--danger);border-radius:7px;padding:6px 11px;font-size:12px;cursor:pointer;font-family:inherit;}
-  .glist-del:active{background:rgba(181,82,63,.08);}
-  .glist-loading{text-align:center;color:var(--muted);font-size:12.5px;padding:18px;}
-
-  .lock-note{font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--txt);font-family:"Noto Sans TC","PingFang TC",sans-serif;
+       padding:16px;max-width:640px;margin:0 auto;line-height:1.6;}
+  h1{font-size:20px;color:var(--gold);text-align:center;margin-bottom:4px;}
+  .sub{text-align:center;color:var(--sub);font-size:13px;margin-bottom:18px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:16px;margin-bottom:14px;}
+  label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px;}
+  input,textarea{width:100%;background:#160f08;border:1px solid var(--line);
+    border-radius:9px;color:var(--txt);padding:11px;font-size:15px;font-family:inherit;}
+  textarea{resize:vertical;min-height:60px;}
+  input:focus,textarea:focus{outline:none;border-color:var(--gold);}
+  button{border:none;border-radius:10px;padding:12px 16px;font-size:15px;
+    font-weight:700;cursor:pointer;font-family:inherit;width:100%;margin-top:14px;}
+  .btn-add{background:var(--gold);color:#1a120b;}
+  .btn-add:active{opacity:.8;}
+  .row{display:flex;gap:10px;align-items:center;background:#160f08;
+    border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px;}
+  .row img{width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#000;}
+  .row .info{flex:1;min-width:0;}
+  .row .info b{display:block;font-size:14px;color:var(--txt);}
+  .row .info span{display:block;font-size:12px;color:var(--sub);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row .ord{font-size:11px;color:var(--gold);}
+  .btn-del{background:transparent;border:1px solid var(--del);color:var(--del);
+    width:auto;padding:7px 11px;font-size:13px;margin:0;flex-shrink:0;}
+  .msg{text-align:center;font-size:14px;padding:10px;border-radius:9px;margin-top:10px;display:none;}
+  .msg.ok{background:rgba(76,175,125,.15);color:var(--ok);display:block;}
+  .msg.err{background:rgba(194,91,78,.15);color:var(--del);display:block;}
+  .empty{text-align:center;color:var(--sub);font-size:14px;padding:24px 0;}
+  .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5;}
+  .url-box{font-size:12px;}
+  .sec-title{font-size:14px;color:var(--gold);font-weight:700;margin-bottom:4px;}
+  details{margin-top:10px;}
+  summary{cursor:pointer;color:var(--sub);font-size:13px;}
 </style>
 </head>
 <body>
+  <h1>🟣 染前對照圖後台</h1>
+  <div class="sub">卡4 對照圖管理 · 圖走 Cloudinary · 獨立分頁不打架</div>
 
-  <header class="hero">
-    <div class="hero-mark">UNI HAIR DESIGN</div>
-    <h1 class="hero-title">染前對照圖 · 後台</h1>
-    <div class="hero-sub">上傳對照圖，自動同步到染前精靈卡4</div>
-  </header>
-
-  <div class="wrap">
-
-    <div class="tip">
-      🌿 這裡上傳的圖會顯示在 <b>booking.html 染前精靈「卡4」</b>的對照圖區。<br>
-      上傳順序＝顯示順序（<b>第1張＝對照1、第2張＝對照2</b>）。<br>
-      建議上 <b>真人三格製程圖</b>（有白髮、適量散佈）。
-    </div>
-
-    <!-- 新增 -->
-    <div class="panel">
-      <div class="panel-title">➕ 新增一張對照圖</div>
-
-      <div class="pick" id="pickBox" onclick="document.getElementById('fileInput').click()">
-        <div class="pick-ico">🖼️</div>
-        <div class="pick-text">點此選擇對照圖</div>
-        <div class="pick-hint">建議直式 4:5 三格製程圖</div>
-      </div>
-      <input type="file" id="fileInput" accept="image/*">
-
-      <div class="preview" id="preview">
-        <img id="previewImg" alt="預覽">
-        <div class="up-state" id="upState"></div>
-      </div>
-
-      <label>標題</label>
-      <input type="text" id="title" placeholder="例：對照1 · 白髮新生時">
-
-      <label>小說明（選填）</label>
-      <input type="text" id="desc" placeholder="例：染暗 vs 染亮共存">
-
-      <button class="btn btn-main" id="submitBtn" onclick="submitImg()" disabled>送出新增</button>
-      <div class="msg" id="msg"></div>
-    </div>
-
-    <!-- 現有列表 -->
-    <div class="panel">
-      <div class="panel-title">📋 目前的對照圖</div>
-      <div id="glist"><div class="glist-loading">載入中…</div></div>
-    </div>
-
-    <div class="lock-note">此頁僅供 Elsa 管理使用<br>請勿外流網址</div>
+  <!-- 設定區（URL + token，摺疊） -->
+  <div class="card">
+    <details id="cfgBox">
+      <summary>⚙️ 連線設定（第一次用先確認）</summary>
+      <label>主GS Web App 網址（/exec 結尾）</label>
+      <input id="gasUrl" class="url-box" placeholder="https://script.google.com/macros/s/.../exec">
+      <label>後台保護碼 token</label>
+      <input id="token" value="uni_bleach_2026">
+      <div class="hint">網址＝🔴主系統 GS「管理部署→Web App」那條 /exec 網址。<br>填好後會自動記住（存在本機，不外流）。</div>
+    </details>
   </div>
 
-  <script>
-    // ===== 設定 =====
-    var GAS_URL    = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
-    var TOKEN      = 'uni_bleach_2026';
-    var CLOUD_NAME = 'dvti8ug8s';
-    var PRESET     = 'uni_hair';   // unsigned upload preset
+  <!-- 新增區 -->
+  <div class="card">
+    <div class="sec-title">➕ 新增對照圖</div>
+    <label>圖網址（Cloudinary）</label>
+    <input id="img" placeholder="https://res.cloudinary.com/dvti8ug8s/image/upload/...">
+    <label>標題</label>
+    <input id="title" placeholder="例：暗 vs 亮（同樣白髮）">
+    <label>說明</label>
+    <textarea id="desc" placeholder="例：左深色對比突兀／右淡亮霧色自然共存"></textarea>
+    <button class="btn-add" onclick="addImg()">＋ 上傳這張</button>
+    <div id="addMsg" class="msg"></div>
+  </div>
 
-    var uploadedUrl = '';
+  <!-- 清單區 -->
+  <div class="card">
+    <div class="sec-title">📋 目前的對照圖</div>
+    <div id="list"><div class="empty">載入中…</div></div>
+  </div>
 
-    // ===== 選圖 + 上傳 Cloudinary =====
-    document.getElementById('fileInput').addEventListener('change', function(e){
-      var file = e.target.files[0];
-      if(!file) return;
-      var pv = document.getElementById('preview');
-      var pvImg = document.getElementById('previewImg');
-      var st = document.getElementById('upState');
-      var btn = document.getElementById('submitBtn');
+<script>
+  // ── 設定記憶（localStorage）──
+  const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbz_PASTE_YOUR_EXEC_URL/exec';
+  const $ = id => document.getElementById(id);
 
-      pvImg.src = URL.createObjectURL(file);
-      pv.style.display = 'block';
-      st.textContent = '⏳ 上傳中…';
-      st.style.color = '#9a8f82';
-      uploadedUrl = '';
-      btn.disabled = true;
+  function loadCfg(){
+    const u = localStorage.getItem('bleach_gas_url');
+    $('gasUrl').value = u || DEFAULT_URL;
+    if(!u) $('cfgBox').open = true; // 沒設過→自動展開提醒
+  }
+  function getUrl(){
+    const u = $('gasUrl').value.trim();
+    if(u) localStorage.setItem('bleach_gas_url', u);
+    return u;
+  }
+  function getToken(){ return $('token').value.trim(); }
 
-      var fd = new FormData();
-      fd.append('file', file);
-      fd.append('upload_preset', PRESET);
+  function showMsg(el, text, ok){
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+    if(ok) setTimeout(()=>{ el.className='msg'; }, 2500);
+  }
 
-      fetch('https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/image/upload', {method:'POST', body:fd})
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if(d.secure_url){
-            uploadedUrl = d.secure_url;
-            st.textContent = '✅ 圖片已上傳';
-            st.style.color = '#5a7548';
-            btn.disabled = false;
-          } else {
-            st.textContent = '❌ 上傳失敗：' + (d.error && d.error.message ? d.error.message : '請重試');
-            st.style.color = '#b5523f';
-          }
-        })
-        .catch(function(){
-          st.textContent = '❌ 上傳失敗，請檢查網路後重試';
-          st.style.color = '#b5523f';
-        });
-    });
-
-    // ===== 送出新增（寫進 Sheet）=====
-    function submitImg(){
-      var title = document.getElementById('title').value.trim();
-      var desc  = document.getElementById('desc').value.trim();
-      var btn   = document.getElementById('submitBtn');
-
-      if(!uploadedUrl){ showMsg('請先選擇並上傳圖片', false); return; }
-      if(!title){ showMsg('請填寫標題', false); return; }
-
-      btn.disabled = true; btn.textContent = '送出中…';
-
-      var url = GAS_URL + '?action=saveBleachImg'
-        + '&token=' + encodeURIComponent(TOKEN)
-        + '&img='   + encodeURIComponent(uploadedUrl)
-        + '&title=' + encodeURIComponent(title)
-        + '&desc='  + encodeURIComponent(desc)
-        + '&t=' + Date.now();
-
-      fetch(url, {cache:'no-store'})
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          btn.textContent = '送出新增';
-          if(d && d.ok){
-            showMsg('✅ 已新增！染前精靈卡4已同步', true);
-            resetForm();
-            loadList();
-          } else {
-            showMsg('❌ 新增失敗：' + (d && d.msg ? d.msg : '請重試'), false);
-            btn.disabled = false;
-          }
-        })
-        .catch(function(){
-          btn.textContent = '送出新增';
-          showMsg('❌ 連線失敗，請重試', false);
-          btn.disabled = false;
-        });
+  // ── 讀清單（一般 GET，可讀回應）──
+  async function loadList(){
+    const url = getUrl();
+    if(!url || url.includes('PASTE_YOUR')){
+      $('list').innerHTML = '<div class="empty">⚠️ 請先在上方「連線設定」填主GS網址</div>';
+      $('cfgBox').open = true;
+      return;
     }
-
-    function resetForm(){
-      uploadedUrl = '';
-      document.getElementById('title').value = '';
-      document.getElementById('desc').value = '';
-      document.getElementById('preview').style.display = 'none';
-      document.getElementById('fileInput').value = '';
-      document.getElementById('submitBtn').disabled = true;
+    try{
+      const res = await fetch(url + '?action=getBleachImgs&t=' + Date.now());
+      const data = await res.json();
+      const imgs = (data && data.imgs) || [];
+      if(!imgs.length){
+        $('list').innerHTML = '<div class="empty">目前沒有對照圖<br>（上方新增第一張）</div>';
+        return;
+      }
+      $('list').innerHTML = imgs.map(g => `
+        <div class="row">
+          <img src="${g.img}" onerror="this.style.opacity=.3">
+          <div class="info">
+            <span class="ord">排序 ${g.order}</span>
+            <b>${esc(g.title)}</b>
+            <span>${esc(g.desc||'')}</span>
+          </div>
+          <button class="btn-del" onclick="delImg(${g.order})">刪除</button>
+        </div>`).join('');
+    }catch(err){
+      $('list').innerHTML = '<div class="empty">❌ 讀取失敗：'+esc(err.message)+'<br>檢查網址是否正確、是否已部署新版本</div>';
     }
+  }
 
-    function showMsg(t, ok){
-      var m = document.getElementById('msg');
-      m.textContent = t;
-      m.className = 'msg ' + (ok ? 'ok' : 'err');
-      if(ok) setTimeout(function(){ m.className = 'msg'; }, 4000);
+  function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  // ── 新增（no-cors GET 寫入，不讀回應，照鐵則）──
+  async function addImg(){
+    const url = getUrl();
+    const token = getToken();
+    const img = $('img').value.trim();
+    const title = $('title').value.trim();
+    const desc = $('desc').value.trim();
+    if(!url || url.includes('PASTE_YOUR')){ showMsg($('addMsg'),'請先填主GS網址',false); $('cfgBox').open=true; return; }
+    if(!img){ showMsg($('addMsg'),'請填圖網址',false); return; }
+    if(!title){ showMsg($('addMsg'),'請填標題',false); return; }
+    const q = url + '?action=saveBleachImg'
+      + '&token=' + encodeURIComponent(token)
+      + '&img='   + encodeURIComponent(img)
+      + '&title=' + encodeURIComponent(title)
+      + '&desc='  + encodeURIComponent(desc);
+    try{
+      await fetch(q, { method:'GET', mode:'no-cors' }); // 無回應，照鐵則
+      showMsg($('addMsg'),'✅ 已上傳，下方更新中…',true);
+      $('img').value=''; $('title').value=''; $('desc').value='';
+      setTimeout(loadList, 1200); // 等寫入完成再撈
+    }catch(err){
+      showMsg($('addMsg'),'❌ '+err.message,false);
     }
+  }
 
-    // ===== 現有列表 + 刪除 =====
-    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  // ── 刪除（no-cors GET）──
+  async function delImg(order){
+    if(!confirm('確定刪除排序 '+order+' 這張？')) return;
+    const url = getUrl();
+    const q = url + '?action=deleteBleachImg&token=' + encodeURIComponent(getToken()) + '&order=' + order;
+    try{
+      await fetch(q, { method:'GET', mode:'no-cors' });
+      setTimeout(loadList, 1200);
+    }catch(err){ alert('刪除失敗：'+err.message); }
+  }
 
-    function loadList(){
-      var box = document.getElementById('glist');
-      fetch(GAS_URL + '?action=getBleachImgs&t=' + Date.now(), {cache:'no-store'})
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if(!d || !d.ok || !d.images || !d.images.length){
-            box.innerHTML = '<div class="glist-loading">目前尚無對照圖</div>';
-            return;
-          }
-          var html = '';
-          d.images.forEach(function(g){
-            html += '<div class="glist-item">'
-              + '<img class="glist-thumb" src="'+esc(g.url)+'" alt="">'
-              + '<div class="glist-meta">'
-              +   '<div class="glist-name">'+esc(g.title)+'</div>'
-              +   '<div class="glist-desc">'+esc(g.desc||'')+'</div>'
-              + '</div>'
-              + '<button class="glist-del" onclick="delImg('+g.order+', this)">刪除</button>'
-              + '</div>';
-          });
-          box.innerHTML = html;
-        })
-        .catch(function(){ box.innerHTML = '<div class="glist-loading">載入失敗</div>'; });
-    }
-
-    function delImg(order, btn){
-      if(!confirm('確定刪除這張對照圖？')) return;
-      btn.textContent = '刪除中…'; btn.disabled = true;
-      fetch(GAS_URL + '?action=deleteBleachImg&token=' + encodeURIComponent(TOKEN) + '&order=' + order + '&t=' + Date.now(), {cache:'no-store'})
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if(d && d.ok){ loadList(); }
-          else { alert('刪除失敗：' + (d && d.msg ? d.msg : '請重試')); btn.textContent='刪除'; btn.disabled=false; }
-        })
-        .catch(function(){ alert('連線失敗'); btn.textContent='刪除'; btn.disabled=false; });
-    }
-
-    loadList();
-  </script>
-
+  loadCfg();
+  loadList();
+</script>
 </body>
 </html>
