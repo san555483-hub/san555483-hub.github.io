@@ -960,29 +960,29 @@ function toggleTheme() {
 /* ══════════════════════════════════════════════════════════════════
    LINE Login + UID 取得
 ══════════════════════════════════════════════════════════════════ */
+// 回傳:{ kind:'uid', uid } 直接有 UID｜{ kind:'code', code } 待換 token｜{ kind:'none' } 都沒有
 function getUid() {
   // 1. URL ?uid=xxx 備援(Q1)
   const paramUid = getQueryParam('uid');
   if (paramUid && /^U[a-z0-9]{32}$/i.test(paramUid)) {
     STATE.uid = paramUid;
     STATE.loginMethod = 'param';
-    return paramUid;
+    return { kind: 'uid', uid: paramUid };
   }
-  // 2. LINE Login 回呼(?code=xxx)
+  // 2. LINE Login 回呼(?code=xxx)— 不在此換 token,交給 init 以 await 串接,杜絕競態
   const code = getQueryParam('code');
   if (code) {
-    handleLineCallback(code);
-    return null;
+    return { kind: 'code', code: code };
   }
   // 3. localStorage 上次登入
   const cached = localStorage.getItem('uni_pg_uid');
   if (cached && /^U[a-z0-9]{32}$/i.test(cached)) {
     STATE.uid = cached;
     STATE.loginMethod = 'cache';
-    return cached;
+    return { kind: 'uid', uid: cached };
   }
   // 4. 都沒有 → LINE Login
-  return null;
+  return { kind: 'none' };
 }
 function startLineLogin() {
   const state = Math.random().toString(36).slice(2);
@@ -997,7 +997,18 @@ function startLineLogin() {
   location.href = url;
 }
 async function handleLineCallback(code) {
-  // 走點數 GAS 換 UID(後端應該有實作 lineLoginExchange action;若無則退回 ?uid 模式)
+  // ── 三道防線:防止同一個 code 被換 token 兩次(LINE code 一次性,第二次必 invalid)──
+  // 防線① 重入旗標:同一頁面生命週期內只跑一次
+  if (window.__lineExchanging) return false;
+  // 防線② sessionStorage 去重:即使頁面重載,同一個 code 也只換一次
+  const doneCode = sessionStorage.getItem('uni_pg_code_done');
+  if (doneCode === code) return false;
+  window.__lineExchanging = true;
+  sessionStorage.setItem('uni_pg_code_done', code);
+  // 防線③ 換 token「之前」就先把 ?code 從網址清掉,源頭斷絕第二次讀到
+  history.replaceState({}, '', location.pathname);
+
+  // 走點數 GAS 換 UID
   setLoading(true);
   try {
     const r = await callPointsApi('lineLoginExchange', { code: code, redirect_uri: CONFIG.LINE_LOGIN_CALLBACK });
@@ -1005,16 +1016,19 @@ async function handleLineCallback(code) {
       STATE.uid = r.uid;
       STATE.loginMethod = 'line';
       localStorage.setItem('uni_pg_uid', r.uid);
-      // 清除 URL 上的 ?code 參數
-      history.replaceState({}, '', location.pathname);
       await loadData();
+      return true;
     } else {
-      showToast('LINE 登入失敗,改用備援');
-      // 後端如果還沒實作,允許用戶手動輸入 ?uid
+      // 換失敗 → 釋放旗標,允許用戶重新登入(此 code 已作廢,不重打)
+      window.__lineExchanging = false;
+      showToast('LINE 登入失敗,請重新登入');
+      return false;
     }
   } catch (e) {
     console.error(e);
+    window.__lineExchanging = false;
     showToast(TEXTS.ERR_NETWORK);
+    return false;
   } finally {
     setLoading(false);
   }
@@ -1340,18 +1354,35 @@ async function init() {
   applyTheme(localStorage.getItem(BIZ.STORAGE_KEYS.THEME) || 'auto');
   bindEvents();
 
-  // 取 UID
-  const uid = getUid();
-  if (uid) {
+  // 取 UID(三態:uid / code / none)
+  const r = getUid();
+
+  if (r.kind === 'uid') {
+    // 直接有 UID(param / cache)
     await loadData();
-  } else {
-    // 沒 UID → LINE Login
     setLoading(false);
-    openConfirm('登入點數樂園', '需要 LINE 登入才能查看你的點數和角色卡 🐾', () => {
-      startLineLogin();
-    });
+    return;
   }
+
+  if (r.kind === 'code') {
+    // LINE 回呼:以 await 串接換 token,成功與否都不再彈第二次窗(杜絕競態)
+    const ok = await handleLineCallback(r.code);
+    if (!ok) {
+      setLoading(false);
+      openConfirm('登入點數樂園', '需要 LINE 登入才能查看你的點數和角色卡 🐾', () => {
+        startLineLogin();
+      });
+    } else {
+      setLoading(false);
+    }
+    return;
+  }
+
+  // 都沒有 → LINE Login
   setLoading(false);
+  openConfirm('登入點數樂園', '需要 LINE 登入才能查看你的點數和角色卡 🐾', () => {
+    startLineLogin();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);
