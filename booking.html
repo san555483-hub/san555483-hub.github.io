@@ -1409,6 +1409,11 @@ function goStep(n) {
     bwOpen();
     return;
   }
+  // === 🔥 燙髮檢測卡：染前沒攔，含「燙」且本次沒跳過 → 跳一次（軟引導，不強制）===
+  if (n === 2 && typeof pcShouldShow === 'function' && pcShouldShow()) {
+    pcOpen();
+    return;
+  }
   if (n === 4) {
     const name = document.getElementById('inputName').value.trim();
     const phone = document.getElementById('inputPhone').value.trim();
@@ -1570,7 +1575,7 @@ function showSuccess(bookingId) {
     '📅 ' + dateStr + ' ' + state.time + '<br>' +
     '🔖 預約編號：' + (bookingId || '') + '<br><br>' +
     '<strong style="color:#e65100">✨ 您好 已為您預約完成<br>很高興為您服務<br>我們到時候見唷 謝謝您 ^^</strong><br><br>' +
-    'Elsa 確認後會透過 LINE 通知您<br>如有任何問題歡迎直接傳訊息給我們 😊' +
+    '如有任何問題歡迎直接傳訊息給我們 😊' +
     (state.priority ?
       '<div class="success-voucher">' +
         '<div class="sv-title">🎁 指定預約・現金禮券</div>' +
@@ -2150,6 +2155,38 @@ function bwFinish() {
   goStep(2);  // 已簽，bwShouldIntercept() 回 false，正常進入選時段
 }
 
+// ═══════════════════════════════════════════════════════
+//   🔥 燙髮檢測引導卡 v1.0（2026/06/15）— 單卡軟引導
+//   觸發：服務名含「燙」且本次還沒看過 → 進選時段前跳一次
+//   不強制：兩顆按鈕都能繼續預約
+//   回滾：window.PERM_CHECK_ENABLED = false，或刪本段 + goStep 內攔截
+// ═══════════════════════════════════════════════════════
+window.PERM_CHECK_ENABLED = (typeof window.PERM_CHECK_ENABLED === 'undefined') ? true : window.PERM_CHECK_ENABLED;
+const PC_KEYWORDS = ['燙'];   // 觸發關鍵字
+let _pcShown = false;         // 本次 session 是否已顯示過（刷新頁面重置）
+
+// 是否該跳燙髮卡：啟用 + 本次沒跳過 + 已選服務含「燙」
+function pcShouldShow() {
+  if (!window.PERM_CHECK_ENABLED) return false;
+  if (_pcShown) return false;
+  if (!state.services || state.services.length === 0) return false;
+  return state.services.some(s => {
+    const nm = String(s.name || '');
+    return PC_KEYWORDS.some(k => nm.indexOf(k) !== -1);
+  });
+}
+function pcOpen() {
+  _pcShown = true;  // 標記已跳過，之後不再跳
+  document.getElementById('permCheck').classList.add('show');
+}
+function pcContinue() {           // 「我了解了，繼續預約」
+  document.getElementById('permCheck').classList.remove('show');
+  goStep(2);                      // _pcShown 已 true，不會再攔
+}
+function pcMarkFilled() {         // 按「前往檢測」也算看過，關卡讓他去填（表單另開分頁）
+  // 不關卡、不前進：讓客人填完回來自己按「繼續預約」；這裡僅記錄
+}
+
 </script>
 </div><!-- bkg2-main END -->
 </div><!-- bkg2-layout END -->
@@ -2283,6 +2320,36 @@ function bwFinish() {
   </div>
 </div>
 <!-- ═══ 染前精靈 HTML 結束 ═══ -->
+
+<!-- ═══════════════════════════════════════════════════════
+     🔥 燙髮檢測引導卡 v1.0（2026/06/15）— 單卡軟引導
+     回滾：刪除整個 #permCheck 區塊即可（共用 .bw- 樣式）
+═══════════════════════════════════════════════════════ -->
+<div class="bw-mask" id="permCheck">
+  <div class="bw-card" style="max-width:400px">
+    <div class="bw-head">
+      <div style="font-size:30px;margin-bottom:6px">🔥</div>
+      <div style="font-family:'Noto Serif TC',serif;font-size:18px;font-weight:600;color:#3a2c23">燙髮前的小提醒</div>
+    </div>
+    <div style="padding:20px 24px 8px">
+      <p style="font-size:14px;color:#5c4a3e;line-height:1.9;margin:0 0 14px">
+        為了替您燙出最適合的捲度、同時兼顧頭髮健康，<br>
+        建議您先花 1 分鐘填寫<strong>線上髮質檢測</strong>。
+      </p>
+      <p style="font-size:13px;color:#9a8f82;line-height:1.85;margin:0 0 4px">
+        讓 Elsa 提前了解您的髮質與需求，<br>
+        到店時能更快為您預備、減少等候 🙏
+      </p>
+    </div>
+    <div style="padding:8px 24px 24px">
+      <a href="https://forms.gle/VnpeHt5DvY5yT5aD6" target="_blank" rel="noopener"
+         class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px"
+         onclick="pcMarkFilled()">📋 前往線上檢測（另開分頁）</a>
+      <button class="btn btn-secondary" style="width:100%" onclick="pcContinue()">我了解了，繼續預約</button>
+    </div>
+  </div>
+</div>
+<!-- ═══ 燙髮檢測卡 HTML 結束 ═══ -->
 
 </body>
 </html>
