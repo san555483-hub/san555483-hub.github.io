@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNI 廠商註冊 · 跟著做 4 步驟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F6F1E9;
+    --cream-deep:#EFE7DA;
+    --ink:#3A332B;
+    --ink-soft:#6E655A;
+    --gold:#B79268;
+    --gold-deep:#9C7A52;
+    --leaf:#8A9A7B;
+    --leaf-deep:#6F8062;
+    --card:#FFFDF9;
+    --line:#E3D9C9;
+    --done:#7E9A6E;
+    --shadow:0 10px 30px rgba(122,98,66,.10);
+    --shadow-soft:0 4px 14px rgba(122,98,66,.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'Noto Sans TC',sans-serif;
+    background:
+      radial-gradient(1200px 500px at 50% -10%, #FBF7F0 0%, transparent 60%),
+      var(--cream);
+    color:var(--ink);
+    line-height:1.75;
+    padding:28px 18px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:560px;margin:0 auto;}
+
+  /* ── Hero ── */
+  .hero{text-align:center;padding:18px 8px 30px;}
+  .brand{
+    font-family:'Noto Serif TC',serif;
+    font-weight:600;
+    letter-spacing:.22em;
+    font-size:13px;
+    color:var(--gold-deep);
+    margin-bottom:14px;
+  }
+  .brand::before,.brand::after{
+    content:"";display:inline-block;width:26px;height:1px;
+    background:var(--gold);vertical-align:middle;margin:0 12px;opacity:.6;
+  }
+  .hero h1{
+    font-family:'Noto Serif TC',serif;
+    font-weight:700;
+    font-size:27px;
+    letter-spacing:.04em;
+    line-height:1.5;
+    color:var(--ink);
+  }
+  .hero h1 .em{color:var(--gold-deep);}
+  .hero p{
+    margin-top:14px;
+    color:var(--ink-soft);
+    font-size:15px;
+    letter-spacing:.02em;
+  }
+  .leaf-mark{
+    font-size:22px;margin-bottom:6px;display:block;opacity:.85;
+  }
+
+  /* ── Progress bar ── */
+  .progress{
+    margin:26px auto 30px;
+    background:var(--cream-deep);
+    border-radius:100px;
+    height:9px;
+    overflow:hidden;
+    box-shadow:inset 0 1px 2px rgba(122,98,66,.12);
+  }
+  .progress-fill{
+    height:100%;width:0%;
+    background:linear-gradient(90deg,var(--leaf),var(--gold));
+    border-radius:100px;
+    transition:width .6s cubic-bezier(.4,0,.2,1);
+  }
+  .progress-label{
+    text-align:center;font-size:13px;color:var(--ink-soft);
+    margin-top:-18px;margin-bottom:28px;letter-spacing:.05em;
+  }
+  .progress-label b{color:var(--gold-deep);font-weight:700;}
+
+  /* ── Steps ── */
+  .step{
+    display:flex;align-items:stretch;gap:0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow-soft);
+    overflow:hidden;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    position:relative;
+  }
+  .step.done{
+    border-color:#CFDCC4;
+    background:linear-gradient(180deg,#FAFBF7,#F4F7EF);
+  }
+  .step-num{
+    flex:0 0 64px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#FBF6EE,#F2E9DA);
+    border-right:1px solid var(--line);
+    position:relative;
+  }
+  .step.done .step-num{
+    background:linear-gradient(160deg,#EAF0E3,#DCE6D2);
+    border-right-color:#CFDCC4;
+  }
+  .step-num .n{
+    font-family:'Noto Serif TC',serif;
+    font-size:25px;font-weight:700;
+    color:var(--gold-deep);
+    line-height:1;
+  }
+  .step.done .step-num .n{color:var(--leaf-deep);opacity:.45;}
+  .step-num .n-label{
+    font-size:10px;letter-spacing:.15em;color:var(--ink-soft);
+    margin-top:5px;opacity:.7;
+  }
+  .step-num .check{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;color:var(--done);
+    opacity:0;transform:scale(.4);
+    transition:opacity .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .step.done .step-num .n,.step.done .step-num .n-label{opacity:0;}
+  .step.done .step-num .check{opacity:1;transform:scale(1);}
+
+  .step-body{flex:1;padding:16px 16px 16px 18px;display:flex;flex-direction:column;gap:11px;}
+  .step-title{
+    font-family:'Noto Serif TC',serif;
+    font-weight:600;font-size:17px;letter-spacing:.02em;color:var(--ink);
+  }
+  .step-desc{font-size:13.5px;color:var(--ink-soft);letter-spacing:.01em;}
+  .step-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:2px;}
+  .btn-go{
+    flex:1;min-width:130px;
+    text-align:center;
+    text-decoration:none;
+    background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+    color:#fff;
+    font-weight:500;font-size:14.5px;letter-spacing:.06em;
+    padding:11px 14px;border-radius:11px;
+    box-shadow:0 4px 12px rgba(156,122,82,.28);
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  }
+  .btn-go:active{transform:translateY(1px) scale(.99);filter:brightness(.97);}
+  .step.done .btn-go{
+    background:linear-gradient(135deg,#A9B89C,#8A9A7B);
+    box-shadow:0 4px 12px rgba(122,138,100,.22);
+  }
+  .chk{
+    flex:0 0 auto;
+    display:flex;align-items:center;gap:7px;
+    cursor:pointer;user-select:none;
+    font-size:13px;color:var(--ink-soft);letter-spacing:.04em;
+    padding:8px 4px;
+  }
+  .chk .box{
+    width:21px;height:21px;border-radius:7px;
+    border:2px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s ease;
+    font-size:13px;color:#fff;
+  }
+  .step.done .chk .box{
+    background:var(--done);border-color:var(--done);
+  }
+  .chk .box::after{content:"✓";opacity:0;transition:opacity .2s ease;}
+  .step.done .chk .box::after{opacity:1;}
+  .chk .txt{white-space:nowrap;}
+  .step.done .chk .txt{color:var(--leaf-deep);font-weight:500;}
+
+  /* ── All done banner ── */
+  .done-banner{
+    text-align:center;
+    margin:6px 0 22px;
+    padding:18px;
+    border-radius:16px;
+    background:linear-gradient(160deg,#EFF4EA,#E4EEDC);
+    border:1px solid #CFDCC4;
+    color:var(--leaf-deep);
+    font-family:'Noto Serif TC',serif;
+    font-weight:600;font-size:16px;letter-spacing:.04em;
+    max-height:0;opacity:0;overflow:hidden;padding-top:0;padding-bottom:0;
+    border-width:0;
+    transition:all .5s ease;
+  }
+  .done-banner.show{
+    max-height:120px;opacity:1;padding-top:18px;padding-bottom:18px;border-width:1px;
+  }
+
+  /* ── Payout block ── */
+  .payout{
+    margin-top:30px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:24px 22px;
+    box-shadow:var(--shadow-soft);
+  }
+  .payout h2{
+    font-family:'Noto Serif TC',serif;
+    font-weight:700;font-size:18px;letter-spacing:.03em;
+    color:var(--ink);margin-bottom:6px;
+    display:flex;align-items:center;gap:9px;
+  }
+  .payout h2 .ic{color:var(--gold-deep);font-size:19px;}
+  .payout .lead{font-size:14px;color:var(--ink-soft);margin-bottom:16px;}
+  .payout-item{
+    display:flex;gap:11px;
+    padding:13px 0;
+    border-top:1px solid var(--line);
+  }
+  .payout-item .leaf{flex:0 0 auto;font-size:16px;line-height:1.5;}
+  .payout-item .pt-body{flex:1;}
+  .payout-item .pt-title{font-weight:700;font-size:14.5px;color:var(--ink);margin-bottom:2px;letter-spacing:.02em;}
+  .payout-item .pt-desc{font-size:13.5px;color:var(--ink-soft);}
+  .payout-note{
+    margin-top:16px;padding-top:15px;border-top:1px solid var(--line);
+    font-size:13.5px;color:var(--ink-soft);text-align:center;letter-spacing:.02em;
+  }
+
+  /* ── Help footer ── */
+  .help{
+    margin-top:26px;text-align:center;
+    padding:20px;
+    border-radius:16px;
+    background:linear-gradient(160deg,#FBF6EE,#F2E9DA);
+    border:1px dashed var(--gold);
+  }
+  .help p{font-size:14px;color:var(--ink);letter-spacing:.03em;}
+  .help .hl{color:var(--gold-deep);font-weight:700;}
+  .footer-mark{
+    text-align:center;margin-top:30px;
+    font-family:'Noto Serif TC',serif;
+    font-size:12px;letter-spacing:.28em;color:var(--gold);opacity:.7;
+  }
+
+  @media (max-width:380px){
+    .step-num{flex:0 0 54px;}
+    .hero h1{font-size:24px;}
+    .btn-go{min-width:100px;font-size:13.5px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="leaf-mark">🌿</span>
+    <div class="brand">UNI 職人髮品坊</div>
+    <h1>廠商註冊 · 跟著做 <span class="em">4 步驟</span></h1>
+    <p>由上到下,一步做完再點下一步,做到哪勾到哪 ✦</p>
+  </header>
+
+  <!-- PROGRESS -->
+  <div class="progress"><div class="progress-fill" id="bar"></div></div>
+  <div class="progress-label">已完成 <b id="cnt">0</b> / 4 步</div>
+
+  <!-- DONE BANNER -->
+  <div class="done-banner" id="banner">🎉 4 步驟全部完成,歡迎開始上架!</div>
+
+  <!-- STEPS -->
+  <main id="steps">
+
+    <section class="step" data-step="1">
+      <div class="step-num">
+        <span class="n">1</span><span class="n-label">STEP</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="step-body">
+        <div class="step-title">註冊申請</div>
+        <div class="step-desc">填寫基本資料,送出廠商合作申請。</div>
+        <div class="step-actions">
+          <a class="btn-go" href="https://san555483-hub.github.io/vendor/register.html" target="_blank" rel="noopener">前往註冊 →</a>
+          <label class="chk"><span class="box"></span><span class="txt">完成</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="2">
+      <div class="step-num">
+        <span class="n">2</span><span class="n-label">STEP</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="step-body">
+        <div class="step-title">設定密碼</div>
+        <div class="step-desc">為您的廠商帳號設定一組登入密碼。</div>
+        <div class="step-actions">
+          <a class="btn-go" href="https://san555483-hub.github.io/vendor/vendor-set-password.html" target="_blank" rel="noopener">設定密碼 →</a>
+          <label class="chk"><span class="box"></span><span class="txt">完成</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="3">
+      <div class="step-num">
+        <span class="n">3</span><span class="n-label">STEP</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="step-body">
+        <div class="step-title">登入廠商 Portal</div>
+        <div class="step-desc">用 LINE 驗證身分,或以廠商代號＋密碼登入,管理訂單與分潤。</div>
+        <div class="step-actions">
+          <a class="btn-go" href="https://san555483-hub.github.io/vendor/vendor-portal.html" target="_blank" rel="noopener">進入 Portal →</a>
+          <label class="chk"><span class="box"></span><span class="txt">完成</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" data-step="4">
+      <div class="step-num">
+        <span class="n">4</span><span class="n-label">STEP</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="step-body">
+        <div class="step-title">送出審核</div>
+        <div class="step-desc">完成資料後送出審核,UNI 會與您核對。審核 OK 即可開始上架商品。</div>
+        <div class="step-actions">
+          <a class="btn-go" href="https://san555483-hub.github.io/vendor/vendor.html" target="_blank" rel="noopener">送出審核 →</a>
+          <label class="chk"><span class="box"></span><span class="txt">完成</span></label>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- HELP -->
+  <div class="help">
+    <p>遇到問題?<span class="hl">請直接在 LINE 留言找 ELSA</span> ✦</p>
+  </div>
+
+  <div class="footer-mark">UNI 職人髮品坊</div>
+
+</div>
+
+<script>
+  // 進度小勾:點整列卡片或勾選框皆可切換;狀態記在記憶體(本次瀏覽)
+  (function(){
+    var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+    var bar = document.getElementById('bar');
+    var cnt = document.getElementById('cnt');
+    var banner = document.getElementById('banner');
+
+    function refresh(){
+      var done = steps.filter(function(s){return s.classList.contains('done');}).length;
+      bar.style.width = (done/steps.length*100) + '%';
+      cnt.textContent = done;
+      if(done === steps.length){ banner.classList.add('show'); }
+      else { banner.classList.remove('show'); }
+    }
+
+    steps.forEach(function(s){
+      var chk = s.querySelector('.chk');
+      chk.addEventListener('click', function(e){
+        e.preventDefault();
+        s.classList.toggle('done');
+        refresh();
+      });
+    });
+
+    refresh();
+  })();
+</script>
+</body>
+</html>
