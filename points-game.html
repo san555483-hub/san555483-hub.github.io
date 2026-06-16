@@ -916,18 +916,18 @@ const BIZ = {
   SHOW_LEADERBOARD: false,
   // 12 貓清單(對齊後端,順序 = 圖鑑顯示順序)
   CATS: [
-    { id: 'N01', name: '橘貓', rarity: 'N', emoji: '🐈' },
-    { id: 'N02', name: '虎斑', rarity: 'N', emoji: '🐈' },
-    { id: 'N03', name: '黑貓', rarity: 'N', emoji: '🐈‍⬛' },
-    { id: 'N04', name: '白貓', rarity: 'N', emoji: '🐈' },
-    { id: 'N05', name: '玳瑁', rarity: 'N', emoji: '🐈' },
-    { id: 'R01', name: '布偶', rarity: 'R', emoji: '😺' },
-    { id: 'R02', name: '波斯', rarity: 'R', emoji: '😸' },
-    { id: 'R03', name: '英短', rarity: 'R', emoji: '😼' },
-    { id: 'R04', name: '緬因', rarity: 'R', emoji: '🦁' },
-    { id: 'SSR01', name: '月光女王', rarity: 'SSR', emoji: '🌙' },
-    { id: 'SSR02', name: '星砂使者', rarity: 'SSR', emoji: '✨' },
-    { id: 'SSR03', name: 'CATWOMAN', rarity: 'SSR', emoji: '😻' },
+    { id: 'CAT_N01', name: '奶蓋', rarity: 'N', emoji: '🐈' },
+    { id: 'CAT_N02', name: '摩卡', rarity: 'N', emoji: '🐈' },
+    { id: 'CAT_N03', name: '棉花', rarity: 'N', emoji: '🐈‍⬛' },
+    { id: 'CAT_N04', name: '布丁', rarity: 'N', emoji: '🐈' },
+    { id: 'CAT_N05', name: '蜜桃', rarity: 'N', emoji: '🐈' },
+    { id: 'CAT_R01', name: '可可', rarity: 'R', emoji: '😺' },
+    { id: 'CAT_R02', name: '香檳', rarity: 'R', emoji: '😸' },
+    { id: 'CAT_R03', name: '抹茶', rarity: 'R', emoji: '😼' },
+    { id: 'CAT_R04', name: '莓果', rarity: 'R', emoji: '🦁' },
+    { id: 'CAT_SSR01', name: '月光', rarity: 'SSR', emoji: '🌙' },
+    { id: 'CAT_SSR02', name: '星砂', rarity: 'SSR', emoji: '✨' },
+    { id: 'CAT_SSR03', name: 'CATWOMAN', rarity: 'SSR', emoji: '😻' },
   ],
   // localStorage key
   STORAGE_KEYS: {
@@ -1170,6 +1170,13 @@ async function loadData() {
     const rChar = await callPointsApi('getCatsCollection', { uid: STATE.uid });
     if (rChar && rChar.ok && Array.isArray(rChar.cats)) {
       STATE.data.catsOwned = rChar.cats;
+      // 方案甲:存後端回傳的真圖網址映射(catId → imageUrl),來源 = 神祕卡池 Sheet
+      if (Array.isArray(rChar.catsDetail)) {
+        STATE.data.catsImgMap = {};
+        rChar.catsDetail.forEach(c => {
+          if (c && c.catId) STATE.data.catsImgMap[String(c.catId)] = String(c.imageUrl || '');
+        });
+      }
     } else {
       // 退回 getMyCharacter(只回最新一隻)
       const rOne = await callPointsApi('getMyCharacter', { uid: STATE.uid });
@@ -1238,10 +1245,13 @@ function renderCats() {
     const isOwned = owned.has(cat.id);
     const div = document.createElement('div');
     div.className = 'cat-card ' + (isOwned ? 'unlocked' : 'locked');
-    const imgHtml = (CONFIG.CAT_IMG_USE_PLACEHOLDER || !isOwned)
-      ? `<span style="font-size:36px;">${isOwned ? cat.emoji : ''}</span>` +
-        (isOwned ? '' : '<div class="cat-lock-icon">🔒</div>')
-      : `<img src="${CONFIG.CAT_IMG_BASE}${cat.id}.png" alt="${cat.name}" loading="lazy">`;
+    const imgMap = STATE.data.catsImgMap || {};
+    const realUrl = imgMap[cat.id] || '';
+    const imgHtml = (!isOwned)
+      ? `<span style="font-size:36px;"></span><div class="cat-lock-icon">🔒</div>`
+      : (realUrl
+          ? `<img src="${realUrl}" alt="${cat.name}" loading="lazy" onerror="this.outerHTML='<span style=\\'font-size:36px;\\'>${cat.emoji}</span>'">`
+          : `<span style="font-size:36px;">${cat.emoji}</span>`);
     div.innerHTML = `
       <div class="cat-img-wrap">${imgHtml}</div>
       <div class="cat-info">
@@ -1358,10 +1368,13 @@ function showResultModal(ch) {
   imgWrap.classList.toggle('result-glow-ssr', r === 'SSR');
   // 找對應 emoji
   const cat = BIZ.CATS.find(c => c.id === ch.charId) || {};
-  if (CONFIG.CAT_IMG_USE_PLACEHOLDER) {
-    imgWrap.innerHTML = `<span style="font-size:80px;">${cat.emoji || '🐱'}</span>`;
+  // 方案甲:抽中圖優先用後端回傳的 imageUrl,其次查映射表,都沒有才 emoji 後備
+  const imgMap = STATE.data.catsImgMap || {};
+  const realUrl = ch.imageUrl || imgMap[ch.charId] || '';
+  if (realUrl) {
+    imgWrap.innerHTML = `<img src="${realUrl}" alt="${ch.charName || ''}" onerror="this.outerHTML='<span style=\\'font-size:80px;\\'>${cat.emoji || '🐱'}</span>'">`;
   } else {
-    imgWrap.innerHTML = `<img src="${CONFIG.CAT_IMG_BASE}${ch.charId}.png" alt="${ch.charName}">`;
+    imgWrap.innerHTML = `<span style="font-size:80px;">${cat.emoji || '🐱'}</span>`;
   }
   $('drawModal').classList.add('show');
 }
