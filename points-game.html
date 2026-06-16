@@ -245,6 +245,37 @@
   .quick-link-arrow { color: var(--text-hint); font-size: 14px; }
 
   /* ════════════════════════════════════════════════════════════════
+     探索更多(玄關 2 卡:🔵購物 / 🎓理財)— 僅跳轉,不串點數
+  ════════════════════════════════════════════════════════════════ */
+  .explore-sect { margin-top: 18px; }
+  .explore-label {
+    font-size: 12px; color: var(--text-hint);
+    letter-spacing: 1px; margin: 0 4px 10px; font-weight: 600;
+  }
+  .explore-grid { display: flex; flex-direction: column; gap: 10px; }
+  .explore-card {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px;
+    width: 100%; text-align: left;
+    box-shadow: var(--shadow);
+    transition: transform .12s ease;
+  }
+  .explore-card:active { transform: scale(.98); }
+  .explore-icon {
+    width: 44px; height: 44px; flex: 0 0 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; border-radius: 12px;
+    background: var(--bg-elev);
+  }
+  .explore-body { flex: 1; }
+  .explore-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .explore-desc { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
+  .explore-arrow { color: var(--gold); font-size: 16px; }
+
+  /* ════════════════════════════════════════════════════════════════
      #cats 我的貓圖鑑
   ════════════════════════════════════════════════════════════════ */
   .cats-summary {
@@ -699,6 +730,29 @@
         <span class="quick-link-arrow">→</span>
       </button>
     </div>
+
+    <!-- ████ 探索更多(玄關 2 卡,僅跳轉)████ -->
+    <div class="explore-sect">
+      <div class="explore-label">探索更多</div>
+      <div class="explore-grid">
+        <button class="explore-card" id="exploreShopBtn">
+          <div class="explore-icon">🛍️</div>
+          <div class="explore-body">
+            <div class="explore-title">逛逛 UNI 選物</div>
+            <div class="explore-desc">職人嚴選髮品 · 線上選購</div>
+          </div>
+          <div class="explore-arrow">→</div>
+        </button>
+        <button class="explore-card" id="exploreFqBtn">
+          <div class="explore-icon">🎓</div>
+          <div class="explore-body">
+            <div class="explore-title">給孩子的第一堂理財課</div>
+            <div class="explore-desc">邊玩邊存養護金 · 換得想要的東西</div>
+          </div>
+          <div class="explore-arrow">→</div>
+        </button>
+      </div>
+    </div>
   </section>
 
   <!-- ████████████ #cats 我的貓圖鑑 ████████████ -->
@@ -840,7 +894,10 @@ const CONFIG = {
   CAT_IMG_BASE: 'https://san555483-hub.github.io/cats/',  // [UNI_EXCLUSIVE] 公版需替換
   CAT_IMG_USE_PLACEHOLDER: true,  // 改 false 啟用真實圖片
   // LINE OA 聯絡(對齊主系統)
-  LINE_OA_URL: 'https://line.me/R/ti/p/@uni',  // [UNI_EXCLUSIVE] 公版需替換
+  LINE_OA_URL: 'https://line.me/R/ti/p/@261bhcyh',  // [UNI_EXCLUSIVE] 公版需替換
+  // 探索更多:三產品玄關連結(鐵則14 各自獨立,僅跳轉不串點數)
+  SHOP_URL: 'https://san555483-hub.github.io/',                          // [UNI_EXCLUSIVE] 🔵 購物系統
+  FQ_URL: 'https://san555483-hub.github.io/money-adventurer.html',       // [UNI_EXCLUSIVE] 🎓 Finance Quest
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1373,6 +1430,9 @@ function bindEvents() {
   $('howEarnBtn').addEventListener('click', showHowEarn);
   $('exchangeBtn').addEventListener('click', showExchange);
   $('contactBtn').addEventListener('click', contactElsa);
+  // 探索更多(僅跳轉,新分頁開啟,不碰任何點數邏輯)
+  $('exploreShopBtn').addEventListener('click', () => window.open(CONFIG.SHOP_URL, '_blank'));
+  $('exploreFqBtn').addEventListener('click', () => window.open(CONFIG.FQ_URL, '_blank'));
 }
 
 /* ══════════════════════════════════════════════════════════════════
