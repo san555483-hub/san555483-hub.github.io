@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UNI 兒童樂園</title>
+<!--
+  🧒 UNI 兒童線 · 前端外殼 kid-game.html v1.0(骨架版)
+  ─────────────────────────────────────────────────────
+  架構:身分=家長 LINE 登入幫小孩開帳號 ｜ 部署=獨立(獨立 GAS/Sheet)
+  與 🎮 點數系統零關聯。iPad 橫式。kawaii 貓咪風。
+  三畫面流:① 家長登入 → ② 選/開小孩 → ③ 小孩遊戲畫面(玩法佔位)
+  ⚠️ 玩法待定:遊戲畫面先放佔位區塊,玩法定了再填,外殼不動。
+-->
+<style>
+  :root {
+    --bg: #FFF5F8;
+    --bg-card: #FFFFFF;
+    --bg-soft: #FFE9F0;
+    --pink: #FF8FB1;
+    --pink-deep: #E8638C;
+    --purple: #B79CED;
+    --mint: #8FD9C4;
+    --text: #5A4A52;
+    --text-mute: #9B8A92;
+    --line: #FBDCE6;
+    --shadow: 0 6px 20px rgba(232,99,140,0.12);
+    --radius: 24px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    font-family: "PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+  body { user-select: none; }
+
+  .stage { width: 100vw; height: 100vh; position: relative; }
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    animation: pop .35s ease;
+  }
+  .screen.active { display: flex; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+
+  /* ── 頂部 bar ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: var(--bg-card);
+    border-bottom: 2px solid var(--line);
+  }
+  .topbar .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; color: var(--pink-deep); }
+  .topbar .brand .cat { font-size: 26px; }
+  .topbar .right { display: flex; align-items: center; gap: 10px; }
+  .pill-btn {
+    background: var(--bg-soft); color: var(--pink-deep);
+    border: none; border-radius: 16px;
+    padding: 8px 16px; font-size: 14px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .pill-btn:active { transform: scale(0.95); }
+
+  /* ── 通用置中容器 ── */
+  .center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
+
+  /* ── ① 家長登入畫面 ── */
+  .login-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 48px 56px; text-align: center; max-width: 480px;
+  }
+  .login-cat { font-size: 72px; margin-bottom: 12px; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .login-title { font-size: 28px; font-weight: 800; color: var(--pink-deep); margin-bottom: 8px; }
+  .login-sub { font-size: 15px; color: var(--text-mute); margin-bottom: 28px; line-height: 1.6; }
+  .big-btn {
+    background: var(--pink); color: #fff;
+    border: none; border-radius: 20px;
+    padding: 16px 40px; font-size: 18px; font-weight: 800;
+    box-shadow: 0 6px 0 var(--pink-deep);
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-deep); }
+
+  /* ── ② 選小孩畫面 ── */
+  .kids-wrap { flex: 1; padding: 28px 40px; overflow-y: auto; }
+  .kids-head { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .kids-head-sub { font-size: 14px; color: var(--text-mute); margin-bottom: 24px; }
+  .kids-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 18px;
+  }
+  .kid-card {
+    background: var(--bg-card); border-radius: 22px;
+    box-shadow: var(--shadow);
+    padding: 24px 16px; text-align: center;
+    border: 3px solid transparent;
+  }
+  .kid-card:active { border-color: var(--pink); transform: scale(0.97); }
+  .kid-avatar { font-size: 52px; margin-bottom: 10px; }
+  .kid-name { font-size: 17px; font-weight: 800; color: var(--text); }
+  .kid-card.add {
+    border: 3px dashed var(--line);
+    background: var(--bg-soft);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--pink-deep);
+  }
+  .kid-card.add .plus { font-size: 44px; font-weight: 800; line-height: 1; }
+  .kid-card.add .add-label { font-size: 14px; font-weight: 700; margin-top: 6px; }
+
+  /* ── ③ 小孩遊戲畫面(玩法佔位)── */
+  .play-wrap { flex: 1; display: flex; flex-direction: column; }
+  .play-hero {
+    background: linear-gradient(135deg, var(--bg-soft), #F3E9FF);
+    padding: 28px 40px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .play-hero .avatar { font-size: 60px; }
+  .play-hero .who .hi { font-size: 14px; color: var(--text-mute); }
+  .play-hero .who .name { font-size: 26px; font-weight: 800; color: var(--pink-deep); }
+  .play-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .play-placeholder {
+    text-align: center; max-width: 520px;
+  }
+  .play-placeholder .big-cat { font-size: 80px; margin-bottom: 16px; }
+  .play-placeholder .ph-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+  .play-placeholder .ph-sub { font-size: 15px; color: var(--text-mute); line-height: 1.7; }
+  .play-slots {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-top: 28px;
+  }
+  .play-slot {
+    background: var(--bg-card); border-radius: 18px;
+    border: 2px dashed var(--line);
+    padding: 22px 12px; text-align: center;
+  }
+  .play-slot .slot-icon { font-size: 34px; margin-bottom: 6px; opacity: 0.6; }
+  .play-slot .slot-label { font-size: 13px; font-weight: 700; color: var(--text-mute); }
+
+  /* ── modal ── */
+  .modal-mask {
+    position: absolute; inset: 0; background: rgba(90,74,82,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 50;
+    padding: 24px;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 32px 36px; max-width: 420px; width: 100%;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .modal .m-cat { font-size: 52px; margin-bottom: 8px; }
+  .modal .m-title { font-size: 20px; font-weight: 800; color: var(--pink-deep); margin-bottom: 16px; }
+  .modal input {
+    width: 100%; border: 2px solid var(--line); border-radius: 16px;
+    padding: 14px 18px; font-size: 17px; text-align: center;
+    color: var(--text); outline: none; margin-bottom: 18px;
+    font-family: inherit;
+  }
+  .modal input:focus { border-color: var(--pink); }
+  .modal-actions { display: flex; gap: 12px; }
+  .modal-actions button { flex: 1; border: none; border-radius: 16px; padding: 14px; font-size: 16px; font-weight: 800; }
+  .btn-cancel { background: var(--bg-soft); color: var(--text-mute); }
+  .btn-ok { background: var(--pink); color: #fff; }
+  .btn-ok:active, .btn-cancel:active { transform: scale(0.96); }
+
+  /* ── loading / toast ── */
+  .loading {
+    position: absolute; inset: 0; background: rgba(255,245,248,0.85);
+    display: none; align-items: center; justify-content: center; z-index: 80;
+    font-size: 18px; font-weight: 800; color: var(--pink-deep);
+  }
+  .loading.show { display: flex; }
+  .loading .spin-cat { font-size: 48px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff; padding: 12px 24px; border-radius: 16px;
+    font-size: 15px; font-weight: 700; opacity: 0; transition: all .3s; z-index: 90;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ════════ ① 家長登入 ════════ -->
+  <section class="screen active" id="scr-login">
+    <div class="center">
+      <div class="login-card">
+        <div class="login-cat">🐱</div>
+        <div class="login-title">UNI 兒童樂園</div>
+        <div class="login-sub">家長先登入,就能幫小朋友開一個專屬帳號<br>陪孩子一起玩 🎀</div>
+        <button class="big-btn" id="parentLoginBtn">
+          <span>💚</span> 家長 LINE 登入
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ ② 選/開小孩 ════════ -->
+  <section class="screen" id="scr-kids">
+    <div class="topbar">
+      <div class="brand"><span class="cat">🐱</span> UNI 兒童樂園</div>
+      <div class="right">
+        <button class="pill-btn" id="parentLogoutBtn">👋 切換家長</button>
+      </div>
+    </div>
+    <div class="kids-wrap">
+      <div class="kids-head">選一個小朋友 🎀</div>
+      <div class="kids-head-sub">點頭像進入,或按右邊「＋」幫小朋友開新帳號</div>
+      <div class="kids-grid" id="kidsGrid">
+        <!-- 動態渲染小孩卡 + 一張新增卡 -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ ③ 小孩遊戲畫面(玩法佔位)════════ -->
+  <section class="screen" id="scr-play">
+    <div class="topbar">
+      <div class="brand"><span class="cat">🐾</span> 兒童樂園</div>
+      <div class="right">
+        <button class="pill-btn" id="backToKidsBtn">↩ 換小朋友</button>
+      </div>
+    </div>
+    <div class="play-wrap">
+      <div class="play-hero">
+        <div class="avatar" id="playAvatar">🐱</div>
+        <div class="who">
+          <div class="hi">哈囉,歡迎回來</div>
+          <div class="name" id="playName">小朋友</div>
+        </div>
+      </div>
+      <div class="play-body">
+        <div class="play-placeholder">
+          <div class="big-cat">🐾</div>
+          <div class="ph-title">遊戲正在準備中</div>
+          <div class="ph-sub">Elsa 正在設計好玩的內容給你<br>很快就可以開始玩囉!</div>
+          <div class="play-slots">
+            <div class="play-slot"><div class="slot-icon">🐱</div><div class="slot-label">養成</div></div>
+            <div class="play-slot"><div class="slot-icon">👗</div><div class="slot-label">換裝</div></div>
+            <div class="play-slot"><div class="slot-icon">🧸</div><div class="slot-label">玩具</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ modal:新增小孩 ════════ -->
+  <div class="modal-mask" id="addKidMask">
+    <div class="modal">
+      <div class="m-cat">🐱</div>
+      <div class="m-title">幫小朋友取個名字</div>
+      <input type="text" id="kidNameInput" placeholder="小朋友的名字" maxlength="12">
+      <div class="modal-actions">
+        <button class="btn-cancel" id="addKidCancel">取消</button>
+        <button class="btn-ok" id="addKidOk">開好了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ loading / toast ════════ -->
+  <div class="loading" id="loading"><div class="spin-cat">🐈</div></div>
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+/* ═══════════════════════ 設定區 ═══════════════════════ */
+const KID = {
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbydkPPf36pSeAdQrLQlchTsO_hSAX7LSMgEdZHSfihQPMsLA4tykvV0QidfsdN4Hyij/exec',
+  // 家長 LINE 登入(沿用點數系統那個 LINE Login channel)
+  LINE_LOGIN_CHANNEL_ID: '2009831862',
+  LINE_LOGIN_CALLBACK: 'https://san555483-hub.github.io/kid-game.html', // ⚠️ 需在 LINE 後台 callback 白名單加這個
+};
+
+const $ = id => document.getElementById(id);
+
+const STATE = {
+  parentUid: '',
+  kids: [],
+  currentKid: null,
+};
+
+/* ═══════════════════════ 工具 ═══════════════════════ */
+function show(scr) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(scr).classList.add('active');
+}
+function setLoading(on) { $('loading').classList.toggle('show', on); }
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function getParam(k) { return new URLSearchParams(location.search).get(k); }
+
+// 呼叫後端(GET，避免 CORS preflight)
+async function callKidApi(action, params) {
+  const qs = new URLSearchParams(Object.assign({ action }, params || {})).toString();
+  const res = await fetch(KID.GAS_URL + '?' + qs);
+  return await res.json();
+}
+
+/* ═══════════════════════ 身分:家長登入 ═══════════════════════ */
+function startParentLogin() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem('kid_login_state', state);
+  const url = 'https://access.line.me/oauth2/v2.1/authorize'
+    + '?response_type=code'
+    + '&client_id=' + KID.LINE_LOGIN_CHANNEL_ID
+    + '&redirect_uri=' + encodeURIComponent(KID.LINE_LOGIN_CALLBACK)
+    + '&state=' + state
+    + '&scope=' + encodeURIComponent('profile openid');
+  location.href = url;
+}
+
+// 三道防線:同一個 code 只換一次 token(避免競態)
+async function handleParentCallback(code) {
+  if (window.__kidExchanging) return false;
+  if (sessionStorage.getItem('kid_code_done') === code) return false;
+  window.__kidExchanging = true;
+  sessionStorage.setItem('kid_code_done', code);
+  history.replaceState({}, '', location.pathname);
+
+  setLoading(true);
+  try {
+    const r = await callKidApi('parentLogin', { code: code, redirect_uri: KID.LINE_LOGIN_CALLBACK });
+    if (r && r.ok && r.uid) {
+      STATE.parentUid = r.uid;
+      localStorage.setItem('kid_parent_uid', r.uid);
+      await loadKids();
+      return true;
+    } else {
+      window.__kidExchanging = false;
+      toast('登入沒成功,再試一次喔');
+      return false;
+    }
+  } catch (e) {
+    window.__kidExchanging = false;
+    toast('網路怪怪的,再試一次');
+    return false;
+  } finally {
+    setLoading(false);
+  }
+}
+
+function parentLogout() {
+  localStorage.removeItem('kid_parent_uid');
+  sessionStorage.removeItem('kid_code_done');
+  window.__kidExchanging = false;
+  STATE.parentUid = ''; STATE.kids = []; STATE.currentKid = null;
+  location.replace(location.pathname);
+}
+
+/* ═══════════════════════ 小孩:清單/開帳號/選擇 ═══════════════════════ */
+async function loadKids() {
+  setLoading(true);
+  try {
+    const r = await callKidApi('getKids', { parentUid: STATE.parentUid });
+    STATE.kids = (r && r.ok) ? (r.kids || []) : [];
+    renderKids();
+    show('scr-kids');
+  } catch (e) {
+    toast('讀取小朋友清單失敗');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderKids() {
+  const grid = $('kidsGrid');
+  grid.innerHTML = '';
+  STATE.kids.forEach(kid => {
+    const card = document.createElement('div');
+    card.className = 'kid-card';
+    card.innerHTML = '<div class="kid-avatar">' + (kid.avatar || '🐱') + '</div>'
+      + '<div class="kid-name">' + escapeHtml(kid.nickname) + '</div>';
+    card.onclick = () => enterKid(kid);
+    grid.appendChild(card);
+  });
+  // 新增卡
+  const add = document.createElement('div');
+  add.className = 'kid-card add';
+  add.innerHTML = '<div class="plus">＋</div><div class="add-label">新增小朋友</div>';
+  add.onclick = openAddKid;
+  grid.appendChild(add);
+}
+
+function enterKid(kid) {
+  STATE.currentKid = kid;
+  $('playAvatar').textContent = kid.avatar || '🐱';
+  $('playName').textContent = kid.nickname;
+  show('scr-play');
+  // TODO 玩法待定:這裡之後呼叫 kidPlayState 載入玩法狀態
+}
+
+function openAddKid() { $('kidNameInput').value = ''; $('addKidMask').classList.add('show'); setTimeout(() => $('kidNameInput').focus(), 100); }
+function closeAddKid() { $('addKidMask').classList.remove('show'); }
+
+async function submitAddKid() {
+  const name = $('kidNameInput').value.trim();
+  if (!name) { toast('幫小朋友取個名字吧'); return; }
+  closeAddKid();
+  setLoading(true);
+  try {
+    const r = await callKidApi('createKid', { parentUid: STATE.parentUid, nickname: name });
+    if (r && r.ok) {
+      toast('開好囉!🎉');
+      await loadKids();
+    } else {
+      toast(r && r.error ? r.error : '開帳號失敗');
+    }
+  } catch (e) {
+    toast('網路怪怪的,再試一次');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ═══════════════════════ 事件綁定 ═══════════════════════ */
+function bindEvents() {
+  $('parentLoginBtn').addEventListener('click', startParentLogin);
+  $('parentLogoutBtn').addEventListener('click', parentLogout);
+  $('backToKidsBtn').addEventListener('click', () => show('scr-kids'));
+  $('addKidCancel').addEventListener('click', closeAddKid);
+  $('addKidOk').addEventListener('click', submitAddKid);
+}
+
+/* ═══════════════════════ 啟動 ═══════════════════════ */
+async function init() {
+  bindEvents();
+  const code = getParam('code');
+  if (code) {
+    const ok = await handleParentCallback(code);
+    if (!ok) show('scr-login');
+    return;
+  }
+  const cached = localStorage.getItem('kid_parent_uid');
+  if (cached && /^U[a-z0-9]{32}$/i.test(cached)) {
+    STATE.parentUid = cached;
+    await loadKids();
+    return;
+  }
+  show('scr-login');
+}
+
+init();
+</script>
+</body>
+</html>
