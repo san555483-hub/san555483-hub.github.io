@@ -721,13 +721,21 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     <div id="serviceList"></div>
     <div class="notice-box" style="margin-top:16px">
       <div class="notice-title">⏱ 關於服務時長</div>
-      <div class="notice-text">每位顧客需求狀況不同，以上時間為預估時間。若有異動，Elsa 會主動通知您。<br><br>若不想等候，可於下一步勾選「加價指定時段全程服務」。<br>會員 $250 ／ 非會員 $350</div>
+      <div class="notice-text">每位顧客需求狀況不同，以上時間為預估時間。若有異動，Elsa 會主動通知您。</div>
+    </div>
+    <div class="notice-box" style="margin-top:12px;background:#faf6f0;border:1px solid #e8ddcc">
+      <div class="notice-title">💛 指定服務費說明（會員 $250／非會員 $350）</div>
+      <div class="notice-text"><b>① 專程指定時段</b><br>主要營業時間（10:00–19:30）以外的時段，由 Elsa 專程在店為您服務。<br><br><b>② 全程專屬服務</b><br>主要營業時間內，亦可預約全程專屬，由我為您一對一悉心服務至完成，過程中不安排其他顧客，給您不被打擾的完整時光。<br><br><span style="color:var(--muted);font-size:12px">※ 兩項服務費相同，可單獨適用或合併適用。</span></div>
     </div>
     <button class="btn btn-primary" id="btn1" onclick="goStep(2)" disabled>下一步</button>
   </div>
   <div class="section" id="section2">
     <div class="section-title">選擇預約時段</div>
     <div class="section-desc">請選擇方便的日期與時間</div>
+    <div class="notice-box" style="margin-top:4px;margin-bottom:14px;background:#faf6f0;border:1px solid #e8ddcc">
+      <div class="notice-title">🕙 關於營業與專程指定時段</div>
+      <div class="notice-text">主要營業時間為 <b>10:00–19:30</b>。<br>其餘時段（09:00–09:30 早場、19:30 起夜間）為<b>「專程指定時段」</b>，屬非營業時間，由 Elsa 專程在店為您服務。<br>為保留您的專屬時段，專程指定時段需於 <b>3 小時前</b>完成預約。</div>
+    </div>
     <div class="date-scroll" id="dateScroll"></div>
     <div id="timeSlotArea"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">請先選擇日期</div></div>
     <div class="loading-inline" id="loadingSlots"><div class="spinner-sm"></div>載入時段中...</div>
@@ -755,11 +763,11 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
       <div class="priority-header">
         <div class="priority-checkbox" id="priorityCheck"></div>
         <div>
-          <div class="priority-title">加價指定時段全程服務<span class="voucher-i" onclick="event.stopPropagation();openVoucherInfo()">i</span></div>
+          <div class="priority-title">專屬指定服務<span class="voucher-i" onclick="event.stopPropagation();openVoucherInfo()">i</span></div>
           <div class="priority-price" id="priorityPriceLabel">會員 $250 ／ 非會員 $350</div>
         </div>
       </div>
-      <div class="priority-desc">Elsa 將為您安排專屬時段，全程服務不受排程影響。此費用用以平衡排程與人力負擔，敬請見諒與理解 🙏</div>
+      <div class="priority-desc">依您選擇之專程指定時段，或您希望全程一對一不被打擾的專屬服務，Elsa 將為您保留完整時段、悉心服務至完成 🌿</div>
     </div>
     <div id="memberTypeArea" style="display:none;margin-bottom:16px">
       <label class="form-label">您是否為會員？</label>
@@ -873,11 +881,11 @@ window.SHOW_BOOKING_PROFILE = true;
 // ═══════════════════════════════════════════════════════════
 window.MARQUEE_FALLBACK_TO_SHOP = true;
 
-// 【2026-06-03 營業時間改制】主要營業時間每天統一 10:00–19:30
-// 次要時段（09:00–10:00、19:30–21:00）為「指定付費時段」，需勾選指定付費預約
-const MAIN_SLOTS = ['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
-const PAID_SLOTS = ['09:00','09:30','20:00','20:30','21:00'];  // 指定付費時段
-const ALL_SLOTS  = ['09:00','09:30'].concat(MAIN_SLOTS).concat(['20:00','20:30','21:00']);
+// 【2026-06-19 營業時間改制】主要營業時間每天統一 10:00–19:30（19:30 為關門時間）
+// 專程指定時段（09:00–09:30 早場、19:30 起夜間）需提前 3 小時預約，最後可約 20:30
+const MAIN_SLOTS = ['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
+const PAID_SLOTS = ['09:00','09:30','19:30','20:00','20:30'];  // 專程指定時段
+const ALL_SLOTS  = ['09:00','09:30'].concat(MAIN_SLOTS).concat(['19:30','20:00','20:30']);
 // 每天時段相同（主要 + 次要付費）
 const BUSINESS_HOURS = {
   0: ALL_SLOTS, 1: ALL_SLOTS, 2: ALL_SLOTS, 3: ALL_SLOTS, 4: ALL_SLOTS, 5: ALL_SLOTS, 6: ALL_SLOTS,
@@ -1341,7 +1349,7 @@ function renderTimeSlotsMulti(date, slotInfoMap) {
       const cssClass = 'time-slot taken-base taken-' + info.type;
       html += '<div class="' + cssClass + '">' + nt + '<br><span style="font-size:9px">' + info.label + '</span></div>';
     } else if (isPaidSlot(nt)) {
-      html += '<div class="time-slot paid-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '<br><span style="font-size:9px">指定付費</span></div>';
+      html += '<div class="time-slot paid-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '<br><span style="font-size:9px">專程指定時段</span></div>';
     } else {
       html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>';
     }
@@ -1361,7 +1369,7 @@ function renderTimeSlotsLegacy(date, booked) {
     if (isPastSlot(date, nt)) { html += '<div class="time-slot taken-base taken-general" style="opacity:.5">' + nt + '<br><span style="font-size:9px">' + pastSlotLabel(nt) + '</span></div>'; }
     else if (isNotice) { html += '<div class="time-slot locked-notice">⏳ 溝通中<br>請留言</div>'; }
     else if (isBooked) { html += '<div class="time-slot taken-base taken-general">' + nt + '<br><span style="font-size:9px">已預約</span></div>'; }
-    else if (isPaidSlot(nt)) { html += '<div class="time-slot paid-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '<br><span style="font-size:9px">指定付費</span></div>'; }
+    else if (isPaidSlot(nt)) { html += '<div class="time-slot paid-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '<br><span style="font-size:9px">專程指定時段</span></div>'; }
     else { html += '<div class="time-slot" onclick="selectTime(\'' + nt + '\', this)">' + nt + '</div>'; }
   });
   html += '</div>';
@@ -1375,10 +1383,10 @@ function selectTime(time, el) {
   document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('btn2').disabled = false;
-  // 【2026-06-03】次要付費時段：自動引導勾選指定付費
+  // 【2026-06-19】專程指定時段：自動引導勾選專屬指定服務
   state.isPaidSlot = isPaidSlot(time);
   if (state.isPaidSlot && !state.priority) {
-    alert('您選擇的是「指定付費時段」（主要營業時間 10:00–19:30 以外）。\n\n此時段需採指定付費預約，Elsa 會專程到店為您服務。\n下一步將為您帶入指定付費選項。');
+    alert('🌿 您所選擇的是「專程指定時段」\n\n主要營業時間為 10:00–19:30；19:30 起之時段為專程指定，屬非營業時間，需由 Elsa 專程在店為您服務。\n\n為保留您的專屬時段，請於 3 小時前完成預約；下一步將為您帶入指定服務選項。\n\n指定時段服務費　會員 $250／非會員 $350');
     if (!state.priority) { try { togglePriority(); } catch(_) {} }
   }
 }
