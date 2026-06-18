@@ -313,6 +313,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 .category-label:first-child { margin-top: 0; }
 .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
 .service-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 12px; cursor: pointer; transition: all 0.2s; background: var(--surface); position: relative; }
+/* 服務卡圖片（2026-06-19 新增）：有圖才出現，4:3 滿版裁切，無圖時整段不渲染、維持原樣 */
+.service-card.has-img { padding: 0; overflow: hidden; }
+.service-card-img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #f3ede3; }
+.service-card.has-img .service-card-body { padding: 12px 12px 14px; }
+.service-card.has-img.selected::after { top: 10px; right: 12px; background: rgba(255,255,255,.9); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .service-card:active { transform: scale(0.98); }
 .service-card.selected { border-color: var(--gold); background: #fdf6ee; }
 .service-card.selected::after { content: '✓'; position: absolute; top: 8px; right: 10px; color: var(--gold); font-size: 12px; font-weight: 700; }
@@ -1145,14 +1150,21 @@ function renderServices() {
   });
   document.getElementById('serviceList').innerHTML = Object.entries(categories).map(([cat, items]) =>
     '<div class="category-label">' + cat + '</div><div class="service-grid">' +
-    items.map(s =>
-      '<div class="service-card" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' +
-      '<div class="service-name">' + s.name + '</div>' +
-      '<div class="service-price">' + s.price + '</div>' +
-      '<div class="service-time">' + (s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘') + '</div>' +
-      (s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : '') +
-      '</div>'
-    ).join('') + '</div>'
+    items.map(s => {
+      var hasImg = s.img && String(s.img).trim() !== '';
+      var inner =
+        '<div class="service-name">' + s.name + '</div>' +
+        '<div class="service-price">' + s.price + '</div>' +
+        '<div class="service-time">' + (s.duration === -1 ? '⏱ 依髮況確認' : s.duration === 0 ? '⏱ ' + s.note : '⏱ 約' + s.duration + '分鐘') + '</div>' +
+        (s.note && s.duration > 0 && s.duration !== -1 ? '<div class="service-note">※ ' + s.note + '</div>' : '');
+      if (hasImg) {
+        return '<div class="service-card has-img" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' +
+          '<img class="service-card-img" src="' + s.img + '" alt="' + s.name + '" loading="lazy" onerror="this.style.display=\'none\'">' +
+          '<div class="service-card-body">' + inner + '</div>' +
+          '</div>';
+      }
+      return '<div class="service-card" id="svc_' + s.id + '" onclick="toggleService(\'' + s.id + '\')">' + inner + '</div>';
+    }).join('') + '</div>'
   ).join('');
 }
 
