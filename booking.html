@@ -312,19 +312,19 @@ body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', s
 .category-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; padding: 4px 0 8px; margin-top: 16px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 .category-label:first-child { margin-top: 0; }
 .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
-.service-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 12px; cursor: pointer; transition: all 0.2s; background: var(--surface); position: relative; }
+.service-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 15px; cursor: pointer; transition: all 0.2s; background: var(--surface); position: relative; }
 /* 服務卡圖片（2026-06-19 新增）：有圖才出現，4:3 滿版裁切，無圖時整段不渲染、維持原樣 */
 .service-card.has-img { padding: 0; overflow: hidden; }
 .service-card-img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #f3ede3; }
-.service-card.has-img .service-card-body { padding: 12px 12px 14px; }
+.service-card.has-img .service-card-body { padding: 14px 15px 16px; }
 .service-card.has-img.selected::after { top: 10px; right: 12px; background: rgba(255,255,255,.9); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .service-card:active { transform: scale(0.98); }
 .service-card.selected { border-color: var(--gold); background: #fdf6ee; }
 .service-card.selected::after { content: '✓'; position: absolute; top: 8px; right: 10px; color: var(--gold); font-size: 12px; font-weight: 700; }
-.service-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
-.service-price { font-size: 11px; color: var(--gold-dark); font-weight: 500; }
-.service-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
-.service-note { font-size: 10px; color: #c08040; margin-top: 3px; }
+.service-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.5; }
+.service-price { font-size: 14px; color: var(--gold-dark); font-weight: 600; margin-bottom: 2px; }
+.service-time { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.service-note { font-size: 12px; color: #c08040; margin-top: 5px; line-height: 1.6; word-break: break-word; white-space: normal; }
 .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .selected-tag { background: #fdf6ee; border: 1.5px solid var(--gold); border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 12px; color: var(--gold-dark); display: flex; align-items: center; gap: 6px; }
 .selected-tag-remove { cursor: pointer; font-size: 16px; color: var(--gold); line-height: 1; }
