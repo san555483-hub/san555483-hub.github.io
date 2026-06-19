@@ -6,1068 +6,343 @@
 <meta name="format-detection" content="telephone=no">
 <title>UNI 貓咪村</title>
 <!--
-═══════════════════════════════════════════════════════════════════════
-  UNI 點數系統 · 貓咪村遊戲世界 village.html v1.0(橫式沉浸版)
-═══════════════════════════════════════════════════════════════════════
-  📅 建立:2026/06/18
-  🎯 用途:成人線點數系統「遊戲感世界」前端。橫式強制橫向,五區域。
-  🔌 後端:點數 GAS(完全沿用 points-game.html 的 API,後端一行不改)
-  🎨 素材:Cloudinary dvti8ug8s(村莊背景+5建築+UI框)
-  🔐 認證:LINE Login(沿用三道防線)+ ?uid 備援
-
-  🚨 緊急回滾:這是「新檔」,舊 points-game.html 完整保留。
-              出問題 → LINE 選單連結改回 points-game.html 即可,30秒。
-  📌 五區域:🏠我的小屋(圖鑑) 🎰扭蛋站(抽卡) 🏛️榮耀神殿(譽望榜)
-             🛋️交誼廳(影片+裝飾貓) 🎁村口郵筒(賺點/介紹/兌換)
-═══════════════════════════════════════════════════════════════════════
+  UNI 貓咪村 RPG village.html v2.0(Phaser 遊戲引擎版)
+  操作:左下虛擬搖桿走位 / 走到建築跳「進入」鈕 / 切室內場景
+  後端:點數 GAS,API 全沿用,後端一行不改
+  回滾:新檔,出問題 LINE 選單指回 points-game.html,30秒
 -->
 <style>
-  /* ════════════════════════════════════════════════════════════════
-     主題色:延續點數系統深紫金 + 水彩粉嫩
-  ════════════════════════════════════════════════════════════════ */
-  :root {
-    --gold: #C9A668;
-    --gold-deep: #A88547;
-    --purple: #8B6FA8;
-    --purple-deep: #5E4A78;
-    --rose: #E8A0A8;
-    --cream: #FAF6F0;
-    --text-light: #FFF8F0;
-    --text-dark: #5E4A55;
-    --panel-bg: rgba(94, 74, 120, 0.82);
-    --panel-line: rgba(201, 166, 104, 0.6);
-    --shadow: 0 4px 20px rgba(94, 74, 120, 0.35);
-
-    /* 稀有度 */
-    --rarity-n: #A89899;
-    --rarity-r: #B98BC9;
-    --rarity-ssr: #E8C77E;
-
-    /* === 你的 Cloudinary 素材(已對齊命名)=== */
-    --img-village: url('https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_53_25.png');
-  }
-
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-    background: #1a1525;
-    color: var(--text-light);
-    -webkit-font-smoothing: antialiased;
-    user-select: none;
-  }
-  img { display: block; max-width: 100%; -webkit-user-drag: none; }
-  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-
-  /* ════════════════════════════════════════════════════════════════
-     🔄 強制橫向:直拿時提示轉橫
-  ════════════════════════════════════════════════════════════════ */
-  #rotateHint {
-    display: none;
-    position: fixed; inset: 0;
-    background: linear-gradient(135deg, #5E4A78, #8B6FA8);
-    z-index: 9999;
-    flex-direction: column;
-    align-items: center; justify-content: center;
-    text-align: center;
-    padding: 30px;
-  }
-  #rotateHint .phone {
-    font-size: 64px;
-    animation: rotatePhone 2s ease-in-out infinite;
-    margin-bottom: 20px;
-  }
-  @keyframes rotatePhone {
-    0%, 40% { transform: rotate(0deg); }
-    60%, 100% { transform: rotate(90deg); }
-  }
-  #rotateHint .txt { font-size: 18px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 8px; }
-  #rotateHint .sub { font-size: 13px; opacity: 0.8; }
-
-  /* 直向時顯示提示、藏住遊戲 */
-  @media (orientation: portrait) {
-    #rotateHint { display: flex; }
-    #gameWrap { display: none; }
-  }
-
-  /* ════════════════════════════════════════════════════════════════
-     🌏 遊戲主容器(橫式滿版)
-  ════════════════════════════════════════════════════════════════ */
-  #gameWrap {
-    position: fixed; inset: 0;
-    width: 100vw; height: 100vh;
-    overflow: hidden;
-  }
-
-  /* 村莊背景 */
-  #village {
-    position: absolute; inset: 0;
-    background-image: var(--img-village);
-    background-size: cover;
-    background-position: center;
-    transition: transform 0.4s ease, filter 0.3s ease;
-  }
-  #village.dimmed { filter: brightness(0.5) blur(2px); }
-
-  /* ════════════════════════════════════════════════════════════════
-     ☁️ 頂部 HUD（點數 / 譽望 / 主角貓）
-  ════════════════════════════════════════════════════════════════ */
-  .hud {
-    position: absolute;
-    top: 14px; left: 14px; right: 14px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    z-index: 50;
-    pointer-events: none;
-  }
-  .hud > * { pointer-events: auto; }
-
-  .hud-left { display: flex; gap: 10px; align-items: center; }
-  .hud-pill {
-    display: flex; align-items: center; gap: 6px;
-    background: var(--panel-bg);
-    border: 1.5px solid var(--panel-line);
-    border-radius: 18px;
-    padding: 7px 14px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(6px);
-  }
-  .hud-pill .ic { font-size: 16px; }
-  .hud-pill .label { font-size: 10px; opacity: 0.75; margin-right: 2px; }
-  .hud-pill .val { font-size: 16px; font-weight: 800; color: var(--gold); letter-spacing: 0.02em; }
-
-  .hud-avatar {
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    border: 2.5px solid var(--gold);
-    background: var(--panel-bg) center/cover;
-    box-shadow: var(--shadow);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.15s;
-  }
-  .hud-avatar:active { transform: scale(0.92); }
-  .hud-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-  .hud-right { display: flex; gap: 8px; align-items: center; }
-  .hud-btn {
-    background: var(--panel-bg);
-    border: 1.5px solid var(--panel-line);
-    border-radius: 14px;
-    padding: 8px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(6px);
-    transition: transform 0.15s;
-  }
-  .hud-btn:active { transform: scale(0.92); }
-
-  /* ════════════════════════════════════════════════════════════════
-     🏘️ 建築(村裡的可點區域)
-  ════════════════════════════════════════════════════════════════ */
-  .buildings {
-    position: absolute; inset: 0;
-    z-index: 20;
-  }
-  .building {
-    position: absolute;
-    cursor: pointer;
-    transition: transform 0.2s ease, filter 0.2s ease;
-    filter: drop-shadow(0 6px 10px rgba(94,74,120,0.4));
-    text-align: center;
-  }
-  .building:active { transform: scale(0.94); }
-  .building:hover { transform: translateY(-4px) scale(1.03); }
-  .building img {
-    width: 100%;
-    height: auto;
-    pointer-events: none;
-  }
-  .building .blabel {
-    margin-top: -6px;
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--text-light);
-    text-shadow: 0 1px 4px rgba(94,74,120,0.9), 0 0 2px rgba(94,74,120,0.9);
-    letter-spacing: 0.05em;
-  }
-
-  /* 五棟位置(橫式村莊佈局,百分比定位,自適應) */
-  #bHome    { left: 6%;   top: 30%;  width: 17%; }
-  #bGacha   { left: 27%;  top: 24%;  width: 16%; }
-  #bTemple  { left: 47%;  top: 20%;  width: 17%; }
-  #bLounge  { left: 67%;  top: 26%;  width: 18%; }
-  #bMailbox { left: 84%;  top: 40%;  width: 14%; }
-
-  /* 主角貓(村中央) */
-  #mainCat {
-    position: absolute;
-    left: 50%; bottom: 8%;
-    transform: translateX(-50%);
-    z-index: 30;
-    width: 90px; height: 90px;
-    border-radius: 50%;
-    border: 3px solid var(--gold);
-    background: rgba(255,255,255,0.5) center/cover;
-    box-shadow: 0 6px 16px rgba(94,74,120,0.5);
-    cursor: pointer;
-    overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 44px;
-    transition: transform 0.2s;
-    animation: floatCat 3s ease-in-out infinite;
-  }
-  #mainCat:active { transform: translateX(-50%) scale(0.92); }
-  #mainCat img { width: 100%; height: 100%; object-fit: cover; }
-  @keyframes floatCat {
-    0%,100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(-8px); }
-  }
-  .maincat-tag {
-    position: absolute;
-    left: 50%; bottom: calc(8% + 94px);
-    transform: translateX(-50%);
-    z-index: 30;
-    background: var(--panel-bg);
-    border: 1.5px solid var(--panel-line);
-    border-radius: 12px;
-    padding: 3px 12px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-    box-shadow: var(--shadow);
-  }
-
-  /* ════════════════════════════════════════════════════════════════
-     🪟 區域面板（點建築滑入）
-  ════════════════════════════════════════════════════════════════ */
-  .panel {
-    position: absolute;
-    top: 0; right: 0;
-    width: 0;
-    height: 100%;
-    background: var(--panel-bg);
-    backdrop-filter: blur(14px);
-    border-left: 2px solid var(--panel-line);
-    box-shadow: -8px 0 30px rgba(0,0,0,0.3);
-    z-index: 100;
-    overflow: hidden;
-    transition: width 0.35s cubic-bezier(.4,0,.2,1);
-  }
-  .panel.open { width: min(56%, 560px); }
-  .panel-inner {
-    width: min(56vw, 560px);
-    height: 100%;
-    overflow-y: auto;
-    padding: 20px 24px 40px;
-  }
-  .panel-head {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px;
-    position: sticky; top: 0;
-    background: linear-gradient(var(--panel-bg), transparent);
-    padding-bottom: 8px;
-  }
-  .panel-title { font-size: 20px; font-weight: 800; color: var(--gold); letter-spacing: 0.05em; }
-  .panel-close {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 1.5px solid var(--panel-line);
-    font-size: 18px;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  /* ════════════════════════════════════════════════════════════════
-     🐱 我的小屋:貓圖鑑
-  ════════════════════════════════════════════════════════════════ */
-  .cats-summary {
-    text-align: center; margin-bottom: 14px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 14px; padding: 12px;
-    border: 1px solid var(--panel-line);
-  }
-  .cats-summary .num { font-size: 24px; font-weight: 800; color: var(--gold); }
-  .cats-bar { height: 6px; background: rgba(0,0,0,0.25); border-radius: 3px; margin-top: 8px; overflow: hidden; }
-  .cats-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .5s; }
-  .cats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .cat-card {
-    aspect-ratio: 3/4; border-radius: 12px; overflow: hidden;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid var(--panel-line);
-    display: flex; flex-direction: column;
-    position: relative;
-  }
-  .cat-card.locked { opacity: 0.4; filter: grayscale(0.7); }
-  .cat-img { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 28px; overflow: hidden; }
-  .cat-img img { width: 100%; height: 100%; object-fit: cover; }
-  .cat-nm { font-size: 10px; text-align: center; padding: 4px 2px; font-weight: 600; }
-  .cat-rar { font-size: 8px; padding: 1px 5px; border-radius: 5px; font-weight: 800; display: inline-block; margin: 0 auto 4px; }
-  .cat-rar.N { background: rgba(168,152,153,0.3); color: #d8c8c9; }
-  .cat-rar.R { background: rgba(185,139,201,0.3); color: #e0b8ec; }
-  .cat-rar.SSR { background: rgba(232,199,126,0.3); color: var(--rarity-ssr); }
-  .cat-lock { position: absolute; top:50%; left:50%; transform: translate(-50%,-50%); font-size: 22px; opacity: 0.7; }
-  .cat-card.clickable { cursor: pointer; }
-  .cat-card.clickable:active { transform: scale(0.95); }
-
-  /* ════════════════════════════════════════════════════════════════
-     🎰 扭蛋站:抽卡
-  ════════════════════════════════════════════════════════════════ */
-  .gacha-box { text-align: center; }
-  .gacha-machine {
-    width: 120px; height: 120px; margin: 6px auto 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 60px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 20px; border: 1px solid var(--panel-line);
-  }
-  .gacha-machine.spin { animation: shake .15s infinite; }
-  @keyframes shake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-3px,2px)rotate(-2deg)} 75%{transform:translate(3px,-2px)rotate(2deg)} }
-  .gacha-cost { font-size: 13px; margin-bottom: 12px; }
-  .gacha-cost b { color: var(--gold); font-size: 18px; }
-  .gacha-pools { display: flex; gap: 8px; margin-bottom: 16px; }
-  .gacha-pool { flex:1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; border: 1px solid var(--panel-line); }
-  .gacha-pool .t { font-size: 10px; opacity:.8; }
-  .gacha-pool .r { font-size: 15px; font-weight: 800; }
-  .gacha-pool .n { font-size: 9px; opacity:.7; }
-  .gacha-btn {
-    width: 100%; padding: 14px; border-radius: 14px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
-    color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.1em;
-    box-shadow: 0 4px 14px rgba(201,166,104,0.4);
-    transition: transform .15s;
-  }
-  .gacha-btn:active { transform: scale(0.97); }
-  .gacha-btn:disabled { opacity: 0.4; }
-  .gacha-hint { font-size: 11px; opacity: 0.7; margin-top: 8px; }
-
-  /* ════════════════════════════════════════════════════════════════
-     🏛️ 榮耀神殿:譽望
-  ════════════════════════════════════════════════════════════════ */
-  .rep-mine { text-align: center; background: rgba(255,255,255,0.1); border-radius: 16px; padding: 18px; border: 1px solid var(--panel-line); margin-bottom: 14px; }
-  .rep-num { font-size: 44px; font-weight: 800; color: var(--gold); line-height: 1; }
-  .rep-tier { display: inline-block; margin-top: 10px; padding: 4px 14px; background: rgba(0,0,0,0.2); border-radius: 10px; font-size: 12px; font-weight: 700; }
-  .rep-desc { font-size: 11px; opacity: 0.75; margin-top: 10px; }
-  .rep-board h4 { font-size: 13px; margin-bottom: 8px; opacity: 0.9; }
-  .rep-row { display: flex; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.06); margin-bottom: 6px; }
-  .rep-rank { width: 26px; font-weight: 800; }
-  .rep-rank.gold { color: var(--gold); }
-  .rep-rname { flex: 1; font-size: 12px; }
-  .rep-rscore { font-weight: 700; color: var(--gold); }
-  .rep-locked { text-align: center; padding: 28px 12px; opacity: 0.6; }
-  .rep-locked .lk { font-size: 32px; margin-bottom: 8px; }
-
-  /* ════════════════════════════════════════════════════════════════
-     🛋️ 交誼廳:影片 + 裝飾貓
-  ════════════════════════════════════════════════════════════════ */
-  .lounge-screen {
-    width: 100%; aspect-ratio: 16/9;
-    background: #000; border-radius: 14px; overflow: hidden;
-    border: 2px solid var(--panel-line); margin-bottom: 12px;
-    position: relative;
-  }
-  .lounge-screen iframe { width: 100%; height: 100%; border: 0; }
-  .lounge-screen .novid { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; opacity:0.7; text-align:center; padding:20px; }
-  .lounge-ctrl { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
-  .lounge-ctrl button { background: rgba(255,255,255,0.12); border: 1px solid var(--panel-line); border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 600; }
-  .lounge-seats { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
-  .seat-cat {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: rgba(255,255,255,0.15); border: 1.5px solid var(--panel-line);
-    display: flex; align-items: center; justify-content: center; font-size: 20px;
-    overflow: hidden;
-    animation: seatBob 2.5s ease-in-out infinite;
-  }
-  .seat-cat img { width:100%; height:100%; object-fit: cover; }
-  .seat-cat:nth-child(2n) { animation-delay: .4s; }
-  .seat-cat:nth-child(3n) { animation-delay: .8s; }
-  @keyframes seatBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-  .lounge-label { font-size: 11px; opacity: 0.6; text-align: center; margin-top: 8px; }
-
-  /* ════════════════════════════════════════════════════════════════
-     🎁 村口郵筒:賺點/介紹/兌換
-  ════════════════════════════════════════════════════════════════ */
-  .mail-sect { margin-bottom: 14px; }
-  .mail-sect h4 { font-size: 13px; color: var(--gold); margin-bottom: 8px; }
-  .mail-item { display: flex; justify-content: space-between; padding: 9px 12px; background: rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 6px; font-size: 12px; }
-  .mail-item .pts { color: var(--gold); font-weight: 700; }
-  .mail-btn { width: 100%; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.12); border: 1px solid var(--panel-line); font-size: 13px; font-weight: 700; margin-top: 6px; }
-
-  /* ════════════════════════════════════════════════════════════════
-     抽獎結果 Modal
-  ════════════════════════════════════════════════════════════════ */
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
-  .modal.show { display: flex; }
-  .modal-card {
-    background: linear-gradient(160deg, #6a5590, #4a3a62);
-    border: 2px solid var(--gold); border-radius: 22px;
-    padding: 26px; text-align: center; max-width: 320px; width: 100%;
-    animation: pop .5s cubic-bezier(.2,1.2,.4,1);
-  }
-  @keyframes pop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
-  .modal-rar { font-size: 13px; font-weight: 800; letter-spacing: 0.2em; margin-bottom: 8px; }
-  .modal-img { width: 150px; height: 150px; margin: 10px auto; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 70px; }
-  .modal-img img { width: 100%; height: 100%; object-fit: cover; }
-  .modal-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
-  .modal-story { font-size: 12px; opacity: 0.8; margin-bottom: 18px; }
-  .modal-btn { padding: 11px 28px; border-radius: 14px; background: var(--gold); color: #fff; font-weight: 700; }
-
-  /* 確認彈窗 */
-  .confirm { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:550; align-items:center; justify-content:center; padding:24px; }
-  .confirm.show { display:flex; }
-  .confirm-card { background: linear-gradient(160deg, #6a5590, #4a3a62); border:2px solid var(--panel-line); border-radius:18px; padding:22px; max-width:300px; width:100%; }
-  .confirm-card h4 { font-size:16px; margin-bottom:8px; }
-  .confirm-card p { font-size:13px; opacity:0.85; margin-bottom:18px; line-height:1.5; }
-  .confirm-btns { display:flex; gap:10px; }
-  .confirm-btns button { flex:1; padding:11px; border-radius:11px; font-weight:700; font-size:13px; }
-  .cf-cancel { background: rgba(255,255,255,0.12); }
-  .cf-ok { background: var(--gold); color:#fff; }
-
-  /* Toast */
-  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color:#fff; padding: 11px 20px; border-radius: 16px; font-size: 13px; z-index: 600; opacity: 0; transition: opacity .25s; pointer-events: none; max-width: 80%; text-align:center; }
-  .toast.show { opacity: 1; }
-
-  /* Loading */
-  .loading { position: fixed; inset: 0; background: #1a1525; display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 800; }
-  .loading.hide { display: none; }
-  .spinner { width: 38px; height: 38px; border: 3px solid rgba(201,166,104,0.25); border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 12px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-txt { font-size: 13px; opacity: 0.7; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#1a1525; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; -webkit-font-smoothing:antialiased; user-select:none; }
+  :root{ --gold:#C9A668; --gold-deep:#A88547; --panel-bg:rgba(94,74,120,0.92); --panel-line:rgba(201,166,104,0.6); --text:#FFF8F0; --rarity-n:#A89899; --rarity-r:#B98BC9; --rarity-ssr:#E8C77E; }
+  #rotateHint{ display:none; position:fixed; inset:0; background:linear-gradient(135deg,#5E4A78,#8B6FA8); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:30px; }
+  #rotateHint .ph{ font-size:64px; animation:rot 2s ease-in-out infinite; margin-bottom:20px; }
+  @keyframes rot{ 0%,40%{transform:rotate(0)} 60%,100%{transform:rotate(90deg)} }
+  #rotateHint .t{ font-size:18px; font-weight:700; letter-spacing:.1em; margin-bottom:8px; } #rotateHint .s{ font-size:13px; opacity:.8; }
+  @media(orientation:portrait){ #rotateHint{display:flex} #app{display:none} }
+  #app{ position:fixed; inset:0; } #gameHost{ position:absolute; inset:0; }
+  .hud{ position:absolute; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:flex-start; z-index:50; pointer-events:none; }
+  .hud>*{ pointer-events:auto; }
+  .hud-left{ display:flex; gap:8px; align-items:center; }
+  .pill{ display:flex; align-items:center; gap:5px; background:var(--panel-bg); border:1.5px solid var(--panel-line); border-radius:16px; padding:6px 12px; color:var(--text); backdrop-filter:blur(6px); }
+  .pill .ic{ font-size:14px; } .pill .lb{ font-size:9px; opacity:.7; } .pill .vl{ font-size:14px; font-weight:800; color:var(--gold); }
+  .avatar{ width:46px; height:46px; border-radius:50%; border:2.5px solid var(--gold); background:var(--panel-bg) center/cover; display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden; }
+  .avatar img{ width:100%; height:100%; object-fit:cover; }
+  .hud-btn{ background:var(--panel-bg); border:1.5px solid var(--panel-line); border-radius:13px; padding:7px 11px; font-size:11px; font-weight:600; color:var(--text); backdrop-filter:blur(6px); }
+  #joystick{ position:absolute; left:24px; bottom:24px; width:120px; height:120px; z-index:60; touch-action:none; }
+  #joyBase{ position:absolute; inset:0; border-radius:50%; background:rgba(94,74,120,0.35); border:2px solid rgba(201,166,104,0.5); backdrop-filter:blur(4px); }
+  #joyStick{ position:absolute; left:35px; top:35px; width:50px; height:50px; border-radius:50%; background:rgba(201,166,104,0.85); border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+  #enterBtn{ position:absolute; right:24px; bottom:40px; z-index:60; background:linear-gradient(135deg,var(--gold),var(--gold-deep)); color:#fff; border:none; border-radius:18px; padding:14px 26px; font-size:16px; font-weight:800; letter-spacing:.05em; box-shadow:0 4px 16px rgba(201,166,104,0.5); display:none; animation:pulseBtn 1.2s ease-in-out infinite; }
+  #enterBtn.show{ display:block; }
+  @keyframes pulseBtn{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+  #interior{ position:absolute; inset:0; z-index:100; display:none; flex-direction:column; }
+  #interior.show{ display:flex; }
+  #interiorBg{ position:absolute; inset:0; background-size:cover; background-position:center; }
+  #interiorBg::after{ content:''; position:absolute; inset:0; background:rgba(40,30,60,0.55); }
+  .int-head{ position:relative; z-index:2; display:flex; justify-content:space-between; align-items:center; padding:14px 18px; }
+  .int-title{ font-size:20px; font-weight:800; color:var(--gold); text-shadow:0 2px 6px rgba(0,0,0,0.6); letter-spacing:.05em; }
+  .int-back{ background:var(--panel-bg); border:1.5px solid var(--panel-line); color:var(--text); border-radius:14px; padding:9px 16px; font-size:13px; font-weight:700; }
+  .int-body{ position:relative; z-index:2; flex:1; overflow-y:auto; padding:6px 18px 24px; }
+  .cats-sum{ text-align:center; background:var(--panel-bg); border:1px solid var(--panel-line); border-radius:14px; padding:12px; margin-bottom:12px; color:var(--text); }
+  .cats-sum .n{ font-size:24px; font-weight:800; color:var(--gold); }
+  .cbar{ height:6px; background:rgba(0,0,0,0.3); border-radius:3px; margin-top:8px; overflow:hidden; } .cbar-f{ height:100%; background:var(--gold); transition:width .5s; }
+  .cgrid{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+  @media(max-width:700px){ .cgrid{ grid-template-columns:repeat(4,1fr); } }
+  .ccard{ aspect-ratio:3/4; border-radius:10px; overflow:hidden; background:var(--panel-bg); border:1px solid var(--panel-line); display:flex; flex-direction:column; position:relative; color:var(--text); }
+  .ccard.locked{ opacity:.4; filter:grayscale(.7); } .ccard.clickable{ cursor:pointer; } .ccard.main{ border:2px solid var(--gold); }
+  .cimg{ flex:1; display:flex; align-items:center; justify-content:center; font-size:26px; overflow:hidden; } .cimg img{ width:100%; height:100%; object-fit:cover; }
+  .cnm{ font-size:10px; text-align:center; padding:3px 2px; font-weight:600; }
+  .crar{ font-size:8px; padding:1px 5px; border-radius:5px; font-weight:800; display:inline-block; margin:0 auto 4px; }
+  .crar.N{ background:rgba(168,152,153,.3); color:#d8c8c9; } .crar.R{ background:rgba(185,139,201,.3); color:#e0b8ec; } .crar.SSR{ background:rgba(232,199,126,.3); color:var(--rarity-ssr); }
+  .clock{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:22px; opacity:.7; }
+  .cmaintag{ position:absolute; top:3px; right:3px; background:var(--gold); color:#fff; font-size:8px; padding:1px 4px; border-radius:4px; font-weight:800; }
+  .gbox{ text-align:center; color:var(--text); }
+  .gmach{ width:120px; height:120px; margin:10px auto 14px; display:flex; align-items:center; justify-content:center; font-size:64px; background:var(--panel-bg); border-radius:20px; border:1px solid var(--panel-line); }
+  .gmach.spin{ animation:shake .15s infinite; } @keyframes shake{ 0%,100%{transform:translate(0,0)} 25%{transform:translate(-3px,2px)rotate(-2deg)} 75%{transform:translate(3px,-2px)rotate(2deg)} }
+  .gcost{ font-size:14px; margin-bottom:12px; } .gcost b{ color:var(--gold); font-size:20px; }
+  .gpools{ display:flex; gap:8px; margin-bottom:16px; max-width:340px; margin:0 auto 16px; }
+  .gpool{ flex:1; background:var(--panel-bg); border:1px solid var(--panel-line); border-radius:10px; padding:8px 4px; } .gpool .t{ font-size:10px; opacity:.8; } .gpool .r{ font-size:16px; font-weight:800; } .gpool .nn{ font-size:9px; opacity:.7; }
+  .gbtn{ max-width:340px; width:100%; padding:14px; border-radius:14px; background:linear-gradient(135deg,var(--gold),var(--gold-deep)); color:#fff; font-size:16px; font-weight:800; letter-spacing:.1em; border:none; } .gbtn:disabled{ opacity:.4; }
+  .ghint{ font-size:11px; opacity:.7; margin-top:8px; }
+  .rmine{ text-align:center; background:var(--panel-bg); border:1px solid var(--panel-line); border-radius:16px; padding:18px; margin:0 auto 14px; color:var(--text); max-width:360px; }
+  .rnum{ font-size:44px; font-weight:800; color:var(--gold); line-height:1; }
+  .rtier{ display:inline-block; margin-top:10px; padding:4px 14px; background:rgba(0,0,0,.25); border-radius:10px; font-size:12px; font-weight:700; } .rdesc{ font-size:11px; opacity:.75; margin-top:10px; }
+  .rboard{ max-width:360px; margin:0 auto; color:var(--text); } .rboard h4{ font-size:13px; margin-bottom:8px; }
+  .rrow{ display:flex; align-items:center; padding:9px 12px; border-radius:10px; background:var(--panel-bg); margin-bottom:6px; }
+  .rrank{ width:26px; font-weight:800; } .rrank.gold{ color:var(--gold); } .rname{ flex:1; font-size:12px; } .rscore{ font-weight:700; color:var(--gold); }
+  .rlock{ text-align:center; padding:28px 12px; opacity:.6; color:var(--text); } .rlock .lk{ font-size:32px; margin-bottom:8px; }
+  .lscreen{ max-width:440px; margin:0 auto 12px; width:100%; aspect-ratio:16/9; background:#000; border-radius:14px; overflow:hidden; border:2px solid var(--panel-line); position:relative; }
+  .lscreen iframe{ width:100%; height:100%; border:0; } .lscreen .nov{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff; opacity:.7; text-align:center; padding:20px; }
+  .lctrl{ display:flex; gap:8px; justify-content:center; margin-bottom:14px; } .lctrl button{ background:var(--panel-bg); border:1px solid var(--panel-line); color:var(--text); border-radius:10px; padding:8px 14px; font-size:12px; font-weight:600; }
+  .lseats{ display:flex; justify-content:center; gap:5px; flex-wrap:wrap; max-width:440px; margin:0 auto; }
+  .seat{ width:36px; height:36px; border-radius:50%; background:var(--panel-bg); border:1.5px solid var(--panel-line); display:flex; align-items:center; justify-content:center; font-size:18px; overflow:hidden; animation:bob 2.5s ease-in-out infinite; }
+  .seat img{ width:100%; height:100%; object-fit:cover; } .seat:nth-child(2n){ animation-delay:.4s } .seat:nth-child(3n){ animation-delay:.8s }
+  @keyframes bob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+  .llabel{ font-size:11px; opacity:.6; text-align:center; margin-top:8px; color:var(--text); }
+  .msect{ max-width:380px; margin:0 auto 14px; color:var(--text); } .msect h4{ font-size:13px; color:var(--gold); margin-bottom:8px; }
+  .mitem{ display:flex; justify-content:space-between; padding:9px 12px; background:var(--panel-bg); border-radius:10px; margin-bottom:6px; font-size:12px; } .mitem .pts{ color:var(--gold); font-weight:700; }
+  .mbtn{ width:100%; padding:12px; border-radius:12px; background:var(--panel-bg); border:1px solid var(--panel-line); color:var(--text); font-size:13px; font-weight:700; margin-top:6px; }
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center; padding:20px; } .modal.show{ display:flex; }
+  .mcard{ background:linear-gradient(160deg,#6a5590,#4a3a62); border:2px solid var(--gold); border-radius:22px; padding:26px; text-align:center; max-width:320px; width:100%; color:var(--text); animation:pop .5s cubic-bezier(.2,1.2,.4,1); }
+  @keyframes pop{ 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+  .mrar{ font-size:13px; font-weight:800; letter-spacing:.2em; margin-bottom:8px; }
+  .mimg{ width:150px; height:150px; margin:10px auto; border-radius:16px; overflow:hidden; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; font-size:70px; } .mimg img{ width:100%; height:100%; object-fit:cover; }
+  .mname{ font-size:20px; font-weight:800; margin-bottom:4px; } .mstory{ font-size:12px; opacity:.8; margin-bottom:18px; }
+  .mbtn2{ padding:11px 28px; border-radius:14px; background:var(--gold); color:#fff; font-weight:700; border:none; }
+  .confirm{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:550; align-items:center; justify-content:center; padding:24px; } .confirm.show{ display:flex; }
+  .conf-card{ background:linear-gradient(160deg,#6a5590,#4a3a62); border:2px solid var(--panel-line); border-radius:18px; padding:22px; max-width:300px; width:100%; color:var(--text); } .conf-card h4{ font-size:16px; margin-bottom:8px; } .conf-card p{ font-size:13px; opacity:.85; margin-bottom:18px; line-height:1.5; }
+  .cbtns{ display:flex; gap:10px; } .cbtns button{ flex:1; padding:11px; border-radius:11px; font-weight:700; font-size:13px; border:none; } .cf-c{ background:rgba(255,255,255,.12); color:var(--text); } .cf-o{ background:var(--gold); color:#fff; }
+  .toast{ position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.85); color:#fff; padding:11px 20px; border-radius:16px; font-size:13px; z-index:600; opacity:0; transition:opacity .25s; pointer-events:none; max-width:80%; text-align:center; } .toast.show{ opacity:1; }
+  .loading{ position:fixed; inset:0; background:#1a1525; display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:800; color:var(--text); } .loading.hide{ display:none; }
+  .spinner{ width:38px; height:38px; border:3px solid rgba(201,166,104,.25); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:12px; } @keyframes spin{ to{transform:rotate(360deg)} }
 </style>
 </head>
 <body>
 
-<!-- 🔄 轉橫提示 -->
-<div id="rotateHint">
-  <div class="phone">📱</div>
-  <div class="txt">請將手機橫放</div>
-  <div class="sub">貓咪村是橫式遊戲世界 🐾</div>
-</div>
+<div id="rotateHint"><div class="ph">📱</div><div class="t">請將手機橫放</div><div class="s">貓咪村是橫式遊戲世界 🐾</div></div>
 
-<!-- 🌏 遊戲世界 -->
-<div id="gameWrap">
-  <div id="village"></div>
-
-  <!-- HUD -->
+<div id="app">
+  <div id="gameHost"></div>
   <div class="hud">
     <div class="hud-left">
-      <div class="hud-avatar" id="hudAvatar">🐱</div>
-      <div class="hud-pill">
-        <span class="ic">💎</span><span class="label">點數</span>
-        <span class="val" id="hudPoints">—</span>
-      </div>
-      <div class="hud-pill">
-        <span class="ic">⭐</span><span class="label">譽望</span>
-        <span class="val" id="hudRep">—</span>
-      </div>
+      <div class="avatar" id="hudAvatar">🐱</div>
+      <div class="pill"><span class="ic">💎</span><span class="lb">點數</span><span class="vl" id="hudPoints">—</span></div>
+      <div class="pill"><span class="ic">⭐</span><span class="lb">譽望</span><span class="vl" id="hudRep">—</span></div>
     </div>
-    <div class="hud-right">
-      <button class="hud-btn" id="switchAccBtn">切換帳號</button>
-    </div>
+    <button class="hud-btn" id="switchAccBtn">切換帳號</button>
   </div>
-
-  <!-- 主角貓 -->
-  <div class="maincat-tag" id="mainCatTag">我的主角貓</div>
-  <div id="mainCat">🐱</div>
-
-  <!-- 五棟建築 -->
-  <div class="buildings">
-    <div class="building" id="bHome" data-zone="home">
-      <img src="https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858776/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8807_11_00.png" alt="我的小屋">
-      <div class="blabel">🏠 我的小屋</div>
-    </div>
-    <div class="building" id="bGacha" data-zone="gacha">
-      <img src="https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_55_11.png" alt="扭蛋站">
-      <div class="blabel">🎰 扭蛋站</div>
-    </div>
-    <div class="building" id="bTemple" data-zone="temple">
-      <img src="https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_56_54.png" alt="榮耀神殿">
-      <div class="blabel">🏛️ 榮耀神殿</div>
-    </div>
-    <div class="building" id="bLounge" data-zone="lounge">
-      <img src="https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_58_09.png" alt="交誼廳">
-      <div class="blabel">🛋️ 交誼廳</div>
-    </div>
-    <div class="building" id="bMailbox" data-zone="mailbox">
-      <img src="https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858776/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8807_02_37.png" alt="村口郵筒">
-      <div class="blabel">🎁 村口郵筒</div>
-    </div>
-  </div>
-
-  <!-- 區域面板 -->
-  <div class="panel" id="panel">
-    <div class="panel-inner">
-      <div class="panel-head">
-        <div class="panel-title" id="panelTitle">區域</div>
-        <button class="panel-close" id="panelClose">✕</button>
-      </div>
-      <div id="panelBody"></div>
-    </div>
+  <div id="joystick"><div id="joyBase"></div><div id="joyStick"></div></div>
+  <button id="enterBtn">進入 🚪</button>
+  <div id="interior">
+    <div id="interiorBg"></div>
+    <div class="int-head"><div class="int-title" id="intTitle">室內</div><button class="int-back" id="intBack">← 回村莊</button></div>
+    <div class="int-body" id="intBody"></div>
   </div>
 </div>
 
-<!-- 抽獎結果 -->
-<div class="modal" id="drawModal">
-  <div class="modal-card">
-    <div class="modal-rar" id="drawRar"></div>
-    <div class="modal-img" id="drawImg"></div>
-    <div class="modal-name" id="drawName"></div>
-    <div class="modal-story" id="drawStory"></div>
-    <button class="modal-btn" id="drawClose">收下 🐾</button>
-  </div>
-</div>
-
-<!-- 確認彈窗 -->
-<div class="confirm" id="confirm">
-  <div class="confirm-card">
-    <h4 id="cfTitle">確認</h4>
-    <p id="cfMsg">訊息</p>
-    <div class="confirm-btns">
-      <button class="cf-cancel" id="cfCancel">取消</button>
-      <button class="cf-ok" id="cfOk">確認</button>
-    </div>
-  </div>
-</div>
-
+<div class="modal" id="drawModal"><div class="mcard"><div class="mrar" id="drawRar"></div><div class="mimg" id="drawImg"></div><div class="mname" id="drawName"></div><div class="mstory" id="drawStory"></div><button class="mbtn2" id="drawClose">收下 🐾</button></div></div>
+<div class="confirm" id="confirm"><div class="conf-card"><h4 id="cfTitle">確認</h4><p id="cfMsg">訊息</p><div class="cbtns"><button class="cf-c" id="cfCancel">取消</button><button class="cf-o" id="cfOk">確認</button></div></div></div>
 <div class="toast" id="toast"></div>
-<div class="loading" id="loading"><div class="spinner"></div><div class="loading-txt">進入貓咪村...</div></div>
+<div class="loading" id="loading"><div class="spinner"></div><div style="font-size:13px;opacity:.7">進入貓咪村...</div></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
 <script>
-/* ══════════════════════════════════════════════════════════════════
-   CONFIG（沿用 points-game.html 已驗證設定）
-══════════════════════════════════════════════════════════════════ */
+const IMG = {
+  village:'https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_53_25.png',
+  home:   'https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858776/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8807_11_00.png',
+  gacha:  'https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_55_11.png',
+  temple: 'https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_56_54.png',
+  lounge: 'https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858775/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8806_58_09.png',
+  mailbox:'https://res.cloudinary.com/dvti8ug8s/image/upload/v1781858776/ChatGPT_Image_2026%E5%B9%B46%E6%9C%8818%E6%97%A5_%E4%B8%8B%E5%8D%8807_02_37.png',
+};
 const CONFIG = {
-  POINTS_GAS_URL: 'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec',
-  ADMIN_TOKEN: 'unisalon_points_2026',
-  LINE_LOGIN_CHANNEL_ID: '2009831862',
-  LINE_LOGIN_CALLBACK: 'https://san555483-hub.github.io/village.html',  // ⚠️ 新檔網址,記得加進 LINE Login callback 白名單
-  LINE_OA_URL: 'https://line.me/R/ti/p/@261bhcyh',
-  SHOP_URL: 'https://san555483-hub.github.io/',
-  FQ_URL: 'https://san555483-hub.github.io/money-adventurer.html',
+  POINTS_GAS_URL:'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec',
+  ADMIN_TOKEN:'unisalon_points_2026',
+  LINE_LOGIN_CHANNEL_ID:'2009831862',
+  LINE_LOGIN_CALLBACK:'https://san555483-hub.github.io/village.html',
+  LINE_OA_URL:'https://line.me/R/ti/p/@261bhcyh',
 };
-
-/* ══════════════════════════════════════════════════════════════════
-   BIZ
-══════════════════════════════════════════════════════════════════ */
 const BIZ = {
-  DRAW_COST: 99,
-  REP_TIERS: [
-    { min: 0, name: '實習勇者' },
-    { min: 501, name: '鋼鐵衛士' },
-    { min: 2001, name: '傳奇聖王' },
+  DRAW_COST:99,
+  REP_TIERS:[{min:0,name:'實習勇者'},{min:501,name:'鋼鐵衛士'},{min:2001,name:'傳奇聖王'}],
+  SHOW_LEADERBOARD:false,
+  CATS:[
+    {id:'CAT_N01',name:'奶蓋',rarity:'N',emoji:'🐈'},{id:'CAT_N02',name:'摩卡',rarity:'N',emoji:'🐈'},
+    {id:'CAT_N03',name:'棉花',rarity:'N',emoji:'🐈‍⬛'},{id:'CAT_N04',name:'布丁',rarity:'N',emoji:'🐈'},
+    {id:'CAT_N05',name:'蜜桃',rarity:'N',emoji:'🐈'},{id:'CAT_R01',name:'可可',rarity:'R',emoji:'😺'},
+    {id:'CAT_R02',name:'香檳',rarity:'R',emoji:'😸'},{id:'CAT_R03',name:'抹茶',rarity:'R',emoji:'😼'},
+    {id:'CAT_R04',name:'莓果',rarity:'R',emoji:'🦁'},{id:'CAT_SSR01',name:'月光',rarity:'SSR',emoji:'🌙'},
+    {id:'CAT_SSR02',name:'星砂',rarity:'SSR',emoji:'✨'},{id:'CAT_SSR03',name:'CATWOMAN',rarity:'SSR',emoji:'😻'},
   ],
-  SHOW_LEADERBOARD: false,  // 🔒 Elsa 檢測通過前不開
-  CATS: [
-    { id: 'CAT_N01', name: '奶蓋', rarity: 'N', emoji: '🐈' },
-    { id: 'CAT_N02', name: '摩卡', rarity: 'N', emoji: '🐈' },
-    { id: 'CAT_N03', name: '棉花', rarity: 'N', emoji: '🐈‍⬛' },
-    { id: 'CAT_N04', name: '布丁', rarity: 'N', emoji: '🐈' },
-    { id: 'CAT_N05', name: '蜜桃', rarity: 'N', emoji: '🐈' },
-    { id: 'CAT_R01', name: '可可', rarity: 'R', emoji: '😺' },
-    { id: 'CAT_R02', name: '香檳', rarity: 'R', emoji: '😸' },
-    { id: 'CAT_R03', name: '抹茶', rarity: 'R', emoji: '😼' },
-    { id: 'CAT_R04', name: '莓果', rarity: 'R', emoji: '🦁' },
-    { id: 'CAT_SSR01', name: '月光', rarity: 'SSR', emoji: '🌙' },
-    { id: 'CAT_SSR02', name: '星砂', rarity: 'SSR', emoji: '✨' },
-    { id: 'CAT_SSR03', name: 'CATWOMAN', rarity: 'SSR', emoji: '😻' },
+  LOUNGE_VIDEOS:[
+    // 🎬 Elsa 填 YouTube 影片 ID,要幾支填幾支,自動輪播。例:'dQw4w9WgXcQ'
   ],
-  // ════════════════════════════════════════════════
-  //  🎬 交誼廳 YouTube 影片清單 ← Elsa 自己填這裡!
-  //  填法:把 YouTube 網址的影片 ID 貼進來(? v= 後面那串)
-  //  例: https://www.youtube.com/watch?v=AbCdEfg123 → 填 'AbCdEfg123'
-  //  要幾支填幾支,會自動輪播。留空就顯示「即將上線」。
-  // ════════════════════════════════════════════════
-  LOUNGE_VIDEOS: [
-    // 'YOUTUBE_ID_1',
-    // 'YOUTUBE_ID_2',
-    // 'YOUTUBE_ID_3',
-  ],
-  STORAGE_KEYS: { LAST_DATA: 'uni_village_lastdata', HISTORY: 'uni_village_history' },
-  API_TIMEOUT_MS: 12000,
+  STORAGE_KEY:'uni_village_v2_data',
+  API_TIMEOUT_MS:12000,
 };
-
 const TEXTS = {
-  GUEST_NAME: 'UNI 村民',
-  ERR_NOT_LOGIN: '請先登入 LINE 才能進村',
-  ERR_NETWORK: '連線失敗,請稍後再試 🐾',
-  ERR_NOT_ENOUGH: '點數不足,需要 99 點才能抽',
-  DRAW_TITLES: { SSR: '✨ SSR ✨', R: '🌟 R 🌟', N: 'N' },
-  HOW_EARN: [
-    ['消費 1 元', '1 點'],
-    ['註冊綁定', '100 點'],
-    ['美髮分享照', '100 點'],
-    ['準時赴約', '20 點'],
-    ['介紹朋友首次消費', '200 點'],
-  ],
-  EXCHANGE: [
-    ['30 點', '折抵 1 元現金'],
-    ['50 點', '儲值 1 元'],
-    ['99 點', '抽 1 次扭蛋'],
-  ],
+  GUEST_NAME:'UNI 村民', ERR_NETWORK:'連線失敗,請稍後再試 🐾', ERR_NOT_ENOUGH:'點數不足,需要 99 點才能抽',
+  DRAW_TITLES:{SSR:'✨ SSR ✨',R:'🌟 R 🌟',N:'N'},
+  HOW_EARN:[['消費 1 元','1 點'],['註冊綁定','100 點'],['美髮分享照','100 點'],['準時赴約','20 點'],['介紹朋友首次消費','200 點']],
+  EXCHANGE:[['30 點','折抵 1 元現金'],['50 點','儲值 1 元'],['99 點','抽 1 次扭蛋']],
 };
+const STATE = { uid:'', loginMethod:'', data:{ points:0, reputation:0, totalDraws:0, catsOwned:[], catsImgMap:{}, mainCatId:'', referralCode:'', name:'' }, history:[], curZone:'', videoIdx:0, phaserReady:false };
 
-/* ══════════════════════════════════════════════════════════════════
-   STATE
-══════════════════════════════════════════════════════════════════ */
-const STATE = {
-  uid: '', loginMethod: '',
-  data: { points: 0, reputation: 0, totalDraws: 0, catsOwned: [], catsImgMap: {}, mainCatId: '', referralCode: '', name: '' },
-  history: [],
-  curZone: '',
-  videoIdx: 0,
-};
-
-/* ══════════════════════════════════════════════════════════════════
-   工具
-══════════════════════════════════════════════════════════════════ */
 function $(id){ return document.getElementById(id); }
-function showToast(m, ms){ const e=$('toast'); e.textContent=m; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'), ms||2500); }
-function setLoading(on){ $('loading').classList.toggle('hide', !on); }
-function getQ(k){ return new URLSearchParams(location.search).get(k) || ''; }
+function showToast(m,ms){ const e=$('toast'); e.textContent=m; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),ms||2500); }
+function setLoading(on){ $('loading').classList.toggle('hide',!on); }
+function getQ(k){ return new URLSearchParams(location.search).get(k)||''; }
+function openConfirm(title,msg,onOk){ $('cfTitle').textContent=title; $('cfMsg').textContent=msg; $('confirm').classList.add('show'); const close=()=>$('confirm').classList.remove('show'); $('cfOk').onclick=()=>{ close(); onOk&&onOk(); }; $('cfCancel').onclick=close; }
 
-function openConfirm(title, msg, onOk){
-  $('cfTitle').textContent=title; $('cfMsg').textContent=msg;
-  $('confirm').classList.add('show');
-  const ok=$('cfOk'), cancel=$('cfCancel');
-  const close=()=>$('confirm').classList.remove('show');
-  ok.onclick=()=>{ close(); onOk&&onOk(); };
-  cancel.onclick=close;
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   LINE Login + UID(沿用三道防線)
-══════════════════════════════════════════════════════════════════ */
 function getUid(){
-  const paramUid = getQ('uid');
-  if (paramUid && /^U[a-z0-9]{32}$/i.test(paramUid)){ STATE.uid=paramUid; STATE.loginMethod='param'; return {kind:'uid', uid:paramUid}; }
-  const code = getQ('code');
-  if (code) return {kind:'code', code:code};
-  const cached = localStorage.getItem('uni_village_uid');
-  if (cached && /^U[a-z0-9]{32}$/i.test(cached)){ STATE.uid=cached; STATE.loginMethod='cache'; return {kind:'uid', uid:cached}; }
+  const p=getQ('uid'); if(p&&/^U[a-z0-9]{32}$/i.test(p)){ STATE.uid=p; STATE.loginMethod='param'; return {kind:'uid',uid:p}; }
+  const code=getQ('code'); if(code) return {kind:'code',code:code};
+  const c=localStorage.getItem('uni_village_uid'); if(c&&/^U[a-z0-9]{32}$/i.test(c)){ STATE.uid=c; STATE.loginMethod='cache'; return {kind:'uid',uid:c}; }
   return {kind:'none'};
 }
-function startLineLogin(){
-  const state = Math.random().toString(36).slice(2);
-  sessionStorage.setItem('uni_village_state', state);
-  const url = 'https://access.line.me/oauth2/v2.1/authorize'
-    + '?response_type=code'
-    + '&client_id=' + CONFIG.LINE_LOGIN_CHANNEL_ID
-    + '&redirect_uri=' + encodeURIComponent(CONFIG.LINE_LOGIN_CALLBACK)
-    + '&state=' + state
-    + '&scope=profile%20openid'
-    + '&bot_prompt=normal';
-  location.href = url;
-}
+function startLineLogin(){ const st=Math.random().toString(36).slice(2); sessionStorage.setItem('uni_village_state',st); location.href='https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id='+CONFIG.LINE_LOGIN_CHANNEL_ID+'&redirect_uri='+encodeURIComponent(CONFIG.LINE_LOGIN_CALLBACK)+'&state='+st+'&scope=profile%20openid&bot_prompt=normal'; }
 async function handleLineCallback(code){
-  if (window.__lineExchanging) return false;
-  const doneCode = sessionStorage.getItem('uni_village_code_done');
-  if (doneCode === code) return false;
-  window.__lineExchanging = true;
-  sessionStorage.setItem('uni_village_code_done', code);
-  history.replaceState({}, '', location.pathname);
-  setLoading(true);
-  try {
-    const r = await callApi('lineLoginExchange', { code: code, redirect_uri: CONFIG.LINE_LOGIN_CALLBACK });
-    if (r && r.ok && r.uid){
-      STATE.uid = r.uid; STATE.loginMethod='line';
-      localStorage.setItem('uni_village_uid', r.uid);
-      await loadData();
-      return true;
-    } else {
-      window.__lineExchanging=false;
-      showToast('LINE 登入失敗,請重新登入');
-      return false;
-    }
-  } catch(e){
-    console.error(e); window.__lineExchanging=false;
-    showToast(TEXTS.ERR_NETWORK); return false;
-  } finally { setLoading(false); }
+  if(window.__lineExchanging) return false;
+  if(sessionStorage.getItem('uni_village_code_done')===code) return false;
+  window.__lineExchanging=true; sessionStorage.setItem('uni_village_code_done',code); history.replaceState({},'',location.pathname); setLoading(true);
+  try{ const r=await callApi('lineLoginExchange',{code:code,redirect_uri:CONFIG.LINE_LOGIN_CALLBACK});
+    if(r&&r.ok&&r.uid){ STATE.uid=r.uid; STATE.loginMethod='line'; localStorage.setItem('uni_village_uid',r.uid); await loadData(); return true; }
+    window.__lineExchanging=false; showToast('LINE 登入失敗,請重新登入'); return false;
+  }catch(e){ console.error(e); window.__lineExchanging=false; showToast(TEXTS.ERR_NETWORK); return false; } finally{ setLoading(false); }
 }
-
-/* ══════════════════════════════════════════════════════════════════
-   API
-══════════════════════════════════════════════════════════════════ */
-async function callApi(action, params){
-  const url = new URL(CONFIG.POINTS_GAS_URL);
-  url.searchParams.set('action', action);
-  url.searchParams.set('token', CONFIG.ADMIN_TOKEN);
-  if (params) Object.keys(params).forEach(k=>{ if(params[k]!=null) url.searchParams.set(k, params[k]); });
-  const ctrl = new AbortController();
-  const timer = setTimeout(()=>ctrl.abort(), BIZ.API_TIMEOUT_MS);
-  try {
-    const res = await fetch(url.toString(), { method:'GET', signal: ctrl.signal });
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    return await res.json();
-  } catch(err){ console.error('[API '+action+']', err); return null; }
-  finally { clearTimeout(timer); }
+async function callApi(action,params){
+  const url=new URL(CONFIG.POINTS_GAS_URL); url.searchParams.set('action',action); url.searchParams.set('token',CONFIG.ADMIN_TOKEN);
+  if(params) Object.keys(params).forEach(k=>{ if(params[k]!=null) url.searchParams.set(k,params[k]); });
+  const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),BIZ.API_TIMEOUT_MS);
+  try{ const res=await fetch(url.toString(),{method:'GET',signal:ctrl.signal}); if(!res.ok) throw new Error('HTTP '+res.status); return await res.json(); }
+  catch(err){ console.error('[API '+action+']',err); return null; } finally{ clearTimeout(timer); }
 }
-
-/* ══════════════════════════════════════════════════════════════════
-   載入資料
-══════════════════════════════════════════════════════════════════ */
 async function loadData(){
-  if (!STATE.uid){ showToast(TEXTS.ERR_NOT_LOGIN); return; }
-  setLoading(true);
-  loadCache();
-  try {
-    const rPts = await callApi('getPoints', { uid: STATE.uid });
-    if (rPts && rPts.ok){
-      STATE.data.points = (rPts.balance!=null ? rPts.balance : (rPts.points||0));
-      STATE.data.reputation = rPts.reputation || 0;
-      STATE.data.totalDraws = rPts.totalDraws || 0;
-      STATE.data.referralCode = rPts.referralCode || '';
-      STATE.data.name = rPts.name || rPts.displayName || TEXTS.GUEST_NAME;
-    }
-    const rChar = await callApi('getCatsCollection', { uid: STATE.uid });
-    if (rChar && rChar.ok && Array.isArray(rChar.cats)){
-      STATE.data.catsOwned = rChar.cats;
-      STATE.data.mainCatId = rChar.mainCatId || '';
-      if (Array.isArray(rChar.catsDetail)){
-        STATE.data.catsImgMap = {};
-        rChar.catsDetail.forEach(c=>{ if(c&&c.catId){ STATE.data.catsImgMap[String(c.catId)]={ img:String(c.imageUrl||''), story:String(c.story||'') }; } });
-      }
-    }
-    if (BIZ.SHOW_LEADERBOARD){
-      const rBoard = await callApi('getReputationBoard', { limit: 10 });
-      if (rBoard && rBoard.ok && Array.isArray(rBoard.list)) STATE.data.repBoard = rBoard.list;
-    }
-    saveCache();
-    renderHud();
-    renderMainCat();
-    if (STATE.curZone) renderPanel(STATE.curZone);
-  } catch(e){ console.error(e); showToast(TEXTS.ERR_NETWORK); }
-  finally { setLoading(false); }
+  if(!STATE.uid) return; setLoading(true); loadCache();
+  try{
+    const rPts=await callApi('getPoints',{uid:STATE.uid});
+    if(rPts&&rPts.ok){ STATE.data.points=(rPts.balance!=null?rPts.balance:(rPts.points||0)); STATE.data.reputation=rPts.reputation||0; STATE.data.totalDraws=rPts.totalDraws||0; STATE.data.referralCode=rPts.referralCode||''; STATE.data.name=rPts.name||rPts.displayName||TEXTS.GUEST_NAME; }
+    const rChar=await callApi('getCatsCollection',{uid:STATE.uid});
+    if(rChar&&rChar.ok&&Array.isArray(rChar.cats)){ STATE.data.catsOwned=rChar.cats; STATE.data.mainCatId=rChar.mainCatId||'';
+      if(Array.isArray(rChar.catsDetail)){ STATE.data.catsImgMap={}; rChar.catsDetail.forEach(c=>{ if(c&&c.catId) STATE.data.catsImgMap[String(c.catId)]={img:String(c.imageUrl||''),story:String(c.story||'')}; }); } }
+    if(BIZ.SHOW_LEADERBOARD){ const rB=await callApi('getReputationBoard',{limit:10}); if(rB&&rB.ok&&Array.isArray(rB.list)) STATE.data.repBoard=rB.list; }
+    saveCache(); renderHud(); updatePlayerCatTexture(); if(STATE.curZone) renderInterior(STATE.curZone);
+  }catch(e){ console.error(e); showToast(TEXTS.ERR_NETWORK); } finally{ setLoading(false); }
 }
-function loadCache(){
-  try { const raw=localStorage.getItem(BIZ.STORAGE_KEYS.LAST_DATA);
-    if(raw){ const d=JSON.parse(raw); Object.assign(STATE.data, d.data||{}); STATE.history=d.history||[]; renderHud(); renderMainCat(); } } catch(_){}
-}
-function saveCache(){
-  try { localStorage.setItem(BIZ.STORAGE_KEYS.LAST_DATA, JSON.stringify({ data:STATE.data, history:STATE.history, ts:Date.now() })); } catch(_){}
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   渲染:HUD + 主角貓
-══════════════════════════════════════════════════════════════════ */
+function loadCache(){ try{ const raw=localStorage.getItem(BIZ.STORAGE_KEY); if(raw){ const d=JSON.parse(raw); Object.assign(STATE.data,d.data||{}); STATE.history=d.history||[]; renderHud(); } }catch(_){} }
+function saveCache(){ try{ localStorage.setItem(BIZ.STORAGE_KEY,JSON.stringify({data:STATE.data,history:STATE.history,ts:Date.now()})); }catch(_){} }
 function renderHud(){
-  $('hudPoints').textContent = (STATE.data.points||0).toLocaleString();
-  $('hudRep').textContent = STATE.data.reputation||0;
-  // HUD 頭像 = 主角貓
-  const mc = STATE.data.mainCatId;
-  const av = $('hudAvatar');
-  if (mc && STATE.data.catsImgMap[mc] && STATE.data.catsImgMap[mc].img){
-    av.innerHTML = `<img src="${STATE.data.catsImgMap[mc].img}" alt="">`;
-  } else {
-    const cat = BIZ.CATS.find(c=>c.id===mc);
-    av.textContent = cat ? cat.emoji : '🐱';
-  }
-}
-function renderMainCat(){
-  const mc = STATE.data.mainCatId;
-  const el = $('mainCat');
-  const tag = $('mainCatTag');
-  if (mc && STATE.data.catsImgMap[mc] && STATE.data.catsImgMap[mc].img){
-    el.innerHTML = `<img src="${STATE.data.catsImgMap[mc].img}" alt="">`;
-    const cat = BIZ.CATS.find(c=>c.id===mc);
-    tag.textContent = cat ? cat.name : '我的主角貓';
-  } else {
-    const cat = BIZ.CATS.find(c=>c.id===mc);
-    el.textContent = cat ? cat.emoji : '🐱';
-    tag.textContent = (STATE.data.catsOwned||[]).length ? '點我選主角貓' : '抽一隻貓當主角吧';
-  }
+  $('hudPoints').textContent=(STATE.data.points||0).toLocaleString(); $('hudRep').textContent=STATE.data.reputation||0;
+  const mc=STATE.data.mainCatId, av=$('hudAvatar');
+  if(mc&&STATE.data.catsImgMap[mc]&&STATE.data.catsImgMap[mc].img){ av.innerHTML=`<img src="${STATE.data.catsImgMap[mc].img}">`; } else{ const cat=BIZ.CATS.find(c=>c.id===mc); av.textContent=cat?cat.emoji:'🐱'; }
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   區域面板:點建築開
-══════════════════════════════════════════════════════════════════ */
-const ZONE_TITLES = { home:'🏠 我的小屋', gacha:'🎰 扭蛋站', temple:'🏛️ 榮耀神殿', lounge:'🛋️ 交誼廳', mailbox:'🎁 村口郵筒' };
-
-function openZone(zone){
-  STATE.curZone = zone;
-  $('panelTitle').textContent = ZONE_TITLES[zone] || '區域';
-  renderPanel(zone);
-  $('panel').classList.add('open');
-  $('village').classList.add('dimmed');
-}
-function closeZone(){
-  STATE.curZone='';
-  $('panel').classList.remove('open');
-  $('village').classList.remove('dimmed');
-  // 停掉交誼廳影片(避免背景播放)
-  const lf = $('loungeFrame'); if (lf) lf.src = lf.src;
-}
-
-function renderPanel(zone){
-  const body = $('panelBody');
-  if (zone==='home') body.innerHTML = renderHome();
-  else if (zone==='gacha') body.innerHTML = renderGacha();
-  else if (zone==='temple') body.innerHTML = renderTemple();
-  else if (zone==='lounge') { body.innerHTML = renderLounge(); initLounge(); }
-  else if (zone==='mailbox') body.innerHTML = renderMailbox();
-  bindPanelEvents(zone);
-}
-
-/* —— 🏠 我的小屋 —— */
-function renderHome(){
-  const owned = new Set(STATE.data.catsOwned||[]);
-  const collected = (STATE.data.catsOwned||[]).length;
-  let grid = '';
-  BIZ.CATS.forEach(cat=>{
-    const isOwned = owned.has(cat.id);
-    const detail = STATE.data.catsImgMap[cat.id];
-    const realUrl = detail ? detail.img : '';
-    const inner = !isOwned
-      ? `<div class="cat-lock">🔒</div>`
-      : (realUrl
-          ? `<img src="${realUrl}" alt="${cat.name}" onerror="this.outerHTML='<span style=\\'font-size:28px\\'>${cat.emoji}</span>'">`
-          : `<span style="font-size:28px">${cat.emoji}</span>`);
-    grid += `
-      <div class="cat-card ${isOwned?'clickable':'locked'}" ${isOwned?`data-cat="${cat.id}"`:''}>
-        <div class="cat-img">${inner}</div>
-        <div style="text-align:center">
-          <div class="cat-nm">${isOwned?cat.name:'???'}</div>
-          <span class="cat-rar ${cat.rarity}">${cat.rarity}</span>
-        </div>
-      </div>`;
-  });
-  return `
-    <div class="cats-summary">
-      <div>已收集 <span class="num">${collected}</span> / 12 隻</div>
-      <div class="cats-bar"><div class="cats-bar-fill" style="width:${collected/12*100}%"></div></div>
-      <div style="font-size:11px;opacity:0.7;margin-top:8px">點亮的貓可點選設為主角 🐾</div>
-    </div>
-    <div class="cats-grid">${grid}</div>`;
-}
-
-/* —— 🎰 扭蛋站 —— */
-function renderGacha(){
-  const enough = (STATE.data.points||0) >= BIZ.DRAW_COST;
-  return `
-    <div class="gacha-box">
-      <div class="gacha-machine" id="gachaMachine">🎰</div>
-      <div class="gacha-cost">消耗 <b>99</b> 點 · 抽一隻貓回村</div>
-      <div class="gacha-pools">
-        <div class="gacha-pool"><div class="t">A賞</div><div class="r" style="color:var(--rarity-ssr)">5%</div><div class="n">SSR</div></div>
-        <div class="gacha-pool"><div class="t">B賞</div><div class="r" style="color:var(--rarity-r)">15%</div><div class="n">R</div></div>
-        <div class="gacha-pool"><div class="t">C賞</div><div class="r">80%</div><div class="n">N</div></div>
-      </div>
-      <button class="gacha-btn" id="gachaBtn" ${enough?'':'disabled'}>${enough?'立即扭蛋':'點數不足'}</button>
-      <div class="gacha-hint" id="gachaHint">目前持有 ${STATE.data.points||0} 點</div>
-    </div>`;
-}
-
-/* —— 🏛️ 榮耀神殿 —— */
-function renderTemple(){
-  const rep = STATE.data.reputation||0;
-  let tier = BIZ.REP_TIERS[0].name;
-  for (let i=BIZ.REP_TIERS.length-1; i>=0; i--){ if(rep>=BIZ.REP_TIERS[i].min){ tier=BIZ.REP_TIERS[i].name; break; } }
-  let board;
-  if (!BIZ.SHOW_LEADERBOARD){
-    board = `<div class="rep-locked"><div class="lk">🔒</div><div>排行榜尚未開放</div></div>`;
-  } else {
-    const list = STATE.data.repBoard||[];
-    board = list.length===0 ? `<div class="rep-locked">尚無資料</div>`
-      : list.map((row,i)=>`<div class="rep-row"><div class="rep-rank ${i<3?'gold':''}">${i+1}</div><div class="rep-rname">${row.uidMasked||row.name||'匿名'}</div><div class="rep-rscore">${row.score||row.reputation||0}</div></div>`).join('');
-  }
-  return `
-    <div class="rep-mine">
-      <div style="font-size:12px;opacity:0.8">我的譽望</div>
-      <div class="rep-num">${rep}</div>
-      <div class="rep-tier">${tier}</div>
-      <div class="rep-desc">介紹朋友 / 完成消費 / 守時都會加分</div>
-    </div>
-    <div class="rep-board"><h4>譽望排行榜</h4>${board}</div>`;
-}
-
-/* —— 🛋️ 交誼廳 —— */
-function renderLounge(){
-  const vids = BIZ.LOUNGE_VIDEOS.filter(v=>v && v.trim());
-  let screen;
-  if (vids.length===0){
-    screen = `<div class="lounge-screen"><div class="novid">🎬 店家頻道即將上線<br><span style="font-size:11px;opacity:0.7">(影片清單在程式 LOUNGE_VIDEOS 填入)</span></div></div>`;
-  } else {
-    const first = vids[STATE.videoIdx % vids.length];
-    screen = `<div class="lounge-screen"><iframe id="loungeFrame" src="https://www.youtube.com/embed/${first}?rel=0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
-  }
-  const ctrl = vids.length>1
-    ? `<div class="lounge-ctrl"><button id="vPrev">⏮ 上一支</button><button id="vNext">下一支 ⏭</button></div>`
-    : '';
-  // 裝飾貓座位:用已擁有的貓,沒有就用全 12 emoji
-  const owned = STATE.data.catsOwned||[];
-  const seatCats = owned.length>0
-    ? owned.map(id=>{ const d=STATE.data.catsImgMap[id]; const c=BIZ.CATS.find(x=>x.id===id);
-        return d&&d.img ? `<div class="seat-cat"><img src="${d.img}"></div>` : `<div class="seat-cat">${c?c.emoji:'🐱'}</div>`; }).join('')
-    : BIZ.CATS.slice(0,8).map(c=>`<div class="seat-cat">${c.emoji}</div>`).join('');
-  return `
-    ${screen}
-    ${ctrl}
-    <div class="lounge-seats">${seatCats}</div>
-    <div class="lounge-label">🐾 村民們一起看店家影片</div>`;
-}
-function initLounge(){
-  // 影片切換綁定在 bindPanelEvents
-}
-
-/* —— 🎁 村口郵筒 —— */
-function renderMailbox(){
-  const earn = TEXTS.HOW_EARN.map(([a,b])=>`<div class="mail-item"><span>${a}</span><span class="pts">+${b}</span></div>`).join('');
-  const exch = TEXTS.EXCHANGE.map(([a,b])=>`<div class="mail-item"><span>${a}</span><span>${b}</span></div>`).join('');
-  const code = STATE.data.referralCode || '';
-  return `
-    <div class="mail-sect">
-      <h4>💎 怎麼累積點數</h4>
-      ${earn}
-    </div>
-    <div class="mail-sect">
-      <h4>💱 點數兌換</h4>
-      ${exch}
-    </div>
-    <div class="mail-sect">
-      <h4>🎟 我的介紹卡</h4>
-      <div class="mail-item"><span>邀請碼</span><span class="pts">${code||'聯絡 Elsa 開通'}</span></div>
-      ${code?`<button class="mail-btn" id="copyRef">複製邀請碼</button>`:''}
-    </div>
-    <div class="mail-sect">
-      <h4>💬 聯絡 Elsa</h4>
-      <button class="mail-btn" id="contactBtn">開啟 LINE 對話</button>
-    </div>`;
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   面板內事件
-══════════════════════════════════════════════════════════════════ */
-function bindPanelEvents(zone){
-  if (zone==='home'){
-    document.querySelectorAll('.cat-card.clickable').forEach(el=>{
-      el.addEventListener('click', ()=> setMainCat(el.dataset.cat));
-    });
-  }
-  if (zone==='gacha'){
-    const btn = $('gachaBtn');
-    if (btn) btn.addEventListener('click', ()=>{
-      openConfirm('確認扭蛋?', '將消耗 99 點 · A賞5% / B賞15% / C賞80%', doDraw);
-    });
-  }
-  if (zone==='lounge'){
-    const vids = BIZ.LOUNGE_VIDEOS.filter(v=>v&&v.trim());
-    const prev=$('vPrev'), next=$('vNext');
-    if (next) next.addEventListener('click', ()=>{ STATE.videoIdx=(STATE.videoIdx+1)%vids.length; renderPanel('lounge'); });
-    if (prev) prev.addEventListener('click', ()=>{ STATE.videoIdx=(STATE.videoIdx-1+vids.length)%vids.length; renderPanel('lounge'); });
-  }
-  if (zone==='mailbox'){
-    const cp=$('copyRef'); if(cp) cp.addEventListener('click', ()=>{ navigator.clipboard?.writeText(STATE.data.referralCode||'').then(()=>showToast('已複製邀請碼')); });
-    const ct=$('contactBtn'); if(ct) ct.addEventListener('click', ()=>{ location.href=CONFIG.LINE_OA_URL; });
-  }
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   切換主角貓(後端 setMainCharacter,5點)
-══════════════════════════════════════════════════════════════════ */
-function setMainCat(catId){
-  const cat = BIZ.CATS.find(c=>c.id===catId);
-  if (!cat) return;
-  if (STATE.data.mainCatId === catId){ showToast(cat.name+' 已經是你的主角貓了'); return; }
-  openConfirm('設為主角貓?', `要把「${cat.name}」設為主角貓嗎?(消耗 5 點)`, async ()=>{
-    const r = await callApi('setMainCharacter', { uid: STATE.uid, charId: catId });
-    if (r && r.ok){
-      STATE.data.mainCatId = catId;
-      if (r.balance!=null) STATE.data.points = r.balance;
-      saveCache(); renderHud(); renderMainCat();
-      showToast('主角貓換成 '+cat.name+' 🐾');
-    } else {
-      showToast(r&&r.msg ? r.msg : '切換失敗,點數可能不足');
+let GAME=null, GScene=null, player=null, buildings=[], nearBld=null;
+const joy={active:false,dx:0,dy:0};
+function buildGame(){
+  const host=$('gameHost'); const W=host.clientWidth, H=host.clientHeight;
+  const sceneObj={
+    preload:function(){
+      this.load.crossOrigin='anonymous';
+      this.load.image('bg',IMG.village); this.load.image('home',IMG.home); this.load.image('gacha',IMG.gacha);
+      this.load.image('temple',IMG.temple); this.load.image('lounge',IMG.lounge); this.load.image('mailbox',IMG.mailbox);
+      Object.keys(STATE.data.catsImgMap||{}).forEach(id=>{ const u=STATE.data.catsImgMap[id].img; if(u) this.load.image('cat_'+id,u); });
+      this.load.image('cat_default',IMG.home);
+    },
+    create:function(){
+      GScene=this;
+      const bg=this.add.image(W/2,H/2,'bg'); const bs=Math.max(W/bg.width,H/bg.height); bg.setScale(bs);
+      const mk=(key,x,y,w,zone,name)=>{ const b=this.add.image(W*x,H*y,key); b.setScale((W*w)/b.width); b.setData('zone',zone); b.setData('name',name); return b; };
+      buildings=[ mk('home',0.12,0.34,0.15,'home','我的小屋'), mk('gacha',0.32,0.26,0.15,'gacha','扭蛋站'), mk('temple',0.52,0.24,0.16,'temple','榮耀神殿'), mk('lounge',0.72,0.30,0.18,'lounge','交誼廳'), mk('mailbox',0.90,0.42,0.13,'mailbox','村口郵筒') ];
+      const ptex=playerTexKey(this); player=this.add.image(W*0.5,H*0.78,ptex); player.setScale((W*0.085)/player.width); player.setDepth(20);
+      this.cursors=this.input.keyboard.createCursorKeys(); STATE.phaserReady=true;
+    },
+    update:function(){
+      if(!player) return; const sp=2.6; let mx=0,my=0;
+      if(joy.active){ mx=joy.dx; my=joy.dy; }
+      if(this.cursors.left.isDown) mx=-1; if(this.cursors.right.isDown) mx=1; if(this.cursors.up.isDown) my=-1; if(this.cursors.down.isDown) my=1;
+      const moving=(mx!==0||my!==0);
+      if(moving){ player.x+=mx*sp; player.y+=my*sp; if(mx<-0.1) player.setFlipX(true); if(mx>0.1) player.setFlipX(false); player.y+=Math.sin(this.time.now/90)*0.5; }
+      player.x=Phaser.Math.Clamp(player.x,20,W-20); player.y=Phaser.Math.Clamp(player.y,H*0.12,H-20);
+      let found=null; buildings.forEach(b=>{ const d=Phaser.Math.Distance.Between(player.x,player.y,b.x,b.y); if(d<b.displayWidth*0.5){ found=b; } });
+      if(found!==nearBld){ nearBld=found; const eb=$('enterBtn'); if(nearBld){ eb.textContent='進入 '+nearBld.getData('name')+' 🚪'; eb.classList.add('show'); } else eb.classList.remove('show'); }
     }
+  };
+  GAME=new Phaser.Game({type:Phaser.AUTO,width:W,height:H,parent:'gameHost',transparent:true,scene:sceneObj});
+}
+function playerTexKey(scene){ const mc=STATE.data.mainCatId; if(mc&&scene.textures.exists('cat_'+mc)) return 'cat_'+mc; return 'cat_default'; }
+function updatePlayerCatTexture(){
+  if(!GScene||!player) return; const mc=STATE.data.mainCatId;
+  if(mc&&STATE.data.catsImgMap[mc]&&STATE.data.catsImgMap[mc].img){ const key='cat_'+mc;
+    if(GScene.textures.exists(key)){ player.setTexture(key); player.setScale((GScene.scale.width*0.085)/player.width); }
+    else{ GScene.load.image(key,STATE.data.catsImgMap[mc].img); GScene.load.once('complete',()=>{ player.setTexture(key); player.setScale((GScene.scale.width*0.085)/player.width); }); GScene.load.start(); } }
+}
+function initJoystick(){
+  const js=$('joystick'), stick=$('joyStick'); const R=35;
+  function move(px,py){ const r=js.getBoundingClientRect(); let dx=px-(r.left+60), dy=py-(r.top+60); const dist=Math.hypot(dx,dy); if(dist>R){ dx=dx/dist*R; dy=dy/dist*R; } stick.style.left=(35+dx)+'px'; stick.style.top=(35+dy)+'px'; joy.dx=dx/R; joy.dy=dy/R; joy.active=true; }
+  function end(){ stick.style.left='35px'; stick.style.top='35px'; joy.active=false; joy.dx=0; joy.dy=0; }
+  js.addEventListener('touchstart',e=>{ e.preventDefault(); move(e.touches[0].clientX,e.touches[0].clientY); },{passive:false});
+  js.addEventListener('touchmove',e=>{ e.preventDefault(); move(e.touches[0].clientX,e.touches[0].clientY); },{passive:false});
+  js.addEventListener('touchend',e=>{ e.preventDefault(); end(); },{passive:false});
+  js.addEventListener('mousedown',e=>{ move(e.clientX,e.clientY); const mm=ev=>move(ev.clientX,ev.clientY); const mu=()=>{ end(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }; document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu); });
+}
+const ZONE = { home:{title:'🏠 我的小屋',bg:IMG.home}, gacha:{title:'🎰 扭蛋站',bg:IMG.gacha}, temple:{title:'🏛️ 榮耀神殿',bg:IMG.temple}, lounge:{title:'🛋️ 交誼廳',bg:IMG.lounge}, mailbox:{title:'🎁 村口郵筒',bg:IMG.mailbox} };
+function enterZone(zone){ STATE.curZone=zone; const z=ZONE[zone]; $('intTitle').textContent=z.title; $('interiorBg').style.backgroundImage=`url('${z.bg}')`; renderInterior(zone); $('interior').classList.add('show'); if(GAME&&GAME.scene&&GAME.scene.scenes[0]) GAME.scene.scenes[0].scene.pause(); }
+function exitZone(){ STATE.curZone=''; $('interior').classList.remove('show'); const lf=$('loungeFrame'); if(lf) lf.src=lf.src; if(GAME&&GAME.scene&&GAME.scene.scenes[0]) GAME.scene.scenes[0].scene.resume(); }
+function renderInterior(zone){ const body=$('intBody'); if(zone==='home') body.innerHTML=renderHome(); else if(zone==='gacha') body.innerHTML=renderGacha(); else if(zone==='temple') body.innerHTML=renderTemple(); else if(zone==='lounge') body.innerHTML=renderLounge(); else if(zone==='mailbox') body.innerHTML=renderMailbox(); bindInterior(zone); }
+function renderHome(){
+  const owned=new Set(STATE.data.catsOwned||[]); const collected=(STATE.data.catsOwned||[]).length; let grid='';
+  BIZ.CATS.forEach(cat=>{ const isO=owned.has(cat.id); const det=STATE.data.catsImgMap[cat.id]; const url=det?det.img:''; const isMain=STATE.data.mainCatId===cat.id;
+    const inner=!isO?`<div class="clock">🔒</div>`:(url?`<img src="${url}" onerror="this.outerHTML='<span style=\\'font-size:26px\\'>${cat.emoji}</span>'">`:`<span style="font-size:26px">${cat.emoji}</span>`);
+    grid+=`<div class="ccard ${isO?'clickable':'locked'} ${isMain?'main':''}" ${isO?`data-cat="${cat.id}"`:''}>${isMain?'<div class="cmaintag">主角</div>':''}<div class="cimg">${inner}</div><div style="text-align:center"><div class="cnm">${isO?cat.name:'???'}</div><span class="crar ${cat.rarity}">${cat.rarity}</span></div></div>`; });
+  return `<div class="cats-sum"><div>已收集 <span class="n">${collected}</span> / 12 隻</div><div class="cbar"><div class="cbar-f" style="width:${collected/12*100}%"></div></div><div style="font-size:11px;opacity:.7;margin-top:8px">點亮的貓可點選設為主角 🐾</div></div><div class="cgrid">${grid}</div>`;
+}
+function renderGacha(){ const enough=(STATE.data.points||0)>=BIZ.DRAW_COST; return `<div class="gbox"><div class="gmach" id="gmach">🎰</div><div class="gcost">消耗 <b>99</b> 點 · 抽一隻貓回村</div><div class="gpools"><div class="gpool"><div class="t">A賞</div><div class="r" style="color:var(--rarity-ssr)">5%</div><div class="nn">SSR</div></div><div class="gpool"><div class="t">B賞</div><div class="r" style="color:var(--rarity-r)">15%</div><div class="nn">R</div></div><div class="gpool"><div class="t">C賞</div><div class="r">80%</div><div class="nn">N</div></div></div><button class="gbtn" id="gbtn" ${enough?'':'disabled'}>${enough?'立即扭蛋':'點數不足'}</button><div class="ghint">目前持有 ${STATE.data.points||0} 點</div></div>`; }
+function renderTemple(){
+  const rep=STATE.data.reputation||0; let tier=BIZ.REP_TIERS[0].name; for(let i=BIZ.REP_TIERS.length-1;i>=0;i--){ if(rep>=BIZ.REP_TIERS[i].min){ tier=BIZ.REP_TIERS[i].name; break; } }
+  let board; if(!BIZ.SHOW_LEADERBOARD){ board=`<div class="rlock"><div class="lk">🔒</div><div>排行榜尚未開放</div></div>`; } else{ const list=STATE.data.repBoard||[]; board=list.length===0?`<div class="rlock">尚無資料</div>`:list.map((row,i)=>`<div class="rrow"><div class="rrank ${i<3?'gold':''}">${i+1}</div><div class="rname">${row.uidMasked||row.name||'匿名'}</div><div class="rscore">${row.score||row.reputation||0}</div></div>`).join(''); }
+  return `<div class="rmine"><div style="font-size:12px;opacity:.8">我的譽望</div><div class="rnum">${rep}</div><div class="rtier">${tier}</div><div class="rdesc">介紹朋友 / 完成消費 / 守時都會加分</div></div><div class="rboard"><h4>譽望排行榜</h4>${board}</div>`;
+}
+function renderLounge(){
+  const vids=BIZ.LOUNGE_VIDEOS.filter(v=>v&&v.trim()); let screen;
+  if(vids.length===0){ screen=`<div class="lscreen"><div class="nov">🎬 店家頻道即將上線<br><span style="font-size:11px;opacity:.7">(影片在程式 LOUNGE_VIDEOS 填入)</span></div></div>`; }
+  else{ const f=vids[STATE.videoIdx%vids.length]; screen=`<div class="lscreen"><iframe id="loungeFrame" src="https://www.youtube.com/embed/${f}?rel=0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`; }
+  const ctrl=vids.length>1?`<div class="lctrl"><button id="vPrev">⏮ 上一支</button><button id="vNext">下一支 ⏭</button></div>`:'';
+  const owned=STATE.data.catsOwned||[]; const seats=owned.length>0?owned.map(id=>{ const d=STATE.data.catsImgMap[id]; const c=BIZ.CATS.find(x=>x.id===id); return d&&d.img?`<div class="seat"><img src="${d.img}"></div>`:`<div class="seat">${c?c.emoji:'🐱'}</div>`; }).join(''):BIZ.CATS.slice(0,8).map(c=>`<div class="seat">${c.emoji}</div>`).join('');
+  return `${screen}${ctrl}<div class="lseats">${seats}</div><div class="llabel">🐾 村民們一起看店家影片</div>`;
+}
+function renderMailbox(){
+  const earn=TEXTS.HOW_EARN.map(([a,b])=>`<div class="mitem"><span>${a}</span><span class="pts">+${b}</span></div>`).join(''); const exch=TEXTS.EXCHANGE.map(([a,b])=>`<div class="mitem"><span>${a}</span><span>${b}</span></div>`).join(''); const code=STATE.data.referralCode||'';
+  return `<div class="msect"><h4>💎 怎麼累積點數</h4>${earn}</div><div class="msect"><h4>💱 點數兌換</h4>${exch}</div><div class="msect"><h4>🎟 我的介紹卡</h4><div class="mitem"><span>邀請碼</span><span class="pts">${code||'聯絡 Elsa 開通'}</span></div>${code?`<button class="mbtn" id="copyRef">複製邀請碼</button>`:''}</div><div class="msect"><h4>💬 聯絡 Elsa</h4><button class="mbtn" id="contactBtn">開啟 LINE 對話</button></div>`;
+}
+function bindInterior(zone){
+  if(zone==='home'){ document.querySelectorAll('.ccard.clickable').forEach(el=>el.addEventListener('click',()=>setMainCat(el.dataset.cat))); }
+  if(zone==='gacha'){ const b=$('gbtn'); if(b) b.addEventListener('click',()=>openConfirm('確認扭蛋?','將消耗 99 點 · A賞5% / B賞15% / C賞80%',doDraw)); }
+  if(zone==='lounge'){ const vids=BIZ.LOUNGE_VIDEOS.filter(v=>v&&v.trim()); const pv=$('vPrev'),nx=$('vNext'); if(nx) nx.addEventListener('click',()=>{ STATE.videoIdx=(STATE.videoIdx+1)%vids.length; renderInterior('lounge'); }); if(pv) pv.addEventListener('click',()=>{ STATE.videoIdx=(STATE.videoIdx-1+vids.length)%vids.length; renderInterior('lounge'); }); }
+  if(zone==='mailbox'){ const cp=$('copyRef'); if(cp) cp.addEventListener('click',()=>navigator.clipboard?.writeText(STATE.data.referralCode||'').then(()=>showToast('已複製邀請碼'))); const ct=$('contactBtn'); if(ct) ct.addEventListener('click',()=>location.href=CONFIG.LINE_OA_URL); }
+}
+function setMainCat(catId){
+  const cat=BIZ.CATS.find(c=>c.id===catId); if(!cat) return;
+  if(STATE.data.mainCatId===catId){ showToast(cat.name+' 已經是你的主角貓了'); return; }
+  openConfirm('設為主角貓?',`要把「${cat.name}」設為主角貓嗎?(消耗 5 點)`,async()=>{
+    const r=await callApi('setMainCharacter',{uid:STATE.uid,charId:catId});
+    if(r&&r.ok){ STATE.data.mainCatId=catId; if(r.balance!=null) STATE.data.points=r.balance; saveCache(); renderHud(); updatePlayerCatTexture(); renderInterior('home'); showToast('主角貓換成 '+cat.name+' 🐾'); }
+    else showToast(r&&r.msg?r.msg:'切換失敗,點數可能不足');
   });
 }
-
-/* ══════════════════════════════════════════════════════════════════
-   抽卡
-══════════════════════════════════════════════════════════════════ */
 async function doDraw(){
-  if ((STATE.data.points||0) < BIZ.DRAW_COST){ showToast(TEXTS.ERR_NOT_ENOUGH); return; }
-  const machine = $('gachaMachine'); const btn = $('gachaBtn');
-  if (machine) machine.classList.add('spin');
-  if (btn) btn.disabled = true;
-  const r = await callApi('drawCharacter', { uid: STATE.uid });
-  await new Promise(res=>setTimeout(res, 1800));
-  if (machine) machine.classList.remove('spin');
-  if (!r || !r.ok){ showToast(r&&r.msg?r.msg:TEXTS.ERR_NETWORK); if(btn)btn.disabled=false; return; }
-
-  const ch = r.character || {};
-  const newPts = (r.balance!=null ? r.balance : r.points);
-  if (newPts!=null) STATE.data.points = newPts;
-  STATE.data.totalDraws = (STATE.data.totalDraws||0)+1;
-  if (ch.charId && !STATE.data.catsOwned.includes(ch.charId)) STATE.data.catsOwned.push(ch.charId);
-  STATE.history.unshift({ time:new Date().toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}), rarity:ch.rarity||'N', name:ch.charName||ch.name||'?' });
-  saveCache();
-  renderHud(); renderMainCat();
-  if (STATE.curZone==='gacha') renderPanel('gacha');
-  showDrawResult(ch);
+  if((STATE.data.points||0)<BIZ.DRAW_COST){ showToast(TEXTS.ERR_NOT_ENOUGH); return; }
+  const m=$('gmach'),b=$('gbtn'); if(m) m.classList.add('spin'); if(b) b.disabled=true;
+  const r=await callApi('drawCharacter',{uid:STATE.uid}); await new Promise(res=>setTimeout(res,1800)); if(m) m.classList.remove('spin');
+  if(!r||!r.ok){ showToast(r&&r.msg?r.msg:TEXTS.ERR_NETWORK); if(b) b.disabled=false; return; }
+  const ch=r.character||{}; const np=(r.balance!=null?r.balance:r.points); if(np!=null) STATE.data.points=np; STATE.data.totalDraws=(STATE.data.totalDraws||0)+1;
+  if(ch.charId&&!STATE.data.catsOwned.includes(ch.charId)) STATE.data.catsOwned.push(ch.charId);
+  STATE.history.unshift({time:new Date().toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),rarity:ch.rarity||'N',name:ch.charName||ch.name||'?'});
+  saveCache(); renderHud(); if(STATE.curZone==='gacha') renderInterior('gacha'); showDrawResult(ch);
 }
 function showDrawResult(ch){
-  const r = ch.rarity || 'N';
-  $('drawRar').textContent = TEXTS.DRAW_TITLES[r] || r;
-  $('drawRar').style.color = r==='SSR'?'var(--rarity-ssr)':(r==='R'?'var(--rarity-r)':'var(--rarity-n)');
-  $('drawName').textContent = ch.charName || ch.name || '神秘貓咪';
-  const detail = STATE.data.catsImgMap[ch.charId];
-  $('drawStory').textContent = (detail&&detail.story) ? detail.story : (ch.story||'');
-  const cat = BIZ.CATS.find(c=>c.id===ch.charId) || {};
-  const realUrl = ch.imageUrl || (detail&&detail.img) || '';
-  $('drawImg').innerHTML = realUrl
-    ? `<img src="${realUrl}" onerror="this.outerHTML='<span style=\\'font-size:70px\\'>${cat.emoji||'🐱'}</span>'">`
-    : `<span style="font-size:70px">${cat.emoji||'🐱'}</span>`;
+  const r=ch.rarity||'N'; $('drawRar').textContent=TEXTS.DRAW_TITLES[r]||r; $('drawRar').style.color=r==='SSR'?'var(--rarity-ssr)':(r==='R'?'var(--rarity-r)':'var(--rarity-n)');
+  $('drawName').textContent=ch.charName||ch.name||'神秘貓咪'; const det=STATE.data.catsImgMap[ch.charId]; $('drawStory').textContent=(det&&det.story)?det.story:(ch.story||'');
+  const cat=BIZ.CATS.find(c=>c.id===ch.charId)||{}; const url=ch.imageUrl||(det&&det.img)||'';
+  $('drawImg').innerHTML=url?`<img src="${url}" onerror="this.outerHTML='<span style=\\'font-size:70px\\'>${cat.emoji||'🐱'}</span>'">`:`<span style="font-size:70px">${cat.emoji||'🐱'}</span>`;
   $('drawModal').classList.add('show');
 }
-
-/* ══════════════════════════════════════════════════════════════════
-   登出
-══════════════════════════════════════════════════════════════════ */
-function doLogout(){
-  openConfirm('切換帳號', '要登出目前帳號嗎?下次需重新用 LINE 登入 🐾', ()=>{
-    localStorage.removeItem('uni_village_uid');
-    sessionStorage.removeItem('uni_village_code_done');
-    sessionStorage.removeItem('uni_village_state');
-    window.__lineExchanging=false;
-    STATE.uid=''; STATE.loginMethod='';
-    location.replace(location.pathname);
-  });
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   事件綁定
-══════════════════════════════════════════════════════════════════ */
+function doLogout(){ openConfirm('切換帳號','要登出目前帳號嗎?下次需重新用 LINE 登入 🐾',()=>{ localStorage.removeItem('uni_village_uid'); sessionStorage.removeItem('uni_village_code_done'); sessionStorage.removeItem('uni_village_state'); window.__lineExchanging=false; STATE.uid=''; STATE.loginMethod=''; location.replace(location.pathname); }); }
 function bindEvents(){
-  document.querySelectorAll('.building').forEach(b=>{
-    b.addEventListener('click', ()=> openZone(b.dataset.zone));
-  });
-  $('panelClose').addEventListener('click', closeZone);
-  $('mainCat').addEventListener('click', ()=> openZone('home'));
-  $('hudAvatar').addEventListener('click', ()=> openZone('home'));
-  $('switchAccBtn').addEventListener('click', doLogout);
-  $('drawClose').addEventListener('click', ()=> $('drawModal').classList.remove('show'));
+  $('enterBtn').addEventListener('click',()=>{ if(nearBld) enterZone(nearBld.getData('zone')); });
+  $('intBack').addEventListener('click',exitZone);
+  $('switchAccBtn').addEventListener('click',doLogout);
+  $('drawClose').addEventListener('click',()=>$('drawModal').classList.remove('show'));
+  $('hudAvatar').addEventListener('click',()=>enterZone('home'));
 }
-
-/* ══════════════════════════════════════════════════════════════════
-   啟動
-══════════════════════════════════════════════════════════════════ */
 async function init(){
-  bindEvents();
-  const r = getUid();
-  if (r.kind==='uid'){ await loadData(); setLoading(false); return; }
-  if (r.kind==='code'){
-    const ok = await handleLineCallback(r.code);
-    if (!ok){ setLoading(false); openConfirm('進入貓咪村', '需要 LINE 登入才能進村查看你的點數和貓咪 🐾', startLineLogin); }
-    else setLoading(false);
-    return;
-  }
-  setLoading(false);
-  openConfirm('進入貓咪村', '需要 LINE 登入才能進村查看你的點數和貓咪 🐾', startLineLogin);
+  bindEvents(); initJoystick(); const r=getUid();
+  if(r.kind==='uid'){ await loadData(); buildGame(); setLoading(false); return; }
+  if(r.kind==='code'){ const ok=await handleLineCallback(r.code); if(!ok){ setLoading(false); openConfirm('進入貓咪村','需要 LINE 登入才能進村 🐾',startLineLogin); } else { buildGame(); setLoading(false); } return; }
+  setLoading(false); openConfirm('進入貓咪村','需要 LINE 登入才能進村查看你的點數和貓咪 🐾',startLineLogin);
 }
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
