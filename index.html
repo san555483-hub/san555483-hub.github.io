@@ -712,6 +712,157 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   .hero h1{font-size:1.4rem;}
   .shipping-grid{grid-template-columns:1fr;}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 視覺美化覆蓋層 v1（2026/06/19）
+   原則：只改視覺，不動任何 JS 與結構邏輯。
+   回滾：刪除本「視覺美化覆蓋層」整段即完全還原。
+   ─────────────────────────────────────────────────────────── */
+
+/* ── 全站底色加一層極淡暖階，減少大片死白 ── */
+body{ background:linear-gradient(180deg,#faf6f1 0%,#f6efe6 100%); }
+
+/* ── 1. 快速入口四張功能卡：放大圖示、統一留白與陰影、暖色描邊 ── */
+.quick-actions{ padding:30px 18px 14px; }
+.qa-grid{ gap:14px; }
+.qa-card{
+  padding:24px 14px 20px;
+  border:1px solid #e6dccd;
+  border-radius:14px;
+  background:linear-gradient(160deg,#ffffff 0%,#fffdf9 100%);
+  box-shadow:0 3px 14px -6px rgba(61,43,31,.14);
+  gap:10px;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,border-color .28s;
+}
+.qa-card:hover{
+  transform:translateY(-4px);
+  border-color:var(--rose);
+  box-shadow:0 12px 30px -10px rgba(201,137,122,.4);
+}
+.qa-icon{
+  font-size:2.15rem;
+  line-height:1;
+  filter:drop-shadow(0 2px 4px rgba(61,43,31,.12));
+}
+.qa-title{ font-size:.86rem; letter-spacing:.02em; }
+.qa-sub{ font-size:.64rem; opacity:.85; }
+
+/* ── 2. 首頁分類頁籤：藥丸質感統一、換行整齊、護髮完整顯示 ── */
+#home-shop-section{ padding-top:14px; }
+#home-cat-tabs{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:9px !important;
+  padding:6px 0 16px 0 !important;
+  align-items:center;
+  border-bottom:1px solid #eee3d4;
+  margin-bottom:18px;
+}
+.home-cat-tab{
+  padding:8px 17px;
+  border:1.5px solid #e3d8c8;
+  border-radius:22px;
+  font-size:.76rem;
+  background:#fff;
+  color:var(--mid);
+  box-shadow:0 1px 4px -2px rgba(61,43,31,.1);
+  transition:all .22s ease;
+}
+.home-cat-tab:hover{
+  background:var(--gold-lt);
+  color:var(--bark);
+  border-color:var(--gold);
+}
+.home-cat-tab.active{
+  background:var(--bark);
+  color:#fff;
+  border-color:var(--bark);
+  box-shadow:0 3px 10px -3px rgba(61,43,31,.4);
+}
+.home-cat-tab.brand-tab{ border-color:var(--gold); color:var(--gold); background:#fffaf2; }
+.home-cat-tab.brand-tab.active,.home-cat-tab.brand-tab:hover{ background:var(--gold); color:#fff; }
+
+/* ── 3. 商品卡：圖底柔化、NEW 標籤與圓角陰影統一、hover 更穩 ── */
+.product-grid{ gap:14px; }
+.product-card{
+  border:1px solid #ebe1d3;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 2px 10px -5px rgba(61,43,31,.12);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s;
+}
+.product-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 34px -12px rgba(61,43,31,.28);
+  border-color:#e0d3c0;
+}
+.prod-img-wrap{
+  height:188px;
+  background:linear-gradient(160deg,#f7f1e8,#efe6d8) !important;
+  border-bottom:1px solid #f0e7d8;
+}
+.prod-tag{
+  top:9px; left:9px;
+  background:linear-gradient(135deg,var(--rose),#b87468);
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:.5rem;
+  box-shadow:0 2px 6px -2px rgba(201,137,122,.5);
+  letter-spacing:.1em;
+}
+.prod-body{ padding:12px 11px 13px; }
+.prod-name{ font-size:.83rem; line-height:1.45; }
+.add-btn{
+  border-radius:22px;
+  padding:9px;
+  font-size:.74rem;
+  letter-spacing:.05em;
+  background:linear-gradient(135deg,#4a3526,var(--bark));
+  transition:all .22s;
+}
+.add-btn:hover{ background:linear-gradient(135deg,var(--bark2),#4a3526); transform:translateY(-1px); }
+.qty-wrap{ border-radius:20px; border-color:#e3d8c8; }
+
+/* ── 4. 品牌特色區：卡片化、留白呼吸感 ── */
+.features-section{
+  background:linear-gradient(180deg,#f3ebde,#efe6d6);
+  border-color:#e6dccd;
+}
+.features-inner{ padding:38px 18px; gap:22px; }
+.feat-item{
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(230,220,205,.7);
+  border-radius:12px;
+  padding:18px 12px;
+  transition:transform .25s,box-shadow .25s;
+}
+.feat-item:hover{ transform:translateY(-3px); box-shadow:0 10px 24px -12px rgba(61,43,31,.25); }
+.feat-icon{ font-size:1.7rem; filter:drop-shadow(0 2px 3px rgba(61,43,31,.12)); }
+.feat-title{ font-size:.8rem; }
+
+/* ── 5. Hero V2 文字區地址 meta 與整體間距微調 ── */
+.hv2-meta{ margin-top:20px; }
+
+/* ── 6. 救火求助卡：圓角與陰影柔化，融入整體 ── */
+.shop-rescue-box{
+  border-radius:14px;
+  box-shadow:0 3px 14px -8px rgba(61,43,31,.18);
+}
+
+/* ── 7. 區塊之間統一垂直節奏 ── */
+.video-section-inner{ padding-top:8px; }
+.step-header h2,.video-section-inner h2{ letter-spacing:.02em; }
+
+/* ── 手機微調 ── */
+@media(max-width:480px){
+  .qa-grid{ gap:10px; }
+  .qa-card{ padding:18px 10px 16px; border-radius:12px; }
+  .qa-icon{ font-size:1.85rem; }
+  .product-grid{ gap:10px; }
+  .home-cat-tab{ font-size:.72rem; padding:7px 14px; }
+}
+/* ═══════ 視覺美化覆蓋層 END ═══════ */
+
 </style>
 </head>
 <body>
@@ -977,7 +1128,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   <!-- ── 商品直覽區（內嵌在首頁） ── -->
   <div id="home-shop-section" style="max-width:900px;margin:0 auto;padding:8px 16px 24px;">
     <!-- 分類 Tab -->
-    <div id="home-cat-tabs" style="display:flex;g<div id="home-cat-tabs" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 12px 0;"></div>
+    <div id="home-cat-tabs" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 12px 0;"></div>
     <div id="home-add-prod-wrap"></div>
     <!-- 商品格 -->
     <div id="home-product-wrap">
