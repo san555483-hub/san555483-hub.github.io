@@ -396,7 +396,7 @@ header{background:var(--bark);position:sticky;top:0;z-index:200;box-shadow:0 2px
 
 .cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
 /* 首頁商品直覽分類Tab */
-.home-cat-tab{padding:8px 18px;border:1.5px solid var(--border);border-radius:20px;font-size:.75rem;font-family:'Noto Sans TC',sans-serif;background:#fff;color:var(--mid);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;}
+.home-cat-tab{padding:8px 18px;border:1.5px solid var(--border);border-radius:20px;font-size:.75rem;font-family:'Noto Sans TC',sans-serif;background:#fff;color:var(--mid);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;scroll-snap-align:start;}
 .home-cat-tab.active,.home-cat-tab:hover{background:var(--bark);color:#fff;border-color:var(--bark);}
 .home-cat-tab.brand-tab{border-color:var(--gold);color:var(--gold);}
 .home-cat-tab.brand-tab.active,.home-cat-tab.brand-tab:hover{background:var(--gold);color:#fff;border-color:var(--gold);}
@@ -977,7 +977,7 @@ footer{background:var(--bark);color:rgba(255,255,255,.45);text-align:center;padd
   <!-- ── 商品直覽區（內嵌在首頁） ── -->
   <div id="home-shop-section" style="max-width:900px;margin:0 auto;padding:8px 16px 24px;">
     <!-- 分類 Tab -->
-    <div id="home-cat-tabs" style="display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:none;-ms-overflow-style:none;"></div>
+    <div id="home-cat-tabs" style="display:flex;gap:8px;overflow-x:auto;padding:4px 16px 12px 0;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;"></div>
     <!-- 新增商品按鈕（店家模式） -->
     <div id="home-add-prod-wrap"></div>
     <!-- 商品格 -->
