@@ -236,12 +236,23 @@ function buildGame(){
       const mk=(key,x,y,w,zone,name)=>{ const b=this.add.image(W*x,H*y,key); b.setScale((W*w)/b.width); b.setData('zone',zone); b.setData('name',name); return b; };
       buildings=[ mk('home',0.12,0.34,0.15,'home','我的小屋'), mk('gacha',0.32,0.26,0.15,'gacha','扭蛋站'), mk('temple',0.52,0.24,0.16,'temple','榮耀神殿'), mk('lounge',0.72,0.30,0.18,'lounge','交誼廳'), mk('mailbox',0.90,0.42,0.13,'mailbox','村口郵筒') ];
       const ptex=playerTexKey(this); player=this.add.image(W*0.5,H*0.78,ptex); player.setScale((W*0.085)/player.width); player.setDepth(20);
-      this.cursors=this.input.keyboard.createCursorKeys(); STATE.phaserReady=true;
+      this.cursors=this.input.keyboard.createCursorKeys();
+      // 🎮 WASD 鍵（遊戲常用移動鍵，與方向鍵並存）
+      this.wasd=this.input.keyboard.addKeys({up:'W',left:'A',down:'S',right:'D'});
+      STATE.phaserReady=true;
     },
     update:function(){
       if(!player) return; const sp=2.6; let mx=0,my=0;
+      // 📱 手機虛擬搖桿（原樣保留）
       if(joy.active){ mx=joy.dx; my=joy.dy; }
-      if(this.cursors.left.isDown) mx=-1; if(this.cursors.right.isDown) mx=1; if(this.cursors.up.isDown) my=-1; if(this.cursors.down.isDown) my=1;
+      // 💻 鍵盤：方向鍵 + WASD 都吃，累加可斜向走
+      const c=this.cursors, w=this.wasd;
+      if(c.left.isDown  || (w&&w.left.isDown))  mx-=1;
+      if(c.right.isDown || (w&&w.right.isDown)) mx+=1;
+      if(c.up.isDown    || (w&&w.up.isDown))    my-=1;
+      if(c.down.isDown  || (w&&w.down.isDown))  my+=1;
+      // 斜向正規化：避免斜走比直走快（向量長度 >1 才縮）
+      const mag=Math.hypot(mx,my); if(mag>1){ mx/=mag; my/=mag; }
       const moving=(mx!==0||my!==0);
       if(moving){ player.x+=mx*sp; player.y+=my*sp; if(mx<-0.1) player.setFlipX(true); if(mx>0.1) player.setFlipX(false); player.y+=Math.sin(this.time.now/90)*0.5; }
       player.x=Phaser.Math.Clamp(player.x,20,W-20); player.y=Phaser.Math.Clamp(player.y,H*0.12,H-20);
