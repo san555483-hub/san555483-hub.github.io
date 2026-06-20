@@ -96,6 +96,11 @@
   .toast{ position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.85); color:#fff; padding:11px 20px; border-radius:16px; font-size:13px; z-index:600; opacity:0; transition:opacity .25s; pointer-events:none; max-width:80%; text-align:center; } .toast.show{ opacity:1; }
   .loading{ position:fixed; inset:0; background:#1a1525; display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:800; color:var(--text); } .loading.hide{ display:none; }
   .spinner{ width:38px; height:38px; border:3px solid rgba(201,166,104,.25); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:12px; } @keyframes spin{ to{transform:rotate(360deg)} }
+
+/* 🌿②進門過場白光 */
+#enterFx{ position:fixed; inset:0; background:radial-gradient(circle at center, rgba(255,250,235,.95), rgba(255,245,220,.7)); opacity:0; pointer-events:none; z-index:9000; transition:opacity .34s ease; }
+#enterFx.on{ opacity:1; }
+#interior{ transition:opacity .4s ease; }
 </style>
 </head>
 <body>
@@ -114,6 +119,7 @@
   </div>
   <div id="joystick"><div id="joyBase"></div><div id="joyStick"></div></div>
   <button id="enterBtn">進入 🚪</button>
+  <div id="enterFx"></div>
   <div id="interior">
     <div id="interiorBg"></div>
     <div class="int-head"><div class="int-title" id="intTitle">室內</div><button class="int-back" id="intBack">← 回村莊</button></div>
@@ -229,31 +235,29 @@ function buildGame(){
       this.load.image('temple',IMG.temple); this.load.image('lounge',IMG.lounge); this.load.image('mailbox',IMG.mailbox);
       Object.keys(STATE.data.catsImgMap||{}).forEach(id=>{ const u=STATE.data.catsImgMap[id].img; if(u) this.load.image('cat_'+id,u); });
       this.load.image('cat_default',IMG.home);
+      preloadWalkFrames(this); preloadAccessories(this); /* 🌿增強 */
     },
     create:function(){
       GScene=this;
       const bg=this.add.image(W/2,H/2,'bg'); const bs=Math.max(W/bg.width,H/bg.height); bg.setScale(bs);
       const mk=(key,x,y,w,zone,name)=>{ const b=this.add.image(W*x,H*y,key); b.setScale((W*w)/b.width); b.setData('zone',zone); b.setData('name',name); return b; };
-      buildings=[ mk('home',0.12,0.34,0.15,'home','我的小屋'), mk('gacha',0.32,0.26,0.15,'gacha','扭蛋站'), mk('temple',0.52,0.24,0.16,'temple','榮耀神殿'), mk('lounge',0.72,0.30,0.18,'lounge','交誼廳'), mk('mailbox',0.90,0.42,0.13,'mailbox','村口郵筒') ];
+      buildings=[ mk('home',0.12,0.34,0.15,'home','我的小屋'), mk('gacha',0.32,0.26,0.15,'gacha','扭蛋站'), mk('temple',0.52,0.24,0.16,'temple','榮耀神殿'), mk('lounge',0.72,0.30,0.18,'lounge','幻想劇院'), mk('mailbox',0.90,0.42,0.13,'mailbox','村口郵筒') ];
       const ptex=playerTexKey(this); player=this.add.image(W*0.5,H*0.78,ptex); player.setScale((W*0.085)/player.width); player.setDepth(20);
       this.cursors=this.input.keyboard.createCursorKeys();
-      // 🎮 WASD 鍵（遊戲常用移動鍵，與方向鍵並存）
-      this.wasd=this.input.keyboard.addKeys({up:'W',left:'A',down:'S',right:'D'});
-      STATE.phaserReady=true;
+      this.wasd=this.input.keyboard.addKeys({up:'W',left:'A',down:'S',right:'D'}); /* 🎮鍵盤WASD */
+      buildAtmosphere(this); /* 🌿①氛圍 */ STATE.phaserReady=true;
     },
     update:function(){
       if(!player) return; const sp=2.6; let mx=0,my=0;
-      // 📱 手機虛擬搖桿（原樣保留）
       if(joy.active){ mx=joy.dx; my=joy.dy; }
-      // 💻 鍵盤：方向鍵 + WASD 都吃，累加可斜向走
-      const c=this.cursors, w=this.wasd;
-      if(c.left.isDown  || (w&&w.left.isDown))  mx-=1;
-      if(c.right.isDown || (w&&w.right.isDown)) mx+=1;
-      if(c.up.isDown    || (w&&w.up.isDown))    my-=1;
-      if(c.down.isDown  || (w&&w.down.isDown))  my+=1;
-      // 斜向正規化：避免斜走比直走快（向量長度 >1 才縮）
+      const c=this.cursors, w=this.wasd; /* 🎮方向鍵+WASD，可斜向 */
+      if(c.left.isDown ||(w&&w.left.isDown))  mx-=1;
+      if(c.right.isDown||(w&&w.right.isDown)) mx+=1;
+      if(c.up.isDown   ||(w&&w.up.isDown))    my-=1;
+      if(c.down.isDown ||(w&&w.down.isDown))  my+=1;
       const mag=Math.hypot(mx,my); if(mag>1){ mx/=mag; my/=mag; }
       const moving=(mx!==0||my!==0);
+      updateAtmosphere(this); animateWalk(this, moving); /* 🌿①③ */
       if(moving){ player.x+=mx*sp; player.y+=my*sp; if(mx<-0.1) player.setFlipX(true); if(mx>0.1) player.setFlipX(false); player.y+=Math.sin(this.time.now/90)*0.5; }
       player.x=Phaser.Math.Clamp(player.x,20,W-20); player.y=Phaser.Math.Clamp(player.y,H*0.12,H-20);
       let found=null; buildings.forEach(b=>{ const d=Phaser.Math.Distance.Between(player.x,player.y,b.x,b.y); if(d<b.displayWidth*0.5){ found=b; } });
@@ -279,7 +283,147 @@ function initJoystick(){
   js.addEventListener('mousedown',e=>{ move(e.clientX,e.clientY); const mm=ev=>move(ev.clientX,ev.clientY); const mu=()=>{ end(); document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); }; document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu); });
 }
 const ZONE = { home:{title:'🏠 我的小屋',bg:IMG.home}, gacha:{title:'🎰 扭蛋站',bg:IMG.gacha}, temple:{title:'🏛️ 榮耀神殿',bg:IMG.temple}, lounge:{title:'🛋️ 交誼廳',bg:IMG.lounge}, mailbox:{title:'🎁 村口郵筒',bg:IMG.mailbox} };
-function enterZone(zone){ STATE.curZone=zone; const z=ZONE[zone]; $('intTitle').textContent=z.title; $('interiorBg').style.backgroundImage=`url('${z.bg}')`; renderInterior(zone); $('interior').classList.add('show'); if(GAME&&GAME.scene&&GAME.scene.scenes[0]) GAME.scene.scenes[0].scene.pause(); }
+/* ═══════════════════════════════════════════════════════════
+   🌿 貓咪村「活起來」增強模組 v1（2026/06/19）
+   四塊：①氛圍 ②過場 ③走路動畫 ④裝扮系統
+   原則：獨立模組，現有移動/後端/搖桿一行不動。
+   ═══════════════════════════════════════════════════════════ */
+
+/* 📦 填圖區（生圖上傳 Cloudinary 後填 URL） */
+const CAT_WALK_MAP = {
+  // 'CAT_N01': { walk1:'https://res.cloudinary.com/dvti8ug8s/.../n01_milkfoam_walk1.png',
+  //              walk2:'https://res.cloudinary.com/dvti8ug8s/.../n01_milkfoam_walk2.png' },
+};
+const ACCESSORIES = [
+  // { id:'hat_straw', name:'草帽',   slot:'hat', url:'https://res.cloudinary.com/dvti8ug8s/.../hat_straw.png',  scale:0.6, ox:0,    oy:-0.42 },
+  // { id:'bag_pink',  name:'粉背包', slot:'bag', url:'https://res.cloudinary.com/dvti8ug8s/.../bag_pink.png',   scale:0.5, ox:0.28, oy:0.05 },
+];
+
+/* ① 氛圍：飄雲 + 光影粒子（純程式，零素材） */
+function buildAtmosphere(scene){
+  try{
+    scene._clouds = [];
+    for(let i=0;i<3;i++){
+      const g = scene.add.graphics();
+      g.fillStyle(0xffffff, 0.16);
+      const cw = W*(0.22+i*0.05), ch = cw*0.42;
+      g.fillEllipse(0,0,cw,ch);
+      g.fillEllipse(cw*0.28,ch*0.18,cw*0.7,ch*0.8);
+      g.fillEllipse(-cw*0.28,ch*0.15,cw*0.6,ch*0.7);
+      g.setDepth(5);
+      g.x = W*(0.2+i*0.35); g.y = H*(0.10+i*0.05);
+      g._spd = 0.12 + i*0.05;
+      scene._clouds.push(g);
+    }
+    scene._motes = [];
+    for(let i=0;i<14;i++){
+      const m = scene.add.circle(Math.random()*W, Math.random()*H, 1.5+Math.random()*2, 0xffe9b0, 0.5);
+      m.setDepth(6);
+      m._vy = -(0.15+Math.random()*0.25);
+      m._sway = Math.random()*Math.PI*2;
+      scene._motes.push(m);
+    }
+  }catch(e){ console.warn('[氛圍] 失敗', e); }
+}
+function updateAtmosphere(scene){
+  if(scene._clouds) scene._clouds.forEach(c=>{ c.x += c._spd; if(c.x > W*1.3) c.x = -W*0.3; });
+  if(scene._motes) scene._motes.forEach(m=>{
+    m.y += m._vy; m._sway += 0.03; m.x += Math.sin(m._sway)*0.3;
+    if(m.y < -10){ m.y = H+10; m.x = Math.random()*W; }
+  });
+}
+
+/* ③ 走路動畫：有生圖用生圖，沒生圖用假動畫 */
+function preloadWalkFrames(scene){
+  try{
+    Object.keys(CAT_WALK_MAP).forEach(id=>{
+      const w = CAT_WALK_MAP[id];
+      if(w.walk1) scene.load.image('walk1_'+id, w.walk1);
+      if(w.walk2) scene.load.image('walk2_'+id, w.walk2);
+    });
+  }catch(e){ console.warn('[走路圖] preload 失敗', e); }
+}
+function hasWalkFrames(scene){
+  const mc = STATE.data.mainCatId;
+  return !!(mc && CAT_WALK_MAP[mc] && scene.textures.exists('walk1_'+mc) && scene.textures.exists('walk2_'+mc));
+}
+const WALK = { t:0, frame:0, baseScaleY:0, baseScaleX:0 };
+function animateWalk(scene, moving){
+  if(!player) return;
+  if(!WALK.baseScaleY){ WALK.baseScaleY = player.scaleY; WALK.baseScaleX = Math.abs(player.scaleX); }
+  const mc = STATE.data.mainCatId;
+  if(moving){
+    WALK.t += 1;
+    if(hasWalkFrames(scene)){
+      if(WALK.t % 9 === 0){
+        WALK.frame = WALK.frame ? 0 : 1;
+        const flip = player.flipX;
+        player.setTexture(WALK.frame ? 'walk2_'+mc : 'walk1_'+mc);
+        player.setFlipX(flip);
+      }
+    } else {
+      const bob = Math.sin(WALK.t/4)*0.06;
+      player.scaleY = WALK.baseScaleY * (1 + bob);
+      player.scaleX = (player.flipX? -1:1) * WALK.baseScaleX * (1 - bob*0.5);
+    }
+  } else {
+    if(hasWalkFrames(scene) && mc && scene.textures.exists('cat_'+mc)){
+      const flip = player.flipX;
+      player.setTexture('cat_'+mc); player.setFlipX(flip);
+    }
+    if(WALK.baseScaleY){ player.scaleY = WALK.baseScaleY; player.scaleX = (player.flipX?-1:1)*WALK.baseScaleX; }
+    WALK.frame = 0; WALK.t = 0;
+  }
+  syncAccessories();
+}
+
+/* ④ 裝扮系統：角色身上疊配件 */
+let _equipped = { hat:null, bag:null };
+let _accSprites = {};
+function preloadAccessories(scene){
+  try{ ACCESSORIES.forEach(a=>{ if(a.url) scene.load.image('acc_'+a.id, a.url); }); }
+  catch(e){ console.warn('[裝扮] preload 失敗', e); }
+}
+function equipAccessory(scene, slot, accId){
+  if(_accSprites[slot]){ _accSprites[slot].destroy(); delete _accSprites[slot]; }
+  _equipped[slot] = accId || null;
+  if(!accId) return;
+  const a = ACCESSORIES.find(x=>x.id===accId);
+  if(!a || !scene.textures.exists('acc_'+a.id)) return;
+  const img = scene.add.image(player.x, player.y, 'acc_'+a.id);
+  img.setDepth(21);
+  img.setScale((player.displayWidth * a.scale) / img.width);
+  img._cfg = a;
+  _accSprites[slot] = img;
+  syncAccessories();
+}
+function syncAccessories(){
+  Object.keys(_accSprites).forEach(slot=>{
+    const img = _accSprites[slot]; if(!img) return;
+    const a = img._cfg;
+    const dir = player.flipX ? -1 : 1;
+    img.x = player.x + (a.ox||0)*player.displayWidth*dir;
+    img.y = player.y + (a.oy||0)*player.displayHeight;
+    img.setFlipX(player.flipX);
+  });
+}
+window.vEquip = function(slot, accId){ if(GScene) equipAccessory(GScene, slot, accId); };
+window.vAccessoryList = function(){ return ACCESSORIES.map(a=>({id:a.id,name:a.name,slot:a.slot})); };
+
+/* ② 進門過場：白光淡入淡出 */
+function playEnterTransition(cb){
+  const fx = document.getElementById('enterFx');
+  if(!fx){ if(cb) cb(); return; }
+  fx.classList.add('on');
+  setTimeout(()=>{ if(cb) cb(); }, 340);
+  setTimeout(()=>{ fx.classList.remove('on'); }, 700);
+}
+
+
+function enterZone(zone){
+  /* 🎬 交誼廳 → 幻想劇院（劇院入口，回滾刪此 if 即還原交誼廳）*/
+  if(zone==='lounge'){ var _u=(STATE&&STATE.uid)?('?uid='+encodeURIComponent(STATE.uid)):''; location.href='theatre.html'+_u; return; }
+  STATE.curZone=zone; const z=ZONE[zone]; $('intTitle').textContent=z.title; $('interiorBg').style.backgroundImage=`url('${z.bg}')`; renderInterior(zone); playEnterTransition(function(){ $('interior').classList.add('show'); }); /* 🌿②過場 */ if(GAME&&GAME.scene&&GAME.scene.scenes[0]) GAME.scene.scenes[0].scene.pause(); }
 function exitZone(){ STATE.curZone=''; $('interior').classList.remove('show'); const lf=$('loungeFrame'); if(lf) lf.src=lf.src; if(GAME&&GAME.scene&&GAME.scene.scenes[0]) GAME.scene.scenes[0].scene.resume(); }
 function renderInterior(zone){ const body=$('intBody'); if(zone==='home') body.innerHTML=renderHome(); else if(zone==='gacha') body.innerHTML=renderGacha(); else if(zone==='temple') body.innerHTML=renderTemple(); else if(zone==='lounge') body.innerHTML=renderLounge(); else if(zone==='mailbox') body.innerHTML=renderMailbox(); bindInterior(zone); }
 function renderHome(){
