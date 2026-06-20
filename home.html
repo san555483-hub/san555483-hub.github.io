@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UNI 幻想小鎮｜會員首頁</title>
+<!--
+  UNI Fantasy World — 卡片視角會員首頁 home.html v1.0（2026/06/20）
+  雙視角的「卡片視角」：一頁總覽，給長輩客/趕時間客人。共用現有點數 GAS，純前端。
+  回滾：不上傳此檔即可，不影響 village/theatre。
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --gold:#C9A84C; --gold-lt:#E3CB86; --coffee:#2C1810; --coffee2:#4A2F22;
+    --cream:#FDF8F0; --cream2:#F5ECDD; --lilac:#B9A8D4; --plum:#6B5B8E;
+    --line:#E5D8C2; --ink:#3a2a1e; --mid:#8a7460;
+  }
+  body{font-family:'Noto Serif TC',serif;color:var(--ink);padding-bottom:30px;
+    background:radial-gradient(ellipse 90% 40% at 50% 0%,rgba(201,168,76,.16),transparent 55%),
+    linear-gradient(180deg,#FDF8F0 0%,#F5ECDD 100%);min-height:100vh;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px;}
+
+  /* 頂部品牌 */
+  .top{text-align:center;padding:24px 16px 14px;}
+  .top-title{font-family:'Playfair Display','Noto Serif TC',serif;font-size:1.6rem;font-weight:700;
+    color:var(--coffee);letter-spacing:.05em;}
+  .top-title span{color:var(--gold);}
+  .top-sub{font-size:.74rem;color:var(--mid);margin-top:4px;letter-spacing:.1em;font-family:'Noto Sans TC',sans-serif;}
+
+  /* 三線切換 */
+  .lines{display:flex;gap:8px;margin:14px 0 6px;}
+  .line-tab{flex:1;text-align:center;padding:9px;border-radius:12px;font-size:.78rem;cursor:pointer;
+    border:1.5px solid var(--line);background:#fff;color:var(--mid);font-family:'Noto Sans TC',sans-serif;transition:all .2s;}
+  .line-tab.active{background:var(--coffee);color:var(--cream);border-color:var(--coffee);font-weight:600;}
+
+  /* 區塊卡 */
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;
+    box-shadow:0 4px 16px -10px rgba(61,43,31,.25);}
+  .card-h{display:flex;align-items:center;gap:7px;font-size:.95rem;font-weight:600;color:var(--coffee);margin-bottom:14px;}
+  .card-h .more{margin-left:auto;font-size:.68rem;color:var(--gold);font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
+
+  /* 我的角色 */
+  .me{display:flex;gap:14px;align-items:center;margin-bottom:16px;}
+  .me-avatar{width:72px;height:72px;border-radius:18px;background:linear-gradient(150deg,var(--gold-lt),var(--gold));
+    display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;box-shadow:0 4px 12px -4px rgba(201,168,76,.5);overflow:hidden;}
+  .me-avatar img{width:100%;height:100%;object-fit:cover;}
+  .me-info{flex:1;}
+  .me-name{font-size:1rem;font-weight:600;color:var(--coffee);}
+  .me-lv{font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin:3px 0 6px;}
+  .me-bar{height:7px;background:var(--cream2);border-radius:5px;overflow:hidden;}
+  .me-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));transition:width .6s;}
+  .coins{display:flex;gap:10px;margin-bottom:16px;}
+  .coin{flex:1;background:var(--cream2);border-radius:12px;padding:10px 12px;text-align:center;}
+  .coin-v{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--coffee);font-weight:700;}
+  .coin-l{font-size:.64rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-top:2px;}
+
+  /* 六入口 */
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .entry{background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:14px 8px;
+    text-align:center;cursor:pointer;transition:all .2s;text-decoration:none;display:block;}
+  .entry:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 8px 20px -10px rgba(201,168,76,.4);}
+  .entry.soon{opacity:.55;cursor:default;}
+  .entry.soon:hover{transform:none;border-color:var(--line);box-shadow:none;}
+  .entry-i{font-size:1.6rem;margin-bottom:5px;}
+  .entry-t{font-size:.72rem;font-weight:600;color:var(--ink);}
+  .entry-soon{font-size:.55rem;color:var(--gold);font-family:'Noto Sans TC',sans-serif;margin-top:2px;}
+
+  /* 劇院橫幅 */
+  .theatre-banner{background:linear-gradient(135deg,#3a2317,#5a3a2a);border-radius:18px;padding:18px;
+    margin-bottom:14px;color:var(--cream);position:relative;overflow:hidden;cursor:pointer;display:block;text-decoration:none;}
+  .theatre-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:8px;
+    background:linear-gradient(90deg,#7a1f1f,#a83232,#7a1f1f,#a83232);background-size:30px 100%;}
+  .tb-tag{font-size:.62rem;color:var(--gold-lt);letter-spacing:.12em;font-family:'Noto Sans TC',sans-serif;margin-top:6px;}
+  .tb-title{font-size:1.15rem;font-weight:700;color:var(--gold);margin:4px 0 6px;font-family:'Playfair Display','Noto Serif TC',serif;}
+  .tb-sub{font-size:.74rem;color:rgba(253,248,240,.75);font-family:'Noto Sans TC',sans-serif;line-height:1.6;}
+  .tb-go{display:inline-block;margin-top:10px;background:var(--gold);color:var(--coffee);
+    padding:7px 16px;border-radius:18px;font-size:.76rem;font-weight:600;font-family:'Noto Sans TC',sans-serif;}
+
+  /* 商城（佔位） */
+  .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  .shop-item{background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;}
+  .shop-i{font-size:1.4rem;margin-bottom:4px;}
+  .shop-t{font-size:.62rem;color:var(--ink);font-family:'Noto Sans TC',sans-serif;line-height:1.4;}
+  .shop-p{font-size:.6rem;color:var(--gold);font-weight:600;margin-top:3px;font-family:'Noto Sans TC',sans-serif;}
+  .soon-mask{text-align:center;font-size:.72rem;color:var(--mid);padding:8px;font-family:'Noto Sans TC',sans-serif;}
+
+  /* 得點來源 */
+  .earn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  @media(max-width:420px){.earn-grid{grid-template-columns:repeat(3,1fr);}}
+  .earn{text-align:center;padding:10px 4px;background:var(--cream);border-radius:12px;border:1px solid var(--line);}
+  .earn-i{font-size:1.3rem;margin-bottom:3px;}
+  .earn-t{font-size:.6rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;line-height:1.3;}
+
+  /* 預約 CTA */
+  .cta-card{background:linear-gradient(135deg,var(--gold),#b8902f);border-radius:18px;padding:20px;
+    text-align:center;margin-bottom:14px;}
+  .cta-t{font-size:1.05rem;font-weight:700;color:var(--coffee);font-family:'Playfair Display','Noto Serif TC',serif;}
+  .cta-s{font-size:.72rem;color:rgba(44,24,16,.7);margin:4px 0 12px;font-family:'Noto Sans TC',sans-serif;}
+  .cta-btn{display:inline-block;background:var(--coffee);color:var(--cream);text-decoration:none;
+    padding:12px 32px;border-radius:24px;font-size:.92rem;font-weight:600;letter-spacing:.06em;}
+
+  /* 切世界視角浮鈕 */
+  .toworld{position:fixed;bottom:18px;right:16px;z-index:100;background:var(--coffee);color:var(--gold-lt);
+    border:1.5px solid var(--gold);border-radius:24px;padding:11px 18px;font-size:.8rem;cursor:pointer;
+    text-decoration:none;box-shadow:0 6px 20px -6px rgba(0,0,0,.4);font-family:'Noto Sans TC',sans-serif;}
+
+  .hint{text-align:center;padding:40px 24px;color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-size:.85rem;line-height:1.8;}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--coffee);
+    color:var(--cream);padding:11px 20px;border-radius:24px;font-size:.82rem;z-index:999;transition:transform .35s;font-family:'Noto Sans TC',sans-serif;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Playfair+Display:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ══ CONFIG（已填好，可直接上傳）══ -->
+<script>
+  const API_URL  = 'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec';
+  const VILLAGE_URL = 'village.html';
+  const THEATRE_URL = 'theatre.html';
+  const BOOKING_URL = 'PLACEHOLDER_BOOKING_URL'; // ← 之後填你的預約連結
+</script>
+
+<div class="wrap">
+  <div class="top">
+    <div class="top-title">UNI <span>幻想小鎮</span></div>
+    <div class="top-sub">FANTASY TOWN · 會員首頁</div>
+    <div class="lines">
+      <div class="line-tab active">成人線</div>
+      <div class="line-tab" onclick="showToast('兒童線即將開放 🧸')">兒童線</div>
+      <div class="line-tab" onclick="showToast('家庭線即將開放 👨‍👩‍👧')">家庭線</div>
+    </div>
+  </div>
+
+  <!-- 我的角色 -->
+  <div class="card">
+    <div class="card-h">🐱 我的角色</div>
+    <div class="me">
+      <div class="me-avatar" id="meAvatar">🐱</div>
+      <div class="me-info">
+        <div class="me-name" id="meName">小鎮居民</div>
+        <div class="me-lv" id="meLv">Lv.1 · 載入中…</div>
+        <div class="me-bar"><div class="me-bar-fill" id="meBar"></div></div>
+      </div>
+    </div>
+    <div class="coins">
+      <div class="coin"><div class="coin-v" id="coinStar">—</div><div class="coin-l">⭐ 星光幣</div></div>
+      <div class="coin"><div class="coin-v" id="coinCharm">—</div><div class="coin-l">💜 魅力值</div></div>
+    </div>
+    <div class="grid6">
+      <div class="entry soon"><div class="entry-i">📜</div><div class="entry-t">任務中心</div><div class="entry-soon">即將開放</div></div>
+      <div class="entry soon"><div class="entry-i">🎁</div><div class="entry-t">獎勵中心</div><div class="entry-soon">即將開放</div></div>
+      <div class="entry soon"><div class="entry-i">🏪</div><div class="entry-t">點數商城</div><div class="entry-soon">即將開放</div></div>
+      <a class="entry" id="eHouse"><div class="entry-i">🏠</div><div class="entry-t">我的小屋</div></a>
+      <a class="entry" id="eTheatre"><div class="entry-i">🎬</div><div class="entry-t">幻想劇院</div></a>
+      <a class="entry" id="eBooking"><div class="entry-i">📅</div><div class="entry-t">預約服務</div></a>
+    </div>
+  </div>
+
+  <!-- 幻想劇院橫幅 -->
+  <a class="theatre-banner" id="theatreBanner">
+    <div class="tb-tag">⭐ 看影片領星光幣</div>
+    <div class="tb-title">🎬 幻想劇院</div>
+    <div class="tb-sub">看懂髮況與服務，每支影片完成可領星光幣</div>
+    <span class="tb-go">進入劇院 →</span>
+  </a>
+
+  <!-- 點數商城（佔位） -->
+  <div class="card">
+    <div class="card-h">🏪 點數商城</div>
+    <div class="shop-grid">
+      <div class="shop-item"><div class="shop-i">✂️</div><div class="shop-t">修護券</div><div class="shop-p">即將開放</div></div>
+      <div class="shop-item"><div class="shop-i">🧴</div><div class="shop-t">護髮券</div><div class="shop-p">即將開放</div></div>
+      <div class="shop-item"><div class="shop-i">🎁</div><div class="shop-t">神祕寶箱</div><div class="shop-p">即將開放</div></div>
+    </div>
+    <div class="soon-mask">商城商品籌備中，敬請期待 ✨</div>
+  </div>
+
+  <!-- 得點來源 -->
+  <div class="card">
+    <div class="card-h">💰 怎麼賺星光幣</div>
+    <div class="earn-grid">
+      <div class="earn"><div class="earn-i">💵</div><div class="earn-t">消費累積</div></div>
+      <div class="earn"><div class="earn-i">📅</div><div class="earn-t">回訪守約</div></div>
+      <div class="earn"><div class="earn-i">▶️</div><div class="earn-t">觀看影片</div></div>
+      <div class="earn"><div class="earn-i">✅</div><div class="earn-t">完成任務</div></div>
+      <div class="earn"><div class="earn-i">👭</div><div class="earn-t">介紹朋友</div></div>
+      <div class="earn"><div class="earn-i">🎂</div><div class="earn-t">生日禮遇</div></div>
+      <div class="earn"><div class="earn-i">⭐</div><div class="earn-t">Google評論</div></div>
+      <div class="earn"><div class="earn-i">🏠</div><div class="earn-t">家庭成就</div></div>
+    </div>
+  </div>
+
+  <!-- 預約 CTA -->
+  <div class="cta-card">
+    <div class="cta-t">立即預約 · 美麗由此開始</div>
+    <div class="cta-s">職人一對一，為您的髮況量身打造</div>
+    <a class="cta-btn" id="ctaBooking">點擊預約</a>
+  </div>
+</div>
+
+<a class="toworld" id="toWorld">🏘️ 走進小鎮</a>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════ UID ══════
+function getCurrentUID(){
+  const q=new URLSearchParams(location.search).get('uid');
+  if(q){ try{localStorage.setItem('uni_uid',q);}catch(_){} return q; }
+  try{ const ls=localStorage.getItem('uni_uid'); if(ls) return ls;
+       const v=localStorage.getItem('uni_village_uid'); if(v) return v; }catch(_){}
+  return '';
+}
+const UID=getCurrentUID();
+const uq = UID?('?uid='+encodeURIComponent(UID)):'';
+
+// 連結帶 uid
+document.getElementById('eHouse').href      = VILLAGE_URL+uq;
+document.getElementById('eTheatre').href    = THEATRE_URL+uq;
+document.getElementById('theatreBanner').href = THEATRE_URL+uq;
+document.getElementById('toWorld').href     = VILLAGE_URL+uq;
+const bookHref = (BOOKING_URL && !/PLACEHOLDER/i.test(BOOKING_URL)) ? BOOKING_URL : '#';
+document.getElementById('eBooking').href  = bookHref;
+document.getElementById('ctaBooking').href= bookHref;
+if(bookHref==='#'){ document.getElementById('ctaBooking').onclick=document.getElementById('eBooking').onclick=function(e){e.preventDefault();showToast('預約連結待設定');}; }
+
+async function apiGet(action,params){
+  const url=new URL(API_URL); url.searchParams.set('action',action);
+  Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));
+  url.searchParams.set('t',Date.now());
+  const r=await fetch(url.toString()); return await r.json();
+}
+
+async function init(){
+  if(!UID){ document.getElementById('meLv').textContent='訪客模式 · 從會員入口進入可顯示資料'; return; }
+  // 點數
+  apiGet('getPoints',{uid:UID}).then(p=>{
+    const bal=(p.balance!=null?p.balance:(p.points!=null?p.points:0));
+    document.getElementById('coinStar').textContent=bal!=null?bal:'—';
+  }).catch(()=>{});
+  // 譽望（魅力值）
+  apiGet('getReputation',{uid:UID}).then(r=>{
+    const v=(r.reputation!=null?r.reputation:(r.score!=null?r.score:(r.value!=null?r.value:null)));
+    if(v!=null) document.getElementById('coinCharm').textContent=v;
+  }).catch(()=>{});
+  // 主角貓 + 等級
+  apiGet('getCatsCollection',{uid:UID}).then(c=>{
+    const mc=c.mainCatId||(c.data&&c.data.mainCatId);
+    const map=c.catsImgMap||(c.data&&c.data.catsImgMap)||{};
+    if(mc&&map[mc]&&map[mc].img){
+      document.getElementById('meAvatar').innerHTML='<img src="'+map[mc].img+'">';
+    }
+    const name=c.name||(c.data&&c.data.name)||'小鎮居民';
+    document.getElementById('meName').textContent=name;
+  }).catch(()=>{});
+  // 簡易等級（用星光幣估，每1000升1級；正式等級表第二版接）
+  setTimeout(()=>{
+    const star=parseInt(document.getElementById('coinStar').textContent)||0;
+    const lv=Math.max(1,Math.floor(star/1000)+1);
+    const into=star%1000;
+    document.getElementById('meLv').textContent='Lv.'+lv+' · '+into+'/1000';
+    document.getElementById('meBar').style.width=(into/10)+'%';
+  },900);
+}
+
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+init();
+</script>
+</body>
+</html>
