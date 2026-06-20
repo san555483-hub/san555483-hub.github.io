@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UNI 幻想劇院</title>
+<!--
+  UNI Fantasy World — 幻想劇院 theatre.html v1.0（2026/06/20）
+  獨立頁，可單獨打開。讀影片庫 → 看 YouTube → 達 min_complete_rate 領星光幣。
+  API：GET 為主（與 village 慣例一致，避 CORS）。
+  回滾：不上傳此檔 / village 拿掉入口 / GAS 註解 3 case，30 秒。
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --gold:#C9A84C; --gold-lt:#E3CB86; --coffee:#2C1810; --coffee2:#4A2F22;
+    --cream:#FDF8F0; --cream2:#F5ECDD; --lilac:#B9A8D4; --plum:#6B5B8E;
+    --line:#E5D8C2; --ink:#3a2a1e; --mid:#8a7460;
+  }
+  html,body{background:var(--coffee);color:var(--ink);font-family:'Noto Serif TC',serif;}
+  body{min-height:100vh;background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,168,76,.18), transparent 60%),
+    linear-gradient(180deg,#2C1810 0%,#3a2317 100%);
+    padding-bottom:90px;}
+
+  /* 頂部布幕 */
+  .stage-top{position:relative;padding:26px 18px 18px;text-align:center;overflow:hidden;}
+  .curtain{position:absolute;top:0;left:0;right:0;height:14px;
+    background:linear-gradient(90deg,#7a1f1f,#a83232,#7a1f1f,#a83232,#7a1f1f);
+    background-size:40px 100%;box-shadow:0 3px 10px rgba(0,0,0,.4);}
+  .stage-title{font-family:'Playfair Display','Noto Serif TC',serif;font-size:1.7rem;font-weight:700;
+    color:var(--gold);letter-spacing:.08em;margin-top:14px;
+    text-shadow:0 2px 12px rgba(201,168,76,.35);}
+  .stage-sub{font-size:.78rem;color:var(--gold-lt);opacity:.8;margin-top:6px;letter-spacing:.04em;font-family:'Noto Sans TC',sans-serif;}
+  .stage-coin{display:inline-flex;align-items:center;gap:6px;margin-top:12px;
+    background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.4);
+    border-radius:20px;padding:5px 14px;font-size:.78rem;color:var(--gold-lt);font-family:'Noto Sans TC',sans-serif;}
+
+  /* 分類列 */
+  .cats{display:flex;gap:8px;overflow-x:auto;padding:14px 16px;scrollbar-width:none;}
+  .cats::-webkit-scrollbar{display:none;}
+  .cat-btn{flex-shrink:0;padding:7px 15px;border-radius:18px;font-size:.76rem;cursor:pointer;
+    border:1.5px solid rgba(201,168,76,.35);background:rgba(253,248,240,.06);color:var(--gold-lt);
+    white-space:nowrap;transition:all .2s;font-family:'Noto Sans TC',sans-serif;}
+  .cat-btn.active{background:var(--gold);color:var(--coffee);border-color:var(--gold);font-weight:600;}
+
+  /* 影片卡列表 */
+  .wrap{max-width:760px;margin:0 auto;padding:4px 16px;}
+  .vgrid{display:grid;grid-template-columns:1fr;gap:14px;}
+  @media(min-width:560px){.vgrid{grid-template-columns:1fr 1fr;}}
+  .vcard{background:linear-gradient(165deg,#fffdf9,#f7eedd);border:1px solid var(--line);
+    border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s;
+    box-shadow:0 4px 16px -8px rgba(0,0,0,.4);}
+  .vcard:hover{transform:translateY(-3px);box-shadow:0 12px 30px -10px rgba(0,0,0,.5);}
+  .vthumb{position:relative;width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#3a2317,#5a3a2a);
+    display:flex;align-items:center;justify-content:center;}
+  .vthumb img{width:100%;height:100%;object-fit:cover;}
+  .vthumb-play{position:absolute;width:46px;height:46px;border-radius:50%;background:rgba(201,168,76,.92);
+    display:flex;align-items:center;justify-content:center;color:#2C1810;font-size:1.1rem;box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .vcat-tag{position:absolute;top:8px;left:8px;background:rgba(44,24,16,.82);color:var(--gold-lt);
+    font-size:.6rem;padding:3px 9px;border-radius:12px;font-family:'Noto Sans TC',sans-serif;letter-spacing:.05em;}
+  .vdone-tag{position:absolute;top:8px;right:8px;background:var(--plum);color:#fff;
+    font-size:.6rem;padding:3px 9px;border-radius:12px;font-family:'Noto Sans TC',sans-serif;}
+  .vbody{padding:12px 13px 14px;}
+  .vtitle{font-size:.9rem;font-weight:600;color:var(--ink);line-height:1.45;margin-bottom:7px;}
+  .vmeta{display:flex;align-items:center;gap:8px;font-size:.68rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+  .vreward{display:inline-flex;align-items:center;gap:3px;color:#b8862a;font-weight:600;}
+
+  /* 播放器 modal */
+  .player-mask{position:fixed;inset:0;background:rgba(20,12,8,.88);z-index:500;display:none;
+    align-items:flex-start;justify-content:center;padding:0;overflow-y:auto;}
+  .player-mask.on{display:flex;}
+  .player-box{width:100%;max-width:760px;background:var(--cream);min-height:100vh;}
+  .player-head{position:sticky;top:0;z-index:5;background:var(--coffee);color:var(--cream);
+    padding:13px 16px;display:flex;align-items:center;justify-content:space-between;}
+  .player-head h3{font-size:.95rem;font-weight:500;font-family:'Playfair Display','Noto Serif TC',serif;}
+  .player-close{background:none;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);
+    width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1rem;}
+  .yt-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;}
+  #ytPlayer{position:absolute;inset:0;width:100%;height:100%;}
+  .player-info{padding:18px 18px 24px;}
+  .pi-title{font-size:1.1rem;font-weight:600;color:var(--ink);line-height:1.5;margin-bottom:12px;}
+  .pi-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--mid);
+    font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;}
+  .pi-chip{background:var(--cream2);border:1px solid var(--line);border-radius:14px;padding:5px 12px;}
+  .pi-progress{height:8px;background:var(--cream2);border-radius:6px;overflow:hidden;margin:14px 0 6px;}
+  .pi-progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));transition:width .4s;}
+  .pi-progress-txt{font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;text-align:right;}
+
+  .claim-btn{width:100%;margin-top:16px;padding:15px;border:none;border-radius:12px;cursor:pointer;
+    font-family:'Noto Serif TC',serif;font-size:1rem;font-weight:600;letter-spacing:.06em;
+    background:linear-gradient(135deg,#cfae50,var(--gold));color:var(--coffee);transition:all .25s;
+    box-shadow:0 6px 18px -6px rgba(201,168,76,.6);}
+  .claim-btn:hover:not(:disabled){transform:translateY(-2px);}
+  .claim-btn:disabled{background:#ddd2bf;color:#9a8a72;cursor:not-allowed;box-shadow:none;}
+  .claim-btn.claimed{background:var(--plum);color:#fff;}
+
+  .cta-btn{display:block;width:100%;margin-top:10px;padding:14px;border-radius:12px;cursor:pointer;
+    text-align:center;text-decoration:none;font-family:'Noto Serif TC',serif;font-size:.95rem;font-weight:600;
+    background:var(--coffee);color:var(--cream);border:none;letter-spacing:.06em;transition:opacity .2s;}
+  .cta-btn:hover{opacity:.9;}
+
+  /* 底部固定列 */
+  .footbar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(44,24,16,.96);
+    border-top:1px solid rgba(201,168,76,.3);padding:11px 14px;display:flex;gap:8px;}
+  .foot-btn{flex:1;padding:11px;border-radius:10px;cursor:pointer;font-size:.8rem;text-align:center;
+    font-family:'Noto Sans TC',sans-serif;border:1.5px solid rgba(201,168,76,.4);
+    background:transparent;color:var(--gold-lt);text-decoration:none;transition:all .2s;}
+  .foot-btn.primary{background:var(--gold);color:var(--coffee);border-color:var(--gold);font-weight:600;}
+  .foot-btn:active{transform:scale(.97);}
+
+  /* 空 / 提示 */
+  .hint{text-align:center;padding:50px 24px;color:var(--gold-lt);opacity:.7;font-family:'Noto Sans TC',sans-serif;font-size:.85rem;line-height:1.8;}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(60px);
+    background:var(--coffee);color:var(--cream);padding:11px 20px;border-radius:24px;font-size:.82rem;
+    z-index:999;transition:transform .35s;font-family:'Noto Sans TC',sans-serif;border:1px solid rgba(201,168,76,.4);}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Playfair+Display:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ══ CONFIG（Elsa 替換）══ -->
+<script>
+  const API_URL  = 'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec'; // ← 換成 🎮 點數 GAS /exec
+  const VILLAGE_URL = 'village.html';             // ← 返回小鎮
+  const HOME_URL    = 'home.html';                // ← 會員首頁（未完成，先佔位）
+</script>
+
+<div class="stage-top">
+  <div class="curtain"></div>
+  <div class="stage-title">UNI 幻想劇院</div>
+  <div class="stage-sub">看懂髮況與服務，領取星光幣</div>
+  <div class="stage-coin" id="coinBox">⭐ 星光幣 <strong id="coinVal">—</strong></div>
+</div>
+
+<div class="cats" id="catBar"></div>
+
+<div class="wrap">
+  <div class="vgrid" id="vgrid">
+    <div class="hint" id="loadHint">布幕拉開中…</div>
+  </div>
+</div>
+
+<!-- 播放器 -->
+<div class="player-mask" id="playerMask">
+  <div class="player-box">
+    <div class="player-head">
+      <h3 id="phTitle">影片</h3>
+      <button class="player-close" onclick="closePlayer()">✕</button>
+    </div>
+    <div class="yt-wrap"><div id="ytPlayer"></div></div>
+    <div class="player-info">
+      <div class="pi-title" id="piTitle"></div>
+      <div class="pi-row">
+        <span class="pi-chip" id="piReward">⭐ —</span>
+        <span class="pi-chip" id="piCond">觀看 —% 可領</span>
+      </div>
+      <div class="pi-progress"><div class="pi-progress-bar" id="piBar"></div></div>
+      <div class="pi-progress-txt" id="piPct">0%</div>
+      <button class="claim-btn" id="claimBtn" disabled onclick="claimReward()">繼續觀看以解鎖獎勵</button>
+      <a class="cta-btn" id="ctaBtn" href="#" target="_blank" rel="noopener">看懂了，前往預約</a>
+    </div>
+  </div>
+</div>
+
+<!-- 底部 -->
+<div class="footbar">
+  <a class="foot-btn" id="backVillage" href="#">🏘️ 返回幻想小鎮</a>
+  <a class="foot-btn" id="goHome" href="#">📋 會員首頁</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+// ══════ UID 取得（可替換設計，本次不做 LINE Login）══════
+function getCurrentUID(){
+  const q = new URLSearchParams(location.search).get('uid');
+  if(q) { try{ localStorage.setItem('uni_uid', q); }catch(_){} return q; }
+  try{ const ls = localStorage.getItem('uni_uid'); if(ls) return ls; }catch(_){}
+  return '';
+}
+const UID = getCurrentUID();
+
+// ══════ 狀態 ══════
+let VIDEOS = [], CLAIMED = {}, CUR_CAT = '全部', CUR_VIDEO = null;
+let ytReady = false, ytPlayer = null, watchTimer = null, reachedRate = 0;
+
+// 底部連結帶 uid
+document.getElementById('backVillage').href = VILLAGE_URL + (UID?('?uid='+encodeURIComponent(UID)):'');
+document.getElementById('goHome').href      = HOME_URL    + (UID?('?uid='+encodeURIComponent(UID)):'');
+
+// ══════ API（GET 為主，與 village 慣例一致）══════
+async function apiGet(action, params){
+  const url = new URL(API_URL);
+  url.searchParams.set('action', action);
+  Object.keys(params||{}).forEach(k=>url.searchParams.set(k, params[k]));
+  url.searchParams.set('t', Date.now());
+  const r = await fetch(url.toString());
+  return await r.json();
+}
+
+// ══════ 初始化 ══════
+async function init(){
+  if(!UID){
+    document.getElementById('vgrid').innerHTML =
+      '<div class="hint">尚未登入會員<br>請先從會員入口進入 🎫</div>';
+    document.getElementById('coinBox').style.display='none';
+    return;
+  }
+  // 並行：影片 + 已領清單 + 點數餘額
+  const [vRes, hRes, pRes] = await Promise.all([
+    apiGet('getVideos',{}).catch(()=>({ok:false})),
+    apiGet('getWatchHistory',{uid:UID}).catch(()=>({ok:false})),
+    apiGet('getPoints',{uid:UID}).catch(()=>({ok:false}))
+  ]);
+  VIDEOS = (vRes && vRes.ok && vRes.videos) ? vRes.videos : [];
+  (hRes && hRes.ok && hRes.claimed || []).forEach(id=>CLAIMED[id]=true);
+  const bal = (pRes && (pRes.balance!=null?pRes.balance:(pRes.points!=null?pRes.points:null)));
+  document.getElementById('coinVal').textContent = (bal!=null)? bal : '—';
+
+  renderCats();
+  renderVideos();
+}
+
+function renderCats(){
+  const cats = ['全部', ...Array.from(new Set(VIDEOS.map(v=>v.category).filter(Boolean)))];
+  document.getElementById('catBar').innerHTML = cats.map(c=>
+    `<button class="cat-btn ${c===CUR_CAT?'active':''}" onclick="switchCat('${c.replace(/'/g,"\\'")}')">${c}</button>`
+  ).join('');
+}
+function switchCat(c){ CUR_CAT=c; renderCats(); renderVideos(); }
+
+function renderVideos(){
+  const list = CUR_CAT==='全部' ? VIDEOS : VIDEOS.filter(v=>v.category===CUR_CAT);
+  const grid = document.getElementById('vgrid');
+  if(!list.length){ grid.innerHTML='<div class="hint">這個分類還沒有影片 🎬</div>'; return; }
+  grid.innerHTML = list.map(v=>{
+    const done = CLAIMED[v.video_id];
+    const thumb = (v.yt_id && !/PLACEHOLDER/i.test(v.yt_id))
+      ? `<img src="https://img.youtube.com/vi/${v.yt_id}/hqdefault.jpg" onerror="this.style.display='none'">` : '';
+    return `<div class="vcard" onclick='openPlayer(${JSON.stringify(v).replace(/'/g,"&#39;")})'>
+      <div class="vthumb">${thumb}<div class="vthumb-play">▶</div>
+        <span class="vcat-tag">${v.category||''}</span>
+        ${done?'<span class="vdone-tag">✓ 已領取</span>':''}
+      </div>
+      <div class="vbody">
+        <div class="vtitle">${v.title}</div>
+        <div class="vmeta"><span class="vreward">⭐ ${v.reward_points} 點</span>
+          <span>·</span><span>看完 ${v.min_complete_rate}% 可領</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════ 播放器 ══════
+function onYouTubeIframeAPIReady(){ ytReady = true; }
+
+function openPlayer(v){
+  CUR_VIDEO = v; reachedRate = 0;
+  document.getElementById('phTitle').textContent = 'UNI 幻想劇院';
+  document.getElementById('piTitle').textContent = v.title;
+  document.getElementById('piReward').textContent = '⭐ '+v.reward_points+' 點';
+  document.getElementById('piCond').textContent = '觀看 '+v.min_complete_rate+'% 可領';
+  document.getElementById('piBar').style.width='0%';
+  document.getElementById('piPct').textContent='0%';
+  const cta = document.getElementById('ctaBtn');
+  cta.textContent = v.cta_text || '看懂了，前往預約';
+  cta.href = (v.cta_url && !/PLACEHOLDER/i.test(v.cta_url)) ? v.cta_url : '#';
+
+  const claimBtn = document.getElementById('claimBtn');
+  if(CLAIMED[v.video_id]){
+    claimBtn.textContent='✓ 已領取'; claimBtn.className='claim-btn claimed'; claimBtn.disabled=true;
+  } else {
+    claimBtn.textContent='繼續觀看以解鎖獎勵'; claimBtn.className='claim-btn'; claimBtn.disabled=true;
+  }
+  document.getElementById('playerMask').classList.add('on');
+
+  const isPlaceholder = (!v.yt_id || /PLACEHOLDER/i.test(v.yt_id));
+  if(ytReady && !isPlaceholder){
+    startYTPlayer(v.yt_id);
+  } else {
+    // ─── MVP fallback：YT 無效或 API 未就緒 → 「我已看完」按鈕，送 complete_rate=80 ───
+    startFallback(v);
+  }
+}
+
+function startYTPlayer(ytId){
+  if(ytPlayer){ try{ ytPlayer.loadVideoById(ytId); return; }catch(_){} }
+  ytPlayer = new YT.Player('ytPlayer',{
+    videoId: ytId, playerVars:{rel:0,modestbranding:1,playsinline:1},
+    events:{ onStateChange: onYTState }
+  });
+}
+function onYTState(e){
+  if(e.data===YT.PlayerState.PLAYING){ startWatchTimer(); }
+  else { stopWatchTimer(); }
+}
+function startWatchTimer(){
+  stopWatchTimer();
+  watchTimer = setInterval(()=>{
+    try{
+      const cur = ytPlayer.getCurrentTime(), dur = ytPlayer.getDuration();
+      if(dur>0){
+        const pct = Math.min(100, Math.round(cur/dur*100));
+        reachedRate = Math.max(reachedRate, pct);
+        updateProgress(reachedRate);
+      }
+    }catch(_){}
+  }, 800);
+}
+function stopWatchTimer(){ if(watchTimer){ clearInterval(watchTimer); watchTimer=null; } }
+
+// ─── MVP fallback ───
+function startFallback(v){
+  // 標註：此為 MVP fallback，無法精準追蹤完成度時，提供「我已看完」
+  document.getElementById('ytPlayer').innerHTML =
+    '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#C9A84C;font-family:sans-serif;gap:10px;padding:20px;text-align:center;">'
+    +'<div style="font-size:2rem;">🎬</div><div style="font-size:.85rem;line-height:1.7;">影片即將上架<br>（YouTube ID 待填）</div></div>';
+  updateProgress(0);
+  if(!CLAIMED[v.video_id]){
+    const btn=document.getElementById('claimBtn');
+    btn.disabled=false; btn.textContent='我已看完（領取 '+v.reward_points+' 點）';
+    btn._fallback=true; // 領取時送 complete_rate=80
+  }
+}
+
+function updateProgress(pct){
+  document.getElementById('piBar').style.width=pct+'%';
+  document.getElementById('piPct').textContent=pct+'%';
+  const v=CUR_VIDEO; if(!v) return;
+  const btn=document.getElementById('claimBtn');
+  if(CLAIMED[v.video_id]) return;
+  if(pct>=v.min_complete_rate){
+    btn.disabled=false; btn.textContent='領取 '+v.reward_points+' 星光幣 ⭐';
+  } else {
+    btn.disabled=true; btn.textContent='繼續觀看以解鎖獎勵（'+pct+'%）';
+  }
+}
+
+async function claimReward(){
+  const v=CUR_VIDEO; if(!v) return;
+  const btn=document.getElementById('claimBtn');
+  const rate = btn._fallback ? 80 : Math.max(reachedRate, v.min_complete_rate);
+  btn.disabled=true; btn.textContent='領取中…';
+  try{
+    const res = await apiGet('markVideoWatched',{uid:UID, video_id:v.video_id, complete_rate:rate});
+    if(res && (res.success||res.ok)){
+      CLAIMED[v.video_id]=true;
+      btn.className='claim-btn claimed'; btn.textContent='✓ 已領取';
+      if(res.already_claimed) showToast('這支影片已領過囉');
+      else { showToast('🎉 +'+(res.points_added||v.reward_points)+' 星光幣'); refreshCoin(); }
+      renderVideos();
+    } else {
+      btn.disabled=false; btn.textContent='領取失敗，再試一次';
+      showToast((res&&res.msg)||'領取失敗');
+    }
+  }catch(e){ btn.disabled=false; btn.textContent='領取失敗，再試一次'; showToast('網路錯誤'); }
+}
+
+async function refreshCoin(){
+  try{ const p=await apiGet('getPoints',{uid:UID});
+    const bal=(p.balance!=null?p.balance:(p.points!=null?p.points:null));
+    if(bal!=null) document.getElementById('coinVal').textContent=bal;
+  }catch(_){}
+}
+
+function closePlayer(){
+  stopWatchTimer();
+  try{ if(ytPlayer) ytPlayer.stopVideo(); }catch(_){}
+  document.getElementById('playerMask').classList.remove('on');
+  CUR_VIDEO=null; reachedRate=0;
+}
+
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+
+init();
+</script>
+</body>
+</html>
