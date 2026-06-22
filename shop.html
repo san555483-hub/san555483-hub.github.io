@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UNI 點數商城</title>
+<!--
+  UNI Fantasy World — 點數商城 shop.html v1.0（2026/06/21）
+  接後端 getShopItems / redeemShopItem（沿用 deductPoints 扣點）/ getPoints
+  商品價格在「商城商品」分頁後台填，未填價=顯示「敬請期待」。回滾：不上傳即可。
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  :root{--gold:#C9A84C;--gold-lt:#E3CB86;--coffee:#2C1810;--cream:#FDF8F0;--cream2:#F5ECDD;
+    --plum:#6B5B8E;--line:#E5D8C2;--ink:#3a2a1e;--mid:#8a7460;}
+  body{font-family:'Noto Serif TC',serif;color:var(--ink);min-height:100vh;padding-bottom:30px;
+    background:radial-gradient(ellipse 90% 40% at 50% 0%,rgba(201,168,76,.16),transparent 55%),
+    linear-gradient(180deg,#FDF8F0,#F2ECE0);}
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px;}
+  .top{text-align:center;padding:22px 16px 8px;}
+  .top-t{font-family:'Playfair Display','Noto Serif TC',serif;font-size:1.5rem;font-weight:700;color:var(--coffee);}
+  .top-t span{color:var(--gold);}
+  .top-s{font-size:.72rem;color:var(--mid);margin-top:3px;font-family:'Noto Sans TC',sans-serif;}
+  .coin{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:rgba(201,168,76,.14);
+    border:1px solid rgba(201,168,76,.4);border-radius:20px;padding:6px 16px;font-size:.84rem;color:#9a7820;font-family:'Noto Sans TC',sans-serif;}
+  .coin strong{font-family:'Playfair Display',serif;font-size:1rem;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 0;}
+  .item{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 12px;text-align:center;
+    box-shadow:0 4px 14px -8px rgba(61,43,31,.2);display:flex;flex-direction:column;}
+  .item-icon{font-size:2.2rem;margin-bottom:6px;}
+  .item-type{display:inline-block;font-size:.58rem;color:var(--plum);background:rgba(107,91,142,.1);
+    border-radius:10px;padding:2px 8px;margin-bottom:5px;font-family:'Noto Sans TC',sans-serif;}
+  .item-name{font-size:.84rem;font-weight:600;color:var(--coffee);margin-bottom:3px;}
+  .item-desc{font-size:.64rem;color:var(--mid);line-height:1.5;font-family:'Noto Sans TC',sans-serif;margin-bottom:10px;flex:1;}
+  .item-cost{font-family:'Playfair Display',serif;font-size:1.1rem;color:#9a7820;margin-bottom:8px;}
+  .item-cost .u{font-size:.62rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+  .item-free{color:#639922;font-size:.82rem;font-weight:600;}
+  .redeem-btn{padding:9px;border:none;border-radius:20px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;
+    font-size:.76rem;font-weight:600;background:linear-gradient(135deg,#cfae50,var(--gold));color:var(--coffee);transition:all .2s;}
+  .redeem-btn:hover:not(:disabled){transform:translateY(-2px);}
+  .redeem-btn:disabled{background:#e8ddc8;color:#a89a80;cursor:not-allowed;}
+  .redeem-btn.soon{background:#eee5d4;color:#a89a80;}
+
+  .footbar{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 0;background:linear-gradient(180deg,transparent,#F2ECE0 30%);}
+  .fbtn{flex:1;padding:13px;border-radius:12px;cursor:pointer;font-size:.85rem;text-align:center;
+    font-family:'Noto Sans TC',sans-serif;border:1.5px solid var(--line);background:#fff;color:var(--mid);text-decoration:none;}
+  .fbtn:active{transform:scale(.97);}
+  .hint{text-align:center;padding:50px 24px;color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-size:.85rem;line-height:1.8;grid-column:span 2;}
+
+  .mask{position:fixed;inset:0;background:rgba(42,31,26,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:500;}
+  .mask.on{display:flex;}
+  .dialog{background:#fff;border-radius:18px;padding:24px 20px;max-width:300px;width:100%;text-align:center;}
+  .dialog-i{font-size:2.4rem;margin-bottom:8px;}
+  .dialog-t{font-size:1rem;font-weight:600;color:var(--coffee);margin-bottom:6px;}
+  .dialog-s{font-size:.8rem;color:var(--mid);line-height:1.7;margin-bottom:16px;font-family:'Noto Sans TC',sans-serif;}
+  .dialog-btns{display:flex;gap:8px;}
+  .dialog-btns button{flex:1;padding:11px;border-radius:10px;cursor:pointer;font-size:.85rem;font-family:'Noto Sans TC',sans-serif;border:none;}
+  .d-yes{background:var(--gold);color:var(--coffee);font-weight:600;}
+  .d-no{background:#f0e9dc;color:var(--mid);}
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--coffee);
+    color:var(--cream);padding:11px 20px;border-radius:24px;font-size:.82rem;z-index:999;transition:transform .35s;font-family:'Noto Sans TC',sans-serif;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Playfair+Display:wght@500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<script>
+  const API_URL  = 'https://script.google.com/macros/s/AKfycbxr7guqpGn_PO6mtFU3wJFmU69RKAZ0PqUGHmO8bnjY8bgIk4goO3rLAG6lFDs9QmlP/exec';
+  const HOME_URL = 'home.html';
+  const VILLAGE_URL = 'village.html';
+</script>
+
+<div class="wrap">
+  <div class="top">
+    <div class="top-t">UNI <span>點數商城</span></div>
+    <div class="top-s">用星光幣兌換專屬好禮 ✨</div>
+    <div class="coin">⭐ 星光幣 <strong id="coinVal">—</strong></div>
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="hint">商城整理中…</div>
+  </div>
+
+  <div class="footbar">
+    <a class="fbtn" id="backHome">← 會員首頁</a>
+    <a class="fbtn" id="backVillage">🏘️ 走進小鎮</a>
+  </div>
+</div>
+
+<div class="mask" id="mask">
+  <div class="dialog">
+    <div class="dialog-i" id="dlgIcon">🎁</div>
+    <div class="dialog-t" id="dlgTitle">確認兌換？</div>
+    <div class="dialog-s" id="dlgSub"></div>
+    <div class="dialog-btns">
+      <button class="d-no" onclick="closeDlg()">取消</button>
+      <button class="d-yes" id="dlgYes">確認兌換</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function getCurrentUID(){
+  const q=new URLSearchParams(location.search).get('uid');
+  if(q){try{localStorage.setItem('uni_uid',q);}catch(_){}return q;}
+  try{const a=localStorage.getItem('uni_uid');if(a)return a;
+      const v=localStorage.getItem('uni_village_uid');if(v)return v;}catch(_){}
+  return '';
+}
+const UID=getCurrentUID();
+const uq=UID?('?uid='+encodeURIComponent(UID)):'';
+document.getElementById('backHome').href=HOME_URL+uq;
+document.getElementById('backVillage').href=VILLAGE_URL+uq;
+
+let BALANCE=0, ITEMS=[];
+
+async function apiGet(action,params){
+  const url=new URL(API_URL);url.searchParams.set('action',action);
+  Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));
+  url.searchParams.set('t',Date.now());
+  const r=await fetch(url.toString());return await r.json();
+}
+
+async function init(){
+  if(!UID){ document.getElementById('grid').innerHTML='<div class="hint">🎫 請從會員入口進入</div>'; return; }
+  const [sRes,pRes]=await Promise.all([
+    apiGet('getShopItems',{}).catch(()=>({ok:false})),
+    apiGet('getPoints',{uid:UID}).catch(()=>({ok:false}))
+  ]);
+  ITEMS=(sRes&&sRes.ok&&sRes.items)?sRes.items:[];
+  BALANCE=(pRes&&pRes.balance!=null)?pRes.balance:0;
+  document.getElementById('coinVal').textContent=BALANCE;
+  render();
+}
+
+function render(){
+  const grid=document.getElementById('grid');
+  if(!ITEMS.length){ grid.innerHTML='<div class="hint">🏪 商城籌備中，敬請期待</div>'; return; }
+  grid.innerHTML=ITEMS.map(it=>{
+    const priced=(it.cost_points!=null);
+    const free=(priced&&it.cost_points===0);
+    const afford=(priced&&BALANCE>=it.cost_points);
+    let costHtml, btnHtml;
+    if(!priced){
+      costHtml='<div class="item-cost" style="color:var(--mid);font-size:.8rem">敬請期待</div>';
+      btnHtml='<button class="redeem-btn soon" disabled>即將開放</button>';
+    } else if(free){
+      costHtml='<div class="item-cost item-free">生日限定</div>';
+      btnHtml='<button class="redeem-btn" onclick=\'confirmRedeem("'+it.item_id+'")\'>免費領取</button>';
+    } else {
+      costHtml='<div class="item-cost">'+it.cost_points+' <span class="u">星光幣</span></div>';
+      btnHtml=afford
+        ? '<button class="redeem-btn" onclick=\'confirmRedeem("'+it.item_id+'")\'>兌換</button>'
+        : '<button class="redeem-btn" disabled>點數不足</button>';
+    }
+    return '<div class="item">'
+      +'<div class="item-icon">'+(it.icon||'🎁')+'</div>'
+      +(it.type?'<div class="item-type">'+it.type+'</div>':'')
+      +'<div class="item-name">'+it.name+'</div>'
+      +'<div class="item-desc">'+(it.desc||'')+'</div>'
+      +costHtml+btnHtml+'</div>';
+  }).join('');
+}
+
+let _pendingId=null;
+function confirmRedeem(itemId){
+  const it=ITEMS.find(x=>x.item_id===itemId); if(!it) return;
+  _pendingId=itemId;
+  document.getElementById('dlgIcon').textContent=it.icon||'🎁';
+  document.getElementById('dlgTitle').textContent='兌換「'+it.name+'」？';
+  document.getElementById('dlgSub').textContent=(it.cost_points>0)
+    ? ('將扣除 '+it.cost_points+' 星光幣，兌換後請洽 Elsa 核銷')
+    : '生日限定免費領取';
+  document.getElementById('mask').classList.add('on');
+}
+function closeDlg(){ document.getElementById('mask').classList.remove('on'); _pendingId=null; }
+
+document.getElementById('dlgYes').onclick=async function(){
+  if(!_pendingId) return;
+  const btn=this; btn.textContent='兌換中…'; btn.disabled=true;
+  try{
+    const res=await apiGet('redeemShopItem',{uid:UID,item_id:_pendingId});
+    if(res&&(res.success||res.ok)){
+      showToast('🎉 '+(res.message||'兌換成功'));
+      // 重撈餘額 + 商品
+      closeDlg(); await init();
+    } else {
+      showToast((res&&res.msg)||'兌換失敗');
+    }
+  }catch(e){ showToast('網路錯誤'); }
+  btn.textContent='確認兌換'; btn.disabled=false;
+  closeDlg();
+};
+
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+init();
+</script>
+</body>
+</html>
