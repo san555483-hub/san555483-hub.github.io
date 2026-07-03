@@ -1557,7 +1557,7 @@ body{ background:linear-gradient(180deg,#faf6f1 0%,#f6efe6 100%); }
           <input class="form-input" type="number" id="edit-disc-thr" placeholder="0">
         </div>
         <div class="form-group">
-          <label class="form-label">折（NT$）</label>
+          <label class="form-label">折(NT$)</label>
           <input class="form-input" type="number" id="edit-disc-amt" placeholder="0">
         </div>
       </div>
@@ -1625,11 +1625,11 @@ let editImgBase64 = '';          // 上傳圖片的 base64（暫存，實際儲�
 
 // PAGE_CONFIGS 從 GAS 動態載入，此為預設值（首次載入前暫用）
 let PAGE_CONFIGS = [
-  {name:'愛德華 / C系列',      idx:0},
-  {name:'香水髮膜',            idx:1},
-  {name:'卡碧兒',              idx:2},
-  {name:'髮品造型 / 美髮工具', idx:3},
-  {name:'髮飾周邊商品',        idx:4},
+  {name:'【分類1】',  idx:0},
+  {name:'【分類2】',  idx:1},
+  {name:'【分類3】',  idx:2},
+  {name:'【分類4】',  idx:3},
+  {name:'【分類5】',  idx:4},
 ];
 const PAGE_SLOTS = 20; // 每頁固定顯示格數
 
@@ -1750,7 +1750,7 @@ function renderHomeCatTabs() {
   const total = allProducts.length;
 
   // 全部 + 五頁都顯示（店家版空頁也要看到才能新增商品）
-  const tabs = [{ label:'全部商品', idx:-1, count: total }];
+  const tabs = [{ label:'【全部】', idx:-1, count: total }];
   PAGE_CONFIGS.forEach((cfg, i) => {
     tabs.push({ label: cfg.name, idx: i, count: counts[i]||0 });
   });
