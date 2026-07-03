@@ -1794,7 +1794,14 @@ function renderHomeCatTabs() {
 function switchHomeCat(idx) {
   _homeCurPage = idx;
   document.querySelectorAll('.home-cat-tab').forEach(b => {
-    const i = parseInt(b.getAttribute('onclick').match(/-?\d+/)[0]);
+    // 🔧 修正：編輯頁籤按鈕用 .onclick 綁定、沒有 onclick 屬性字串，
+    // 原本 match(...)[0] 會對它丟 null 錯誤 → 整個 forEach 中斷 → 點標籤不同步。
+    // 這裡防呆：沒有 onclick 屬性或抓不到數字的按鈕直接跳過。
+    const oc = b.getAttribute('onclick');
+    if (!oc) return;
+    const m = oc.match(/-?\d+/);
+    if (!m) return;
+    const i = parseInt(m[0]);
     b.classList.toggle('active', i === idx);
   });
   renderHomeProducts();
