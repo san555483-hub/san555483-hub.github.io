@@ -902,6 +902,9 @@ body{ background:linear-gradient(180deg,#faf6f1 0%,#f6efe6 100%); }
       showToast('✓ 店家模式已開啟');
       // 在商品頁顯示「新增商品」按鈕
       renderAddProductBtn();
+      // 🔧 修正：登入後重畫首頁標籤列，讓「✏️ 編輯頁籤」按鈕立即出現（原本登入後沒重畫，按鈕永遠不顯示）
+      if (typeof renderHomeCatTabs === 'function') renderHomeCatTabs();
+      if (typeof renderHomeAddBtn === 'function') renderHomeAddBtn();
     } catch(e) { showToast('登入失敗：' + e.message); }
   };
 
@@ -914,6 +917,9 @@ body{ background:linear-gradient(180deg,#faf6f1 0%,#f6efe6 100%); }
          <img src="https://www.google.com/favicon.ico" style="width:11px;height:11px"> 店家登入
        </button>`;
     document.getElementById('add-prod-btn-wrap').innerHTML = '';
+    // 🔧 修正：登出後重畫首頁標籤列，讓「✏️ 編輯頁籤」按鈕消失
+    if (typeof renderHomeCatTabs === 'function') renderHomeCatTabs();
+    if (typeof renderHomeAddBtn === 'function') renderHomeAddBtn();
     showToast('已登出店家模式');
   };
 
