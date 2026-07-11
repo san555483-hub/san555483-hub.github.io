@@ -337,6 +337,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('cancelwarn')" id="tab-btn-cancelwarn">⚠️ 取消預警</button>
       <button class="tab-btn" onclick="switchTab('agentgate')" id="tab-btn-agentgate" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">🤖 AI收單待確認</button>
       <button class="tab-btn" onclick="switchTab('quickbook')" id="tab-btn-quickbook" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">⚡ 快速登記</button>
+      <button class="tab-btn" onclick="switchTab('proactive')" id="tab-btn-proactive" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">📣 主動邀約</button>
     </div>
   </div>
 
@@ -393,6 +394,59 @@ tr:hover td{background:rgba(61,43,31,.03);}
 
       <button class="btn" onclick="qbSubmitAll()" style="width:100%;background:var(--gold);color:#fff;padding:13px;font-size:.9rem;font-weight:700;">✅ 送出登記（佔位）</button>
       <div id="qb-submit-result" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ 📣 主動邀約（劉曦璟型：後台幫客人開場，AI 接手湊單）═══ -->
+  <!-- 回滾：刪除整個 <div class="tab-pane" id="pane-proactive"> ... </div> + 上方 tab 按鈕 -->
+  <div class="tab-pane" id="pane-proactive">
+    <div class="pane-inner">
+      <div style="margin-bottom:14px;">
+        <h2 style="margin:0 0 4px;color:var(--bark);font-size:1rem;">📣 主動邀約</h2>
+        <div style="font-size:.68rem;color:var(--mid);">給「有加 LINE 但懶得點頁面」的熟客。發送後客人在聊天室直接點按鈕，AI 幫他湊單，湊齊後回到「🤖 AI收單待確認」等您確認。</div>
+      </div>
+
+      <!-- 🔒 白名單狀態提示條 -->
+      <div style="background:#FFF8E7;border:1px solid #E8D0B0;border-left:4px solid var(--gold);border-radius:8px;padding:11px 13px;margin-bottom:12px;">
+        <div style="font-size:.72rem;font-weight:700;color:var(--bark);margin-bottom:4px;">🔒 白名單模式（AI 只服務指定客人）</div>
+        <div style="font-size:.66rem;color:var(--mid);line-height:1.65;">
+          只有在 <b>AGENT_WHITELIST</b> 名單內的客人，才走 AI 湊單；其他客人行為完全不變（走原本的預約連結）。<br>
+          要新增客人 → 下方查到他後，按卡片上的「📋 複製 UID」→ 貼進 <b>m_agent_core.gs</b> 的 <b>AGENT_WHITELIST</b> → 管理部署 → 新版本。<br>
+          <span style="color:#b5524a;">🚨 緊急全停：把 AGENT_WHITELIST 清空成 [] 即可，AI 對所有人立即失效。</span>
+        </div>
+      </div>
+
+      <!-- 查客人 -->
+      <div style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:.75rem;font-weight:600;color:var(--bark);margin-bottom:8px;">🔍 查客人（電話末4碼或名字）</div>
+        <div style="font-size:.64rem;color:var(--mid);margin-bottom:7px;">※ 只會列出<b>有綁定 LINE</b> 的客人。沒綁 LINE 的無法主動邀約，請改用「⚡ 快速登記」。</div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="pa-search-kw" placeholder="例：1234 或 劉曦璟" onkeydown="if(event.key==='Enter')paSearch()" style="flex:1;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;">
+          <button class="btn" onclick="paSearch()" style="background:var(--bark);color:#fff;">查詢</button>
+        </div>
+        <div id="pa-search-result" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- 已選客人 + 選服務 + 發送 -->
+      <div style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:.75rem;font-weight:600;color:var(--bark);margin-bottom:8px;">📤 發送邀約</div>
+        <div id="pa-selected" style="background:var(--linen);border:1px dashed var(--border);border-radius:8px;padding:11px;margin-bottom:10px;font-size:.72rem;color:var(--mid);text-align:center;">尚未選擇客人</div>
+        <div style="font-size:.66rem;color:var(--mid);margin-bottom:3px;">服務（選填，留空＝讓客人自己選）</div>
+        <select id="pa-service" style="width:100%;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;margin-bottom:10px;">
+          <option value="">（不指定，讓客人自己選）</option>
+        </select>
+        <button class="btn" id="pa-send-btn" onclick="paSend()" disabled style="width:100%;background:#ccc;color:#fff;padding:13px;font-size:.9rem;font-weight:700;cursor:not-allowed;">📣 發送邀約</button>
+        <div id="pa-send-result" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- 發送紀錄 -->
+      <div style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:.75rem;font-weight:600;color:var(--bark);">📋 發送紀錄（稽核）</div>
+          <button class="btn" onclick="paLoadLog()" style="background:var(--bark);color:#fff;padding:5px 11px;font-size:.68rem;">🔄 重新整理</button>
+        </div>
+        <div id="pa-log"><div style="text-align:center;color:var(--mid);padding:20px 0;font-size:.75rem;">載入中…</div></div>
+      </div>
     </div>
   </div>
 
@@ -1746,8 +1800,180 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh,agentgate:loadAgentGate,quickbook:loadQuickBook};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh,agentgate:loadAgentGate,quickbook:loadQuickBook,proactive:loadProactive};
   if(map[name])map[name]();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 📣 主動邀約（劉曦璟型）— 2026/07/11
+// ─────────────────────────────────────────────────────────────────────
+// 後端：m_agent_proactive.gs
+//   ?action=agentProactiveSearch&kw=  → { ok, customers:[{uid,name,phone4,lastService,isOwner}] }
+//   ?action=agentProactiveStart&uid=&name=&service=  → { ok, sessionId, message }
+//   ?action=agentProactiveLog&n=30    → { ok, rows:[...] }
+// 回滾：刪掉本區塊 + pane-proactive + tab 按鈕 + switchTab 的 proactive 對應。
+// ═══════════════════════════════════════════════════════════════════════
+let _paSelected = null;    // 目前選中的客人
+let _paServices = [];      // 服務清單
+
+async function loadProactive(){
+  await paLoadServices();
+  paLoadLog();
+}
+
+// 動態抓服務清單（跟快速登記同一個來源：💰服務價格表）
+async function paLoadServices(){
+  try{
+    const r = await fetch(GAS+'?action=getServices&t='+Date.now());
+    const d = await r.json();
+    _paServices = (d.services||[]).filter(s=>s.active&&s.name).map(s=>s.name);
+    _paServices = _paServices.filter((v,i)=>_paServices.indexOf(v)===i);
+  }catch(e){ _paServices = ['洗髮','剪髮','燙髮','染髮','護髮']; }
+  const sel = document.getElementById('pa-service');
+  sel.innerHTML = '<option value="">（不指定，讓客人自己選）</option>'
+    + _paServices.map(n=>`<option value="${paEsc(n)}">${paEsc(n)}</option>`).join('');
+}
+
+// ── 查客人 ──
+async function paSearch(){
+  const kw  = document.getElementById('pa-search-kw').value.trim();
+  const box = document.getElementById('pa-search-result');
+  if(!kw){ box.innerHTML = '<div style="font-size:.72rem;color:#b5524a;">請先輸入姓名或電話末4碼</div>'; return; }
+  box.innerHTML = '<div style="font-size:.72rem;color:var(--mid);">查詢中…</div>';
+  try{
+    const r = await fetch(GAS+'?action=agentProactiveSearch&kw='+encodeURIComponent(kw)+'&t='+Date.now());
+    const d = await r.json();
+    if(!d.ok){ box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ ${paEsc(d.error||'查詢失敗')}</div>`; return; }
+    const list = d.customers||[];
+    if(!list.length){
+      box.innerHTML = '<div style="font-size:.72rem;color:var(--mid);padding:8px 0;">查無「有綁 LINE」的客人。<br>沒綁 LINE 的客人無法主動邀約，請改用「⚡ 快速登記」。</div>';
+      return;
+    }
+    box.innerHTML = list.map(c=>paCard(c)).join('');
+  }catch(e){
+    box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ 連線失敗：${paEsc(e.message)}</div>`;
+  }
+}
+
+// 客人卡片（含 UID 複製鈕，方便加進白名單）
+function paCard(c){
+  const uid  = c.uid||'';
+  const nm   = c.name||'（未命名）';
+  const p4   = c.phone4 ? ('末4碼 '+c.phone4) : '無電話';
+  const last = c.lastService ? ('上次：'+c.lastService) : '無服務紀錄';
+  const own  = c.isOwner ? '<span style="background:var(--rose);color:#fff;padding:1px 6px;border-radius:3px;font-size:.6rem;margin-left:5px;">您自己·測試</span>' : '';
+  const j    = paEsc(JSON.stringify(c)).replace(/'/g,'&#39;');
+  return `
+  <div style="border:1px solid var(--border);border-radius:9px;padding:10px 11px;margin-bottom:7px;background:var(--linen);">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:150px;">
+        <div style="font-size:.82rem;font-weight:600;color:var(--bark);">${paEsc(nm)}${own}</div>
+        <div style="font-size:.64rem;color:var(--mid);margin-top:2px;">${paEsc(p4)} ・ ${paEsc(last)}</div>
+        <div style="font-size:.58rem;color:#a89a8e;margin-top:3px;font-family:monospace;word-break:break-all;">${paEsc(uid)}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn" onclick='paCopyUid("${paEsc(uid)}")' style="background:#fff;border:1px solid var(--border);color:var(--mid);padding:6px 9px;font-size:.65rem;">📋 複製UID</button>
+        <button class="btn" onclick='paPick(${j})' style="background:var(--gold);color:#fff;padding:6px 11px;font-size:.68rem;font-weight:600;">選他</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function paCopyUid(uid){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = uid; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('✅ 已複製 UID：\n'+uid+'\n\n貼進 m_agent_core.gs 的 AGENT_WHITELIST，\n再「管理部署 → 新版本」，這位客人就會走 AI 了。');
+  }catch(e){ prompt('請手動複製這串 UID：', uid); }
+}
+
+// ── 選定客人 ──
+function paPick(c){
+  _paSelected = c;
+  document.getElementById('pa-selected').innerHTML = `
+    <div style="text-align:left;">
+      <div style="font-size:.8rem;font-weight:600;color:var(--bark);">👤 ${paEsc(c.name||'')}</div>
+      <div style="font-size:.64rem;color:var(--mid);margin-top:2px;">${paEsc(c.phone4?('末4碼 '+c.phone4):'無電話')}</div>
+    </div>`;
+  const btn = document.getElementById('pa-send-btn');
+  btn.disabled = false;
+  btn.style.background = 'var(--gold)';
+  btn.style.cursor = 'pointer';
+  document.getElementById('pa-send-result').innerHTML = '';
+}
+
+// ── 發送邀約 ──
+async function paSend(){
+  if(!_paSelected){ alert('請先選一位客人'); return; }
+  const svc = document.getElementById('pa-service').value;
+  const nm  = _paSelected.name||'';
+  if(!confirm(`確定要發送邀約給「${nm}」嗎？\n\n服務：${svc||'（不指定）'}\n\n★ 這會真的推 LINE 訊息給他。`)) return;
+
+  const btn = document.getElementById('pa-send-btn');
+  const box = document.getElementById('pa-send-result');
+  btn.disabled = true; btn.textContent = '發送中…';
+  try{
+    const u = GAS+'?action=agentProactiveStart'
+            + '&uid='+encodeURIComponent(_paSelected.uid)
+            + '&name='+encodeURIComponent(nm)
+            + '&service='+encodeURIComponent(svc)
+            + '&t='+Date.now();
+    const r = await fetch(u);
+    const d = await r.json();
+    if(d.ok){
+      box.innerHTML = `<div style="background:#EAF3EA;border:1px solid #B8CFB0;border-radius:8px;padding:11px;font-size:.72rem;color:#4a6b42;white-space:pre-wrap;line-height:1.6;">${paEsc(d.message||'✅ 已發送')}</div>`;
+    }else{
+      box.innerHTML = `<div style="background:#FBEDEC;border:1px solid #E5BFBB;border-radius:8px;padding:11px;font-size:.72rem;color:#b5524a;white-space:pre-wrap;line-height:1.6;">❌ ${paEsc(d.error||'發送失敗')}</div>`;
+    }
+  }catch(e){
+    box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ 連線失敗：${paEsc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = '📣 發送邀約';
+  paLoadLog();
+}
+
+// ── 發送紀錄 ──
+async function paLoadLog(){
+  const box = document.getElementById('pa-log');
+  box.innerHTML = '<div style="text-align:center;color:var(--mid);padding:20px 0;font-size:.75rem;">載入中…</div>';
+  try{
+    const r = await fetch(GAS+'?action=agentProactiveLog&n=30&t='+Date.now());
+    const d = await r.json();
+    if(!d.ok){ box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ ${paEsc(d.error||'讀取失敗')}</div>`; return; }
+    const rows = d.rows||[];
+    if(!rows.length){ box.innerHTML = '<div style="text-align:center;color:var(--mid);padding:18px 0;font-size:.75rem;">尚無發送紀錄</div>'; return; }
+    box.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>時間</th><th>客人</th><th>服務</th><th>結果</th><th>備註</th></tr></thead>
+      <tbody>${rows.map(x=>`
+        <tr>
+          <td style="font-size:.65rem;white-space:nowrap;">${paEsc(String(x.createdAt||'').slice(5,16))}</td>
+          <td style="font-size:.7rem;">${paEsc(x.customerName||'—')}${x.isSelfTest==='Y'?' <span style="color:var(--rose);font-size:.58rem;">(測試)</span>':''}</td>
+          <td style="font-size:.68rem;">${paEsc(x.serviceHint||'—')}</td>
+          <td style="font-size:.65rem;">${paStatus(x.pushStatus)}</td>
+          <td style="font-size:.62rem;color:var(--mid);max-width:170px;">${paEsc(x.errorMsg||'')}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+  }catch(e){
+    box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ 連線失敗：${paEsc(e.message)}</div>`;
+  }
+}
+
+function paStatus(st){
+  const M = {
+    SENT:                    ['#4a6b42','#EAF3EA','✅ 已發送'],
+    DISABLED:                ['#8a6d3b','#FFF8E7','🔒 開關未開'],
+    BLOCKED_NOT_WHITELISTED: ['#8a6d3b','#FFF8E7','🔒 不在名單'],
+    BLOCKED_HAS_SESSION:     ['#7a6a60','#F0EDE7','⏳ 湊單中'],
+    BLOCKED_NO_UID:          ['#b5524a','#FBEDEC','❌ 無LINE'],
+    FAILED:                  ['#b5524a','#FBEDEC','❌ 失敗']
+  };
+  const m = M[st] || ['#7a6a60','#F0EDE7', st||'—'];
+  return `<span style="background:${m[1]};color:${m[0]};padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap;">${paEsc(m[2])}</span>`;
+}
+
+function paEsc(t){
+  return String(t==null?'':t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ════ ⚡ 快速登記（電話客／多人多格建單）════
