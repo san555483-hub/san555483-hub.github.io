@@ -335,6 +335,78 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('cdb')" id="tab-btn-cdb">📇 顧客資料庫</button>
        <button class="tab-btn" onclick="switchTab('template')" id="tab-btn-template">📝 訊息範本</button>
       <button class="tab-btn" onclick="switchTab('cancelwarn')" id="tab-btn-cancelwarn">⚠️ 取消預警</button>
+      <button class="tab-btn" onclick="switchTab('agentgate')" id="tab-btn-agentgate" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">🤖 AI收單待確認</button>
+      <button class="tab-btn" onclick="switchTab('quickbook')" id="tab-btn-quickbook" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">⚡ 快速登記</button>
+    </div>
+  </div>
+
+  <!-- ═══ ⚡ 快速登記（電話客／多人多格建單）═══ -->
+  <div class="tab-pane" id="pane-quickbook">
+    <div class="pane-inner">
+      <div style="margin-bottom:14px;">
+        <h2 style="margin:0 0 4px;color:var(--bark);font-size:1rem;">⚡ 快速登記</h2>
+        <div style="font-size:.68rem;color:var(--mid);">電話客登記／多人接續建單。多人＝佔多個連續時段（3人＝3格），一人做久也可佔多格。</div>
+      </div>
+
+      <!-- 查客人 -->
+      <div style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:.75rem;font-weight:600;color:var(--bark);margin-bottom:8px;">🔍 查客人（輸入電話末4碼或名字）</div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="qb-search-kw" placeholder="例：1234 或 王小姐" style="flex:1;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;">
+          <button class="btn" onclick="qbSearchCustomer()" style="background:var(--bark);color:#fff;">查詢</button>
+        </div>
+        <div id="qb-search-result" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- 選日期 + 起始時段 + 幾格 -->
+      <div style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:.75rem;font-weight:600;color:var(--bark);margin-bottom:8px;">📅 日期與時段</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:.66rem;color:var(--mid);margin-bottom:3px;">日期</div>
+            <input type="date" id="qb-date" onchange="qbLoadSlots()" style="width:100%;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;">
+          </div>
+          <div>
+            <div style="font-size:.66rem;color:var(--mid);margin-bottom:3px;">要佔幾格（連續）</div>
+            <select id="qb-count" onchange="qbRenderRows()" style="width:100%;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;">
+              <option value="1">1 格</option><option value="2">2 格</option><option value="3">3 格</option>
+              <option value="4">4 格</option><option value="5">5 格</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:.66rem;color:var(--mid);margin-bottom:3px;">起始時段</div>
+        <select id="qb-start" onchange="qbRenderRows()" style="width:100%;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;">
+          <option value="">請先選日期</option>
+        </select>
+        <div id="qb-slot-preview" style="margin-top:8px;font-size:.7rem;"></div>
+      </div>
+
+      <!-- 每格填名字＋服務 -->
+      <div style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:.75rem;font-weight:600;color:var(--bark);margin-bottom:8px;">👤 每格資料（可各自填不同名字／服務）</div>
+        <div id="qb-rows"><div style="font-size:.7rem;color:var(--mid);">請先選日期與起始時段</div></div>
+        <div style="margin-top:10px;">
+          <div style="font-size:.66rem;color:var(--mid);margin-bottom:3px;">電話（選填，整組共用）</div>
+          <input type="text" id="qb-phone" placeholder="09xxxxxxxx" style="width:100%;padding:9px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;">
+        </div>
+      </div>
+
+      <button class="btn" onclick="qbSubmitAll()" style="width:100%;background:var(--gold);color:#fff;padding:13px;font-size:.9rem;font-weight:700;">✅ 送出登記（佔位）</button>
+      <div id="qb-submit-result" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ 🤖 AI 收單待確認（授權台，融入 admin）═══ -->
+  <div class="tab-pane" id="pane-agentgate">
+    <div class="pane-inner">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div>
+          <h2 style="margin:0 0 4px;color:var(--bark);font-size:1rem;">🤖 AI 收單待確認</h2>
+          <div style="font-size:.68rem;color:var(--mid);">客人在 LINE 湊好的預約，確認後才正式佔位。改時段＝只提議，客人同意才建單。</div>
+        </div>
+        <button class="btn" onclick="loadAgentGate()" style="background:var(--bark);color:#fff;">🔄 重新整理</button>
+      </div>
+      <div id="ag-list"><div style="text-align:center;color:var(--mid);padding:30px 0;font-size:.8rem;">載入中…</div></div>
     </div>
   </div>
 
@@ -1674,8 +1746,236 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh,agentgate:loadAgentGate,quickbook:loadQuickBook};
   if(map[name])map[name]();
+}
+
+// ════ ⚡ 快速登記（電話客／多人多格建單）════
+let _qbFreeSlots = [];      // 當天空檔
+let _qbServices  = [];      // 服務清單（動態抓服務價格表）
+
+async function loadQuickBook(){
+  // 預設今天
+  var dEl=document.getElementById('qb-date');
+  if(!dEl.value){ var t=new Date(); dEl.value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
+  await qbLoadServices();
+  await qbLoadSlots();
+}
+
+// 動態抓服務清單（從「💰服務價格」表，只取啟用中的）
+async function qbLoadServices(){
+  try{
+    const r=await fetch(GAS+'?action=getServices&t='+Date.now());
+    const d=await r.json();
+    _qbServices=(d.services||[]).filter(s=>s.active&&s.name).map(s=>s.name);
+    _qbServices=_qbServices.filter((v,i)=>_qbServices.indexOf(v)===i);
+  }catch(e){ _qbServices=['洗髮','剪髮','燙髮','染髮','護髮']; }
+}
+
+// 查客人（帶出舊資料＋上次服務）
+async function qbSearchCustomer(){
+  const kw=document.getElementById('qb-search-kw').value.trim();
+  const box=document.getElementById('qb-search-result');
+  if(kw.length<2){ box.innerHTML='<div style="font-size:.7rem;color:#c0392b;">請至少輸入 2 個字</div>'; return; }
+  box.innerHTML='<div style="font-size:.7rem;color:var(--mid);">查詢中…</div>';
+  try{
+    const r=await fetch(GAS+'?action=qbSearch&kw='+encodeURIComponent(kw)+'&t='+Date.now());
+    const d=await r.json();
+    if(!d.ok||!d.customers||!d.customers.length){ box.innerHTML='<div style="font-size:.7rem;color:var(--mid);">查無此客人</div>'; return; }
+    box.innerHTML=d.customers.map(function(c){
+      var last=c.lastService?('上次：'+qb_esc(c.lastService)):'（無紀錄）';
+      return '<div style="border:1px solid #e5ddd0;border-radius:8px;padding:8px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+        +'<div style="min-width:0;"><div style="font-size:.78rem;font-weight:600;color:var(--bark);">'+qb_esc(c.name)+'</div>'
+        +'<div style="font-size:.65rem;color:var(--mid);">'+qb_esc(c.phone||'（無電話）')+'　'+last+'</div></div>'
+        +'<button class="btn" style="background:var(--gold);color:#fff;flex-shrink:0;" onclick="qbPick(\''+qb_esc(c.name).replace(/'/g,"")+'\',\''+qb_esc(c.phone||'')+'\',\''+qb_esc(c.lastService||'')+'\')">帶入</button>'
+      +'</div>';
+    }).join('');
+  }catch(e){ box.innerHTML='<div style="font-size:.7rem;color:#c0392b;">查詢失敗</div>'; }
+}
+
+// 把查到的客人帶入第一格
+function qbPick(name,phone,lastService){
+  document.getElementById('qb-phone').value=phone||'';
+  var n0=document.getElementById('qb-name-0');
+  if(n0) n0.value=name||'';
+  var s0=document.getElementById('qb-svc-0');
+  if(s0&&lastService&&_qbServices.indexOf(lastService)>=0) s0.value=lastService;
+  showToast('✓ 已帶入 '+name);
+}
+
+// 查當天空檔
+async function qbLoadSlots(){
+  const dv=document.getElementById('qb-date').value;
+  const sel=document.getElementById('qb-start');
+  if(!dv){ sel.innerHTML='<option value="">請先選日期</option>'; return; }
+  sel.innerHTML='<option value="">查詢中…</option>';
+  try{
+    const r=await fetch(GAS+'?action=qbFreeSlots&date='+encodeURIComponent(dv)+'&t='+Date.now());
+    const d=await r.json();
+    _qbFreeSlots=(d&&d.ok&&d.slots)?d.slots:[];
+    if(!_qbFreeSlots.length){ sel.innerHTML='<option value="">當天無空檔</option>'; qbRenderRows(); return; }
+    sel.innerHTML='<option value="">請選起始時段</option>'+_qbFreeSlots.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  }catch(e){ sel.innerHTML='<option value="">查詢失敗</option>'; _qbFreeSlots=[]; }
+  qbRenderRows();
+}
+
+// 依「起始時段＋幾格」算出要佔的連續格；並檢查是否都空
+function qbCalcSlots(){
+  const start=document.getElementById('qb-start').value;
+  const n=parseInt(document.getElementById('qb-count').value)||1;
+  if(!start||!_qbFreeSlots.length) return {ok:false,slots:[],msg:''};
+  const idx=_qbFreeSlots.indexOf(start);
+  if(idx<0) return {ok:false,slots:[],msg:'起始時段不在空檔中'};
+  // 從空檔清單取連續 N 個（空檔清單本身已排除被佔的，故連續取即為可用）
+  const picked=_qbFreeSlots.slice(idx,idx+n);
+  if(picked.length<n) return {ok:false,slots:picked,msg:'從 '+start+' 起只剩 '+picked.length+' 格可用，不足 '+n+' 格'};
+  return {ok:true,slots:picked,msg:''};
+}
+
+// 渲染每格的「名字＋服務」輸入列
+function qbRenderRows(){
+  const box=document.getElementById('qb-rows');
+  const pv=document.getElementById('qb-slot-preview');
+  const calc=qbCalcSlots();
+  if(!calc.slots.length){
+    box.innerHTML='<div style="font-size:.7rem;color:var(--mid);">請先選日期與起始時段</div>';
+    pv.innerHTML=''; return;
+  }
+  if(!calc.ok){
+    pv.innerHTML='<span style="color:#c0392b;">⚠️ '+qb_esc(calc.msg)+'</span>';
+  }else{
+    pv.innerHTML='<span style="color:var(--moss,#5a7a4a);">✓ 將佔用：'+calc.slots.join('、')+'</span>';
+  }
+  const svcOpts='<option value="">請選服務</option>'+_qbServices.map(function(s){return '<option value="'+qb_esc(s)+'">'+qb_esc(s)+'</option>';}).join('');
+  box.innerHTML=calc.slots.map(function(t,i){
+    return '<div style="display:grid;grid-template-columns:56px 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px;">'
+      +'<div style="font-size:.72rem;font-weight:700;color:var(--gold);">'+t+'</div>'
+      +'<input type="text" id="qb-name-'+i+'" placeholder="名字" style="padding:8px;border:1px solid #d8cdb8;border-radius:6px;font-size:.78rem;">'
+      +'<select id="qb-svc-'+i+'" style="padding:8px;border:1px solid #d8cdb8;border-radius:6px;font-size:.78rem;">'+svcOpts+'</select>'
+    +'</div>';
+  }).join('');
+}
+
+// 送出：迴圈呼叫 qbSubmit，一格一筆（沿用現有防撞單／電話補零／冪等）
+async function qbSubmitAll(){
+  const calc=qbCalcSlots();
+  const box=document.getElementById('qb-submit-result');
+  if(!calc.ok){ showToast(calc.msg||'請先選好日期與起始時段'); return; }
+  const dv=document.getElementById('qb-date').value;
+  const phone=document.getElementById('qb-phone').value.trim();
+  const n=calc.slots.length;
+  // 驗證每格都有名字＋服務
+  var rows=[];
+  for(var i=0;i<n;i++){
+    var nm=(document.getElementById('qb-name-'+i)||{}).value||'';
+    var sv=(document.getElementById('qb-svc-'+i)||{}).value||'';
+    nm=nm.trim();
+    if(!nm){ showToast('第 '+(i+1)+' 格請填名字'); return; }
+    if(!sv){ showToast('第 '+(i+1)+' 格請選服務'); return; }
+    rows.push({time:calc.slots[i],name:nm,service:sv});
+  }
+  if(!confirm('確定登記 '+n+' 格？\n'+rows.map(function(r,i){return (i+1)+'. '+r.time+'　'+r.name+'　'+r.service;}).join('\n'))) return;
+
+  box.innerHTML='<div style="font-size:.75rem;color:var(--mid);">送出中…</div>';
+  var groupKey='QB'+Date.now();
+  var okCount=0, fails=[];
+  for(var j=0;j<rows.length;j++){
+    var r=rows[j];
+    var note=(n>1)?('快速登記 '+(j+1)+'/'+n+'（同組）'):'快速登記';
+    var idem=groupKey+'_'+j;
+    try{
+      const resp=await fetch(GAS+'?action=qbSubmit'
+        +'&idemKey='+encodeURIComponent(idem)
+        +'&name='+encodeURIComponent(r.name)
+        +'&date='+encodeURIComponent(dv)
+        +'&time='+encodeURIComponent(r.time)
+        +'&phone='+encodeURIComponent(phone)
+        +'&service='+encodeURIComponent(r.service)
+        +'&note='+encodeURIComponent(note)
+        +'&t='+Date.now());
+      const d=await resp.json();
+      if(d&&d.ok&&(d.result==='written'||d.result==='dup')) okCount++;
+      else fails.push(r.time+'（'+((d&&(d.msg||d.result))||'失敗')+'）');
+    }catch(e){ fails.push(r.time+'（連線錯誤）'); }
+  }
+  if(fails.length===0){
+    box.innerHTML='<div style="font-size:.78rem;color:var(--moss,#5a7a4a);font-weight:600;">✅ 已登記 '+okCount+' 格並佔位</div>';
+    showToast('✅ 已登記 '+okCount+' 格');
+    await qbLoadSlots();   // 重查空檔（剛佔的會消失）
+    document.getElementById('qb-search-result').innerHTML='';
+  }else{
+    box.innerHTML='<div style="font-size:.78rem;color:#c0392b;font-weight:600;">⚠️ 成功 '+okCount+' 格，失敗：'+qb_esc(fails.join('、'))+'</div>';
+    showToast('部分失敗，請看下方訊息');
+    await qbLoadSlots();
+  }
+}
+
+function qb_esc(s){return String(s||'').replace(/[<>&"]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+
+// ════ 🤖 AI 收單待確認（授權台融入版）════
+async function loadAgentGate(){
+  var box=document.getElementById('ag-list');
+  box.innerHTML='<div style="text-align:center;color:var(--mid);padding:30px 0;font-size:.8rem;">載入中…</div>';
+  try{
+    var r=await fetch(GAS+'?action=agentGateList&t='+Date.now());
+    var d=await r.json();
+    if(!d.ok){box.innerHTML='<div style="text-align:center;color:#c0392b;padding:30px 0;font-size:.8rem;">讀取失敗：'+ag_esc(d.msg)+'</div>';return;}
+    if(!d.items||!d.items.length){box.innerHTML='<div style="text-align:center;color:var(--mid);padding:40px 0;font-size:.85rem;">目前沒有待確認的預約 ✨</div>';return;}
+    box.innerHTML=d.items.map(ag_card).join('');
+  }catch(e){box.innerHTML='<div style="text-align:center;color:#c0392b;padding:30px 0;font-size:.8rem;">連線錯誤</div>';}
+}
+function ag_esc(s){return String(s||'').replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c];});}
+function ag_card(it){
+  var pid=ag_esc(it.pendingId);
+  var nouid=it.hasUid?'':'<div style="font-size:.62rem;color:#c0392b;margin-top:6px;">⚠️ 此客人無 LINE UID，改時段/自動通知不可用，請以拒絕或電話處理</div>';
+  return '<div class="card" id="ag_c_'+pid+'" style="background:#fff;border:1px solid var(--line,#e5ddd0);border-radius:12px;padding:15px;margin-bottom:12px;">'
+    +'<div style="font-weight:700;font-size:.9rem;margin-bottom:6px;color:var(--bark);">👤 '+ag_esc(it.customerName)+'</div>'
+    +'<div style="font-size:.78rem;margin:2px 0;color:var(--dark,#4a4038);">💇 '+ag_esc(it.service)+'</div>'
+    +'<div style="font-size:.78rem;margin:2px 0;color:var(--dark,#4a4038);">📅 '+ag_esc(it.bookDate)+'　🕐 '+ag_esc(it.bookTime)+'</div>'
+    +'<div style="font-size:.68rem;color:var(--mid);margin-top:6px;background:#f7f3ec;border-radius:6px;padding:6px 8px;">💬 「'+ag_esc(it.originalText)+'」</div>'+nouid
+    +'<div style="display:flex;gap:8px;margin-top:12px;">'
+      +'<button class="btn" style="flex:1;background:var(--gold);color:#fff;" onclick="ag_act(\''+pid+'\',\'confirm\')">✅ 確認</button>'
+      +'<button class="btn" style="flex:1;background:#e8dcc4;color:#5a4a32;" onclick="ag_toggleRe(\''+pid+'\')">🔁 改時段</button>'
+      +'<button class="btn" style="flex:1;background:#f0e6e0;color:#a03b2b;" onclick="ag_act(\''+pid+'\',\'reject\')">✕ 拒絕</button>'
+    +'</div>'
+    +'<div id="ag_re_'+pid+'" style="display:none;margin-top:12px;padding:12px;background:#faf6ee;border-radius:8px;">'
+      +'<div style="font-size:.68rem;color:var(--mid);margin-bottom:4px;">替代日期</div>'
+      +'<input type="date" id="ag_rd_'+pid+'" onchange="ag_loadSlots(\''+pid+'\')" style="width:100%;padding:8px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;margin-bottom:8px;">'
+      +'<div style="font-size:.68rem;color:var(--mid);margin-bottom:4px;">替代時段</div>'
+      +'<select id="ag_rt_'+pid+'" style="width:100%;padding:8px;border:1px solid #d8cdb8;border-radius:6px;font-size:.8rem;margin-bottom:8px;"><option value="">先選日期</option></select>'
+      +'<button class="btn" style="width:100%;background:var(--gold);color:#fff;" onclick="ag_doResched(\''+pid+'\')">送出改期徵詢給客人</button>'
+    +'</div>'
+  +'</div>';
+}
+function ag_toggleRe(pid){var e=document.getElementById('ag_re_'+pid);e.style.display=(e.style.display==='none'?'block':'none');}
+async function ag_loadSlots(pid){
+  var dv=document.getElementById('ag_rd_'+pid).value;var sel=document.getElementById('ag_rt_'+pid);
+  if(!dv){sel.innerHTML='<option value="">先選日期</option>';return;}
+  sel.innerHTML='<option value="">查詢中…</option>';
+  try{
+    var r=await fetch(GAS+'?action=agentGateSlots&date='+encodeURIComponent(dv)+'&t='+Date.now());
+    var d=await r.json();
+    if(!d.ok||!d.slots||!d.slots.length){sel.innerHTML='<option value="">當天無空檔</option>';return;}
+    sel.innerHTML='<option value="">請選時段</option>'+d.slots.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  }catch(e){sel.innerHTML='<option value="">查詢失敗</option>';}
+}
+async function ag_doResched(pid){
+  var dv=document.getElementById('ag_rd_'+pid).value;var tv=document.getElementById('ag_rt_'+pid).value;
+  if(!dv||!tv){showToast('請先選好替代日期與時段');return;}
+  try{
+    var r=await fetch(GAS+'?action=agentGateAct&pendingId='+encodeURIComponent(pid)+'&act=reschedule&proposedDate='+encodeURIComponent(dv)+'&proposedTime='+encodeURIComponent(tv)+'&t='+Date.now());
+    var d=await r.json();
+    if(d.ok){showToast('已送出改期徵詢，等客人回覆');setTimeout(loadAgentGate,800);}else{showToast('失敗：'+(d.msg||''));}
+  }catch(e){showToast('連線錯誤');}
+}
+async function ag_act(pid,a){
+  if(a==='reject'&&!confirm('確定拒絕這筆預約？'))return;
+  try{
+    var r=await fetch(GAS+'?action=agentGateAct&pendingId='+encodeURIComponent(pid)+'&act='+a+'&t='+Date.now());
+    var d=await r.json();
+    if(d.ok){showToast(a==='confirm'?'已確認並佔位 ✅':'已拒絕');setTimeout(loadAgentGate,800);}
+    else{showToast('失敗：'+(d.msg||d.reason||''));}
+  }catch(e){showToast('連線錯誤');}
 }
 
 function initAdmin(){Dashboard.init();initLockTimes();}
