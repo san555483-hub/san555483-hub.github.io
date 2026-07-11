@@ -1846,16 +1846,25 @@ async function paSearch(){
     if(!d.ok){ box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ ${paEsc(d.error||'查詢失敗')}</div>`; return; }
     const list = d.customers||[];
     if(!list.length){
-      box.innerHTML = '<div style="font-size:.72rem;color:var(--mid);padding:8px 0;">查無「有綁 LINE」的客人。<br>沒綁 LINE 的客人無法主動邀約，請改用「⚡ 快速登記」。</div>';
+      box.innerHTML = '<div style="font-size:.72rem;color:var(--mid);padding:8px 0;">查無此人。請確認姓名或電話末4碼。</div>';
       return;
     }
-    box.innerHTML = list.map(c=>paCard(c)).join('');
+    const bound = list.filter(c=>c.hasUid).length;
+    const tip = bound
+      ? `<div style="font-size:.64rem;color:var(--mid);margin-bottom:6px;">找到 ${list.length} 人，其中 <b style="color:#4a6b42;">${bound} 人已綁 LINE</b>（可加白名單／發邀約）。</div>`
+      : `<div style="font-size:.66rem;color:#b5524a;background:#FBEDEC;border:1px solid #E5BFBB;border-radius:6px;padding:8px;margin-bottom:6px;line-height:1.6;">⚠️ 找到 ${list.length} 人，但<b>沒有任何一位綁定 LINE</b>。<br>他們無法走 AI 預約，請改用「⚡ 快速登記」。</div>`;
+    box.innerHTML = tip + list.map(c=>paCard(c)).join('');
   }catch(e){
     box.innerHTML = `<div style="font-size:.72rem;color:#b5524a;">❌ 連線失敗：${paEsc(e.message)}</div>`;
   }
 }
 
-// 客人卡片（含 UID 複製鈕，方便加進白名單）
+// 客人卡片
+//  ★ 2026/07/11 修正：顧客追蹤表 A 欄混了假 UID（CDB_C0072 這種內部編號），
+//    後端已改成只認真 LINE UID（U開頭+30字元）並合併同一人的多列。
+//    這裡依 hasUid 分成兩種卡片：
+//      ✅ 已綁 LINE → 可複製 UID、可選他發邀約
+//      ⚠️ 未綁 LINE → 灰卡、按鈕停用，明講「無法走 AI，請改用快速登記」
 function paCard(c){
   const uid  = c.uid||'';
   const nm   = c.name||'（未命名）';
@@ -1863,11 +1872,36 @@ function paCard(c){
   const last = c.lastService ? ('上次：'+c.lastService) : '無服務紀錄';
   const own  = c.isOwner ? '<span style="background:var(--rose);color:#fff;padding:1px 6px;border-radius:3px;font-size:.6rem;margin-left:5px;">您自己·測試</span>' : '';
   const j    = paEsc(JSON.stringify(c)).replace(/'/g,'&#39;');
+
+  // ── ⚠️ 未綁 LINE：灰卡 + 停用 ──
+  if(!c.hasUid){
+    return `
+    <div style="border:1px solid #e0d8cc;border-radius:9px;padding:10px 11px;margin-bottom:7px;background:#f4f1ec;opacity:.85;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:150px;">
+          <div style="font-size:.82rem;font-weight:600;color:var(--mid);">${paEsc(nm)}
+            <span style="background:#e8e0d4;color:#8a7a6a;padding:1px 6px;border-radius:3px;font-size:.6rem;margin-left:5px;">⚠️ 未綁 LINE</span>
+          </div>
+          <div style="font-size:.64rem;color:var(--mid);margin-top:2px;">${paEsc(p4)} ・ ${paEsc(last)}</div>
+          <div style="font-size:.6rem;color:#b5524a;margin-top:4px;line-height:1.55;">
+            表中沒有真 LINE UID → 無法走 AI 預約。<br>
+            請他加官方帳號 <b>@261bhcyh</b> 並傳一則訊息，系統就會寫入真 UID；<br>
+            在那之前請用「⚡ 快速登記」幫他建單。
+          </div>
+        </div>
+        <button class="btn" disabled style="background:#ddd;color:#fff;padding:6px 11px;font-size:.68rem;cursor:not-allowed;flex-shrink:0;">不可用</button>
+      </div>
+    </div>`;
+  }
+
+  // ── ✅ 已綁 LINE ──
   return `
   <div style="border:1px solid var(--border);border-radius:9px;padding:10px 11px;margin-bottom:7px;background:var(--linen);">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div style="flex:1;min-width:150px;">
-        <div style="font-size:.82rem;font-weight:600;color:var(--bark);">${paEsc(nm)}${own}</div>
+        <div style="font-size:.82rem;font-weight:600;color:var(--bark);">${paEsc(nm)}
+          <span style="background:#EAF3EA;color:#4a6b42;padding:1px 6px;border-radius:3px;font-size:.6rem;margin-left:5px;">✅ 已綁 LINE</span>${own}
+        </div>
         <div style="font-size:.64rem;color:var(--mid);margin-top:2px;">${paEsc(p4)} ・ ${paEsc(last)}</div>
         <div style="font-size:.58rem;color:#a89a8e;margin-top:3px;font-family:monospace;word-break:break-all;">${paEsc(uid)}</div>
       </div>
