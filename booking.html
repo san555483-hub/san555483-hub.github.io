@@ -707,11 +707,30 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
     📅 48 小時前可免費改期，24 小時內可改期一次
   </div>
   <div class="hs-b-btns">
-    <a href="https://san555483-hub.github.io/home-service.html#hs-form" class="hs-b-btn hs-b-primary">📝 預約到府</a>
+    <a href="https://san555483-hub.github.io/home-service.html#hs-form" class="hs-b-btn hs-b-primary" id="hsGoBtn" onclick="hsGoHomeService(event)">📝 預約到府</a>
     <a href="https://line.me/R/ti/p/@261bhcyh" class="hs-b-btn hs-b-line">💬 LINE 詢問</a>
   </div>
 </div>
 <!-- ═══ 到府服務入口 END ═══ -->
+<script>
+/* ═══ 🚗 到府入口跳轉修正 v1.1（回滾：刪除本整段 script + 按鈕 onclick）═══
+   問題：LINE 內建瀏覽器（LIFF WebView）對帶 # 錮點的外部 <a href> 常常無反應。
+   修正：改用 JS 導頁；LIFF 環境下改用 liff.openWindow 外開。 */
+function hsGoHomeService(e){
+  var url = 'https://san555483-hub.github.io/home-service.html#hs-form';
+  try{
+    if(e && e.preventDefault) e.preventDefault();
+    if(typeof liff !== 'undefined' && liff && typeof liff.openWindow === 'function' && liff.isInClient && liff.isInClient()){
+      liff.openWindow({ url: url, external: true });
+      return false;
+    }
+    window.location.assign(url);
+  }catch(err){
+    try{ window.location.href = url; }catch(e2){ window.open(url,'_blank'); }
+  }
+  return false;
+}
+</script>
 <div class="progress">
   <div class="step active" id="step1"><div class="step-dot">1</div><div class="step-label">服務</div></div>
   <div class="step" id="step2"><div class="step-dot">2</div><div class="step-label">時段</div></div>
