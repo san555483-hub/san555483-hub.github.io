@@ -280,6 +280,48 @@ a.deposit-more:hover{color:var(--olive)}
 }
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ═══ 🚗 到府預約表單 v1.0（回滾：刪除本整段） ═══ */
+.hs-form-sec{background:var(--beige);padding:64px 0}
+.hs-form-sec h2{margin:6px 0 10px}
+.hs-lead{color:var(--ink-soft);margin-bottom:22px;line-height:1.7}
+.hs-card{background:var(--white);border-radius:18px;padding:24px 20px;
+  box-shadow:0 6px 28px rgba(58,53,48,.08);border:1px solid rgba(166,124,82,.14)}
+.hs-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hs-full{grid-column:1/-1}
+.hs-field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.hs-req{color:var(--pink)}
+.hs-hint{font-size:11.5px;color:var(--ink-soft);margin-top:5px;line-height:1.5}
+.hs-hint-inline{font-size:11.5px;color:var(--ink-soft);font-weight:400}
+.hs-field input,.hs-field select,.hs-field textarea{width:100%;box-sizing:border-box;
+  padding:11px 12px;border:1.5px solid var(--warm);border-radius:10px;background:var(--cream);
+  font-size:15px;color:var(--ink);font-family:inherit;outline:none;transition:border-color .18s}
+.hs-field input:focus,.hs-field select:focus,.hs-field textarea:focus{border-color:var(--olive-soft)}
+.hs-field textarea{resize:vertical}
+.hs-chips{display:flex;flex-wrap:wrap;gap:8px}
+.hs-chip{position:relative;cursor:pointer}
+.hs-chip input{position:absolute;opacity:0;width:0;height:0}
+.hs-chip span{display:inline-block;padding:8px 14px;border-radius:20px;font-size:13.5px;
+  border:1.5px solid var(--warm);background:var(--cream);color:var(--ink-soft);transition:all .18s}
+.hs-chip input:checked+span{background:var(--olive);border-color:var(--olive);color:var(--white)}
+.hs-policy{margin-top:18px;padding:13px 15px;background:var(--cream);border-radius:11px;
+  font-size:12.5px;line-height:1.85;color:var(--ink-soft);border-left:3px solid var(--wood)}
+.hs-err{display:none;margin-top:14px;padding:11px 14px;border-radius:10px;
+  background:#FBEDE9;color:#A8412C;font-size:13.5px;line-height:1.6}
+.hs-form-sec .btn{margin-top:16px}
+.hs-alt{text-align:center;margin-top:14px;font-size:13px;color:var(--ink-soft)}
+.hs-alt a{color:var(--olive);font-weight:600;text-decoration:none}
+.hs-done{text-align:center}
+.hs-done-icon{font-size:44px;margin-bottom:6px}
+.hs-done-h{margin:0 0 8px;color:var(--olive-deep)}
+.hs-done-sub{color:var(--ink-soft);line-height:1.75;margin-bottom:20px;font-size:14px}
+.hs-deposit{background:var(--cream);border-radius:13px;padding:18px 16px;text-align:left}
+.hs-dep-title{font-weight:700;color:var(--olive-deep);margin-bottom:8px;font-size:15px}
+.hs-dep-body{font-size:13px;line-height:1.8;color:var(--ink-soft);margin-bottom:14px}
+.hs-paybtns{display:flex;flex-direction:column;gap:8px}
+.hs-pay{display:block;text-align:center;padding:12px;border-radius:10px;text-decoration:none;
+  font-size:14.5px;font-weight:600;border:1.5px solid var(--warm);background:var(--white);color:var(--ink)}
+.hs-pay:hover{border-color:var(--olive-soft)}
+@media(max-width:560px){.hs-grid{grid-template-columns:1fr}.hs-form-sec{padding:48px 0}}
 </style>
 </head>
 <body>
@@ -410,7 +452,7 @@ a.deposit-more:hover{color:var(--olive)}
     <h2 data-uni="cta-h2">把專業與安心，<br>帶進你家。</h2>
     <p class="sans" data-uni="cta-sub">選好時段，全家一次整理好。</p>
     <div class="btns">
-      <a href="https://san555483-hub.github.io/booking.html" class="btn">📅 我要預約到府服務</a>
+      <a href="#hs-form" class="btn">📅 我要預約到府服務</a>
       <a href="https://line.me/R/ti/p/@261bhcyh" class="btn btn-line">💬 線上快速詢問</a>
     </div>
     <div class="cta-quick">⏱ 平均 1 分鐘即可完成預約</div>
@@ -466,6 +508,109 @@ a.deposit-more:hover{color:var(--olive)}
   </div>
 </section>
 
+
+<!-- ═══════════ 🚗 到府預約表單 v1.0（回滾：刪除本整段 + 還原 CTA 連結） ═══════════ -->
+<section class="hs-form-sec" id="hs-form">
+  <div class="wrap">
+    <div class="sec-label">線上預約</div>
+    <h2>填好資料，<br>剩下交給我。</h2>
+    <p class="sans hs-lead">送出後我會盡快與你確認時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。</p>
+
+    <div class="hs-card" id="hsCard">
+      <div class="hs-grid">
+        <div class="hs-field">
+          <label>① 姓名 <span class="hs-req">*</span></label>
+          <input type="text" id="hsName" placeholder="您的稱呼" autocomplete="name">
+        </div>
+        <div class="hs-field">
+          <label>② 聯絡電話 <span class="hs-req">*</span></label>
+          <input type="tel" id="hsPhone" placeholder="09xxxxxxxx" autocomplete="tel" inputmode="numeric">
+        </div>
+        <div class="hs-field hs-full">
+          <label>③ 服務地址 <span class="hs-req">*</span></label>
+          <input type="text" id="hsAddr" placeholder="例：桃園市八德區○○路○號○樓">
+          <div class="hs-hint">📍 目前服務：八德・桃園區・龜山（其他區域請先用 LINE 詢問）</div>
+        </div>
+        <div class="hs-field">
+          <label>④ 想預約日期 <span class="hs-req">*</span></label>
+          <input type="date" id="hsDate">
+        </div>
+        <div class="hs-field">
+          <label>⑤ 想預約時段 <span class="hs-req">*</span></label>
+          <select id="hsTime"><option value="">請選擇</option></select>
+        </div>
+        <div class="hs-field">
+          <label>⑥ 大人人數</label>
+          <select id="hsAdults">
+            <option value="0">0 人</option><option value="1" selected>1 人</option>
+            <option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人以上</option>
+          </select>
+        </div>
+        <div class="hs-field">
+          <label>⑥ 小孩人數</label>
+          <select id="hsKids">
+            <option value="0" selected>0 人</option><option value="1">1 人</option>
+            <option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人以上</option>
+          </select>
+        </div>
+        <div class="hs-field hs-full">
+          <label>⑦ 需要的服務 <span class="hs-req">*</span>　<span class="hs-hint-inline">可複選</span></label>
+          <div class="hs-chips" id="hsSvc">
+            <label class="hs-chip"><input type="checkbox" value="剪髮"><span>✂️ 剪髮</span></label>
+            <label class="hs-chip"><input type="checkbox" value="染髮"><span>🎨 染髮</span></label>
+            <label class="hs-chip"><input type="checkbox" value="燙髮"><span>🌀 燙髮</span></label>
+            <label class="hs-chip"><input type="checkbox" value="洗髮"><span>🫧 洗髮</span></label>
+            <label class="hs-chip"><input type="checkbox" value="護髮"><span>💧 護髮</span></label>
+          </div>
+        </div>
+        <div class="hs-field hs-full">
+          <label>⑧ 是否有停車位或社區可臨停</label>
+          <select id="hsPark">
+            <option value="">請選擇</option>
+            <option value="有專屬車位">有專屬車位</option>
+            <option value="社區可臨停">社區可臨停</option>
+            <option value="路邊停車格">路邊停車格</option>
+            <option value="附近停車場">附近停車場</option>
+            <option value="不確定">不確定，需協助</option>
+          </select>
+        </div>
+        <div class="hs-field hs-full">
+          <label>其他備註</label>
+          <textarea id="hsNote" rows="2" placeholder="例：長者行動不便、孩子怕吹風機、有電梯／無電梯…"></textarea>
+        </div>
+      </div>
+
+      <div class="hs-policy">
+        <b>📅 改期說明</b><br>
+        ・48 小時前可免費改期<br>
+        ・24 小時內可改期一次<br>
+        ・已出車或無故未到，訂金恕不退還
+      </div>
+
+      <div class="hs-err" id="hsErr"></div>
+      <button class="btn" id="hsSubmit" type="button">送出到府預約</button>
+      <div class="hs-alt">不方便填表？<a href="https://line.me/R/ti/p/@261bhcyh">直接用 LINE 詢問 →</a></div>
+    </div>
+
+    <!-- 成功／訂金畫面 -->
+    <div class="hs-card hs-done" id="hsDone" style="display:none">
+      <div class="hs-done-icon">✅</div>
+      <h3 class="hs-done-h">預約已送出</h3>
+      <p class="sans hs-done-sub" id="hsDoneSub"></p>
+      <div class="hs-deposit">
+        <div class="hs-dep-title">💰 請完成 300 元訂金</div>
+        <div class="hs-dep-body">
+          訂金完成後時段才正式保留，服務結束可全額折抵消費。<br>
+          <b>付款後請將截圖傳到 LINE，我會為您確認。</b>
+        </div>
+        <div class="hs-paybtns" id="hsPayBtns"></div>
+        <a href="https://line.me/R/ti/p/@261bhcyh" class="btn btn-line" style="margin-top:12px">💬 傳送付款截圖給 Elsa</a>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ═══════════ 到府預約表單 END ═══════════ -->
+
 <footer>
   <div class="brand">U N I</div>
   <div class="foot-grid sans">
@@ -480,7 +625,7 @@ a.deposit-more:hover{color:var(--olive)}
 
 <!-- sticky CTA -->
 <div class="sticky">
-  <a href="https://san555483-hub.github.io/booking.html" class="s-book">📅 我要預約</a>
+  <a href="#hs-form" class="s-book">📅 我要預約</a>
   <a href="https://line.me/R/ti/p/@261bhcyh" class="s-line">💬 快速詢問</a>
 </div>
 
@@ -628,5 +773,94 @@ a.deposit-more:hover{color:var(--olive)}
 })();
 </script>
 
+<script>
+/* ═══ 🚗 到府預約表單 v1.0（回滾：刪除本整段） ═══ */
+(function(){
+  var HS_GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+  var MAIN=['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+  var sel=document.getElementById('hsTime');
+  if(sel){ MAIN.forEach(function(t){ var o=document.createElement('option'); o.value=t; o.textContent=t; sel.appendChild(o); }); }
+
+  var dEl=document.getElementById('hsDate');
+  if(dEl){
+    var min=new Date(); min.setDate(min.getDate()+2);
+    var max=new Date(); max.setDate(max.getDate()+90);
+    var f=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);};
+    dEl.min=f(min); dEl.max=f(max);
+  }
+
+  var busy=false;
+  var btn=document.getElementById('hsSubmit');
+  if(!btn) return;
+
+  function err(msg){
+    var e=document.getElementById('hsErr');
+    e.textContent=msg; e.style.display='block';
+    e.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  btn.addEventListener('click', function(){
+    if(busy) return;
+    document.getElementById('hsErr').style.display='none';
+
+    var svc=[];
+    document.querySelectorAll('#hsSvc input:checked').forEach(function(c){svc.push(c.value);});
+
+    var d={
+      name:  (document.getElementById('hsName').value||'').trim(),
+      phone: (document.getElementById('hsPhone').value||'').trim(),
+      address:(document.getElementById('hsAddr').value||'').trim(),
+      date:  document.getElementById('hsDate').value||'',
+      time:  document.getElementById('hsTime').value||'',
+      adults:document.getElementById('hsAdults').value||'0',
+      kids:  document.getElementById('hsKids').value||'0',
+      services: svc.join('、'),
+      parking:document.getElementById('hsPark').value||'',
+      note:  (document.getElementById('hsNote').value||'').trim()
+    };
+
+    if(!d.name)    return err('請填寫姓名');
+    if(!d.phone||d.phone.replace(/\D/g,'').length<8) return err('請填寫正確的聯絡電話');
+    if(!d.address) return err('請填寫服務地址');
+    if(!d.date)    return err('請選擇想預約的日期');
+    if(!d.time)    return err('請選擇想預約的時段');
+    if(!svc.length)return err('請至少選擇一項服務');
+    if(d.adults==='0'&&d.kids==='0') return err('請選擇服務人數');
+
+    busy=true; btn.disabled=true; btn.textContent='送出中…';
+
+    var p=new URLSearchParams(); p.append('action','homeBooking');
+    Object.keys(d).forEach(function(k){p.append(k,d[k]);});
+
+    fetch(HS_GAS,{method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p.toString()})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      busy=false; btn.disabled=false; btn.textContent='送出到府預約';
+      if(!j||j.status!=='ok'){ return err((j&&j.text)||'送出失敗，請稍後再試或改用 LINE 詢問'); }
+
+      document.getElementById('hsCard').style.display='none';
+      var done=document.getElementById('hsDone');
+      document.getElementById('hsDoneSub').innerHTML =
+        '預約編號 <b>'+j.bookingId+'</b><br>'+
+        d.date+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
+        '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>';
+
+      var box=document.getElementById('hsPayBtns'); box.innerHTML='';
+      if(j.pay&&j.pay.jko)  box.innerHTML+='<a class="hs-pay" target="_blank" rel="noopener" href="'+j.pay.jko+'">💳 街口支付 →</a>';
+      if(j.pay&&j.pay.ipass)box.innerHTML+='<a class="hs-pay" target="_blank" rel="noopener" href="'+j.pay.ipass+'">💳 iPASS Money →</a>';
+      if(j.pay&&j.pay.bank) box.innerHTML+='<div class="hs-pay" style="cursor:default">🏦 轉帳：'+j.pay.bank+'</div>';
+      if(!box.innerHTML)    box.innerHTML='<div class="hs-pay" style="cursor:default">請透過 LINE 向 Elsa 索取付款方式</div>';
+
+      done.style.display='block';
+      done.scrollIntoView({behavior:'smooth',block:'start'});
+    })
+    .catch(function(){
+      busy=false; btn.disabled=false; btn.textContent='送出到府預約';
+      err('連線異常，請稍後再試或改用 LINE 詢問 🙏');
+    });
+  });
+})();
+</script>
 </body>
 </html>
