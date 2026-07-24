@@ -229,6 +229,13 @@ body{padding-bottom:72px}
   width:46px;height:46px;border-radius:50%;font-size:19px;
   box-shadow:0 6px 20px rgba(58,53,48,.3);display:none;align-items:center;justify-content:center}
 #uni-panel-tab.show{display:flex}
+/* ═══ 控制台權限閘門 v1.1（回滾：刪除本行 + JS 閘門段）═══
+   預設全部隱藏；只有網址加 ?admin=1 時，JS 才會加上 body.uni-admin 顯示。 */
+#uni-panel,#uni-panel-tab{display:none!important}
+body.uni-admin #uni-panel{display:block!important}
+body.uni-admin #uni-panel.collapsed{display:block!important}
+body.uni-admin #uni-panel-tab{display:none!important}
+body.uni-admin #uni-panel-tab.show{display:flex!important}
 
 /* Google 評價區（可擴充版型，無數據先顯示佔位） */
 .review-sec{background:var(--white);text-align:center;padding:46px 0}
@@ -513,8 +520,8 @@ a.deposit-more:hover{color:var(--olive)}
 <section class="hs-form-sec" id="hs-form">
   <div class="wrap">
     <div class="sec-label">線上預約</div>
-    <h2>填好資料，<br>剩下交給我。</h2>
-    <p class="sans hs-lead">送出後我會盡快與你確認時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。</p>
+    <h2>把預約交給我，<br>您安心安排今天就好。</h2>
+    <p class="sans hs-lead">收到資料後，我會盡快與您聯繫，確認合適的服務時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。</p>
 
     <div class="hs-card" id="hsCard">
       <div class="hs-grid">
@@ -736,6 +743,18 @@ a.deposit-more:hover{color:var(--olive)}
 
   function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
   applyAll();
+
+  /* ═══ 控制台權限閘門 v1.1（回滾：刪除本整段 + CSS 閘門段）═══
+     applyAll() 已先執行，所以版面參數對客人依舊生效；
+     這裡只決定「滑桿面板要不要顯示」。
+     調版網址：home-service.html?admin=1  （可加到書籤） */
+  var UNI_ADMIN = false;
+  try{
+    UNI_ADMIN = /[?&]admin=1(&|$)/.test(location.search) || location.hash === '#admin';
+    if(!UNI_ADMIN && sessionStorage.getItem('uni_admin')==='1') UNI_ADMIN = true;
+    if(UNI_ADMIN) sessionStorage.setItem('uni_admin','1');
+  }catch(e){}
+  if(UNI_ADMIN){ document.body.classList.add('uni-admin'); }
 
   // 收合 / 展開
   var panel=document.getElementById('uni-panel');
