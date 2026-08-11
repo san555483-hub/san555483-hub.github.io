@@ -656,6 +656,132 @@ textarea.form-input { resize: none; height: 80px; line-height: 1.6; }
 </style>
 </head>
 <body>
+<!-- ═══════════════════════════════════════════════════════════════
+     🚗 UNI 轉型公告攔截層 v1.0（2026-08-11）
+     用途：UNI 升級為到府服務；門市不再開放現場預約。
+     回滾（三選一，任一種即可）：
+       ① 把下方 UNI_CLOSE_ENABLED 改成 false  ← 最快，10 秒
+       ② 刪除本整段（從這行到「攔截層 END」那行）
+       ③ 重新上傳備份檔 20260811BOOKING備份
+     本段完全獨立，未更動原檔任何一行既有程式碼。
+═══════════════════════════════════════════════════════════════ -->
+<style>
+#uniCloseMask{position:fixed;inset:0;z-index:99999;background:#faf8f5;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;}
+#uniCloseMask.on{display:block;}
+.uc-wrap{max-width:460px;margin:0 auto;padding:28px 20px 60px;font-family:'Noto Sans TC',sans-serif;color:#2a2420;}
+.uc-head{background:#2a2420;color:#fff;text-align:center;padding:26px 18px 22px;border-radius:14px;}
+.uc-logo{font-family:'Noto Serif TC',serif;font-size:21px;letter-spacing:4px;margin-bottom:6px;}
+.uc-sub{font-size:11px;letter-spacing:3px;opacity:.6;}
+.uc-tag{display:inline-block;background:#c4a882;color:#fff;font-size:12px;font-weight:700;letter-spacing:2px;padding:5px 14px;border-radius:20px;margin:22px 0 10px;}
+.uc-title{font-family:'Noto Serif TC',serif;font-size:23px;font-weight:600;line-height:1.5;margin-bottom:10px;}
+.uc-lead{font-size:14px;line-height:1.9;color:#6b6058;margin-bottom:20px;}
+.uc-card{background:#fff;border:1px solid #e8e0d5;border-radius:14px;padding:18px 18px 16px;margin-bottom:14px;}
+.uc-card h4{font-size:13px;letter-spacing:1px;color:#a08660;margin-bottom:12px;font-weight:700;}
+.uc-row{display:flex;gap:10px;font-size:14px;line-height:1.85;padding:6px 0;border-bottom:1px dashed #f0ebe4;}
+.uc-row:last-child{border-bottom:0;}
+.uc-k{flex:0 0 74px;color:#8a7d72;font-size:13px;}
+.uc-v{flex:1;font-weight:600;}
+.uc-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+.uc-chip{background:#f0ebe4;border:1px solid #e8e0d5;border-radius:18px;padding:5px 13px;font-size:13px;font-weight:600;}
+.uc-keep{background:#fdfaf5;border:1px solid #e8e0d5;border-left:3px solid #c4a882;border-radius:10px;padding:14px 16px;font-size:13.5px;line-height:2;color:#5c534b;margin-bottom:20px;}
+.uc-btns{display:flex;flex-direction:column;gap:10px;}
+.uc-btn{display:block;text-align:center;padding:15px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;border:0;cursor:pointer;font-family:inherit;}
+.uc-primary{background:#c4a882;color:#fff;}
+.uc-line{background:#06c755;color:#fff;}
+.uc-mini{display:block;text-align:center;margin-top:20px;font-size:12.5px;color:#8a7d72;text-decoration:underline;cursor:pointer;}
+.uc-foot{text-align:center;font-size:12px;color:#a89c92;line-height:1.9;margin-top:22px;}
+</style>
+<div id="uniCloseMask">
+  <div class="uc-wrap">
+    <div class="uc-head">
+      <div class="uc-logo">UNI HAIR SHOP</div>
+      <div class="uc-sub">ONE TO ONE HAIR DESIGN</div>
+    </div>
+    <div style="text-align:center"><span class="uc-tag">服務升級</span></div>
+    <div class="uc-title">UNI 升級為到府服務<br>從 8/16 起，我到您家</div>
+    <div class="uc-lead">
+      從 8/16 起，UNI 不再需要您出門。<br>
+      我帶著全套工具到府，為您一對一服務。<br>
+      <b>門市不再開放現場預約</b>，所有服務改由到府進行。<br>
+      <b style="color:#a08660">現在即可預約 8/16 之後的時段。</b>
+    </div>
+
+    <div class="uc-card">
+      <h4>到府服務資訊</h4>
+      <div class="uc-row"><div class="uc-k">服務方式</div><div class="uc-v">到府一對一<br><span style="font-weight:400;font-size:12.5px;color:#8a7d72">門市不再開放現場預約</span></div></div>
+      <div class="uc-row"><div class="uc-k">開始日期</div><div class="uc-v">8/16 起・即日起可預約</div></div>
+      <div class="uc-row"><div class="uc-k">服務時間</div><div class="uc-v">09:00 – 19:30</div></div>
+      <div class="uc-row"><div class="uc-k">服務項目</div><div class="uc-v"><div class="uc-chips"><span class="uc-chip">✂️ 剪髮服務</span><span class="uc-chip">💇 造型服務</span></div></div></div>
+      <div class="uc-row"><div class="uc-k">預約請提供</div><div class="uc-v">人數 ・ 日期 ・ 時間</div></div>
+      <div class="uc-row"><div class="uc-k">服務區域</div><div class="uc-v">八德・桃園區・龜山<br><span style="font-weight:400;font-size:12.5px;color:#8a7d72">其他區域可先詢問</span></div></div>
+    </div>
+
+    <div class="uc-keep">
+      ✓ 仍由 Elsa 親自為您服務，設計與品質不變<br>
+      ✓ 會員權益、點數、養護金全數保留<br>
+      ✓ 線上預約一頁完成，同樣快速<br>
+      ✓ 19:30 時段請提前一天預約，以便安排車程
+    </div>
+
+    <div class="uc-btns">
+      <button type="button" class="uc-btn uc-primary" onclick="uniCloseGo()">📝 預約到府服務</button>
+      <a class="uc-btn uc-line" href="https://line.me/R/ti/p/@261bhcyh">💬 LINE 詢問 Elsa</a>
+    </div>
+
+    <span class="uc-mini" onclick="uniCloseViewOld()">查詢／取消我先前已成立的預約</span>
+
+    <div class="uc-foot">
+      把工作室帶到您身邊 🤍<br>
+      UNI 髮型設計・Elsa
+    </div>
+  </div>
+</div>
+<script>
+/* ── 攔截層控制（回滾：改 false）── */
+var UNI_CLOSE_ENABLED = true;
+var UNI_HS_URL = 'https://san555483-hub.github.io/home-service.html#hs-form';
+
+function uniCloseGo(){
+  try{
+    if(typeof liff !== 'undefined' && liff && typeof liff.openWindow === 'function' && liff.isInClient && liff.isInClient()){
+      liff.openWindow({ url: UNI_HS_URL, external: true }); return false;
+    }
+    window.location.assign(UNI_HS_URL);
+  }catch(e){ try{ window.location.href = UNI_HS_URL; }catch(e2){ window.open(UNI_HS_URL,'_blank'); } }
+  return false;
+}
+function uniCloseViewOld(){
+  var m = document.getElementById('uniCloseMask');
+  if(m) m.classList.remove('on');
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+(function(){
+  if(!UNI_CLOSE_ENABLED) return;
+  function show(){
+    var m = document.getElementById('uniCloseMask');
+    if(m){ m.classList.add('on'); }
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', show); } else { show(); }
+
+  /* 第二道防線：即使有人把公告關掉，門市預約仍無法送出 */
+  window.addEventListener('load', function(){
+    try{
+      if(typeof window.submitBooking === 'function'){
+        window.submitBooking = function(){
+          alert('門市不再開放現場預約。\n\n8/16 起改為到府服務，現在就可以預約，將為您開啟到府預約頁面 🙏');
+          uniCloseGo();
+          return false;
+        };
+      }
+    }catch(e){}
+  });
+})();
+</script>
+<!-- ═══ UNI 轉型公告攔截層 END ═══ -->
 <!-- 【2026/04/23 新增】左右分欄 layout 容器 -->
 <div class="bkg2-layout">
 
