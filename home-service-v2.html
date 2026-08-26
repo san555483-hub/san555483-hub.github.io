@@ -174,7 +174,7 @@ footer{background:var(--brown-deep);color:#9A8F80;text-align:center;
   --h1-size:26px;--h1-lh:1.24;--h1-ls:7px;--h1-br:none;--h1-x:0px;--h1-y:0px;
   --pu-size:18.5px;--pu-x:1px;--pu-y:1px;
   --pl-size:12.5px;--pl-x:-7px;--pl-y:-1px;
-  --lab-size:20px;--h2-size:35px;--sub-size:19px;--btn-size:21px;
+  --lab-size:20px;--h2-size:24px;--sub-size:17px;--btn-size:21px;
 }
 .hero .eyebrow{font-size:var(--eb-size);letter-spacing:var(--eb-ls);transform:translate(var(--eb-x),var(--eb-y))}
 .hero h1 br.brk{display:var(--h1-br)}
@@ -446,14 +446,13 @@ var OPT = {
   Q2: ['可正常坐椅子','需要使用輪椅','以床邊服務為主','幼兒／兒童','孕婦','無特殊需求'],
   Q3: ['可正常架設工具','需 Elsa 調整工具配置','進門需脫鞋','木地板或地毯',
        '服務位置附近有插座','附近沒有插座','不確定，到現場再確認'],
-  Q4: ['偏粗硬','一般','細軟','不確定'],
+  Q4: ['偏粗硬','一般','細軟','不確定'],   /* 保留字串以對齊後端；不對客人顯示，由 Elsa 判斷 */
   Q5: ['1 位','2 位','3 位','4 位以上']
 };
 var QTITLE = {
   Q1:'這次預計在哪個空間進行服務？',
   Q2:'這次服務對象的狀況較接近：',
   Q3:'現場狀況（可複選）',
-  Q4:'方便 Elsa 提前準備適合的工具，這次服務的頭髮質地較接近：',
   Q5:'本次預計服務幾位？'
 };
 
@@ -574,7 +573,7 @@ function saveFav(p){
 /* ── 問卷渲染 ───────────────────────────────────────────── */
 function renderSurvey(){
   var box=$('surveyBox'); box.innerHTML='';
-  ['Q1','Q2','Q3','Q4','Q5'].forEach(function(k){
+  ['Q1','Q2','Q3','Q5'].forEach(function(k){
     var multi=(k==='Q3');
     var w=document.createElement('div'); w.className='fld';
     var h='<label>'+esc(QTITLE[k])+(multi?'':' <span class="req">*</span>')+'</label><div class="opts">';
@@ -682,7 +681,6 @@ function vSurvey(){
   S.q.q6=($('q6')&&$('q6').value||'').trim();
   if(!S.q.q1){ err('errSurvey','請選擇這次預計進行服務的空間'); return false; }
   if(!S.q.q2){ err('errSurvey','請選擇這次服務對象的狀況'); return false; }
-  if(!S.q.q4){ err('errSurvey','請選擇這次服務的頭髮質地'); return false; }
   if(!S.q.q5){ err('errSurvey','請選擇本次預計服務幾位'); return false; }
   return true;
 }
