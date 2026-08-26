@@ -82,7 +82,7 @@ h2{font-size:clamp(23px,6vw,30px);font-weight:700;letter-spacing:1px;line-height
 .svc-card{background:rgba(255,255,255,.07);border:1px solid rgba(237,231,214,.18);
   border-radius:8px;padding:24px 22px;text-align:center}
 .svc-card .ic{font-size:30px;margin-bottom:8px}
-.svc-card .name{font-family:"PingFang TC",sans-serif;font-weight:700;font-size:17px;color:#fff;margin-bottom:6px}
+.svc-card .name{font-family:"PingFang TC",sans-serif;font-weight:700;font-size:19px;color:#fff;margin-bottom:6px}
 .svc-card .from{font-family:"PingFang TC",sans-serif;font-weight:700;font-size:30px;color:#F0C96B;letter-spacing:0;margin-bottom:8px}
 .svc-card .from small{font-size:14px;font-weight:400;color:#CFC9B5}
 .svc-card .desc{font-family:"PingFang TC",sans-serif;font-size:14px;color:#CFC9B5;line-height:1.6}
@@ -208,9 +208,9 @@ a.deposit-more:hover{color:var(--olive)}
 </style>
 <style>
 /* pricing 頁專用：標題列與訂金引導，沿用品牌色 */
-.page-head{background:var(--olive-deep);color:#EDE7D6;text-align:center;padding:44px 0 38px}
-.page-head .sec-label{color:#B8BC93;font-size:13px}
-.page-head h1{font-size:clamp(23px,5.4vw,27px);font-weight:700;letter-spacing:1px;color:#fff;margin:10px 0 10px;line-height:1.5}
+.page-head{background:var(--olive-deep);color:#EDE7D6;text-align:center;padding:36px 0 32px}
+.page-head .sec-label{color:#B8BC93;font-size:20px}
+.page-head h1{font-size:24px;font-weight:700;letter-spacing:4px;color:#fff;margin:10px 0 10px;line-height:1.5}
 .h1br{display:inline}
 @media(min-width:520px){.h1br{display:none}}
 .page-head .sub{font-family:"PingFang TC",sans-serif;font-size:17px;line-height:1.75;color:#D6D0BC}
@@ -325,7 +325,7 @@ a.deposit-more:hover{color:var(--olive)}
 (function(){
   if(new URLSearchParams(location.search).get('ui')!=='1') return;
 
-  var D={lab:13,h1:27,ls:1,sub:17,padT:44,padB:38,cName:17,cFrom:30,cDesc:14};
+  var D={lab:20,h1:24,ls:4,sub:17,padT:36,padB:32,cName:19,cFrom:30,cDesc:14};
   var K='uni_pricing_ui';
   var V=Object.assign({},D);
   try{var sv=localStorage.getItem(K); if(sv) V=Object.assign(V,JSON.parse(sv));}catch(e){}
