@@ -259,6 +259,7 @@ a.foot-link:hover{color:#EDE7D6}
         <div style="opacity:.7;font-size:11.5px;margin-bottom:3px">第 2 次 POST（自動確認）回應</div>
         <select id="hvSecond" style="min-width:250px;padding:5px 7px;border-radius:5px;border:1px solid #44586b;background:#101a24;color:#e8eef4;font-size:12.5px"></select>
       </label>
+      <button id="hvFill" style="background:#2e7d5b;color:#fff;border:0;border-radius:5px;padding:7px 14px;font-size:12.5px;cursor:pointer;font-weight:700">一鍵填表 → 第 4 步</button>
       <button id="hvReset" style="background:#2f4356;color:#fff;border:0;border-radius:5px;padding:7px 14px;font-size:12.5px;cursor:pointer">重置（重新整理）</button>
       <button id="hvSheet" style="background:#2f4356;color:#fff;border:0;border-radius:5px;padding:7px 14px;font-size:12.5px;cursor:pointer">驗收對照表</button>
     </div>
@@ -400,8 +401,35 @@ a.foot-link:hover{color:#EDE7D6}
   ROWS.forEach(function(r){
     h+='<tr>'+r.map(function(x,i){return '<td style="padding:3px 6px;border-bottom:1px solid #1c2733;'+(i===0?'font-weight:700;white-space:nowrap':'')+'">'+x+'</td>';}).join('')+'</tr>';
   });
-  h+='</table><div style="margin-top:6px;opacity:.6">每驗一項先按「重置」。V-11（正式站零影響）與 V-12（清理）不在本治具範圍。</div>';
+  h+='</table><div style="margin-top:6px;opacity:.6">流程：按「重置」→ 按「一鍵填表 → 第 4 步」→ 設好上方兩個下拉 → 按「送出預約」。V-11（正式站零影響）與 V-12（清理）不在本治具範圍。</div>';
   $('hvTable').innerHTML=h;
+
+  /* 一鍵填表：完全走真實 UI（點鈕、填欄、觸發 change），不碰內部函式。
+     每項驗收都要重新整理，手填 15 次不合理。 */
+  function setTxt(id,v){ var el=$(id); if(el){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); } }
+  function setSel(id,v){ var el=$(id); if(el){ el.value=v; el.dispatchEvent(new Event('change',{bubbles:true})); } }
+  function chk(host,i){ var b=$(host); if(!b) return; var ins=b.querySelectorAll('input');
+    if(!ins.length) return; ins[i||0].checked=true; b.dispatchEvent(new Event('change',{bubbles:true})); }
+
+  $('hvFill').addEventListener('click', function(){
+    var done=$('fDone');
+    if(done && done.style.display==='block'){ log('⚠️ 已在訂金頁，請先按「重置」', true); return; }
+    $('btnFirstBooking').click();
+    var d=new Date(); d.setDate(d.getDate()+7);
+    var ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    var de=$('fDate'); if(de && de.min && ds<de.min) ds=de.min;
+    setTxt('fDate',ds); setSel('fTime','14:00');
+    $('fNext').click();
+    setTxt('fName','B4-5治具測試'); setTxt('fPhone','0900000000');
+    setTxt('fAddr','桃園市八德區（驗收假資料）');
+    setSel('fAdults','1'); setSel('fKids','0'); chk('fSvc',0);
+    setSel('fPark','社區可臨停'); setTxt('fNote','驗收治具自動填表');
+    $('fNext').click();
+    chk('fQ1',0); chk('fQ2',0); chk('fQ3',0); chk('fQ5',0);
+    setTxt('fQ6','驗收治具自動填表');
+    $('fNext').click();
+    log('✅ 已填表並跳到第 4 步（'+ds+' 14:00）→ 直接按「送出預約」');
+  });
 
   $('hvSheet').addEventListener('click', function(){
     var t=$('hvTable'); t.style.display = (t.style.display==='none') ? 'block' : 'none'; fit();
