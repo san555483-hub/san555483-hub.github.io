@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <!--
   ═══════════════════════════════════════════════════════════
-  UNI 到府服務 新前台 v2 ｜ B4-3 預約流程（前台）
-  唯一回滾目標：在 GitHub 刪除本檔 home-service-v2.html
-  （此前無快照；舊檔 home-service.html 完全不受影響）
-  唯一回滾目標：改回快照 home-service-v2_B4-2_ok.html
-  本檔仍為純靜態：無任何 fetch、不打 GAS、不動 m_home_service.gs、不需重新部署。
-  送出動作為 B4-4，本版尚未接後端。
+  UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁
+  依據：UNI_規格_到府B4-5_前台送出與訂金頁_v0.3.md（第三關通過，放行產碼）
+  後端：m_home_service.gs v1.3（已上線，17 字元發號，fixture 24/24）
+
+  🔴 唯一回滾目標：GitHub 貼回快照 home-service-v2_B4-3_ok.html（≤2 分鐘）
+     本檔只動一支 HTML：不動任何 .gs、不需重新部署、正式站 home-service.html 逐字未變。
+     前台出事時客人仍可從 LINE 選單經正式站正常送單。
+
+  ⚠️ 若懷疑是後端 v1.3：貼回 m_home_service_v1.2_rollback.gs
+     ＋ deployment 切回 275 版 ＋ 重跑 HSR_backfillRegistry()（≤5 分鐘）
+
+  ⚠️ 驗收若在「預約紀錄」留下測試單，必須執行 HSC_cleanTestOrder 清除並重跑
+     HSR_backfillRegistry()，否則下一位真客人會被閘門擋成 id_registry_stale。
   ═══════════════════════════════════════════════════════════
 -->
 <html lang="zh-Hant">
@@ -196,6 +203,33 @@ a.foot-link:hover{color:#EDE7D6}
   font-size:13px;color:var(--ink-soft);line-height:1.8}
 .lock b{color:var(--olive-deep)}
 
+/* ── B4-5 未知狀態列（規格 6.2 第 1 步）── */
+.confirming{display:none;background:#F0EADC;border:1px solid var(--warm);
+  border-radius:8px;padding:13px 15px;margin-bottom:14px;
+  font-family:"PingFang TC",sans-serif;font-size:13.5px;color:var(--olive-deep);
+  line-height:1.7}
+.confirming b{color:var(--pink)}
+
+/* ── B4-5 訂金頁（結構與文案照抄正式站）── */
+.hs-done{display:none;background:var(--white);border:1px solid var(--warm);
+  border-radius:12px;padding:24px 20px;margin-top:22px;text-align:center}
+.hs-done-icon{font-size:44px;margin-bottom:6px}
+.hs-done-h{margin:0 0 8px;color:var(--olive-deep);font-size:20px;font-weight:700}
+.hs-done-sub{font-family:"PingFang TC",sans-serif;color:var(--ink-soft);
+  line-height:1.75;margin-bottom:20px;font-size:14px}
+.hs-done-sub b{color:var(--olive-deep);font-size:15px;letter-spacing:.5px}
+.hs-deposit{background:var(--cream);border-radius:10px;padding:18px 16px;text-align:left}
+.hs-dep-title{font-family:"PingFang TC",sans-serif;font-weight:700;
+  color:var(--olive-deep);margin-bottom:8px;font-size:15px}
+.hs-dep-body{font-family:"PingFang TC",sans-serif;font-size:13px;line-height:1.8;
+  color:var(--ink-soft);margin-bottom:14px}
+.hs-dep-body b{color:var(--olive-deep)}
+.hs-paybtns{display:flex;flex-direction:column;gap:8px}
+.hs-pay{display:block;text-align:center;padding:12px;border-radius:8px;
+  text-decoration:none;font-family:"PingFang TC",sans-serif;font-size:14.5px;
+  font-weight:600;border:1px solid var(--warm);background:var(--white);color:var(--ink)}
+.hs-pay:hover{border-color:var(--olive-soft)}
+
 @media(min-width:760px){.info-list{grid-template-columns:1fr 1fr;align-items:start}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -341,6 +375,7 @@ a.foot-link:hover{color:#EDE7D6}
     <p class="deposit-line sans">到府服務採 300 元訂金預約，完成服務後可全額折抵消費。</p>
 
     <div class="err" id="fErr"></div>
+    <div class="confirming" id="fConfirm"></div>
 
     <div class="flow" id="flowBox" style="display:none">
       <div class="flow-steps">
@@ -452,15 +487,31 @@ a.foot-link:hover{color:#EDE7D6}
         <div class="flow-p">確認無誤後即可送出，訂金 300 元完成服務後全額折抵。</div>
         <div class="sum" id="fSum"></div>
         <div class="lock">
-          <b>送出功能尚未開放</b><br>
-          目前為前台測試版本，尚未接上預約系統。<br>要正式預約請透過 LINE 與 Elsa 聯繫。
-          <a href="https://line.me/R/ti/p/@261bhcyh" class="btn btn-line" style="margin-top:12px">💬 用 LINE 預約</a>
+          <b>送出後即為您保留時段</b><br>
+          到府服務採 300 元訂金預約，完成服務後可全額折抵消費。<br>
+          送出後會顯示付款方式，付款截圖傳到 LINE 即完成確認。
         </div>
       </div>
 
       <div class="flow-nav">
         <button class="nav-back" id="fBack" style="display:none">上一步</button>
         <button class="nav-next" id="fNext">下一步</button>
+      </div>
+    </div>
+
+    <!-- ══ B4-5 訂金頁（成功後取代表單卡，送出功能永久關閉｜Elsa 定案 2(A)）══ -->
+    <div class="hs-done" id="fDone">
+      <div class="hs-done-icon">✅</div>
+      <div class="hs-done-h">預約已送出</div>
+      <div class="hs-done-sub" id="fDoneSub"></div>
+      <div class="hs-deposit">
+        <div class="hs-dep-title">💰 請完成 300 元訂金</div>
+        <div class="hs-dep-body">
+          訂金完成後時段才正式保留，服務結束可全額折抵消費。<br>
+          <b>付款後請將截圖傳到 LINE，我會為您確認。</b>
+        </div>
+        <div class="hs-paybtns" id="fPayBtns"></div>
+        <a href="https://line.me/R/ti/p/@261bhcyh" class="btn btn-line" style="margin-top:12px">💬 傳送付款截圖給 Elsa</a>
       </div>
     </div>
 </section>
@@ -483,12 +534,34 @@ a.foot-link:hover{color:#EDE7D6}
 </div>
 
 <script>
-/* ═══ B4-3 預約流程（前台）｜回滾：改回 home-service-v2_B4-2_ok.html ═══
-   本段無任何 fetch、不打 GAS。送出為 B4-4。
-   欄位契約對齊既有 homeBooking：
-   name / phone / address / date / time / adults / kids / services / parking / note
-   ＋ q1..q6（q4 前台不問，送空字串）＋ clientReqId                          */
+/* ═══ B4-5 送出 ＋ 訂金頁｜回滾：改回 home-service-v2_B4-3_ok.html ═══
+   依據 UNI_規格_到府B4-5_前台送出與訂金頁_v0.3.md（第三關通過）
+
+   欄位契約已於產碼前逐欄比對，17/17 對齊：
+   clientReqId / name / phone / address / date / time / adults / kids
+   / services / parking / note / q1..q6（q4 前台不問，送空字串）
+
+   三個關鍵設計，動它們之前請先讀規格：
+   ① clientReqId 全流程只產生一次（規格 5）。中途重產 = 去重層失效 = 建出重複單。
+   ② unknown 有三個入口（規格 6.1）：fetch reject / 逾時 / msg=server。
+      三者一律不宣告失敗，以「相同」clientReqId 自動確認一次。最多一次。
+   ③ disabled 分三類（規格 7.2）：A 可重送 / B fail closed / C 未知終態。
+      B、C 兩類送出鈕維持 disabled，不得重新啟用。                            */
 (function(){
+  /* 與正式站同一支 deployment；v1.3 已部署於此，端點未變 */
+  var HS_GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+
+  /* 規格 6.3：必須高於後端 lock.waitLock(20000)，並保留取得鎖後的
+     TextFinder 查找、登記簿先占、appendRow、flush、水位線推進、回程裕度。
+     ⚠️ 不得改回 20000 —— 那與 waitLock 相等而非大於。 */
+  var HS_TIMEOUT = 30000;
+
+  /* 規格 7.2 三分類 */
+  var A_CODES = ['missing_fields','bad_phone','bad_time','day_closed','slot_taken'];
+  var B_CODES = ['disabled','id_registry_unavailable','id_registry_not_ready',
+                 'id_registry_stale','id_collision'];
+  var STEP1_CODES = ['bad_time','day_closed','slot_taken'];
+
   var FIRST_DAY = '2026-08-16';
   var LATE = ['19:30'];
   var SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30',
@@ -503,6 +576,9 @@ a.foot-link:hover{color:#EDE7D6}
 
   var box=document.getElementById('flowBox');
   var eBox=document.getElementById('fErr');
+  var cBox=document.getElementById('fConfirm');
+  var doneBox=document.getElementById('fDone');
+  var busy=false, locked=false;
   var btnNext=document.getElementById('fNext');
   var btnBack=document.getElementById('fBack');
   var step=1, reqId='';
@@ -513,7 +589,34 @@ a.foot-link:hover{color:#EDE7D6}
   }
   function err(m){ eBox.textContent=m; eBox.style.display='block';
     eBox.scrollIntoView({behavior:'smooth',block:'center'}); }
-  function clr(){ eBox.style.display='none'; }
+  function clr(){ eBox.style.display='none'; cBox.style.display='none'; }
+
+  function confirming(){
+    cBox.innerHTML='網路不穩，<b>正在確認您的預約狀態…</b><br>'+
+      '請不要關閉或重新整理這個頁面。';
+    cBox.style.display='block';
+    cBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  /* 規格 7.2 B／C 類：維持 disabled，不得重新啟用 */
+  function lockOut(msg){
+    locked=true; busy=false;
+    btnNext.disabled=true; btnNext.style.opacity='.45';
+    btnBack.style.display='none';
+    cBox.style.display='none';
+    eBox.innerHTML=msg+
+      '<div style="margin-top:10px"><a href="https://line.me/R/ti/p/@261bhcyh" '+
+      'class="btn btn-line" style="font-size:15px;padding:12px">💬 用 LINE 與 Elsa 聯繫</a></div>';
+    eBox.style.display='block';
+    eBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  /* 規格 7.2 A 類：解除 disabled，可修改後重送 */
+  function unlock(){
+    busy=false;
+    btnNext.disabled=false; btnNext.style.opacity='1';
+    btnNext.textContent='送出預約';
+  }
 
   function chips(host, list, multi){
     var el=document.getElementById(host); if(!el) return;
@@ -613,29 +716,123 @@ a.foot-link:hover{color:#EDE7D6}
     document.getElementById('fSum').innerHTML=rows.join('');
   }
 
+  /* ── 送出：單次 POST，逾時視為 unknown（規格 6.1 入口 2）── */
+  function post(d){
+    var p=new URLSearchParams();
+    p.append('action','homeBooking');
+    Object.keys(d).forEach(function(k){ p.append(k, d[k]); });
+
+    var settled=false;
+    return new Promise(function(resolve){
+      var timer=setTimeout(function(){
+        if(settled) return; settled=true; resolve({ __unknown:'timeout' });
+      }, HS_TIMEOUT);
+
+      var opt={ method:'POST', cache:'no-store',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:p.toString() };
+      var ctrl=null;
+      try{ if(window.AbortController){ ctrl=new AbortController(); opt.signal=ctrl.signal; } }catch(e){}
+      if(ctrl){ setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, HS_TIMEOUT); }
+
+      fetch(HS_GAS, opt)
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if(settled) return; settled=true; clearTimeout(timer);
+          resolve(j && j.status ? j : { __unknown:'bad_response' });
+        })
+        .catch(function(){
+          if(settled) return; settled=true; clearTimeout(timer);
+          resolve({ __unknown:'reject' });   /* 規格 6.1 入口 1 */
+        });
+    });
+  }
+
+  /* ── 主流程（規格 6.2）。isRetry=true 即確認重送，最多一次 ── */
+  function send(isRetry){
+    if(locked) return;
+    busy=true;
+    btnNext.disabled=true; btnNext.style.opacity='.45';
+    btnNext.textContent='送出中…';
+
+    post(collect()).then(function(j){
+      /* 規格 6.1：三個入口等價 */
+      var unknown = j.__unknown || (j.status==='error' && j.msg==='server');
+
+      if(unknown){
+        if(!isRetry){ confirming(); send(true); return; }
+        /* 規格 6.4 最終未知終態 */
+        lockOut('無法確認預約是否送出，請透過 LINE 與 Elsa 確認，<b>請勿重複填寫</b>。');
+        return;
+      }
+
+      if(j.status==='ok'){ showDone(j); return; }
+
+      var m=String(j.msg||'');
+      var t=String(j.text||'送出失敗，請改用 LINE 與 Elsa 聯繫 🙏');
+      cBox.style.display='none';
+
+      if(B_CODES.indexOf(m)>-1){ lockOut(t); return; }   /* B 類 fail closed */
+
+      err(t); unlock();                                   /* A 類 */
+      if(STEP1_CODES.indexOf(m)>-1) show(1);
+    });
+  }
+
+  /* ── 訂金頁（規格 8）。slotStart／slotEnd 一律取後端回傳，不得前台重算 ── */
+  function showDone(j){
+    locked=true; busy=false;
+    box.style.display='none';
+    clr();
+
+    var d=collect();
+    document.getElementById('fDoneSub').innerHTML=
+      '預約編號 <b>'+j.bookingId+'</b><br>'+
+      d.date+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
+      '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>';
+
+    var pay=j.pay||{}, box2=document.getElementById('fPayBtns'), html='';
+    if(pay.jko)   html+='<a class="hs-pay" target="_blank" rel="noopener" href="'+pay.jko+'">💳 街口支付 →</a>';
+    if(pay.ipass) html+='<a class="hs-pay" target="_blank" rel="noopener" href="'+pay.ipass+'">💳 iPASS Money →</a>';
+    if(pay.bank)  html+='<div class="hs-pay" style="cursor:default">🏦 轉帳：'+pay.bank+'</div>';
+    if(!html)     html='<div class="hs-pay" style="cursor:default">請透過 LINE 向 Elsa 索取付款方式</div>';
+    box2.innerHTML=html;
+
+    doneBox.style.display='block';
+    doneBox.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
   function show(n){
     for(var i=1;i<=4;i++){
       document.getElementById('s'+i).style.display=(i===n)?'block':'none';
       document.getElementById('d'+i).classList.toggle('on', i<=n);
     }
     btnBack.style.display=(n===1)?'none':'block';
-    btnNext.textContent=(n===3)?'看預約內容':(n===4?'送出（尚未開放）':'下一步');
-    btnNext.disabled=(n===4);
-    btnNext.style.opacity=(n===4)?'.45':'1';
+    btnNext.textContent=(n===3)?'看預約內容':(n===4?'送出預約':'下一步');
+    btnNext.disabled=false;
+    btnNext.style.opacity='1';
     if(n===4) fillSum();
     step=n;
     box.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   btnNext.addEventListener('click', function(){
+    if(busy||locked) return;          /* 規格 7.1：防連點 */
     clr();
     var m=validate(step);
     if(m) return err(m);
-    if(step<4) show(step+1);
+    if(step<4){ show(step+1); return; }
+    send(false);
   });
-  btnBack.addEventListener('click', function(){ clr(); if(step>1) show(step-1); });
+  btnBack.addEventListener('click', function(){
+    if(busy||locked) return;
+    clr(); if(step>1) show(step-1);
+  });
 
+  /* 規格 5：clientReqId 全流程只產生一次。
+     成功後 locked=true，start() 直接退出，絕不會走到 newReqId()。 */
   function start(){
+    if(locked){ doneBox.scrollIntoView({behavior:'smooth',block:'start'}); return; }
     if(box.style.display==='none'){ reqId=newReqId(); box.style.display='block'; show(1); }
     else box.scrollIntoView({behavior:'smooth',block:'start'});
   }
