@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<!--
+  ═══════════════════════════════════════════════════════════
+  UNI 到府服務 新前台 v2 ｜ B4-3 預約流程（前台）
+  唯一回滾目標：在 GitHub 刪除本檔 home-service-v2.html
+  （此前無快照；舊檔 home-service.html 完全不受影響）
+  唯一回滾目標：改回快照 home-service-v2_B4-2_ok.html
+  本檔仍為純靜態：無任何 fetch、不打 GAS、不動 m_home_service.gs、不需重新部署。
+  送出動作為 B4-4，本版尚未接後端。
+  ═══════════════════════════════════════════════════════════
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>親子到府美髮｜全家不用出門・一次整理好｜UNI 親子髮廊</title>
+<meta name="description" content="UNI 親子到府整理服務，不用出門，全家在熟悉的家裡安心整理。親子、長輩、敏感兒童都適合，一對一服務、用品消毒、不趕時間。桃園八德、桃園區、龜山可預約。">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="favicon.ico">
+<meta property="og:type" content="website">
+<meta property="og:title" content="親子到府美髮｜全家不用出門・一次整理好">
+<meta property="og:description" content="不用出門，全家在熟悉的家裡安心整理。親子、長輩、敏感兒童都適合。桃園八德、桃園區、龜山可預約。">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="UNI 親子髮廊">
+<style>
+:root{
+  --cream:#F5F1E8;--beige:#EDE6D8;--warm:#D9CBB3;
+  --olive:#5A5F3E;--olive-deep:#3E4329;--olive-soft:#7C8060;
+  --wood:#A67C52;--ink:#3A3530;--ink-soft:#6B6358;--white:#FCFAF5;
+  --pink:#C8826F;--gold:#F0C96B;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:"Noto Serif TC",-apple-system,"PingFang TC","Microsoft JhengHei",serif;
+  background:var(--cream);color:var(--ink);line-height:1.85;-webkit-font-smoothing:antialiased;
+  padding-bottom:76px}
+.wrap{max-width:560px;margin:0 auto;padding:0 22px}
+.sans{font-family:"PingFang TC","Microsoft JhengHei",sans-serif}
+
+/* ── HERO ── */
+.hero{position:relative;min-height:88vh;display:flex;align-items:flex-end;overflow:hidden;
+  background:linear-gradient(160deg,#E7DFCD 0%,#D9CBB3 45%,var(--cream) 100%)}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:65% center}
+.hero-bg::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(58,53,48,.08) 0%,rgba(58,53,48,.04) 40%,rgba(245,241,232,.88) 82%,var(--cream) 100%)}
+.hero-inner{position:relative;z-index:1;width:100%;padding-bottom:46px}
+.hero .eyebrow{font-family:"PingFang TC",sans-serif;font-size:13px;letter-spacing:3px;
+  color:var(--olive);font-weight:700;margin-bottom:16px}
+.hero h1{font-size:clamp(30px,8vw,42px);font-weight:700;line-height:1.32;letter-spacing:1px;margin-bottom:18px}
+.hero h1 .hl{color:var(--pink)}
+.hero .punch{font-size:clamp(15px,4.2vw,18px);color:var(--ink-soft);margin-bottom:26px;font-weight:500}
+.hero-pills{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 26px}
+.hero-pill{font-family:"PingFang TC",sans-serif;font-size:13.5px;font-weight:700;
+  letter-spacing:.5px;color:var(--olive-deep);background:#F0EADC;
+  border:1px solid var(--warm);border-radius:30px;padding:8px 16px;
+  box-shadow:0 1px 3px rgba(90,95,62,.08)}
+.hero-foot{margin-top:16px;font-size:13.5px;color:var(--ink-soft);letter-spacing:1.5px}
+
+/* ── 按鈕 ── */
+.btn{display:block;width:100%;text-align:center;background:var(--olive);color:var(--white);
+  font-family:"PingFang TC",sans-serif;font-size:17px;font-weight:700;letter-spacing:2px;
+  padding:17px;border-radius:3px;text-decoration:none;transition:.22s;border:none;
+  box-shadow:0 4px 16px rgba(90,95,62,.25);cursor:pointer}
+.btn:hover{background:var(--olive-deep)}
+.btn-line{background:#06C755;box-shadow:0 4px 16px rgba(6,199,85,.22)}
+.btn-line:hover{background:#05a847}
+
+section{padding:52px 0}
+.sec-label{font-family:"PingFang TC",sans-serif;font-size:12.5px;letter-spacing:3px;
+  color:var(--olive-soft);font-weight:700;margin-bottom:12px;text-align:center}
+h2{font-size:clamp(22px,5.6vw,28px);font-weight:700;letter-spacing:1px;line-height:1.45;text-align:center;margin-bottom:8px}
+.h2-sub{text-align:center;font-size:15px;color:var(--ink-soft);margin-bottom:30px}
+
+/* ── 服務卡 ── */
+.price{background:var(--olive-deep);color:#EDE7D6}
+.price .sec-label{color:#B8BC93}
+.price h2{color:#fff}
+.price .h2-sub{color:#CFC9B5}
+.svc-cards{display:grid;gap:14px;margin-top:6px}
+.svc-card{background:rgba(255,255,255,.07);border:1px solid rgba(237,231,214,.18);
+  border-radius:8px;padding:24px 22px;text-align:center;display:flex;flex-direction:column}
+.svc-card .ic{font-size:30px;margin-bottom:8px}
+.svc-card .name{font-family:"PingFang TC",sans-serif;font-weight:700;font-size:17px;color:#fff;margin-bottom:6px}
+.svc-card .from{font-family:"PingFang TC",sans-serif;font-weight:700;font-size:30px;color:var(--gold);
+  letter-spacing:0;margin-top:auto;margin-bottom:8px;min-height:38px;
+  display:flex;align-items:flex-end;justify-content:center}
+.svc-card .from small{font-size:14px;font-weight:400;color:#CFC9B5}
+.svc-from-people{font-size:22px}
+.svc-card .desc{font-family:"PingFang TC",sans-serif;font-size:14px;color:#CFC9B5;line-height:1.6;margin-top:0}
+.svc-disclaimer{font-family:"PingFang TC",sans-serif;text-align:center;font-size:12.5px;
+  color:#B8BC93;margin-top:18px;letter-spacing:.3px}
+@media(min-width:520px){.svc-cards{grid-template-columns:repeat(3,1fr)}}
+
+/* ── 摺疊資訊卡片（降層）── */
+.info-list{display:grid;gap:12px;margin-top:6px}
+details.info{background:var(--white);border:1px solid var(--warm);border-radius:10px;overflow:hidden}
+details.info>summary{list-style:none;cursor:pointer;padding:16px 18px;
+  font-family:"PingFang TC",sans-serif;font-size:15.5px;font-weight:700;color:var(--olive-deep);
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+details.info>summary::-webkit-details-marker{display:none}
+details.info>summary::after{content:"＋";font-size:18px;color:var(--olive-soft);font-weight:400;flex:0 0 auto}
+details.info[open]>summary::after{content:"－"}
+details.info[open]>summary{border-bottom:1px solid var(--beige)}
+.info-body{padding:16px 18px 20px}
+.info-body p{font-family:"PingFang TC",sans-serif;font-size:14px;color:var(--ink-soft);line-height:1.8}
+.info-item{padding:10px 0;border-bottom:1px dashed var(--beige)}
+.info-item:last-child{border-bottom:none;padding-bottom:0}
+.info-item h3{font-size:15.5px;font-weight:700;margin-bottom:4px;color:var(--ink)}
+.info-item p{margin:0}
+.tags{display:flex;gap:9px;flex-wrap:wrap;margin:4px 0 12px}
+.tag{font-family:"PingFang TC",sans-serif;background:var(--cream);
+  padding:8px 16px;border-radius:30px;font-size:14px;font-weight:600;color:var(--olive-deep)}
+.area{font-family:"PingFang TC",sans-serif;font-size:14px;color:var(--ink-soft)}
+.review-stars{font-size:20px;letter-spacing:3px;color:#E0A82E}
+.info-link{display:inline-block;margin-top:10px;font-family:"PingFang TC",sans-serif;
+  font-size:14px;font-weight:700;color:var(--olive-deep);text-decoration:none;
+  border-bottom:1.5px solid var(--wood);padding-bottom:2px}
+
+/* ── 預約入口 ── */
+.cta{background:var(--beige);text-align:center}
+.cta p{font-size:15px;color:var(--ink-soft);margin-bottom:26px}
+.cta-quick{font-family:"PingFang TC",sans-serif;font-size:13px;color:var(--ink-soft);
+  margin-top:16px;letter-spacing:1px}
+.deposit-line{font-size:13.5px;color:var(--ink-soft);margin-top:16px;letter-spacing:.5px;line-height:1.7}
+.flow-note{background:var(--white);border:1px dashed var(--warm);border-radius:10px;
+  padding:18px 16px;margin-top:22px;font-family:"PingFang TC",sans-serif;
+  font-size:13.5px;color:var(--ink-soft);line-height:1.8}
+.flow-note b{color:var(--olive-deep)}
+.flow-note .btn-line{margin-top:12px}
+
+footer{background:var(--olive-deep);color:#9DA178;text-align:center;
+  padding:36px 22px;font-family:"PingFang TC",sans-serif;font-size:12.5px;letter-spacing:1px}
+footer .brand{color:#EDE7D6;font-size:15px;letter-spacing:4px;margin-bottom:8px}
+.foot-grid{display:grid;gap:10px;margin:18px auto;text-align:left;max-width:280px}
+.foot-link{color:#CFC9B5;font-size:13.5px;text-decoration:none;letter-spacing:.5px}
+a.foot-link:hover{color:#EDE7D6}
+.foot-belief{color:#CFC9B5;font-family:"PingFang TC",sans-serif;font-size:13.5px;
+  line-height:1.9;letter-spacing:1px;margin:4px auto 18px;max-width:300px}
+.foot-copy{color:#9DA178;font-size:12px;margin-top:18px;line-height:1.7;letter-spacing:.5px}
+
+/* ── sticky 底部 ── */
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:rgba(252,250,245,.96);backdrop-filter:blur(8px);
+  border-top:1px solid var(--warm);padding:11px 16px;
+  display:flex;gap:10px;max-width:560px;margin:0 auto}
+.sticky a{flex:1;text-align:center;font-family:"PingFang TC",sans-serif;font-weight:700;
+  font-size:15px;padding:13px;border-radius:3px;text-decoration:none;letter-spacing:1px}
+.sticky .s-book{background:var(--olive);color:#fff}
+.sticky .s-line{background:#06C755;color:#fff}
+
+/* ── B4-3 預約流程 ── */
+.flow{background:var(--white);border:1px solid var(--warm);border-radius:12px;
+  padding:22px 18px;margin-top:22px;text-align:left}
+.flow-steps{display:flex;gap:6px;margin-bottom:20px}
+.flow-dot{flex:1;height:4px;border-radius:2px;background:var(--warm)}
+.flow-dot.on{background:var(--olive)}
+.flow-h{font-family:"PingFang TC",sans-serif;font-size:16px;font-weight:700;
+  color:var(--olive-deep);margin-bottom:4px}
+.flow-p{font-family:"PingFang TC",sans-serif;font-size:13px;color:var(--ink-soft);margin-bottom:18px}
+.fld{margin-bottom:16px}
+.fld label{display:block;font-family:"PingFang TC",sans-serif;font-size:13.5px;
+  font-weight:700;color:var(--ink);margin-bottom:7px}
+.req{color:var(--pink);font-size:12px}
+.hint{font-family:"PingFang TC",sans-serif;font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.6}
+.fld input,.fld select,.fld textarea{width:100%;font-family:"PingFang TC",sans-serif;
+  font-size:15px;color:var(--ink);background:var(--cream);border:1px solid var(--warm);
+  border-radius:6px;padding:11px 12px;-webkit-appearance:none;appearance:none}
+.fld select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%236B6358' stroke-width='1.6' fill='none'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center}
+.fld textarea{resize:vertical}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--olive-soft)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;font-family:"PingFang TC",sans-serif;font-size:14px;
+  border:1px solid var(--warm);background:var(--cream);border-radius:30px;
+  padding:9px 15px;cursor:pointer;color:var(--ink);user-select:none}
+.chip input{position:absolute;opacity:0;width:0;height:0}
+.chip.sel{background:var(--olive);border-color:var(--olive);color:#fff;font-weight:700}
+.flow-nav{display:flex;gap:10px;margin-top:22px}
+.flow-nav button{flex:1;font-family:"PingFang TC",sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:1px;padding:14px;border-radius:4px;border:none;cursor:pointer}
+.nav-back{background:var(--beige);color:var(--olive-deep);border:1px solid var(--warm)!important}
+.nav-next{background:var(--olive);color:#fff}
+.err{display:none;background:#FBEAEA;border:1px solid #E2B3B3;color:#9B3A3A;
+  font-family:"PingFang TC",sans-serif;font-size:13.5px;border-radius:6px;
+  padding:11px 13px;margin-bottom:14px;line-height:1.6}
+.sum{font-family:"PingFang TC",sans-serif;font-size:14px;line-height:1.9;color:var(--ink)}
+.sum b{color:var(--olive-deep)}
+.sum-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed var(--beige)}
+.sum-row:last-child{border-bottom:none}
+.sum-k{flex:0 0 76px;color:var(--ink-soft);font-size:13px}
+.sum-v{flex:1}
+.lock{background:var(--beige);border:1px dashed var(--warm);border-radius:8px;
+  padding:15px 14px;margin-top:18px;font-family:"PingFang TC",sans-serif;
+  font-size:13px;color:var(--ink-soft);line-height:1.8}
+.lock b{color:var(--olive-deep)}
+
+@media(min-width:760px){.info-list{grid-template-columns:1fr 1fr;align-items:start}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ══════ HERO ══════ -->
+<header class="hero">
+  <div class="hero-bg">
+    <img src="hero.jpg" alt="親子到府美髮" onerror="this.style.display='none'">
+  </div>
+  <div class="hero-inner wrap">
+    <div class="eyebrow">UNI 親子到府美髮</div>
+    <h1>UNI 升級為到府服務，<br><span class="hl">從 8/16 起，我到您家。</span></h1>
+    <p class="punch sans">門市不再開放現場預約，所有服務改由 Elsa 親自到府進行。<br>爸爸媽媽孩子，在熟悉的家裡一次整理好。<br>不用塞車、不用等待，也不用配合孩子情緒，一次安排，全家輕鬆整理完成。</p>
+    <div class="hero-pills">
+      <span class="hero-pill">🏠 全面到府</span>
+      <span class="hero-pill">🕘 09:00–19:30</span>
+      <span class="hero-pill">👨‍👩‍👧 親子友善</span>
+    </div>
+    <a href="#book" class="btn">第一次預約</a>
+    <div class="hero-foot sans">桃園親子到府整理服務</div>
+  </div>
+</header>
+
+<!-- ══════ 服務卡（文案逐字照抄，禁止重寫）══════ -->
+<section class="price" id="services">
+  <div class="wrap">
+    <div class="sec-label">服務與價格</div>
+    <h2>先看見價值，<br>再了解價格。</h2>
+    <p class="h2-sub sans">以下為服務起價，實際依需求安排</p>
+    <div class="svc-cards">
+      <div class="svc-card">
+        <div class="ic">✂️</div>
+        <div class="name">到府剪髮服務</div>
+        <div class="from">999<small> 起</small></div>
+        <div class="desc">提供客製化剪髮建議</div>
+      </div>
+      <div class="svc-card">
+        <div class="ic">🏡</div>
+        <div class="name">到府造型服務</div>
+        <div class="from">599<small> 起</small></div>
+        <div class="desc">不用出門，全家更輕鬆</div>
+      </div>
+      <div class="svc-card">
+        <div class="ic">👨‍👩‍👧</div>
+        <div class="name">家庭方案</div>
+        <div class="from svc-from-people">依人數規劃</div>
+        <div class="desc">一次安排，全家整理完成</div>
+      </div>
+    </div>
+    <p class="svc-disclaimer">※ 實際價格依服務內容、地區及需求安排。</p>
+  </div>
+</section>
+
+<!-- ══════ 資訊卡片（降層摺疊）══════ -->
+<section id="info">
+  <div class="wrap">
+    <div class="sec-label">想先了解更多</div>
+    <h2>需要知道的，<br>都在這裡。</h2>
+    <div class="h2-sub"></div>
+
+    <div class="info-list">
+
+      <details class="info">
+        <summary>為什麼家長都放心</summary>
+        <div class="info-body">
+          <div class="info-item"><h3>🧴 雙手・工具都消毒</h3><p class="sans">服務前後雙手酒精消毒，剪髮工具定期消毒，乾淨看得見。</p></div>
+          <div class="info-item"><h3>🧸 兒童專屬・用品分開</h3><p class="sans">兒童專屬圍巾、用品分開使用，不與他人共用。</p></div>
+          <div class="info-item"><h3>💛 一對一・不共用時段</h3><p class="sans">你的時段只屬於你的家，不與其他客人重疊，孩子不緊張。</p></div>
+          <div class="info-item"><h3>🏠 熟悉環境・降低哭鬧</h3><p class="sans">在自己最熟悉的家裡進行，孩子有安全感，比較不會哭鬧、抗拒。</p></div>
+        </div>
+      </details>
+
+      <details class="info">
+        <summary>今天到你家的，是同一位設計師</summary>
+        <div class="info-body">
+          <div class="info-item"><h3>✔ 全程由 Elsa 親自服務</h3><p class="sans">從你預約的那一刻起，服務你的就是 Elsa 本人。</p></div>
+          <div class="info-item"><h3>✔ 不外包</h3><p class="sans">不會把你的預約轉給其他人，到府的就是你認識的設計師。</p></div>
+          <div class="info-item"><h3>✔ 不隨機安排設計師</h3><p class="sans">不是系統派單，每一次都是同一雙手、同一份熟悉。</p></div>
+          <div class="info-item"><h3>✔ 全程親自負責</h3><p class="sans">從預約、溝通到到府服務，全程由 Elsa 親自負責。</p></div>
+        </div>
+      </details>
+
+      <details class="info">
+        <summary>這些家庭都適合・服務範圍</summary>
+        <div class="info-body">
+          <div class="tags sans">
+            <span class="tag">👶 敏感兒童</span>
+            <span class="tag">👨‍👩‍👧 親子家庭</span>
+            <span class="tag">👵 長輩</span>
+            <span class="tag">🤰 產後媽媽</span>
+            <span class="tag">♿ 行動不便</span>
+          </div>
+          <p class="area">📍 服務範圍：八德・桃園區・龜山　｜　其他區域歡迎詢問</p>
+        </div>
+      </details>
+
+      <details class="info">
+        <summary>預約時段與訂金說明</summary>
+        <div class="info-body">
+          <div class="info-item"><h3>🕘 服務時間</h3><p class="sans">09:00–19:30，每 30 分鐘一個時段。19:30 的時段需提前一天預約。</p></div>
+          <div class="info-item"><h3>📅 可預約日期</h3><p class="sans">今日起第 2 天至第 90 天內皆可選擇。</p></div>
+          <div class="info-item"><h3>💰 訂金</h3><p class="sans">到府服務採 300 元訂金預約，完成服務後可全額折抵消費。</p></div>
+          <div class="info-item"><h3>📅 改期說明</h3><p class="sans">・48 小時前可免費改期<br>・24 小時內可改期一次<br>・已出車或無故未到，訂金恕不退還</p></div>
+        </div>
+      </details>
+
+      <details class="info">
+        <summary>家長的真實回饋</summary>
+        <div class="info-body">
+          <div class="review-stars">★★★★★</div>
+          <p class="sans">在 Google 上看看其他家庭的整理經驗，再決定要不要讓孩子在家試試看。</p>
+          <a href="https://www.google.com/maps/search/UNI髮型訂製設計+八德" class="info-link" target="_blank" rel="noopener">在 Google 查看評價 →</a>
+        </div>
+      </details>
+
+      <details class="info">
+        <summary>常見問題</summary>
+        <div class="info-body">
+          <div class="info-item"><h3>到府服務的範圍有哪些？</h3><p class="sans">目前以八德、桃園區、龜山為主，其他鄰近區域也歡迎先詢問，我們會視路程為你安排。</p></div>
+          <div class="info-item"><h3>孩子很怕剪頭髮，會不會很麻煩？</h3><p class="sans">在自己熟悉的家裡，孩子有安全感，通常比在店裡放鬆。一對一不趕時間，可以慢慢來，配合孩子的步調。</p></div>
+          <div class="info-item"><h3>衛生與消毒怎麼處理？</h3><p class="sans">服務前後雙手酒精消毒、工具定期消毒，兒童專屬圍巾與用品分開使用，不與他人共用。</p></div>
+          <div class="info-item"><h3>一次可以幫全家人整理嗎？</h3><p class="sans">可以。爸爸媽媽、孩子、長輩都能在同一個時段一次整理好，省下分別出門的時間。</p></div>
+          <div class="info-item"><h3>怎麼預約？需要先付費嗎？</h3><p class="sans">點預約鈕線上選好時段即可，平均 1 分鐘完成；也可以直接用 LINE 詢問，再一起安排適合的時間。到府服務採 300 元訂金預約，完成服務後全額折抵消費。</p></div>
+          <div class="info-item"><h3>家裡需要準備什麼？</h3><p class="sans">不用準備任何專業設備。只需要一張椅子與基本活動空間即可，其餘工具皆由 UNI 準備。</p></div>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════ 預約入口（R1 單顆鈕）══════ -->
+<section class="cta" id="book">
+  <div class="wrap">
+    <div class="sec-label">準備好了嗎</div>
+    <h2>把專業與安心，<br>帶進你家。</h2>
+    <p class="sans">選好時段，全家一次整理好。</p>
+
+    <a href="#book" class="btn" id="btnFirstBooking">第一次預約</a>
+    <div class="cta-quick">⏱ 平均 1 分鐘即可完成預約</div>
+    <p class="deposit-line sans">到府服務採 300 元訂金預約，完成服務後可全額折抵消費。</p>
+
+    <div class="err" id="fErr"></div>
+
+    <div class="flow" id="flowBox" style="display:none">
+      <div class="flow-steps">
+        <div class="flow-dot on" id="d1"></div>
+        <div class="flow-dot" id="d2"></div>
+        <div class="flow-dot" id="d3"></div>
+        <div class="flow-dot" id="d4"></div>
+      </div>
+
+      <div class="fstep" id="s1">
+        <div class="flow-h">選日期與時段</div>
+        <div class="flow-p">已為你保留含車程的完整時段，不會與其他家庭重疊。</div>
+        <div class="fld">
+          <label>想預約日期 <span class="req">＊</span></label>
+          <input type="date" id="fDate">
+          <div class="hint">可預約範圍：今日起第 2 天至第 90 天</div>
+        </div>
+        <div class="fld">
+          <label>想預約時段 <span class="req">＊</span></label>
+          <select id="fTime"><option value="">請選擇</option></select>
+          <div class="hint">服務時間 09:00–19:30，19:30 的時段需提前一天預約</div>
+        </div>
+      </div>
+
+      <div class="fstep" id="s2" style="display:none">
+        <div class="flow-h">聯絡方式與服務地址</div>
+        <div class="flow-p">到府當天由 Elsa 本人前往，不外包、不換人。</div>
+        <div class="fld">
+          <label>您的稱呼 <span class="req">＊</span></label>
+          <input type="text" id="fName" placeholder="您的稱呼" autocomplete="name">
+        </div>
+        <div class="fld">
+          <label>聯絡電話 <span class="req">＊</span></label>
+          <input type="tel" id="fPhone" placeholder="09xxxxxxxx" autocomplete="tel" inputmode="numeric">
+        </div>
+        <div class="fld">
+          <label>服務地址 <span class="req">＊</span></label>
+          <input type="text" id="fAddr" placeholder="例：桃園市八德區○○路○號○樓">
+          <div class="hint">📍 目前服務：八德・桃園區・龜山（其他區域請先用 LINE 詢問）</div>
+        </div>
+        <div class="two">
+          <div class="fld">
+            <label>大人人數</label>
+            <select id="fAdults">
+              <option value="0">0 人</option><option value="1" selected>1 人</option>
+              <option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人以上</option>
+            </select>
+          </div>
+          <div class="fld">
+            <label>小孩人數</label>
+            <select id="fKids">
+              <option value="0" selected>0 人</option><option value="1">1 人</option>
+              <option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人以上</option>
+            </select>
+          </div>
+        </div>
+        <div class="fld">
+          <label>需要的服務 <span class="req">＊</span></label>
+          <div class="chips" id="fSvc">
+            <label class="chip"><input type="checkbox" value="剪髮服務"><span>✂️ 剪髮服務</span></label>
+            <label class="chip"><input type="checkbox" value="造型服務"><span>💇 造型服務</span></label>
+          </div>
+          <div class="hint">可複選</div>
+        </div>
+        <div class="fld">
+          <label>是否有停車位或社區可臨停</label>
+          <select id="fPark">
+            <option value="">請選擇</option>
+            <option value="有專屬車位">有專屬車位</option>
+            <option value="社區可臨停">社區可臨停</option>
+            <option value="路邊停車格">路邊停車格</option>
+            <option value="附近停車場">附近停車場</option>
+            <option value="不確定">不確定，需協助</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>其他備註</label>
+          <textarea id="fNote" rows="2" placeholder="例：長者行動不便、孩子怕吹風機、有電梯／無電梯…"></textarea>
+        </div>
+      </div>
+
+      <div class="fstep" id="s3" style="display:none">
+        <div class="flow-h">家裡的環境</div>
+        <div class="flow-p">先了解環境，Elsa 才能帶對工具、一次到位。</div>
+        <div class="fld">
+          <label>在家中哪個位置服務</label>
+          <div class="chips" id="fQ1"></div>
+        </div>
+        <div class="fld">
+          <label>服務對象的狀況</label>
+          <div class="chips" id="fQ2"></div>
+        </div>
+        <div class="fld">
+          <label>工具架設與環境 <span class="hint" style="display:inline">可複選</span></label>
+          <div class="chips" id="fQ3"></div>
+        </div>
+        <div class="fld">
+          <label>這次要整理幾位</label>
+          <div class="chips" id="fQ5"></div>
+        </div>
+        <div class="fld">
+          <label>還有想先讓 Elsa 知道的嗎</label>
+          <textarea id="fQ6" rows="2" placeholder="例：孩子第一次剪髮、長輩需要人扶、家中有寵物…"></textarea>
+        </div>
+      </div>
+
+      <div class="fstep" id="s4" style="display:none">
+        <div class="flow-h">確認預約內容</div>
+        <div class="flow-p">確認無誤後即可送出，訂金 300 元完成服務後全額折抵。</div>
+        <div class="sum" id="fSum"></div>
+        <div class="lock">
+          <b>送出功能尚未開放</b><br>
+          目前為前台測試版本，尚未接上預約系統。<br>要正式預約請透過 LINE 與 Elsa 聯繫。
+          <a href="https://line.me/R/ti/p/@261bhcyh" class="btn btn-line" style="margin-top:12px">💬 用 LINE 預約</a>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="nav-back" id="fBack" style="display:none">上一步</button>
+        <button class="nav-next" id="fNext">下一步</button>
+      </div>
+    </div>
+</section>
+
+<footer>
+  <div class="brand">U N I</div>
+  <div class="foot-grid sans">
+    <a href="https://line.me/R/ti/p/@261bhcyh" class="foot-link">💬 LINE：@261bhcyh</a>
+    <a href="https://www.google.com/maps/search/UNI髮型訂製設計+八德" class="foot-link" target="_blank" rel="noopener">📍 Google Map</a>
+    <span class="foot-link">🕘 服務時間：09:00–19:30</span>
+    <span class="foot-link">🏠 服務範圍：八德・桃園區・龜山</span>
+  </div>
+  <div class="foot-belief">希望每個家庭，<br>都能在最熟悉的地方，<br>安心整理自己。</div>
+  <div class="foot-copy">UNI 親子髮廊｜親子・成人・到府整理服務<br>© 2026 UNI Hair Design・版權所有</div>
+</footer>
+
+<div class="sticky">
+  <a href="#book" class="s-book">第一次預約</a>
+  <a href="https://line.me/R/ti/p/@261bhcyh" class="s-line">💬 快速詢問</a>
+</div>
+
+<script>
+/* ═══ B4-3 預約流程（前台）｜回滾：改回 home-service-v2_B4-2_ok.html ═══
+   本段無任何 fetch、不打 GAS。送出為 B4-4。
+   欄位契約對齊既有 homeBooking：
+   name / phone / address / date / time / adults / kids / services / parking / note
+   ＋ q1..q6（q4 前台不問，送空字串）＋ clientReqId                          */
+(function(){
+  var FIRST_DAY = '2026-08-16';
+  var LATE = ['19:30'];
+  var SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30',
+               '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30',
+               '17:00','17:30','18:00','18:30','19:00','19:30'];
+
+  var Q1 = ['客廳／公共空間','房間','床邊','其他空間','到現場再確認'];
+  var Q2 = ['可正常坐椅子','需要使用輪椅','以床邊服務為主','幼兒／兒童','孕婦','無特殊需求'];
+  var Q3 = ['可正常架設工具','需 Elsa 調整工具配置','進門需脫鞋','木地板或地毯',
+            '服務位置附近有插座','附近沒有插座','不確定，到現場再確認'];
+  var Q5 = ['1 位','2 位','3 位','4 位以上'];
+
+  var box=document.getElementById('flowBox');
+  var eBox=document.getElementById('fErr');
+  var btnNext=document.getElementById('fNext');
+  var btnBack=document.getElementById('fBack');
+  var step=1, reqId='';
+
+  function newReqId(){
+    try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+    return Date.now()+'-'+Math.random().toString(36).slice(2,18);
+  }
+  function err(m){ eBox.textContent=m; eBox.style.display='block';
+    eBox.scrollIntoView({behavior:'smooth',block:'center'}); }
+  function clr(){ eBox.style.display='none'; }
+
+  function chips(host, list, multi){
+    var el=document.getElementById(host); if(!el) return;
+    list.forEach(function(v){
+      var l=document.createElement('label'); l.className='chip';
+      l.innerHTML='<input type="'+(multi?'checkbox':'radio')+'" name="'+host+'" value="'+v+'"><span>'+v+'</span>';
+      el.appendChild(l);
+    });
+    el.addEventListener('change', function(){
+      el.querySelectorAll('.chip').forEach(function(c){
+        c.classList.toggle('sel', c.querySelector('input').checked);
+      });
+    });
+  }
+  chips('fQ1',Q1,false); chips('fQ2',Q2,false); chips('fQ3',Q3,true); chips('fQ5',Q5,false);
+
+  var svcBox=document.getElementById('fSvc');
+  svcBox.addEventListener('change', function(){
+    svcBox.querySelectorAll('.chip').forEach(function(c){
+      c.classList.toggle('sel', c.querySelector('input').checked);
+    });
+  });
+
+  var sel=document.getElementById('fTime');
+  SLOTS.forEach(function(t){ var o=document.createElement('option'); o.value=t; o.textContent=t; sel.appendChild(o); });
+
+  var dEl=document.getElementById('fDate');
+  var min=new Date(); min.setDate(min.getDate()+2);
+  var max=new Date(); max.setDate(max.getDate()+90);
+  var f=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);};
+  var minStr=f(min); if(minStr<FIRST_DAY) minStr=FIRST_DAY;
+  dEl.min=minStr; dEl.max=f(max);
+
+  function pick(host){
+    var i=document.querySelector('#'+host+' input:checked');
+    return i?i.value:'';
+  }
+  function picks(host){
+    var out=[]; document.querySelectorAll('#'+host+' input:checked').forEach(function(c){out.push(c.value);});
+    return out.join('、');
+  }
+  function val(id){ return (document.getElementById(id).value||'').trim(); }
+
+  function collect(){
+    return {
+      clientReqId: reqId,
+      name: val('fName'), phone: val('fPhone'), address: val('fAddr'),
+      date: document.getElementById('fDate').value||'',
+      time: document.getElementById('fTime').value||'',
+      adults: document.getElementById('fAdults').value||'0',
+      kids: document.getElementById('fKids').value||'0',
+      services: picks('fSvc'),
+      parking: document.getElementById('fPark').value||'',
+      note: val('fNote'),
+      q1: pick('fQ1'), q2: pick('fQ2'), q3: picks('fQ3'),
+      q4: '', q5: pick('fQ5'), q6: val('fQ6')
+    };
+  }
+
+  function validate(n){
+    var d=collect();
+    if(n===1){
+      if(!d.date) return '請選擇想預約的日期';
+      if(!d.time) return '請選擇想預約的時段';
+      if(LATE.indexOf(d.time)>-1){
+        var t=new Date(); t.setHours(0,0,0,0);
+        var pz=d.date.split('-'); var s=new Date(+pz[0],+pz[1]-1,+pz[2]);
+        if((s-t)/86400000<1) return '19:30 的時段需提前一天預約，請改選其他時段或其他日期 🙏';
+      }
+    }
+    if(n===2){
+      if(!d.name) return '請填寫您的稱呼';
+      if(!d.phone||d.phone.replace(/\D/g,'').length<8) return '請填寫正確的聯絡電話';
+      if(!d.address) return '請填寫服務地址';
+      if(!d.services) return '請至少選擇一項服務';
+      if(d.adults==='0'&&d.kids==='0') return '請選擇服務人數';
+    }
+    return '';
+  }
+
+  function fillSum(){
+    var d=collect(), rows=[];
+    function add(k,v){ if(v) rows.push('<div class="sum-row"><div class="sum-k">'+k+'</div><div class="sum-v">'+v+'</div></div>'); }
+    add('日期', d.date);
+    add('時段', d.time);
+    add('服務', d.services);
+    add('稱呼', d.name);
+    add('電話', d.phone);
+    add('地址', d.address);
+    add('人數', '大人 '+d.adults+' 人、小孩 '+d.kids+' 人');
+    add('停車', d.parking);
+    add('位置', d.q1);
+    add('狀況', d.q2);
+    add('環境', d.q3);
+    add('人數', d.q5);
+    add('備註', [d.note,d.q6].filter(Boolean).join('／'));
+    document.getElementById('fSum').innerHTML=rows.join('');
+  }
+
+  function show(n){
+    for(var i=1;i<=4;i++){
+      document.getElementById('s'+i).style.display=(i===n)?'block':'none';
+      document.getElementById('d'+i).classList.toggle('on', i<=n);
+    }
+    btnBack.style.display=(n===1)?'none':'block';
+    btnNext.textContent=(n===3)?'看預約內容':(n===4?'送出（尚未開放）':'下一步');
+    btnNext.disabled=(n===4);
+    btnNext.style.opacity=(n===4)?'.45':'1';
+    if(n===4) fillSum();
+    step=n;
+    box.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  btnNext.addEventListener('click', function(){
+    clr();
+    var m=validate(step);
+    if(m) return err(m);
+    if(step<4) show(step+1);
+  });
+  btnBack.addEventListener('click', function(){ clr(); if(step>1) show(step-1); });
+
+  function start(){
+    if(box.style.display==='none'){ reqId=newReqId(); box.style.display='block'; show(1); }
+    else box.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  document.getElementById('btnFirstBooking').addEventListener('click', function(e){ e.preventDefault(); start(); });
+  document.querySelectorAll('a[href="#book"]').forEach(function(a){
+    a.addEventListener('click', function(){ setTimeout(start, 350); });
+  });
+})();
+</script>
+</body>
+</html>
