@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <!--
   ═══════════════════════════════════════════════════════════
-  UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁
-  依據：UNI_規格_到府B4-5_前台送出與訂金頁_v0.3.md（第三關通過，放行產碼）
+  UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁 ＋ U-α 身分續存
+  依據：UNI_規格_到府U-α_送出中身分續存_v1.3.md（第五關通過，放行產碼）
   後端：m_home_service.gs v1.3（已上線，17 字元發號，fixture 24/24）
 
   🔴 唯一回滾目標：GitHub 貼回快照 home-service-v2_B4-3_ok.html（≤2 分鐘）
      本檔只動一支 HTML：不動任何 .gs、不需重新部署、正式站 home-service.html 逐字未變。
      前台出事時客人仍可從 LINE 選單經正式站正常送單。
 
-  ⚠️ 若懷疑是後端 v1.3：貼回 m_home_service_v1.2_rollback.gs
-     ＋ deployment 切回 275 版 ＋ 重跑 HSR_backfillRegistry()（≤5 分鐘）
+  ⚠️ 本次只實作 U-α。U-β（19:30 真空條款）、U-γ（摘要重複「人數」標籤）、
+     U-δ（#book 區塊 wrap 未閉合）、U-ε（首屏鈕重複綁定）皆刻意未動，
+     留在交接包待辦，勿順手修改以免擴大回滾差異。
 
   ⚠️ 驗收若在「預約紀錄」留下測試單，必須執行 HSC_cleanTestOrder 清除並重跑
      HSR_backfillRegistry()，否則下一位真客人會被閘門擋成 id_registry_stale。
@@ -534,27 +535,33 @@ a.foot-link:hover{color:#EDE7D6}
 </div>
 
 <script>
-/* ═══ B4-5 送出 ＋ 訂金頁｜回滾：改回 home-service-v2_B4-3_ok.html ═══
-   依據 UNI_規格_到府B4-5_前台送出與訂金頁_v0.3.md（第三關通過）
+/* ═══ B4-5 送出 ＋ 訂金頁 ＋ U-α 身分續存｜回滾：改回 home-service-v2_B4-3_ok.html ═══
+   依據 UNI_規格_到府U-α_送出中身分續存_v1.3.md（第五關通過）
 
-   欄位契約已於產碼前逐欄比對，17/17 對齊：
+   欄位契約 17/17 對齊（U-03）：
    clientReqId / name / phone / address / date / time / adults / kids
    / services / parking / note / q1..q6（q4 前台不問，送空字串）
 
-   三個關鍵設計，動它們之前請先讀規格：
-   ① clientReqId 全流程只產生一次（規格 5）。中途重產 = 去重層失效 = 建出重複單。
-   ② unknown 有三個入口（規格 6.1）：fetch reject / 逾時 / msg=server。
-      三者一律不宣告失敗，以「相同」clientReqId 自動確認一次。最多一次。
-   ③ disabled 分三類（規格 7.2）：A 可重送 / B fail closed / C 未知終態。
-      B、C 兩類送出鈕維持 disabled，不得重新啟用。                            */
+   動它們之前請先讀規格：
+   ① clientReqId 每一筆預約只產生一次，且跨 reload 沿用（U-04）。
+   ② unknown 三入口等價（U-06）：fetch reject / 逾時 / msg=server。
+      一律不宣告失敗，以「相同」clientReqId ＋「相同」payload 自動確認一次。
+   ③ budget ＝已消耗的 POST attempt 額度（U-33），不是 POST 出站次數。
+      只在即將 POST 前消耗，寫入早於送出，一旦記為 2 不得回退。
+   ④ 專用 key 存在但無法安全解析 → fail closed 保守鎖定（U-40），絕不清除。
+   ⑤ 前台主動清除只有兩處（U-36）：B 類確定拒收、done 逾 24 小時。       */
 (function(){
-  /* 與正式站同一支 deployment；v1.3 已部署於此，端點未變 */
+  /* 與正式站同一支 deployment；v1.3 已部署於此，端點未變（U-01） */
   var HS_GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
 
-  /* 規格 6.3：必須高於後端 lock.waitLock(20000)，並保留取得鎖後的
-     TextFinder 查找、登記簿先占、appendRow、flush、水位線推進、回程裕度。
-     ⚠️ 不得改回 20000 —— 那與 waitLock 相等而非大於。 */
+  /* U-05：必須嚴格大於後端 lock.waitLock(20000)。⚠️ 不得改回 20000 */
   var HS_TIMEOUT = 30000;
+
+  /* U-α 記錄（規格 §3） */
+  var STORE_KEY = 'uni_hs_pending';
+  var REC_V     = 1;
+  var DONE_TTL  = 86400000;          /* done 24 小時（U-35） */
+  var STATES    = ['pending','done','dead'];
 
   /* 規格 7.2 三分類 */
   var A_CODES = ['missing_fields','bad_phone','bad_time','day_closed','slot_taken'];
@@ -574,6 +581,9 @@ a.foot-link:hover{color:#EDE7D6}
             '服務位置附近有插座','附近沒有插座','不確定，到現場再確認'];
   var Q5 = ['1 位','2 位','3 位','4 位以上'];
 
+  var LINE_BTN = '<div style="margin-top:10px"><a href="https://line.me/R/ti/p/@261bhcyh" '+
+                 'class="btn btn-line" style="font-size:15px;padding:12px">💬 用 LINE 與 Elsa 聯繫</a></div>';
+
   var box=document.getElementById('flowBox');
   var eBox=document.getElementById('fErr');
   var cBox=document.getElementById('fConfirm');
@@ -582,6 +592,34 @@ a.foot-link:hover{color:#EDE7D6}
   var btnNext=document.getElementById('fNext');
   var btnBack=document.getElementById('fBack');
   var step=1, reqId='';
+
+  /* ═══ U-α 記錄存取（U-34：全程 try/catch，storage 不可用時 fail open）═══ */
+  function recRead(){
+    var raw;
+    try{ raw = sessionStorage.getItem(STORE_KEY); }
+    catch(e){ return null; }                       /* storage 整體不可用 → 視同無記錄 */
+    if(raw === null || typeof raw === 'undefined') return null;   /* key 不存在 */
+    /* 以下：key 存在。任何無法安全解析者一律 fail closed（U-40，規格 §3.2）*/
+    if(typeof raw !== 'string' || raw === '') return {__bad:1};
+    var o;
+    try{ o = JSON.parse(raw); }catch(e){ return {__bad:1}; }
+    if(!o || typeof o !== 'object' || Object.prototype.toString.call(o) === '[object Array]') return {__bad:1};
+    if(o.v !== REC_V) return {__bad:1};
+    if(STATES.indexOf(o.state) < 0) return {__bad:1};
+    if(o.state === 'pending' && (!o.reqId || !o.payload)) return {__bad:1};
+    if(o.state === 'dead'    && !o.reqId) return {__bad:1};
+    if(o.state === 'done'    && (!o.result || !o.payload)) return {__bad:1};
+    return o;
+  }
+  function recWrite(o){
+    try{
+      o.v = REC_V; o.ts = Date.now();
+      sessionStorage.setItem(STORE_KEY, JSON.stringify(o));
+    }catch(e){}                                    /* 寫入失敗 → 靜默，見規格 §5.1 第 4 項 */
+  }
+  function recClear(){
+    try{ sessionStorage.removeItem(STORE_KEY); }catch(e){}
+  }
 
   function newReqId(){
     try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
@@ -604,11 +642,23 @@ a.foot-link:hover{color:#EDE7D6}
     btnNext.disabled=true; btnNext.style.opacity='.45';
     btnBack.style.display='none';
     cBox.style.display='none';
-    eBox.innerHTML=msg+
-      '<div style="margin-top:10px"><a href="https://line.me/R/ti/p/@261bhcyh" '+
-      'class="btn btn-line" style="font-size:15px;padding:12px">💬 用 LINE 與 Elsa 聯繫</a></div>';
+    eBox.innerHTML=msg+LINE_BTN;
     eBox.style.display='block';
     eBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  /* C 類未知終態（U-10 ＋ U-41：請客人提供姓名與電話） */
+  function lockDead(){
+    box.style.display='none';
+    lockOut('無法確認預約是否送出，請透過 LINE 與 Elsa 確認，<b>請勿重複填寫</b>。<br>'+
+            '請在 LINE 提供您的<b>姓名與電話</b>，我會為您查明這筆預約。');
+  }
+
+  /* 保守鎖定（U-40 ＋ U-41）：記錄存在但讀不懂，一律當作狀態不明 */
+  function lockBad(){
+    box.style.display='none';
+    lockOut('無法讀取先前的預約狀態，可能已有一筆送出中的預約，<b>請勿重複填寫</b>。<br>'+
+            '請在 LINE 提供您的<b>姓名與電話</b>，我會為您查明這筆預約。');
   }
 
   /* 規格 7.2 A 類：解除 disabled，可修改後重送 */
@@ -676,6 +726,39 @@ a.foot-link:hover{color:#EDE7D6}
     };
   }
 
+  /* A 類落地時若表單尚未顯示（reload 續送後才收到 A 類），需回填 payload
+     讓客人能真的修改。payload 綁定不變：重送時以最新欄位覆寫（U-31）。 */
+  function setChip(host, v, multi){
+    if(!v) return;
+    var vals = multi ? String(v).split('、') : [String(v)];
+    vals.forEach(function(x){
+      var i=document.querySelector('#'+host+' input[value="'+x+'"]');
+      if(i) i.checked=true;
+    });
+    var el=document.getElementById(host);
+    if(el) el.querySelectorAll('.chip').forEach(function(c){
+      c.classList.toggle('sel', c.querySelector('input').checked);
+    });
+  }
+  function fillForm(d){
+    d = d || {};
+    document.getElementById('fDate').value   = d.date||'';
+    document.getElementById('fTime').value   = d.time||'';
+    document.getElementById('fName').value   = d.name||'';
+    document.getElementById('fPhone').value  = d.phone||'';
+    document.getElementById('fAddr').value   = d.address||'';
+    document.getElementById('fAdults').value = d.adults||'1';
+    document.getElementById('fKids').value   = d.kids||'0';
+    document.getElementById('fPark').value   = d.parking||'';
+    document.getElementById('fNote').value   = d.note||'';
+    document.getElementById('fQ6').value     = d.q6||'';
+    setChip('fSvc', d.services, true);
+    setChip('fQ1',  d.q1, false);
+    setChip('fQ2',  d.q2, false);
+    setChip('fQ3',  d.q3, true);
+    setChip('fQ5',  d.q5, false);
+  }
+
   function validate(n){
     var d=collect();
     if(n===1){
@@ -716,7 +799,7 @@ a.foot-link:hover{color:#EDE7D6}
     document.getElementById('fSum').innerHTML=rows.join('');
   }
 
-  /* ── 送出：單次 POST，逾時視為 unknown（規格 6.1 入口 2）── */
+  /* ── 送出：單次 POST，逾時視為 unknown（U-06 入口 2）── */
   function post(d){
     var p=new URLSearchParams();
     p.append('action','homeBooking');
@@ -743,52 +826,82 @@ a.foot-link:hover{color:#EDE7D6}
         })
         .catch(function(){
           if(settled) return; settled=true; clearTimeout(timer);
-          resolve({ __unknown:'reject' });   /* 規格 6.1 入口 1 */
+          resolve({ __unknown:'reject' });   /* U-06 入口 1 */
         });
     });
   }
 
-  /* ── 主流程（規格 6.2）。isRetry=true 即確認重送，最多一次 ── */
-  function send(isRetry){
-    if(locked) return;
+  /* ── 主流程。d ＝這一次要送的 payload；bud ＝送出前已消耗的額度 ── */
+  function runPost(d, isRetry, bud){
     busy=true;
     btnNext.disabled=true; btnNext.style.opacity='.45';
     btnNext.textContent='送出中…';
 
-    post(collect()).then(function(j){
-      /* 規格 6.1：三個入口等價 */
+    post(d).then(function(j){
       var unknown = j.__unknown || (j.status==='error' && j.msg==='server');
 
       if(unknown){
-        if(!isRetry){ confirming(); send(true); return; }
-        /* 規格 6.4 最終未知終態 */
-        lockOut('無法確認預約是否送出，請透過 LINE 與 Elsa 確認，<b>請勿重複填寫</b>。');
+        if(!isRetry){
+          confirming();
+          /* U-33：額度必須在 POST 之前消耗，且寫入早於送出 */
+          recWrite({ reqId:reqId, payload:d, budget:2, state:'pending' });
+          runPost(d, true, 2);
+          return;
+        }
+        /* 第二次仍 unknown → dead，不得清除（U-36／U-38） */
+        recWrite({ reqId:reqId, payload:d, budget:2, state:'dead' });
+        lockDead();
         return;
       }
 
-      if(j.status==='ok'){ showDone(j); return; }
+      if(j.status==='ok'){
+        /* U-21／U-37：保存成交結果，reload 可還原訂金頁 */
+        recWrite({ reqId:reqId, payload:d, budget:bud, state:'done',
+                   result:{ bookingId:j.bookingId, slotStart:j.slotStart,
+                            slotEnd:j.slotEnd, pay:j.pay||{} } });
+        showDone(j, d);
+        return;
+      }
 
       var m=String(j.msg||'');
       var t=String(j.text||'送出失敗，請改用 LINE 與 Elsa 聯繫 🙏');
       cBox.style.display='none';
 
-      if(B_CODES.indexOf(m)>-1){ lockOut(t); return; }   /* B 類 fail closed */
+      if(B_CODES.indexOf(m)>-1){        /* B 類 fail closed：確定未成立 → 清除（U-36） */
+        recClear();
+        lockOut(t);
+        return;
+      }
 
-      err(t); unlock();                                   /* A 類 */
+      /* A 類：保留記錄、沿用同一 reqId、額度歸 0 */
+      recWrite({ reqId:reqId, payload:d, budget:0, state:'pending' });
+      if(box.style.display==='none'){   /* reload 續送後才收到 A 類 → 讓客人真的能改 */
+        fillForm(d);
+        box.style.display='block';
+        show(4);
+      }
+      err(t); unlock();
       if(STEP1_CODES.indexOf(m)>-1) show(1);
     });
   }
 
-  /* ── 訂金頁（規格 8）。slotStart／slotEnd 一律取後端回傳，不得前台重算 ── */
-  function showDone(j){
+  /* 步驟 4 按下送出：消耗第一次額度後才 POST（U-32／U-33） */
+  function submit(){
+    var d=collect();
+    recWrite({ reqId:reqId, payload:d, budget:1, state:'pending' });
+    runPost(d, false, 1);
+  }
+
+  /* ── 訂金頁（U-22：slotStart／slotEnd 一律取後端回傳，不得前台重算）── */
+  function showDone(j, d){
     locked=true; busy=false;
     box.style.display='none';
     clr();
 
-    var d=collect();
+    d = d || {};
     document.getElementById('fDoneSub').innerHTML=
       '預約編號 <b>'+j.bookingId+'</b><br>'+
-      d.date+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
+      (d.date||'')+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
       '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>';
 
     var pay=j.pay||{}, box2=document.getElementById('fPayBtns'), html='';
@@ -822,24 +935,66 @@ a.foot-link:hover{color:#EDE7D6}
     var m=validate(step);
     if(m) return err(m);
     if(step<4){ show(step+1); return; }
-    send(false);
+    submit();
   });
   btnBack.addEventListener('click', function(){
     if(busy||locked) return;
     clr(); if(step>1) show(step-1);
   });
 
-  /* 規格 5：clientReqId 全流程只產生一次。
-     成功後 locked=true，start() 直接退出，絕不會走到 newReqId()。 */
+  /* ═══ U-α 還原（規格 §4.2）：頁面載入最先執行，回傳 true 代表已接管 ═══ */
+  function restore(){
+    var r = recRead();
+    if(!r) return false;                                  /* key 不存在 → 正常流程 */
+    if(r.__bad){ lockBad(); return true; }                /* 讀不懂 → 保守鎖定，不清除 */
+
+    if(r.state==='done'){
+      if(Date.now() - (r.ts||0) > DONE_TTL){ recClear(); return false; }
+      reqId = r.reqId;
+      showDone(r.result, r.payload);
+      return true;
+    }
+
+    if(r.state==='dead'){ reqId=r.reqId; lockDead(); return true; }
+
+    /* pending */
+    reqId = r.reqId;
+    var bud = r.budget || 0;
+
+    if(bud >= 2){                                         /* 額度用盡 → 落 dead，不再 POST */
+      recWrite({ reqId:r.reqId, payload:r.payload, budget:2, state:'dead' });
+      lockDead();
+      return true;
+    }
+    if(bud === 0){                                        /* A 類後尚未重送 → 還原表單讓客人續填 */
+      fillForm(r.payload);
+      box.style.display='block';
+      show(1);
+      return true;
+    }
+    /* bud === 1：未落地，以同 reqId ＋ 同 payload 續送一次（U-07） */
+    confirming();
+    recWrite({ reqId:r.reqId, payload:r.payload, budget:2, state:'pending' });
+    runPost(r.payload, true, 2);
+    return true;
+  }
+
+  /* U-04：每一筆預約只產生一次 ID。restore 已接管時絕不走到 newReqId() */
   function start(){
-    if(locked){ doneBox.scrollIntoView({behavior:'smooth',block:'start'}); return; }
-    if(box.style.display==='none'){ reqId=newReqId(); box.style.display='block'; show(1); }
+    if(locked){
+      if(doneBox.style.display!=='none') doneBox.scrollIntoView({behavior:'smooth',block:'start'});
+      else eBox.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    if(box.style.display==='none'){ if(!reqId) reqId=newReqId(); box.style.display='block'; show(1); }
     else box.scrollIntoView({behavior:'smooth',block:'start'});
   }
   document.getElementById('btnFirstBooking').addEventListener('click', function(e){ e.preventDefault(); start(); });
   document.querySelectorAll('a[href="#book"]').forEach(function(a){
     a.addEventListener('click', function(){ setTimeout(start, 350); });
   });
+
+  restore();
 })();
 </script>
 </body>
