@@ -9,7 +9,16 @@
      本檔只動一支 HTML：不動任何 .gs、不需重新部署、正式站 home-service.html 逐字未變。
      前台出事時客人仍可從 LINE 選單經正式站正常送單。
 
-  ★ 2026-09-10 本版 v2.1 改動（四項，全部在本檔內，不動任何 .gs、不需重新部署）：
+  ★ 2026-09-10 本版 v2.2 改動（全部在本檔內，不動任何 .gs、不需重新部署）：
+     【服務時間更正】09:00–19:30 → 10:00–19:30（Elsa 定案：每天相同，公休另於顧客追蹤設定）
+       ⤷ SLOTS 由 22 格改 20 格（首格 10:00），並同步四處對外文案：
+         HERO 標籤／常見問題「服務時間」／表單步驟 1 提示／footer。
+       ⚠️ 這是把可約範圍「收窄」，10:00–19:30 完全落在後端原接受的 09:00–19:30 之內，
+          故不會出現「前台給約、後端拒收」，也不需改 .gs 或重新部署。
+       ⚠️ 交接包 U-16 判準原寫「22 格」，自本版起應為 20 格；§12 基準值須同步更新。
+       ⚠️ 正式站 home-service.html 有相同的四處文案與同一份 SLOTS，必須一併改（v1.2）。
+
+  ★ v2.1 改動（四項，保留紀錄）：
      V-1 lockOut() 未還原按鈕文字 → 改「已停止送出」＋收起表單卡（比照正式站 v1.1 的 P-06）
      U-γ 步驟 4 摘要兩列標籤都叫「人數」 → Q5 那一列改標「整理人數」
      U-δ #book 區塊 <div class="wrap"> 未閉合 → 補上，改為顯式閉合
@@ -262,7 +271,7 @@ a.foot-link:hover{color:#EDE7D6}
     <p class="punch sans">門市不再開放現場預約，所有服務改由 Elsa 親自到府進行。<br>爸爸媽媽孩子，在熟悉的家裡一次整理好。<br>不用塞車、不用等待，也不用配合孩子情緒，一次安排，全家輕鬆整理完成。</p>
     <div class="hero-pills">
       <span class="hero-pill">🏠 全面到府</span>
-      <span class="hero-pill">🕘 09:00–19:30</span>
+      <span class="hero-pill">🕘 10:00–19:30</span>
       <span class="hero-pill">👨‍👩‍👧 親子友善</span>
     </div>
     <a href="#book" class="btn">第一次預約</a>
@@ -346,7 +355,7 @@ a.foot-link:hover{color:#EDE7D6}
       <details class="info">
         <summary>預約時段與訂金說明</summary>
         <div class="info-body">
-          <div class="info-item"><h3>🕘 服務時間</h3><p class="sans">09:00–19:30，每 30 分鐘一個時段。19:30 的時段需提前一天預約。</p></div>
+          <div class="info-item"><h3>🕘 服務時間</h3><p class="sans">10:00–19:30，每 30 分鐘一個時段。19:30 的時段需提前一天預約。</p></div>
           <div class="info-item"><h3>📅 可預約日期</h3><p class="sans">今日起第 2 天至第 90 天內皆可選擇。</p></div>
           <div class="info-item"><h3>💰 訂金</h3><p class="sans">到府服務採 300 元訂金預約，完成服務後可全額折抵消費。</p></div>
           <div class="info-item"><h3>📅 改期說明</h3><p class="sans">・48 小時前可免費改期<br>・24 小時內可改期一次<br>・已出車或無故未到，訂金恕不退還</p></div>
@@ -411,7 +420,7 @@ a.foot-link:hover{color:#EDE7D6}
         <div class="fld">
           <label>想預約時段 <span class="req">＊</span></label>
           <select id="fTime"><option value="">請選擇</option></select>
-          <div class="hint">服務時間 09:00–19:30，19:30 的時段需提前一天預約</div>
+          <div class="hint">服務時間 10:00–19:30，19:30 的時段需提前一天預約</div>
         </div>
       </div>
 
@@ -538,7 +547,7 @@ a.foot-link:hover{color:#EDE7D6}
   <div class="foot-grid sans">
     <a href="https://line.me/R/ti/p/@261bhcyh" class="foot-link">💬 LINE：@261bhcyh</a>
     <a href="https://www.google.com/maps/search/UNI髮型訂製設計+八德" class="foot-link" target="_blank" rel="noopener">📍 Google Map</a>
-    <span class="foot-link">🕘 服務時間：09:00–19:30</span>
+    <span class="foot-link">🕘 服務時間：10:00–19:30</span>
     <span class="foot-link">🏠 服務範圍：八德・桃園區・龜山</span>
   </div>
   <div class="foot-belief">希望每個家庭，<br>都能在最熟悉的地方，<br>安心整理自己。</div>
@@ -590,7 +599,8 @@ a.foot-link:hover{color:#EDE7D6}
 
   var FIRST_DAY = '2026-08-16';
   var LATE = ['19:30'];
-  var SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30',
+  /* 服務時間 10:00–19:30，每 30 分鐘一格，共 20 格（2026-09-10 更正，原為 09:00 起 22 格）*/
+  var SLOTS = ['10:00','10:30','11:00','11:30','12:00','12:30',
                '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30',
                '17:00','17:30','18:00','18:30','19:00','19:30'];
 
