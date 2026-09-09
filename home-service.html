@@ -790,9 +790,35 @@ a.deposit-more:hover{color:var(--olive)}
 </script>
 
 <script>
-/* ═══ 🚗 到府預約表單 v1.0（回滾：刪除本整段） ═══ */
+/* ═══ 🚗 到府預約表單 v1.1｜正式站 C 修復（回滾：整段換回 v1.0）═══
+   ★ 2026-09-10 修復三件事，除此之外一字未動：
+     ① 加逾時。v1.0 的 fetch 若永不 settle，按鈕會永久停在「送出中…」，
+        客人看不到任何錯誤、也沒有 LINE 出口，只會覺得網頁壞了。
+     ② 錯誤三分類。v1.0 把所有失敗都當可重送，包含「無法確定是否已建單」。
+        ⚠️ 正式站不送 clientReqId、後端對空 clientReqId 不做去重，
+           所以未知終態一旦放行重送，就是實實在在的第二筆單。
+     ③ catch 不再無條件解鎖按鈕（同 ②）。
+   ⚠️ 本站刻意「不」自動重送。v2 靠 clientReqId 才敢續送一次，這裡沒有那道保險。 */
 (function(){
   var HS_GAS = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+
+  /* ★ v1.1：必須嚴格大於後端 lock.waitLock(20000)。不得改回 20000 或更小，
+        否則會把「後端還在等鎖、其實會成功」誤判成未知終態而鎖住客人。 */
+  var HS_TIMEOUT = 30000;
+
+  /* ★ v1.1 錯誤三分類（邊界：能不能確定 server 沒有建單）
+     A 類｜確定未建單，可安全重送 → 顯示訊息、解除鎖定
+     B 類｜確定被拒收，重送也沒用 → 維持鎖定 ＋ LINE
+     C 類｜無法確定是否已建單    → 維持鎖定 ＋「請勿重複填寫」＋ 請提供姓名電話
+     ⚠️ 未列舉的伺服器錯誤碼一律走 B 類 fail closed，不得預設放行。 */
+  var A_CODES = ['missing_fields','bad_phone','bad_time','day_closed','slot_taken'];
+  var B_CODES = ['disabled','id_registry_unavailable','id_registry_not_ready',
+                 'id_registry_stale','id_collision'];
+
+  var LINE_BTN = '<div style="margin-top:12px"><a href="https://line.me/R/ti/p/@261bhcyh" ' +
+                 'class="btn btn-line" style="font-size:15px;padding:12px;letter-spacing:1px">' +
+                 '💬 用 LINE 與 Elsa 聯繫</a></div>';
+
   /* ═══ 2026-08-11 改版設定（回滾：改回下方註解的原值）═══
      原：MAIN=['10:00'…'17:30']、日期下限為今日+2 天、無 19:30 規則 */
   var HS_FIRST_DAY = '2026-08-16';
@@ -810,19 +836,78 @@ a.deposit-more:hover{color:var(--olive)}
     dEl.min=minStr; dEl.max=f(max);
   }
 
-  var busy=false;
+  var busy=false, locked=false;
   var btn=document.getElementById('hsSubmit');
   if(!btn) return;
+  var eBox=document.getElementById('hsErr');
 
   function err(msg){
-    var e=document.getElementById('hsErr');
-    e.textContent=msg; e.style.display='block';
-    e.scrollIntoView({behavior:'smooth',block:'center'});
+    eBox.textContent=msg; eBox.style.display='block';
+    eBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  /* B／C 類：維持 disabled，不得重新啟用（v1.0 的錯就在這裡） */
+  function lockOut(html){
+    locked=true; busy=false;
+    btn.disabled=true;
+    btn.style.opacity='.45';
+    btn.style.cursor='default';
+    btn.textContent='已停止送出';
+    eBox.innerHTML=html+LINE_BTN;
+    eBox.style.display='block';
+    eBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  /* A 類：可修改後重送 */
+  function unlock(){
+    busy=false; btn.disabled=false; btn.textContent='送出到府預約';
+  }
+
+  function showDone(j, d){
+    locked=true; busy=false;
+    document.getElementById('hsCard').style.display='none';
+    eBox.style.display='none';
+
+    var done=document.getElementById('hsDone');
+    document.getElementById('hsDoneSub').innerHTML =
+      '預約編號 <b>'+j.bookingId+'</b><br>'+
+      d.date+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
+      '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>';
+
+    var box=document.getElementById('hsPayBtns'); box.innerHTML='';
+    if(j.pay&&j.pay.jko)  box.innerHTML+='<a class="hs-pay" target="_blank" rel="noopener" href="'+j.pay.jko+'">💳 街口支付 →</a>';
+    if(j.pay&&j.pay.ipass)box.innerHTML+='<a class="hs-pay" target="_blank" rel="noopener" href="'+j.pay.ipass+'">💳 iPASS Money →</a>';
+    if(j.pay&&j.pay.bank) box.innerHTML+='<div class="hs-pay" style="cursor:default">🏦 轉帳：'+j.pay.bank+'</div>';
+    if(!box.innerHTML)    box.innerHTML='<div class="hs-pay" style="cursor:default">請透過 LINE 向 Elsa 索取付款方式</div>';
+
+    done.style.display='block';
+    done.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function handle(j, d){
+    /* 未知終態三入口等價：逾時／fetch reject／回應不成形／msg==='server' */
+    var unknown = j.__unknown || (j.status==='error' && j.msg==='server');
+
+    if(unknown){
+      lockOut('無法確認這筆預約是否已經送出，<b>請勿重複填寫</b>。<br>'+
+              '請在 LINE 提供您的<b>姓名與電話</b>，我會立刻為您查明並回覆。');
+      return;
+    }
+
+    if(j.status==='ok'){ showDone(j, d); return; }
+
+    var m = String(j.msg||'');
+    var t = String(j.text||'送出失敗，請改用 LINE 與 Elsa 聯繫 🙏');
+
+    if(A_CODES.indexOf(m)>-1){ err(t); unlock(); return; }
+
+    /* B 類，以及任何未列舉的錯誤碼 → fail closed */
+    lockOut(t);
   }
 
   btn.addEventListener('click', function(){
-    if(busy) return;
-    document.getElementById('hsErr').style.display='none';
+    if(busy||locked) return;
+    eBox.style.display='none';
 
     var svc=[];
     document.querySelectorAll('#hsSvc input:checked').forEach(function(c){svc.push(c.value);});
@@ -858,33 +943,28 @@ a.deposit-more:hover{color:var(--olive)}
     var p=new URLSearchParams(); p.append('action','homeBooking');
     Object.keys(d).forEach(function(k){p.append(k,d[k]);});
 
-    fetch(HS_GAS,{method:'POST',cache:'no-store',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p.toString()})
-    .then(function(r){return r.json();})
-    .then(function(j){
-      busy=false; btn.disabled=false; btn.textContent='送出到府預約';
-      if(!j||j.status!=='ok'){ return err((j&&j.text)||'送出失敗，請稍後再試或改用 LINE 詢問'); }
+    /* ★ v1.1：單次 POST ＋ 逾時。settled 旗標確保 handle 只會被呼叫一次。 */
+    var settled=false, timer=null, ctrl=null;
+    var opt={method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:p.toString()};
+    try{ if(window.AbortController){ ctrl=new AbortController(); opt.signal=ctrl.signal; } }catch(e){}
 
-      document.getElementById('hsCard').style.display='none';
-      var done=document.getElementById('hsDone');
-      document.getElementById('hsDoneSub').innerHTML =
-        '預約編號 <b>'+j.bookingId+'</b><br>'+
-        d.date+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
-        '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>';
+    var finish=function(j){
+      if(settled) return; settled=true;
+      if(timer) clearTimeout(timer);
+      handle(j, d);
+    };
 
-      var box=document.getElementById('hsPayBtns'); box.innerHTML='';
-      if(j.pay&&j.pay.jko)  box.innerHTML+='<a class="hs-pay" target="_blank" rel="noopener" href="'+j.pay.jko+'">💳 街口支付 →</a>';
-      if(j.pay&&j.pay.ipass)box.innerHTML+='<a class="hs-pay" target="_blank" rel="noopener" href="'+j.pay.ipass+'">💳 iPASS Money →</a>';
-      if(j.pay&&j.pay.bank) box.innerHTML+='<div class="hs-pay" style="cursor:default">🏦 轉帳：'+j.pay.bank+'</div>';
-      if(!box.innerHTML)    box.innerHTML='<div class="hs-pay" style="cursor:default">請透過 LINE 向 Elsa 索取付款方式</div>';
+    timer=setTimeout(function(){
+      try{ if(ctrl) ctrl.abort(); }catch(e){}
+      finish({__unknown:'timeout'});
+    }, HS_TIMEOUT);
 
-      done.style.display='block';
-      done.scrollIntoView({behavior:'smooth',block:'start'});
-    })
-    .catch(function(){
-      busy=false; btn.disabled=false; btn.textContent='送出到府預約';
-      err('連線異常，請稍後再試或改用 LINE 詢問 🙏');
-    });
+    fetch(HS_GAS, opt)
+      .then(function(r){ return r.json(); })
+      .then(function(j){ finish(j && j.status ? j : {__unknown:'bad_response'}); })
+      .catch(function(){ finish({__unknown:'reject'}); });
   });
 })();
 </script>
