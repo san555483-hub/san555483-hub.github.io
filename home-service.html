@@ -344,7 +344,7 @@ a.deposit-more:hover{color:var(--olive)}
     <p class="punch sans">門市不再開放現場預約，所有服務改由 Elsa 親自到府進行。<br>爸爸媽媽孩子，在熟悉的家裡一次整理好。<br>不用塞車、不用等待，也不用配合孩子情緒，一次安排，全家輕鬆整理完成。</p>
     <div class="hero-pills">
       <span class="hero-pill">🏠 全面到府</span>
-      <span class="hero-pill">🕘 09:00–19:30</span>
+      <span class="hero-pill">🕘 10:00–19:30</span>
       <span class="hero-pill">👨‍👩‍👧 親子友善</span>
     </div>
     <a href="#booking" class="btn">📅 我要預約到府服務</a>
@@ -521,7 +521,7 @@ a.deposit-more:hover{color:var(--olive)}
   <div class="wrap">
     <div class="sec-label">線上預約</div>
     <h2>把預約交給我，<br>您安心安排今天就好。</h2>
-    <p class="sans hs-lead">8/16 起開放預約，服務時間 <b>09:00–19:30</b>，目前提供<b>剪髮服務</b>與<b>造型服務</b>。<br>收到資料後我會盡快與您聯繫確認時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。<br><span class="hs-hint">※ 19:30 時段需提前一天預約。</span></p>
+    <p class="sans hs-lead">8/16 起開放預約，服務時間 <b>10:00–19:30</b>，目前提供<b>剪髮服務</b>與<b>造型服務</b>。<br>收到資料後我會盡快與您聯繫確認時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。<br><span class="hs-hint">※ 19:30 時段需提前一天預約。</span></p>
 
     <div class="hs-card" id="hsCard">
       <div class="hs-grid">
@@ -620,7 +620,7 @@ a.deposit-more:hover{color:var(--olive)}
   <div class="foot-grid sans">
     <a href="https://line.me/R/ti/p/@261bhcyh" class="foot-link">💬 LINE：@261bhcyh</a>
     <a href="https://www.google.com/maps/search/UNI髮型訂製設計+八德" class="foot-link" target="_blank" rel="noopener">📍 Google Map</a>
-    <span class="foot-link">🕘 服務時間：09:00–19:30（8/16 起）</span>
+    <span class="foot-link">🕘 服務時間：10:00–19:30（8/16 起）</span>
     <span class="foot-link">🏠 服務範圍：八德・桃園區・龜山</span>
   </div>
   <div class="foot-belief">希望每個家庭，<br>都能在最熟悉的地方，<br>安心整理自己。</div>
@@ -820,10 +820,14 @@ a.deposit-more:hover{color:var(--olive)}
                  '💬 用 LINE 與 Elsa 聯繫</a></div>';
 
   /* ═══ 2026-08-11 改版設定（回滾：改回下方註解的原值）═══
-     原：MAIN=['10:00'…'17:30']、日期下限為今日+2 天、無 19:30 規則 */
+     原：MAIN=['10:00'…'17:30']、日期下限為今日+2 天、無 19:30 規則
+     ★ 2026-09-10 v1.2 服務時間更正：MAIN 由 09:00 起 22 格改為 10:00 起 20 格。
+       Elsa 定案每天 10:00–19:30，公休另於「顧客追蹤」設定。19:30 末格與 HS_LATE 規則不變。
+       ⚠️ 這是把可約範圍收窄，落在後端原接受區間內，故不動任何 .gs、不需重新部署。
+       回滾＝把下行 MAIN 的開頭改回 '09:00','09:30', 即可。 */
   var HS_FIRST_DAY = '2026-08-16';
   var HS_LATE = ['19:30'];
-  var MAIN=['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
+  var MAIN=['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
   var sel=document.getElementById('hsTime');
   if(sel){ MAIN.forEach(function(t){ var o=document.createElement('option'); o.value=t; o.textContent=t; sel.appendChild(o); }); }
 
