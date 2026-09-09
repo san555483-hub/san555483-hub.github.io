@@ -9,18 +9,20 @@
      本檔只動一支 HTML：不動任何 .gs、不需重新部署、正式站 home-service.html 逐字未變。
      前台出事時客人仍可從 LINE 選單經正式站正常送單。
 
-  ★ 2026-09-06 待辦 D 修復（本次唯一改動，一處）：
-     移除 HERO 區的 <img src="hero.jpg">。該檔不存在於 repo，
-     onerror 只是把元素隱藏，瀏覽器仍會發出請求並記錄 404。
-     .hero 本身已有 CSS 漸層底 ＋ .hero-bg::after 覆蓋層，
-     移除後畫面與移除前完全相同（圖片從未載入成功過）。
-     ⤷ 日後若要放主視覺：把 hero.jpg 上傳到 repo 根目錄，
-       再把 <div class="hero-bg"></div> 還原成
-       <div class="hero-bg"><img src="hero.jpg" alt="親子到府美髮"></div>
+  ★ 2026-09-10 本版 v2.1 改動（四項，全部在本檔內，不動任何 .gs、不需重新部署）：
+     V-1 lockOut() 未還原按鈕文字 → 改「已停止送出」＋收起表單卡（比照正式站 v1.1 的 P-06）
+     U-γ 步驟 4 摘要兩列標籤都叫「人數」 → Q5 那一列改標「整理人數」
+     U-δ #book 區塊 <div class="wrap"> 未閉合 → 補上，改為顯式閉合
+     U-ε btnFirstBooking 被兩個監聽器重複綁定 → a[href="#book"] 迴圈排除它
 
-  ⚠️ 本次只修 hero.jpg。U-β（19:30 真空條款）、U-γ（摘要重複「人數」標籤）、
-     U-δ（#book 區塊 wrap 未閉合）、U-ε（首屏鈕重複綁定）皆刻意未動，
-     留在交接包待辦，勿順手修改以免擴大回滾差異。
+  ⚠️ 刻意未動：U-β（19:30 真空條款，必須連同日期 min 一併評估，見交接包 §8）。
+  ⚠️ 送出契約（U-01～U-07）、U-α 身分續存（U-31～U-41）、錯誤三分類判準、
+     所有對外文案與服務卡三張（U-26）逐字未變。
+
+  ⬜ 2026-09-06 待辦 D（已結案，保留紀錄）：移除 HERO 區的 <img src="hero.jpg">。
+     .hero 已有 CSS 漸層底 ＋ .hero-bg::after 覆蓋層，移除後畫面與移除前完全相同。
+     ⤷ 日後若要放主視覺：把 hero.jpg 上傳到 repo 根目錄，再把 <div class="hero-bg"></div>
+       還原成 <div class="hero-bg"><img src="hero.jpg" alt="親子到府美髮"></div>
 
   ⚠️ 驗收若在「預約紀錄」留下測試單，執行 HSC_cleanAllTestOrders 一次清完
      （m_hs_cleanup.gs v1.2），它會自動重跑 HSR_backfillRegistry() 並驗證一致性。
@@ -527,6 +529,8 @@ a.foot-link:hover{color:#EDE7D6}
         <a href="https://line.me/R/ti/p/@261bhcyh" class="btn btn-line" style="margin-top:12px">💬 傳送付款截圖給 Elsa</a>
       </div>
     </div>
+
+  </div><!-- /.wrap ← U-δ：原本未閉合、由瀏覽器隱式補齊，此處改為顯式閉合 -->
 </section>
 
 <footer>
@@ -651,11 +655,18 @@ a.foot-link:hover{color:#EDE7D6}
     cBox.scrollIntoView({behavior:'smooth',block:'center'});
   }
 
-  /* 規格 7.2 B／C 類：維持 disabled，不得重新啟用 */
+  /* 規格 7.2 B／C 類：維持 disabled，不得重新啟用
+     ★ V-1（2026-09-10）：鎖定後必須同時收掉「還在跑」的視覺殘留，
+       否則按鈕停在「送出中…」且表單卡還開著，客人會以為系統仍在處理。
+       修法比照正式站 home-service.html v1.1 的 P-06。
+       ⚠️ fErr／fConfirm 是 flowBox 的兄弟節點（同在 .wrap 之下），
+          收起表單卡不會連帶蓋掉錯誤訊息與 LINE 按鈕。 */
   function lockOut(msg){
     locked=true; busy=false;
     btnNext.disabled=true; btnNext.style.opacity='.45';
+    btnNext.textContent='已停止送出';        /* V-1：不得停留在「送出中…」 */
     btnBack.style.display='none';
+    box.style.display='none';                /* V-1：收起表單卡，避免誤以為還能改、還能再送 */
     cBox.style.display='none';
     eBox.innerHTML=msg+LINE_BTN;
     eBox.style.display='block';
@@ -809,7 +820,7 @@ a.foot-link:hover{color:#EDE7D6}
     add('位置', d.q1);
     add('狀況', d.q2);
     add('環境', d.q3);
-    add('人數', d.q5);
+    add('整理人數', d.q5);          /* U-γ：與上方大人／小孩的「人數」區隔 */
     add('備註', [d.note,d.q6].filter(Boolean).join('／'));
     document.getElementById('fSum').innerHTML=rows.join('');
   }
@@ -1004,8 +1015,14 @@ a.foot-link:hover{color:#EDE7D6}
     if(box.style.display==='none'){ if(!reqId) reqId=newReqId(); box.style.display='block'; show(1); }
     else box.scrollIntoView({behavior:'smooth',block:'start'});
   }
-  document.getElementById('btnFirstBooking').addEventListener('click', function(e){ e.preventDefault(); start(); });
+  var btnFirst = document.getElementById('btnFirstBooking');
+  btnFirst.addEventListener('click', function(e){ e.preventDefault(); start(); });
+  /* ★ U-ε（2026-09-10）：btnFirstBooking 本身就是 a[href="#book"]，
+     原本會同時被上面的專屬監聽器與下面這一圈綁到，一次點擊呼叫 start() 兩次。
+     此處明確排除它。start() 內「!reqId 才產生」的守衛未變 ⇒ U-04 不受影響；
+     額度只在 submit()／runPost() 消耗 ⇒ U-33 不受影響。 */
   document.querySelectorAll('a[href="#book"]').forEach(function(a){
+    if(a === btnFirst) return;
     a.addEventListener('click', function(){ setTimeout(start, 350); });
   });
 
