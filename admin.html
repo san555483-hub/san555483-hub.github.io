@@ -1922,6 +1922,8 @@ window.adminLogin=async()=>{
     document.getElementById('admin-wrap').style.display='block';
     document.getElementById('header-right').innerHTML='<span class="admin-badge">✏️ 後台已登入</span><button class="logout-btn" onclick="adminLogout()">登出</button>';
     initAdmin();
+    // 🔐 D-37：深層連結 admin.html#quickbook／#agentgate 等，登入後自動切到該分頁（回滾：刪除本 1 行）
+    try{const _h=decodeURIComponent((location.hash||'').slice(1));if(_h&&document.getElementById('pane-'+_h))setTimeout(()=>switchTab(_h),400);}catch(_){}
   }catch(e){showToast('登入失敗：'+e.message);}
 };
 // 📡 需求雷達 R2：提供登入憑證給 m_drr_api.gs 伺服器端驗證（回滾：刪本 1 行）
@@ -1938,6 +1940,89 @@ window.adminLogout=async()=>{
 const GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
 const GAS_SHOP = 'https://script.google.com/macros/s/AKfycbwFLBUwkVoxXOccvgUWdsbaMt4TmAorHHIQOEsWlek9rEGi1YzoMnZi2-JnBEOG56xmxw/exec';
 const GAS_VIP  = 'https://script.google.com/macros/s/AKfycbz2xGmguRIOv8bEefyRN7eZOaR2G0H-gQevWXTW42oAg2jqFfHtR_2DAx_dMcFP_11f/exec';
+// ═══ 🔐 D-37 B0（2026-09-21）後台會話攔截器 ═══
+// 只攔主系統 GAS 網址：登入後換發 32 字後台會話鑰，所有請求自動附帶；GAS_SHOP／GAS_VIP 不動。
+// 伺服器端：m_admin_auth.gs。回滾：刪除本段（伺服器 off 或退回 290 時，本段單獨存在也無害）。
+(function(){
+  if (window.__aaFetchInstalled) return; window.__aaFetchInstalled = true;
+  const MAIN = GAS, DOTS = '.'.repeat(200), rawFetch = window.fetch.bind(window);
+  let aak = '', minting = null, warned = false;
+  function banner(j){
+    let el = document.getElementById('aa-banner');
+    if(!el){ el = document.createElement('div'); el.id = 'aa-banner';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b3261e;color:#fff;padding:10px 40px 10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px));font-size:.8rem;line-height:1.55;box-shadow:0 2px 8px rgba(0,0,0,.25);';
+      document.body.appendChild(el); }
+    const why = j.why || '';
+    let msg = '🔒 後台驗證失敗，請重新整理並重新登入後台。';
+    if(why === '此帳號不在允許名單') msg = '🔒 此帳號不在允許名單' + (j.email ? '（' + escHtml(j.email) + '）' : '') + '。到 Apps Script「顧客追蹤」點開 m_drr_api.gs，函式選 DRR_api_trustLastRejected 按執行，再回來重新整理。';
+    else if(why === 'gen' || j.error === 'gen') msg = '🔒 後台會話機制停用。到 Apps Script「顧客追蹤」點開 m_admin_auth.gs，函式選 ADMAUTH_genReset 按執行，再回來重新整理。';
+    else if(j.error === 'envelope' || j.error === 'conflict') msg = '🔒 請求格式錯誤，請重新整理頁面後再試。';
+    el.innerHTML = msg + '<button type="button" onclick="this.parentNode.remove()" style="position:absolute;right:8px;top:calc(4px + env(safe-area-inset-top,0px));background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">×</button>';
+  }
+  async function mint(force){
+    if(aak && !force) return aak;
+    if(force) aak = '';
+    if(minting) return minting;
+    minting = (async () => {
+      try{
+        const tok = window.drrIdToken ? await window.drrIdToken() : '';
+        if(!tok) return '';
+        const body = new URLSearchParams(); body.append('action','aaSession'); body.append('idToken', tok);
+        const r = await rawFetch(MAIN, { method:'POST', body, redirect:'follow' });
+        const j = await r.json();
+        if(j && j.ok && j.aak) aak = j.aak;
+        else if(j && (j.error === 'unauth' || j.error === 'gen')) banner(j);
+      }catch(_){}
+      return aak;
+    })();
+    try{ return await minting; } finally { minting = null; }
+  }
+  function headersObj(h){ const o = {}; if(!h) return o; if(h instanceof Headers){ h.forEach((v,k)=>{ o[k]=v; }); } else Object.assign(o, h); return o; }
+  function isForm(init){ const h = headersObj(init && init.headers); return Object.keys(h).some(k => k.toLowerCase()==='content-type' && /x-www-form-urlencoded/i.test(h[k])); }
+  function asForm(init){ const i2 = Object.assign({}, init), h = headersObj(init.headers); let has = false;
+    Object.keys(h).forEach(k => { if(k.toLowerCase()==='content-type'){ h[k] = 'application/x-www-form-urlencoded;charset=UTF-8'; has = true; } });
+    if(!has) h['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'; i2.headers = h; return i2; }
+  function build(url, init, k){
+    if(!k) return [url, init];
+    const method = String(init.method || 'GET').toUpperCase();
+    if(method === 'GET') return [url + (url.indexOf('?') >= 0 ? '&' : '?') + 'aak=' + k, init];
+    const b = init.body;
+    if(b instanceof URLSearchParams){
+      if(b.has('idToken') || b.has('aak') || b.has('_')) return [url, init];
+      const i2 = asForm(init); i2.body = '_=' + DOTS + '&aak=' + k + '&' + b.toString(); return [url, i2];
+    }
+    if(typeof b === 'string'){
+      if(b.charAt(0) === '{'){
+        try{ const o = JSON.parse(b);
+          if(o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length && !('aak' in o) && !('_' in o)){
+            const i2 = Object.assign({}, init); i2.body = '{"_":"' + DOTS + '","aak":"' + k + '",' + b.slice(1); return [url, i2]; }
+        }catch(_){}
+        return [url, init];
+      }
+      if(isForm(init) && !/(^|&)(idToken|aak|_)=/.test(b)){ const i2 = Object.assign({}, init); i2.body = '_=' + DOTS + '&aak=' + k + '&' + b; return [url, i2]; }
+      return [url, init];
+    }
+    if(b != null && !warned){ warned = true; console.warn('[D-37] 未支援的 body 型別，原樣送出'); }
+    return [url, init];
+  }
+  async function peek(r){ try{ const t = await r.clone().text(); if(t.length > 800 || t.indexOf('"error"') < 0) return null; return JSON.parse(t); }catch(_){ return null; } }
+  window.fetch = async function(input, init){
+    const url = (typeof input === 'string') ? input : '';
+    if(!url || url.indexOf(MAIN) !== 0) return rawFetch(input, init);
+    const base = init || {};
+    let k = await mint(false);
+    let [u, i] = build(url, base, k);
+    let r = await rawFetch(u, i);
+    const j = await peek(r);
+    if(j && j.error === 'unauth' && j.why === 'session'){
+      k = await mint(true);
+      if(k){ [u, i] = build(url, base, k); r = await rawFetch(u, i); const j2 = await peek(r); if(j2 && j2.error) banner(j2); }
+      else banner(j);
+    } else if(j && ['unauth','envelope','conflict','gen'].indexOf(j.error) >= 0) banner(j);
+    return r;
+  };
+})();
+// ═══ 🔐 D-37 攔截器 END ═══
 // 📊 階段 3C/3D flag（出事改 false 可立刻停用對應來源）
 window.FETCH_VIP_BOOKINGS  = true;
 window.FETCH_LOCKED_SLOTS  = true;
@@ -6093,6 +6178,7 @@ async function drrSaveEdit(){
   const ch = Object.assign({}, E.ch);
   ['需求內容','需求對象'].forEach(f=>{ if(Array.isArray(ch[f])) ch[f]=ch[f].join('｜'); });
   if(!Object.keys(ch).length){ drrClose(); return; }
+  if(ch['紀錄狀態']==='已作廢' && !confirm('確定作廢這一筆？作廢後不計入統計。')) return;   // D-37 同批：作廢二次確認
   const j = await drrApi('update',{id:E.id, changes:ch});
   if(!j.ok){ if(j.error!=='unauth') showToast('❌ '+(j.error||'未更新')); return; }
   showToast('✅ 已更新 '+j.updated.length+' 欄');
