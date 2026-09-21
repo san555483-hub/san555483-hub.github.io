@@ -286,6 +286,60 @@ tr:hover td{background:rgba(61,43,31,.03);}
   .bkmodal-box{max-width:100%;}
 }
 /* ═══ 第6輪新增 END ═══ */
+/* ═══ 📡 需求雷達 R2（回滾：刪除本段）═══ */
+.drr .drr-top h2{margin:0 0 4px;color:var(--bark);font-size:1rem;}
+.drr-sub,.drr-hint{font-size:.68rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;font-weight:400;}
+.drr-seg{display:flex;gap:6px;margin:12px 0;}
+.drr-seg button{flex:1;padding:11px 6px;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:.82rem;color:var(--bark);font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
+.drr-seg button.on{background:var(--bark);color:#fff;border-color:var(--bark);}
+.drr-alert{background:#fdecea;border:1px solid #e8b4ad;color:#8a2a1f;border-radius:8px;padding:10px 12px;font-size:.76rem;margin-bottom:10px;font-family:'Noto Sans TC',sans-serif;}
+.drr-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;}
+.drr-h{font-size:.82rem;font-weight:600;color:var(--bark);margin-bottom:8px;}
+.drr-lab{font-size:.7rem;color:var(--mid);margin:10px 0 5px;font-family:'Noto Sans TC',sans-serif;}
+.drr-warn{color:#b0493a;font-size:.64rem;}
+.drr-row{display:flex;gap:6px;flex-wrap:wrap;}
+.drr-in{flex:1;min-width:120px;width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:.84rem;background:var(--linen);font-family:'Noto Sans TC',sans-serif;}
+.drr-btn{padding:10px 14px;border:none;border-radius:8px;background:var(--bark);color:#fff;font-size:.8rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.drr-link{background:none;border:none;color:var(--gold);font-size:.74rem;padding:8px 0 2px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.drr-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.drr-chip{padding:9px 13px;border:1.5px solid var(--border);border-radius:20px;background:#fff;font-size:.8rem;color:var(--ink);cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.drr-chip.on{background:var(--gold);border-color:var(--gold);color:#fff;}
+.drr-res{display:block;width:100%;text-align:left;padding:10px 12px;margin-top:6px;border:1.5px solid var(--border);border-radius:8px;background:var(--linen);font-size:.8rem;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.drr-card{margin-top:8px;padding:10px 12px;border-radius:8px;background:var(--rose-lt);font-size:.8rem;font-family:'Noto Sans TC',sans-serif;line-height:1.7;}
+.drr-merge{margin-top:8px;padding:10px 12px;border-radius:8px;background:#faf0de;border:1px solid var(--gold-lt);font-size:.78rem;font-family:'Noto Sans TC',sans-serif;}
+.drr-lv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.drr-lv button{padding:14px 4px;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--bark);}
+.drr-lv button b{font-size:1.3rem;font-family:'Playfair Display',serif;}
+.drr-lv button small{font-size:.62rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+.drr-lv button.on{background:var(--bark);border-color:var(--bark);color:#fff;}
+.drr-lv button.on small{color:var(--gold-lt);}
+.drr-lv.dis{opacity:.35;pointer-events:none;}
+.drr-adv summary{font-size:.78rem;color:var(--bark);cursor:pointer;}
+.drr-x{display:block;margin-top:12px;font-size:.76rem;color:#8a2a1f;font-family:'Noto Sans TC',sans-serif;}
+.drr-submit{width:100%;padding:15px;border:none;border-radius:12px;background:var(--gold);color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.drr-submit:disabled{opacity:.5;}
+.drr-timer{text-align:center;font-size:.7rem;color:var(--mid);margin:8px 0 20px;font-family:'Noto Sans TC',sans-serif;}
+.drr-li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;margin-bottom:6px;background:#fff;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:.8rem;font-family:'Noto Sans TC',sans-serif;}
+.drr-li .dim{color:var(--mid);font-size:.7rem;}
+.drr-tag{display:inline-block;min-width:22px;text-align:center;padding:2px 7px;border-radius:10px;font-size:.72rem;font-weight:700;background:var(--sand);color:var(--bark);}
+.drr-tag.A{background:var(--bark);color:#fff;}.drr-tag.X{background:#e8b4ad;color:#8a2a1f;}
+.drr-tw{overflow-x:auto;}
+.drr-t{width:100%;border-collapse:collapse;font-size:.74rem;font-family:'Noto Sans TC',sans-serif;}
+.drr-t th,.drr-t td{border:1px solid var(--border);padding:6px 7px;text-align:center;white-space:nowrap;}
+.drr-t th{background:var(--sand);color:var(--bark);font-weight:600;}
+.drr-t td.l{text-align:left;}
+.drr-bar{display:flex;align-items:center;gap:6px;font-size:.74rem;margin:4px 0;font-family:'Noto Sans TC',sans-serif;}
+.drr-bar span:first-child{width:92px;flex-shrink:0;}
+.drr-bar i{display:block;height:10px;background:var(--gold);border-radius:5px;}
+.drr-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;}
+.drr-kpi div{background:var(--linen);border-radius:8px;padding:10px;font-size:.72rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;}
+.drr-kpi b{display:block;font-size:1.1rem;color:var(--bark);}
+.drr-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:flex-end;justify-content:center;}
+.drr-mask.on{display:flex;}
+.drr-sheet{background:#fff;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px;}
+.drr-kv{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:.78rem;font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;}
+.drr-kv div:nth-child(odd){color:var(--mid);}
+.drr-orig{background:#fdf6e0;border:1px dashed var(--gold);border-radius:8px;padding:8px 10px;font-size:.78rem;white-space:pre-wrap;}
 </style>
 </head>
 <body>
@@ -338,6 +392,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="tab-btn" onclick="switchTab('agentgate')" id="tab-btn-agentgate" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">🤖 AI收單待確認</button>
       <button class="tab-btn" onclick="switchTab('quickbook')" id="tab-btn-quickbook" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">⚡ 快速登記</button>
       <button class="tab-btn" onclick="switchTab('proactive')" id="tab-btn-proactive" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">📣 主動邀約</button>
+      <button class="tab-btn" onclick="switchTab('drr')" id="tab-btn-drr" style="background:linear-gradient(135deg,#F4EDE0,#EFE3CC);font-weight:600;">📡 需求雷達</button>
     </div>
   </div>
 
@@ -395,6 +450,105 @@ tr:hover td{background:rgba(61,43,31,.03);}
       <button class="btn" onclick="qbSubmitAll()" style="width:100%;background:var(--gold);color:#fff;padding:13px;font-size:.9rem;font-weight:700;">✅ 送出登記（佔位）</button>
       <div id="qb-submit-result" style="margin-top:10px;"></div>
     </div>
+  </div>
+
+  <!-- ═══ 📡 需求雷達（R2 2026-09-21）═══ 回滾：刪除整個 pane-drr ＋ drr-modal ＋ 上方 tab 按鈕 ＋ switchTab 的 drr 對應 ＋ 檔尾 DRR script 區塊 -->
+  <div class="tab-pane" id="pane-drr">
+    <div class="pane-inner drr">
+      <div class="drr-top">
+        <h2>📡 需求雷達</h2>
+        <div class="drr-sub">記錄客人主動詢問、UNI 尚未開放的服務。只收數據，不預約、不承諾日期與價格。</div>
+      </div>
+      <div class="drr-seg">
+        <button class="on" data-v="add" onclick="drrView('add')">＋記一筆</button>
+        <button data-v="list" onclick="drrView('list')">📋 紀錄</button>
+        <button data-v="dash" onclick="drrView('dash')">📊 看板</button>
+      </div>
+      <div id="drr-alert" class="drr-alert" style="display:none;"></div>
+
+      <!-- ＋記一筆 -->
+      <div id="drr-v-add" onclick="drrTick()">
+        <div class="drr-box">
+          <div class="drr-h">① 顧客</div>
+          <div class="drr-row">
+            <input id="drr-kw" class="drr-in" placeholder="名字／手機末4碼" onkeydown="if(event.key==='Enter')drrSearch()">
+            <button class="drr-btn" onclick="drrSearch()">查詢</button>
+          </div>
+          <div id="drr-results"></div>
+          <button class="drr-link" onclick="drrNewCust()">＋ 不在名單（新客人）</button>
+          <div id="drr-newcust" style="display:none;">
+            <div class="drr-row">
+              <input id="drr-nc-name" class="drr-in" placeholder="姓名／暱稱">
+              <input id="drr-nc-phone" class="drr-in" placeholder="手機（知道才填）" inputmode="tel" onblur="drrPhoneCheck()">
+            </div>
+          </div>
+          <div id="drr-cust"></div>
+        </div>
+
+        <div class="drr-box">
+          <div class="drr-h">② 服務</div>
+          <div id="drr-svc" class="drr-chips"></div>
+        </div>
+
+        <div class="drr-box">
+          <div class="drr-h">③ 已知需求 <span class="drr-hint">知道才填，不知道不用猜</span></div>
+          <div class="drr-lab">需求內容（可複選）</div><div id="drr-need" class="drr-chips"><span class="drr-hint">先選服務</span></div>
+          <div class="drr-lab">需求對象（可複選）</div><div id="drr-target" class="drr-chips"></div>
+          <div class="drr-lab">預估頻率</div><div id="drr-freq" class="drr-chips"></div>
+          <div class="drr-lab">服務地區</div><div id="drr-region" class="drr-chips"></div>
+        </div>
+
+        <div class="drr-box">
+          <div class="drr-h">④ 意願</div>
+          <div class="drr-lv">
+            <button data-lv="A" onclick="drrLevel('A')"><b>A</b><small>須有明確預約意願</small></button>
+            <button data-lv="B" onclick="drrLevel('B')"><b>B</b><small>有需求</small></button>
+            <button data-lv="C" onclick="drrLevel('C')"><b>C</b><small>一般詢問</small></button>
+          </div>
+        </div>
+
+        <details class="drr-box drr-adv" id="drr-adv">
+          <summary>進階（通知、來源、原句、撤回…）</summary>
+          <div class="drr-lab">開放後通知</div><div id="drr-notify" class="drr-chips"></div>
+          <div class="drr-lab">來源</div><div id="drr-source" class="drr-chips"></div>
+          <div class="drr-lab">詢問日期</div><input id="drr-date" type="date" class="drr-in">
+          <div class="drr-lab">希望時段</div><input id="drr-slot" class="drr-in" placeholder="例：平日上午">
+          <div class="drr-lab">顧客原句 <span class="drr-warn">⚠ 敏感欄位，只在單筆頁顯示</span></div>
+          <textarea id="drr-orig" class="drr-in" rows="2"></textarea>
+          <div class="drr-lab">特殊需求 <span class="drr-warn">只寫服務安排需要知道的事，不寫診斷、病歷、用藥</span></div>
+          <input id="drr-special" class="drr-in">
+          <div class="drr-lab">備註</div><input id="drr-note" class="drr-in">
+          <label class="drr-x"><input type="checkbox" id="drr-xchk" onchange="drrXToggle()"> 客人明確撤回（已不需要／不要再通知）→ 記為 X</label>
+        </details>
+
+        <button class="drr-submit" id="drr-submit" onclick="drrSubmit()">⑤ 送出</button>
+        <div id="drr-timer" class="drr-timer"></div>
+      </div>
+
+      <!-- 📋 紀錄 -->
+      <div id="drr-v-list" style="display:none;">
+        <div id="drr-lfilter" class="drr-chips"></div>
+        <div id="drr-lrows"></div>
+      </div>
+
+      <!-- 📊 看板 -->
+      <div id="drr-v-dash" style="display:none;">
+        <div id="drr-dash"></div>
+        <div class="drr-box">
+          <div class="drr-h">＋ 新增追蹤服務</div>
+          <div class="drr-row">
+            <input id="drr-ns-name" class="drr-in" placeholder="服務名稱">
+            <input id="drr-ns-opts" class="drr-in" placeholder="需求選項，用｜分隔（可空）">
+            <button class="drr-btn" onclick="drrAddService()">新增</button>
+          </div>
+          <div class="drr-hint">新服務一律「籌劃中」、標準回覆文案留空（定稿前不可對客人發送）。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drr-mask" id="drr-modal" onclick="if(event.target===this)drrClose()">
+    <div class="drr-sheet" id="drr-modal-body"></div>
   </div>
 
   <!-- ═══ 📣 主動邀約（劉曦璟型：後台幫客人開場，AI 接手湊單）═══ -->
@@ -1770,6 +1924,8 @@ window.adminLogin=async()=>{
     initAdmin();
   }catch(e){showToast('登入失敗：'+e.message);}
 };
+// 📡 需求雷達 R2：提供登入憑證給 m_drr_api.gs 伺服器端驗證（回滾：刪本 1 行）
+window.drrIdToken=async()=>(auth.currentUser?await auth.currentUser.getIdToken():'');
 window.adminLogout=async()=>{
   await signOut(auth);
   document.getElementById('login-wrap').style.display='block';
@@ -1800,7 +1956,7 @@ function switchTab(name){
   if(btn)btn.classList.add('active');
   const pane=document.getElementById('pane-'+name);
   if(pane)pane.classList.add('active');
-  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh,agentgate:loadAgentGate,quickbook:loadQuickBook,proactive:loadProactive};
+  const map={dashboard:()=>Dashboard.load(),booking:loadBookings,customer:loadCustomers,blacklist:loadBlacklist,settings:loadSettings,lockslot:()=>{initLockTimes();loadLockedSlots();},service:loadServices,schedule:()=>{loadScheduleTypes();loadSchedule();},credit:loadCredits,marquee:loadMarquees,orders:loadOrders,coupon:()=>{loadCouponTypes();loadCoupons();},quickmenu:loadQuickMenu,image:loadImageConfig,template:loadTemplates,cancelwarn:loadCancelWarn,cdb:cdbLoad,vote:voteRefresh,agentgate:loadAgentGate,quickbook:loadQuickBook,proactive:loadProactive,drr:loadDrr};
   if(map[name])map[name]();
 }
 
@@ -5645,5 +5801,350 @@ function voteExportWaitlist(){
 // ═══════════ 🗳️ 品牌投票管理 END ═══════════
 </script>
 <!-- ═══ 三模組擴充 JS END ═══ -->
+<!-- ═══ 📡 需求雷達 R2 JS（2026-09-21）回滾：刪除本 script 區塊 ═══ -->
+<script>
+// 後端：m_drr_api.gs（POST action=drr，每次帶登入憑證，伺服器端驗證）
+const DRR = { init:null, view:'add', cust:null, svc:'', need:[], target:[], freq:'', region:'', level:'', x:false,
+  notify:'Y', source:'', consumed:'新客', consumedManual:false, mergeTo:'', t0:0, times:[], listSvc:'', dashSvc:'SVC-WASH', busy:false, edit:null };
+
+async function drrApi(op, data){
+  let tok = '';
+  try{ tok = window.drrIdToken ? await window.drrIdToken() : ''; }catch(_){}
+  const body = new URLSearchParams();
+  body.append('action','drr'); body.append('op',op);
+  body.append('_','.'.repeat(200));            // 讓 doPost-peek 記錄的前 200 字只有操作碼，不含任何顧客資料
+  body.append('d', JSON.stringify(data||{}));
+  body.append('idToken', tok);
+  let j;
+  try{
+    const r = await fetch(GAS,{method:'POST',body,redirect:'follow'});
+    j = await r.json();
+  }catch(e){ j = {ok:false, error:'連線失敗：'+e.message}; }
+  const al = document.getElementById('drr-alert');
+  if(j.error==='unauth'){
+    al.innerHTML = '🔒 '+escHtml(j.why||'未授權')+(j.email?'（'+escHtml(j.email)+'）':'')+
+      (j.why==='此帳號不在允許名單'?'<br>到 Apps Script「顧客追蹤」點開 m_drr_api.gs，執行 DRR_api_trustLastRejected，再回來重新整理。':'');
+    al.style.display='block';
+  } else if(j.ok){ al.style.display='none'; }
+  return j;
+}
+
+async function loadDrr(){
+  if(!DRR.init){
+    const j = await drrApi('init');
+    if(!j.ok){ if(j.error!=='unauth') showToast('❌ '+(j.error||'載入失敗')); return; }
+    DRR.init = j;
+    drrReset();
+  }
+  drrView(DRR.view);
+}
+
+function drrView(v){
+  DRR.view = v;
+  document.querySelectorAll('.drr-seg button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  ['add','list','dash'].forEach(k=>{ document.getElementById('drr-v-'+k).style.display = k===v?'block':'none'; });
+  if(!DRR.init) return;
+  if(v==='list') drrLoadList();
+  if(v==='dash') drrLoadDash();
+}
+
+// ── 共用：按鈕群 ──
+function drrChips(elId, items, selected, multi, onPick){
+  const el = document.getElementById(elId); if(!el) return;
+  el.innerHTML = '';
+  items.forEach(it=>{
+    const val = typeof it==='string'?it:it.v, lab = typeof it==='string'?it:it.l;
+    const on = multi ? selected.indexOf(val)>=0 : selected===val;
+    const b = document.createElement('button');
+    b.type='button'; b.className='drr-chip'+(on?' on':''); b.textContent=lab;
+    b.onclick = ()=>{
+      let next;
+      if(multi){ next = selected.indexOf(val)>=0 ? selected.filter(x=>x!==val) : selected.concat([val]); }
+      else { next = selected===val ? '' : val; }
+      onPick(next);
+    };
+    el.appendChild(b);
+  });
+}
+
+// ── ＋記一筆 ──
+function drrTick(){ if(!DRR.t0) DRR.t0 = Date.now(); }
+
+function drrReset(){
+  const L = DRR.init.lists;
+  Object.assign(DRR,{cust:null,svc:'',need:[],target:[],freq:'',region:'',level:'',x:false,notify:'Y',source:'',
+    consumed:'新客',consumedManual:false,mergeTo:'',t0:0});
+  ['drr-kw','drr-nc-name','drr-nc-phone','drr-slot','drr-orig','drr-special','drr-note'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
+  document.getElementById('drr-date').value = DRR.init.today;
+  document.getElementById('drr-date').max = DRR.init.today;
+  document.getElementById('drr-xchk').checked = false;
+  document.getElementById('drr-adv').open = false;
+  document.getElementById('drr-results').innerHTML='';
+  document.getElementById('drr-newcust').style.display='none';
+  document.getElementById('drr-cust').innerHTML='';
+  drrRenderForm();
+}
+
+function drrRenderForm(){
+  const L = DRR.init.lists;
+  const svcs = DRR.init.services.filter(s=>['已開放','停止追蹤'].indexOf(s.status)<0).map(s=>({v:s.id,l:s.name}));
+  drrChips('drr-svc', svcs, DRR.svc, false, v=>{ DRR.svc=v; DRR.need=[]; drrRenderForm(); });
+  const cur = DRR.init.services.find(s=>s.id===DRR.svc);
+  if(cur) drrChips('drr-need', cur.options, DRR.need, true, v=>{ DRR.need=v; drrRenderForm(); });
+  else document.getElementById('drr-need').innerHTML='<span class="drr-hint">先選服務</span>';
+  drrChips('drr-target', L.targets, DRR.target, true, v=>{ DRR.target=v; drrRenderForm(); });
+  drrChips('drr-freq', L.freqs.filter(f=>f!=='未確認'), DRR.freq, false, v=>{ DRR.freq=v; drrRenderForm(); });
+  drrChips('drr-region', L.regions, DRR.region, false, v=>{ DRR.region=v; drrRenderForm(); });
+  drrChips('drr-notify', [{v:'Y',l:'要通知（預設）'},{v:'N',l:'客人說不用通知'}], DRR.notify, false, v=>{ DRR.notify=v||'Y'; drrRenderForm(); });
+  const defSrc = DRR.cust && DRR.cust.uid ? 'LINE OA' : '電話';
+  drrChips('drr-source', L.sources, DRR.source||defSrc, false, v=>{ DRR.source=v; drrRenderForm(); });
+  document.querySelectorAll('.drr-lv button').forEach(b=>b.classList.toggle('on', b.dataset.lv===DRR.level));
+  document.querySelector('.drr-lv').classList.toggle('dis', DRR.x);
+  drrRenderCust();
+}
+
+async function drrSearch(){
+  const kw = document.getElementById('drr-kw').value.trim();
+  const box = document.getElementById('drr-results');
+  if(kw.length<2){ showToast('至少輸入 2 個字'); return; }
+  box.innerHTML='<div class="drr-hint">查詢中…</div>';
+  const j = await drrApi('search',{kw});
+  if(!j.ok){ box.innerHTML=''; return; }
+  if(!j.customers.length){ box.innerHTML='<div class="drr-hint">查無此人，可按「不在名單」直接記</div>'; return; }
+  box.innerHTML='';
+  j.customers.forEach(c=>{
+    const b=document.createElement('button'); b.type='button'; b.className='drr-res';
+    b.textContent = c.name+'　'+(c.phone?'📱'+c.phone.slice(-4):'')+(c.uid?'　💬LINE':'');
+    b.onclick=()=>drrPickCust(c);
+    box.appendChild(b);
+  });
+}
+
+async function drrPickCust(c){
+  DRR.cust = {name:c.name, phone:c.phone||'', uid:c.uid||''};
+  DRR.mergeTo=''; DRR.consumedManual=false; DRR.source='';
+  document.getElementById('drr-results').innerHTML='';
+  document.getElementById('drr-newcust').style.display='none';
+  drrRenderForm();
+  const j = await drrApi('who',{uid:DRR.cust.uid, phone:DRR.cust.phone});
+  if(j.ok && DRR.cust && DRR.cust.name===c.name){ DRR.consumed = j.consumed?'曾消費':'新客'; drrRenderCust(); }
+}
+
+function drrNewCust(){
+  DRR.cust = {name:'', phone:'', uid:'', isNew:true};
+  DRR.mergeTo=''; DRR.consumed='新客'; DRR.consumedManual=false; DRR.source='';
+  document.getElementById('drr-results').innerHTML='';
+  document.getElementById('drr-newcust').style.display='block';
+  drrRenderForm();
+}
+
+async function drrPhoneCheck(){
+  if(!DRR.cust || !DRR.cust.isNew) return;
+  const ph = document.getElementById('drr-nc-phone').value.trim();
+  if(ph.replace(/\D/g,'').length<9) return;
+  const j = await drrApi('who',{phone:ph});
+  if(!j.ok) return;
+  DRR.consumed = j.consumed?'曾消費':'新客';
+  DRR.cust.mergeHint = j.mergeTo || null;
+  drrRenderCust();
+}
+
+function drrRenderCust(){
+  const el = document.getElementById('drr-cust');
+  const c = DRR.cust;
+  if(!c){ el.innerHTML=''; return; }
+  let h = '';
+  if(!c.isNew){
+    h += '<div class="drr-card">👤 <b>'+escHtml(c.name)+'</b>　'+(c.uid?'💬 LINE':'📱 '+escHtml(c.phone||'無手機'))+'</div>';
+  }
+  if(c.mergeHint && !DRR.mergeTo){
+    h += '<div class="drr-merge">此號碼屬於 <b>'+escHtml(c.mergeHint.name)+'</b>（已有 LINE），要歸併嗎？<br>'+
+      '<button class="drr-chip" type="button" onclick="drrMerge(true)">歸併</button> <button class="drr-chip" type="button" onclick="drrMerge(false)">不用</button></div>';
+  }
+  if(DRR.mergeTo) h += '<div class="drr-merge">✅ 已歸併到 '+escHtml(c.mergeHint?c.mergeHint.name:'')+'</div>';
+  h += '<div class="drr-lab">新客／曾消費（系統建議，可改）</div><div id="drr-consumed" class="drr-chips"></div>';
+  el.innerHTML = h;
+  drrChips('drr-consumed', ['新客','曾消費'], DRR.consumed, false, v=>{ if(v){ DRR.consumed=v; DRR.consumedManual=true; drrRenderCust(); } });
+}
+
+function drrMerge(yes){
+  if(yes && DRR.cust.mergeHint) DRR.mergeTo = DRR.cust.mergeHint.uid;
+  else { DRR.mergeTo=''; DRR.cust.mergeHint=null; }
+  drrRenderCust();
+}
+
+function drrLevel(v){ DRR.level = DRR.level===v?'':v; drrRenderForm(); }
+function drrXToggle(){ DRR.x = document.getElementById('drr-xchk').checked; drrRenderForm(); }
+
+async function drrSubmit(){
+  if(DRR.busy) return;
+  const c = DRR.cust;
+  if(!c){ showToast('① 請先選顧客'); return; }
+  if(c.isNew){
+    c.name = document.getElementById('drr-nc-name').value.trim();
+    c.phone = document.getElementById('drr-nc-phone').value.trim();
+    if(!c.name && !c.phone){ showToast('① 請填姓名或手機'); return; }
+  }
+  if(!DRR.svc){ showToast('② 請選服務'); return; }
+  const level = DRR.x ? 'X' : DRR.level;
+  if(!level){ showToast('④ 請點 A／B／C'); return; }
+  const payload = {
+    uid:c.uid, phone:c.phone, name:c.name, mergeTo:DRR.mergeTo, svc:DRR.svc, level,
+    need:DRR.need, target:DRR.target, freq:DRR.freq, region:DRR.region,
+    notify:DRR.notify, source:DRR.source||(c.uid?'LINE OA':'電話'),
+    consumed:DRR.consumed, consumedManual:DRR.consumedManual,
+    date:document.getElementById('drr-date').value, slot:document.getElementById('drr-slot').value,
+    orig:document.getElementById('drr-orig').value, special:document.getElementById('drr-special').value,
+    note:document.getElementById('drr-note').value
+  };
+  DRR.busy = true; const btn = document.getElementById('drr-submit'); btn.disabled = true; btn.textContent='送出中…';
+  const j = await drrApi('add', payload);
+  DRR.busy = false; btn.disabled = false; btn.textContent='⑤ 送出';
+  if(!j.ok){ if(j.error!=='unauth') showToast('❌ '+(j.error||'未寫入')); return; }
+  const sec = DRR.t0 ? Math.round((Date.now()-DRR.t0)/1000) : 0;
+  if(sec){ DRR.times.push(sec); if(DRR.times.length>5) DRR.times.shift(); }
+  const s = DRR.times.slice().sort((a,b)=>a-b), med = s.length ? s[Math.floor((s.length-1)/2)] : 0;
+  document.getElementById('drr-timer').textContent =
+    '上一筆 '+sec+' 秒｜近 '+s.length+' 筆中位數 '+med+' 秒'+(s.length>=5?(med<=30?'　✅ UX 驗收達標':'　⚠ 超過 30 秒'):'');
+  showToast('✅ '+j.action+'｜'+j.id);
+  drrReset();
+  window.scrollTo({top:document.getElementById('pane-drr').offsetTop-60, behavior:'smooth'});
+}
+
+// ── 📋 紀錄 ──
+async function drrLoadList(){
+  const svcs = [{v:'',l:'全部'}].concat(DRR.init.services.map(s=>({v:s.id,l:s.name})));
+  drrChips('drr-lfilter', svcs, DRR.listSvc, false, v=>{ DRR.listSvc=v; drrLoadList(); });
+  const box = document.getElementById('drr-lrows');
+  box.innerHTML='<div class="drr-hint" style="margin-top:10px;">載入中…</div>';
+  const j = await drrApi('list',{svc:DRR.listSvc, n:80});
+  if(!j.ok){ box.innerHTML=''; return; }
+  if(!j.rows.length){ box.innerHTML='<div class="drr-hint" style="margin-top:10px;">尚無紀錄</div>'; return; }
+  box.innerHTML = '<div style="height:8px"></div>' + j.rows.map(r=>
+    '<div class="drr-li" onclick="drrOpen(\''+escHtml(r.id)+'\')"><div><b>'+escHtml(r.name||'（未填名）')+'</b>　'+escHtml(r.svc)+
+    '<div class="dim">'+escHtml(r.date)+'｜'+escHtml(r.id)+(r.merged?'｜已歸併':'')+(r.notify==='N'?'｜不通知':'')+(r.status!=='已確認'?'｜'+escHtml(r.status):'')+'</div></div>'+
+    '<span class="drr-tag '+escHtml(r.level)+'">'+escHtml(r.level)+'</span></div>').join('');
+}
+
+async function drrOpen(id){
+  const m = document.getElementById('drr-modal'), body = document.getElementById('drr-modal-body');
+  body.innerHTML='<div class="drr-hint">載入中…</div>'; m.classList.add('on');
+  const j = await drrApi('get',{id});
+  if(!j.ok){ body.innerHTML='<div class="drr-hint">'+escHtml(j.error||'')+'</div>'; return; }
+  const r = j.rec;
+  DRR.edit = { id, options:j.options, orig:r, ch:{},
+    v:{ '意願等級':r['意願等級'], '新客/曾消費':r['新客/曾消費'], '開放後通知':r['開放後通知'], '紀錄狀態':r['紀錄狀態'],
+        '需求內容':(r['需求內容']||'').split('｜').filter(Boolean), '需求對象':(r['需求對象']||'').split('｜').filter(Boolean),
+        '預估頻率':r['預估頻率'], '服務地區':r['服務地區'] } };
+  drrRenderEdit(j.svcName);
+}
+
+function drrRenderEdit(svcName){
+  const E = DRR.edit, r = E.orig, L = DRR.init.lists, body = document.getElementById('drr-modal-body');
+  if(svcName) E.svcName = svcName;
+  const kv = [['紀錄ID',r['紀錄ID']],['詢問日期',r['詢問日期']],['姓名暱稱',r['姓名暱稱']],['識別',r.keyType+(r.mergeTail?'｜已歸併到 LINE 尾碼 '+r.mergeTail:'')],
+    ['服務',E.svcName],['來源',r['來源']],['判定方式',r['判定方式']],['希望時段',r['希望時段']],['特殊需求',r['特殊需求']],['備註',r['備註']],
+    ['建立方式',r['建立方式']],['最後更新',r['最後更新']]];
+  body.innerHTML =
+    '<div class="drr-h">單筆確認</div><div class="drr-kv">'+kv.map(x=>'<div>'+x[0]+'</div><div>'+escHtml(x[1]||'—')+'</div>').join('')+'</div>'+
+    '<div class="drr-lab">顧客原句 <span class="drr-warn">⚠ 敏感欄位</span></div><div class="drr-orig">'+escHtml(r['顧客原句']||'—')+'</div>'+
+    '<div class="drr-lab">意願等級（X＝明確撤回）</div><div id="drr-e-lv" class="drr-chips"></div>'+
+    '<div class="drr-lab">新客／曾消費（改了會記為手動）</div><div id="drr-e-cs" class="drr-chips"></div>'+
+    '<div class="drr-lab">需求內容</div><div id="drr-e-need" class="drr-chips"></div>'+
+    '<div class="drr-lab">需求對象</div><div id="drr-e-tg" class="drr-chips"></div>'+
+    '<div class="drr-lab">預估頻率</div><div id="drr-e-fq" class="drr-chips"></div>'+
+    '<div class="drr-lab">服務地區</div><div id="drr-e-rg" class="drr-chips"></div>'+
+    '<div class="drr-lab">開放後通知</div><div id="drr-e-nt" class="drr-chips"></div>'+
+    '<div class="drr-lab">紀錄狀態</div><div id="drr-e-st" class="drr-chips"></div>'+
+    '<div class="drr-lab">歸併到（同一人用 LINE 問過）</div><div class="drr-row"><input id="drr-e-mkw" class="drr-in" placeholder="搜 LINE 顧客名字／手機末4碼"><button class="drr-btn" type="button" onclick="drrEditMergeSearch()">查</button></div><div id="drr-e-mres"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px;"><button class="drr-submit" type="button" onclick="drrSaveEdit()">儲存</button><button class="drr-submit" type="button" style="background:var(--sand);color:var(--bark);" onclick="drrClose()">關閉</button></div>';
+  const set = (f)=>v=>{ E.v[f]=v; E.ch[f]=v; drrRenderEdit(); };
+  const setReq = (f)=>v=>{ if(v){ E.v[f]=v; E.ch[f]=v; drrRenderEdit(); } };
+  drrChips('drr-e-lv',['A','B','C','X'],E.v['意願等級'],false,setReq('意願等級'));
+  drrChips('drr-e-cs',['新客','曾消費'],E.v['新客/曾消費'],false,setReq('新客/曾消費'));
+  drrChips('drr-e-need',E.options,E.v['需求內容'],true,set('需求內容'));
+  drrChips('drr-e-tg',L.targets,E.v['需求對象'],true,set('需求對象'));
+  drrChips('drr-e-fq',L.freqs,E.v['預估頻率'],false,setReq('預估頻率'));
+  drrChips('drr-e-rg',L.regions,E.v['服務地區'],false,set('服務地區'));
+  drrChips('drr-e-nt',['Y','N'],E.v['開放後通知'],false,setReq('開放後通知'));
+  drrChips('drr-e-st',['已確認','已作廢'],E.v['紀錄狀態'],false,setReq('紀錄狀態'));
+  if(E.mergeName) document.getElementById('drr-e-mres').innerHTML='<div class="drr-merge">將歸併到 '+escHtml(E.mergeName)+'（按儲存生效）</div>';
+}
+
+async function drrEditMergeSearch(){
+  const kw = document.getElementById('drr-e-mkw').value.trim();
+  if(kw.length<2){ showToast('至少輸入 2 個字'); return; }
+  const j = await drrApi('search',{kw});
+  const box = document.getElementById('drr-e-mres');
+  if(!j.ok) return;
+  const list = j.customers.filter(c=>c.uid);
+  if(!list.length){ box.innerHTML='<div class="drr-hint">查無有 LINE 的顧客</div>'; return; }
+  box.innerHTML='';
+  list.forEach(c=>{
+    const b=document.createElement('button'); b.type='button'; b.className='drr-res';
+    b.textContent=c.name+'　💬LINE'+(c.phone?'　📱'+c.phone.slice(-4):'');
+    b.onclick=()=>{ DRR.edit.ch['歸併到']=c.uid; DRR.edit.mergeName=c.name; drrRenderEdit(); };
+    box.appendChild(b);
+  });
+}
+
+async function drrSaveEdit(){
+  const E = DRR.edit;
+  const ch = Object.assign({}, E.ch);
+  ['需求內容','需求對象'].forEach(f=>{ if(Array.isArray(ch[f])) ch[f]=ch[f].join('｜'); });
+  if(!Object.keys(ch).length){ drrClose(); return; }
+  const j = await drrApi('update',{id:E.id, changes:ch});
+  if(!j.ok){ if(j.error!=='unauth') showToast('❌ '+(j.error||'未更新')); return; }
+  showToast('✅ 已更新 '+j.updated.length+' 欄');
+  drrClose(); drrLoadList();
+}
+function drrClose(){ document.getElementById('drr-modal').classList.remove('on'); DRR.edit=null; }
+
+// ── 📊 看板 ──
+async function drrLoadDash(){
+  const box = document.getElementById('drr-dash');
+  box.innerHTML='<div class="drr-hint">計算中…</div>';
+  const j = await drrApi('dash',{svc:DRR.dashSvc});
+  if(!j.ok){ box.innerHTML=''; return; }
+  const t = (head, rows)=>'<div class="drr-tw"><table class="drr-t"><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr>'+
+    rows.map(r=>'<tr>'+r.map((c,i)=>'<td'+(i===0?' class="l"':'')+'>'+escHtml(c)+'</td>').join('')+'</tr>').join('')+'</table></div>';
+  const bars = (arr)=>{ const mx=Math.max(1,...arr.map(a=>a.n)); return arr.map(a=>'<div class="drr-bar"><span>'+escHtml(a.k)+'</span><i style="width:'+Math.round(a.n*140/mx)+'px"></i><span>'+a.n+' 人（'+a.pct+'%）</span></div>').join('') || '<div class="drr-hint">—</div>'; };
+  const d = j.detail;
+  const top = j.rank.find(x=>x.id===d.id) || {};
+  let h = '';
+  h += '<div class="drr-box"><div class="drr-h">總覽（已確認紀錄）</div>'+
+    t(['窗口','獨立人數','總次數','A','B','C','X'], j.overview.map(o=>[o.win,o.uniq,o.count,o.A,o.B,o.C,o.X]))+'</div>';
+  h += '<div class="drr-box"><div class="drr-h">各服務排行（依近30天獨立人數）</div>'+
+    t(['服務','狀態','LEVEL','近30天獨立','近30天A','近90天獨立','累積獨立','累積次數','A','B','C','X','近30天次數','最近詢問日','距下一級','趨勢','站內票選'],
+      j.rank.map(r=>[r.name,r.status,r.levelName,r.uniq30,r.a30,r.uniq90,r.uniq,r.count,r.A,r.B,r.C,r.X,r.count30,r.last||'—',r.gap,r.trend,r.vote]))+
+    '<div class="drr-hint" style="margin-top:6px;">系統只顯示是否達標，服務「狀態」與決策一律由你在服務清單記錄。</div></div>';
+  h += '<div class="drr-box"><div class="drr-h">單一服務細項</div><div id="drr-dsvc" class="drr-chips" style="margin-bottom:10px;"></div>'+
+    '<div class="drr-kpi"><div>獨立人數<b>'+d.uniq+'</b></div><div>LEVEL<b>'+escHtml(top.levelName||'—')+'</b>'+escHtml(top.levelText||'')+'</div>'+
+    '<div>距下一級<b style="font-size:.85rem">'+escHtml(top.gap||'—')+'</b></div><div>潛在月服務次數（A＋B）<b>'+d.monthly+'</b></div></div>'+
+    ((top.checklist&&top.checklist.length)?'<div class="drr-merge" style="margin-top:8px;">可行性評估清單：'+top.checklist.map(escHtml).join('／')+'</div>':'')+
+    '<div class="drr-lab">需求內容占比（複選，分母＝獨立人數）</div>'+bars(d.need)+
+    '<div class="drr-lab">地區</div>'+bars(d.region)+
+    '<div class="drr-lab">新客／曾消費（自動判定含低估）</div>'+bars(d.cust)+
+    '<div class="drr-lab">頻率</div>'+bars(d.freq)+
+    '<div class="drr-lab">對象</div>'+bars(d.target)+'</div>';
+  h += '<div class="drr-box"><div class="drr-h">優先通知名單｜'+escHtml(d.name)+'（'+j.notify.rows.length+' 人）</div>'+
+    (j.notify.rows.length?t(j.notify.cols,j.notify.rows):'<div class="drr-hint">尚無</div>')+
+    '<div class="drr-hint" style="margin-top:6px;">排序：A→B→C，同級先問先通知。本名單不含原句、特殊需求、備註。</div></div>';
+  h += '<div class="drr-hint">'+escHtml(j.note)+'</div>';
+  box.innerHTML = h;
+  drrChips('drr-dsvc', DRR.init.services.map(s=>({v:s.id,l:s.name})), DRR.dashSvc, false, v=>{ if(v){ DRR.dashSvc=v; drrLoadDash(); } });
+}
+
+async function drrAddService(){
+  const name = document.getElementById('drr-ns-name').value.trim();
+  if(!name){ showToast('請填服務名稱'); return; }
+  const j = await drrApi('addService',{name, options:document.getElementById('drr-ns-opts').value});
+  if(!j.ok){ if(j.error!=='unauth') showToast('❌ '+(j.error||j.reason||'未新增')); return; }
+  showToast('✅ 已新增 '+j.id+' '+name);
+  document.getElementById('drr-ns-name').value=''; document.getElementById('drr-ns-opts').value='';
+  DRR.init = null; await loadDrr();
+}
+</script>
+<!-- ═══ 📡 需求雷達 R2 JS END ═══ -->
 </body>
 </html>
