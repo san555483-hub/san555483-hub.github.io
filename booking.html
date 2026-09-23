@@ -1462,6 +1462,8 @@ async function selectDate(date, el) {
       const isPriority = String(b.priority || '').includes('✅') || String(b.priority || '').includes('加價');
       let type = 'general', label = '已預約';
       if (isPriority) { type = 'priority'; label = '指定加價服務預約'; }
+      // 🔐 D-37 E1：getBookings 降級版只回 {date,time,vip}，先看伺服器的 vip 旗標；完整版（無 vip 欄）照舊走電話雜湊比對（回滾：刪本 1 行）
+      else if (b.vip === true) { type = 'vip-credit'; label = 'VIP客預約'; }
       else if (_vipPhoneHashSet && _vipPhoneHashSet.size > 0 && b.phone) {
         const normPhone = normalizePhoneForHash(b.phone);
         if (normPhone) {

@@ -64,6 +64,14 @@
   .glist-loading{text-align:center;color:var(--muted);font-size:12.5px;padding:18px;}
 
   .lock-note{font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7;}
+
+  /* 🔐 D-37 E2：登入閘 */
+  .login-panel{text-align:center;}
+  .login-panel p{font-size:13px;color:var(--muted);margin-bottom:4px;}
+  .btn-google{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:var(--ink);border:1px solid var(--gold);}
+  .btn-google img{width:16px;height:16px;}
+  .who{font-size:11.5px;color:var(--muted);text-align:center;margin-bottom:14px;}
+  .who button{background:none;border:none;color:var(--gold-dark);text-decoration:underline;cursor:pointer;font-family:inherit;font-size:11.5px;margin-left:6px;}
 </style>
 </head>
 <body>
@@ -75,6 +83,17 @@
   </header>
 
   <div class="wrap">
+
+    <!-- 🔐 D-37 E2：未登入時只顯示登入鈕 -->
+    <div class="panel login-panel" id="loginWrap">
+      <div class="panel-title" style="justify-content:center;">🔐 請先登入後台</div>
+      <p>使用與後台 admin 相同的 Google 帳號</p>
+      <button class="btn btn-google" onclick="pageLogin()"><img src="https://www.google.com/favicon.ico" alt="">以 Google 登入</button>
+      <div class="msg" id="loginMsg"></div>
+    </div>
+
+    <div id="appWrap" style="display:none;">
+    <div class="who">已登入：<span id="whoEmail"></span><button type="button" onclick="pageLogout()">登出</button></div>
 
     <!-- 新增 -->
     <div class="panel">
@@ -108,6 +127,8 @@
       <div id="glist"><div class="glist-loading">載入中…</div></div>
     </div>
 
+    </div><!-- /appWrap -->
+
     <div class="lock-note">此頁僅供 Elsa 管理使用<br>請勿外流網址</div>
   </div>
 
@@ -117,6 +138,89 @@
     var TOKEN      = 'uni_bleach_2026';
     var CLOUD_NAME = 'dvti8ug8s';
     var PRESET     = 'uni_hair';   // unsigned upload preset（與使用指南共用）
+
+    // ═══ 🔐 D-37 E2 後台會話攔截器（與 admin.html 同一段；只攔主系統 GAS_URL）═══
+    (function(){
+      if (window.__aaFetchInstalled) return; window.__aaFetchInstalled = true;
+      const MAIN = GAS_URL, DOTS = '.'.repeat(200), rawFetch = window.fetch.bind(window);
+      let aak = '', minting = null, warned = false;
+      function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+      function banner(j){
+        let el = document.getElementById('aa-banner');
+        if(!el){ el = document.createElement('div'); el.id = 'aa-banner';
+          el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b3261e;color:#fff;padding:10px 40px 10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px));font-size:.8rem;line-height:1.55;box-shadow:0 2px 8px rgba(0,0,0,.25);';
+          document.body.appendChild(el); }
+        const why = j.why || '';
+        let msg = '🔒 後台驗證失敗，請重新整理並重新登入後台。';
+        if(why === '此帳號不在允許名單') msg = '🔒 此帳號不在允許名單' + (j.email ? '（' + escHtml(j.email) + '）' : '') + '。到 Apps Script「顧客追蹤」點開 m_drr_api.gs，函式選 DRR_api_trustLastRejected 按執行，再回來重新整理。';
+        else if(why === 'gen' || j.error === 'gen') msg = '🔒 後台會話機制停用。到 Apps Script「顧客追蹤」點開 m_admin_auth.gs，函式選 ADMAUTH_genReset 按執行，再回來重新整理。';
+        else if(j.error === 'envelope' || j.error === 'conflict') msg = '🔒 請求格式錯誤，請重新整理頁面後再試。';
+        el.innerHTML = msg + '<button type="button" onclick="this.parentNode.remove()" style="position:absolute;right:8px;top:calc(4px + env(safe-area-inset-top,0px));background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;">×</button>';
+      }
+      async function mint(force){
+        if(aak && !force) return aak;
+        if(force) aak = '';
+        if(minting) return minting;
+        minting = (async () => {
+          try{
+            const tok = window.drrIdToken ? await window.drrIdToken() : '';
+            if(!tok) return '';
+            const body = new URLSearchParams(); body.append('action','aaSession'); body.append('idToken', tok);
+            const r = await rawFetch(MAIN, { method:'POST', body, redirect:'follow' });
+            const j = await r.json();
+            if(j && j.ok && j.aak) aak = j.aak;
+            else if(j && (j.error === 'unauth' || j.error === 'gen')) banner(j);
+          }catch(_){}
+          return aak;
+        })();
+        try{ return await minting; } finally { minting = null; }
+      }
+      function headersObj(h){ const o = {}; if(!h) return o; if(h instanceof Headers){ h.forEach((v,k)=>{ o[k]=v; }); } else Object.assign(o, h); return o; }
+      function isForm(init){ const h = headersObj(init && init.headers); return Object.keys(h).some(k => k.toLowerCase()==='content-type' && /x-www-form-urlencoded/i.test(h[k])); }
+      function asForm(init){ const i2 = Object.assign({}, init), h = headersObj(init.headers); let has = false;
+        Object.keys(h).forEach(k => { if(k.toLowerCase()==='content-type'){ h[k] = 'application/x-www-form-urlencoded;charset=UTF-8'; has = true; } });
+        if(!has) h['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'; i2.headers = h; return i2; }
+      function build(url, init, k){
+        if(!k) return [url, init];
+        const method = String(init.method || 'GET').toUpperCase();
+        if(method === 'GET') return [url + (url.indexOf('?') >= 0 ? '&' : '?') + 'aak=' + k, init];
+        const b = init.body;
+        if(b instanceof URLSearchParams){
+          if(b.has('idToken') || b.has('aak') || b.has('_')) return [url, init];
+          const i2 = asForm(init); i2.body = '_=' + DOTS + '&aak=' + k + '&' + b.toString(); return [url, i2];
+        }
+        if(typeof b === 'string'){
+          if(b.charAt(0) === '{'){
+            try{ const o = JSON.parse(b);
+              if(o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length && !('aak' in o) && !('_' in o)){
+                const i2 = Object.assign({}, init); i2.body = '{"_":"' + DOTS + '","aak":"' + k + '",' + b.slice(1); return [url, i2]; }
+            }catch(_){}
+            return [url, init];
+          }
+          if(isForm(init) && !/(^|&)(idToken|aak|_)=/.test(b)){ const i2 = Object.assign({}, init); i2.body = '_=' + DOTS + '&aak=' + k + '&' + b; return [url, i2]; }
+          return [url, init];
+        }
+        if(b != null && !warned){ warned = true; console.warn('[D-37] 未支援的 body 型別，原樣送出'); }
+        return [url, init];
+      }
+      async function peek(r){ try{ const t = await r.clone().text(); if(t.length > 800 || t.indexOf('"error"') < 0) return null; return JSON.parse(t); }catch(_){ return null; } }
+      window.fetch = async function(input, init){
+        const url = (typeof input === 'string') ? input : '';
+        if(!url || url.indexOf(MAIN) !== 0) return rawFetch(input, init);
+        const base = init || {};
+        let k = await mint(false);
+        let [u, i] = build(url, base, k);
+        let r = await rawFetch(u, i);
+        const j = await peek(r);
+        if(j && j.error === 'unauth' && j.why === 'session'){
+          k = await mint(true);
+          if(k){ [u, i] = build(url, base, k); r = await rawFetch(u, i); const j2 = await peek(r); if(j2 && j2.error) banner(j2); }
+          else banner(j);
+        } else if(j && ['unauth','envelope','conflict','gen'].indexOf(j.error) >= 0) banner(j);
+        return r;
+      };
+    })();
+    // ═══ 🔐 D-37 攔截器 END ═══
 
     var uploadedUrl = '';
 
@@ -255,7 +359,34 @@
         .catch(function(){ alert('連線失敗'); btn.textContent='刪除'; btn.disabled=false; });
     }
 
-    loadList();
+    // 🔐 D-37 E2：登入後才載入列表（見 pageLogin）
+  </script>
+
+  <!-- 🔐 D-37 E2：Firebase 登入（與 admin.html 同一組專案與允許名單）；回滾：以 D-37 前版本覆蓋本頁 -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, signInWithPopup, signOut, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    const app = initializeApp({apiKey:"AIzaSyBIjbjkdA7h-rzZK4RKMBEwMNUg9R3kMqY",authDomain:"uni-hair-shop.firebaseapp.com",projectId:"uni-hair-shop",storageBucket:"uni-hair-shop.firebasestorage.app",messagingSenderId:"643874710249",appId:"1:643874710249:web:9910edcffda00c9d53c678"});
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    window.drrIdToken = async () => (auth.currentUser ? await auth.currentUser.getIdToken() : '');
+    window.pageLogin = async () => {
+      const m = document.getElementById('loginMsg');
+      m.className = 'msg';
+      try {
+        await signInWithPopup(auth, provider);
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('appWrap').style.display = 'block';
+        document.getElementById('whoEmail').textContent = (auth.currentUser && auth.currentUser.email) || '';
+        loadList();
+      } catch (e) {
+        m.textContent = '登入失敗：' + e.message; m.className = 'msg err';
+      }
+    };
+    window.pageLogout = async () => {
+      await signOut(auth);
+      location.reload();
+    };
   </script>
 
 </body>
