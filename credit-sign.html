@@ -404,6 +404,14 @@
   @keyframes spin { to { transform:rotate(360deg); } }
 
   .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; text-align: center; display: none; }
+  /* D-39 F2：登入與顧客資料 */
+  .login-wrap { margin: 40px 16px 0; text-align: center; background: var(--paper); border: 1px solid var(--border); border-radius: 12px; padding: 28px 18px; }
+  .login-wrap p { font-size: 13px; color: #777; margin-bottom: 16px; line-height: 1.7; }
+  .cust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cust-grid input { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; padding: 10px 12px; outline: none; }
+  .cust-grid input:focus { border-color: var(--gold); }
+  .who-bar { margin: 10px 16px 0; font-size: 11px; color: #999; text-align: right; }
+  .who-bar button { background: none; border: none; color: var(--warm); text-decoration: underline; font-size: 11px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -413,6 +421,24 @@
   <div class="header-logo">UNI HAIR SHOP</div>
   <h1>養護金儲值同意書</h1>
   <div class="header-sub">桃園 · 一對一客製美髮</div>
+</div>
+
+<!-- ── 🔐 D-39：後台登入後才可操作 ── -->
+<div class="login-wrap" id="loginWrap">
+  <p>此頁由 Elsa 登入後台後，<br>在顧客面前操作簽署。</p>
+  <button class="btn-submit" style="width:auto;padding:12px 28px;font-size:15px" onclick="csLogin()">Google 登入</button>
+</div>
+
+<div id="mainWrap" style="display:none">
+<div class="who-bar">操作者：<span id="loginWho"></span>　<button onclick="csLogout()">登出</button></div>
+
+<!-- ── 顧客資料 ── -->
+<div class="pay-section">
+  <div class="pay-title">▸ 顧客資料</div>
+  <div class="cust-grid">
+    <input type="text" id="custName" placeholder="顧客姓名">
+    <input type="tel" id="custPhone" placeholder="手機號碼" inputmode="tel">
+  </div>
 </div>
 
 <!-- ── 方案 ── -->
@@ -426,6 +452,8 @@
     <div class="bonus-note" id="planTotal">合計可用 ...</div>
   </div>
 </div>
+
+<div class="pay-methods" id="planPick" style="display:none;margin:10px 16px 0"></div>
 
 <!-- ── 支付方式 ── -->
 <div class="pay-section">
@@ -535,6 +563,7 @@
   </button>
   <div class="error-msg" id="errorMsg"></div>
 </div>
+</div><!-- /mainWrap -->
 
 <!-- ── 成功畫面 ── -->
 <div id="successScreen">
@@ -552,76 +581,158 @@
 
 <!-- SignaturePad lib -->
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+<!-- 🔐 D-39 F2（2026-09-24）：後台登入後才可操作（Firebase，與 admin.html 同一套）；回滾：GitHub 上傳 credit-sign_備份_D39前.html -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+const app = initializeApp({apiKey:"AIzaSyBIjbjkdA7h-rzZK4RKMBEwMNUg9R3kMqY",authDomain:"uni-hair-shop.firebaseapp.com",projectId:"uni-hair-shop",storageBucket:"uni-hair-shop.firebasestorage.app",messagingSenderId:"643874710249",appId:"1:643874710249:web:9910edcffda00c9d53c678"});
+const auth = getAuth(app);
+window.drrIdToken = async () => (auth.currentUser ? await auth.currentUser.getIdToken() : '');
+window.csLogin = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { alert('登入失敗：' + e.message); } };
+window.csLogout = async () => { await signOut(auth); location.reload(); };
+onAuthStateChanged(auth, u => { if (u) window.csOnLogin(u.email || ''); });
+</script>
 <script>
-// ── 從 URL 取得顧客資訊 ──────────────────────────────────
 const urlParams = new URLSearchParams(location.search);
 const UID   = urlParams.get('uid') || '';
 const NAME  = urlParams.get('name') || '';
 const PHONE = urlParams.get('phone') || '';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-// 從 Sheet 讀到的方案設定
-let PLAN_AMOUNT = 3000;
-let PLAN_BONUS  = 300;
+// ═══ 🔐 D-37 後台會話攔截器（與 admin.html 同一段，只攔主系統 GAS 網址）═══
+(function(){
+  if (window.__aaFetchInstalled) return; window.__aaFetchInstalled = true;
+  const MAIN = GAS_URL, DOTS = '.'.repeat(200), rawFetch = window.fetch.bind(window);
+  let aak = '', minting = null;
+  function banner(j){
+    let el = document.getElementById('aa-banner');
+    if(!el){ el = document.createElement('div'); el.id = 'aa-banner';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b3261e;color:#fff;padding:10px 14px;font-size:13px;line-height:1.55;';
+      document.body.appendChild(el); }
+    el.textContent = j.why === '此帳號不在允許名單' ? '🔒 此帳號不在允許名單' + (j.email ? '（' + j.email + '）' : '') + '，請改用後台帳號登入。' : '🔒 後台驗證失敗，請重新整理並重新登入。';
+  }
+  async function mint(force){
+    if(aak && !force) return aak;
+    if(force) aak = '';
+    if(minting) return minting;
+    minting = (async () => {
+      try{
+        const tok = window.drrIdToken ? await window.drrIdToken() : '';
+        if(!tok) return '';
+        const body = new URLSearchParams(); body.append('action','aaSession'); body.append('idToken', tok);
+        const r = await rawFetch(MAIN, { method:'POST', body, redirect:'follow' });
+        const j = await r.json();
+        if(j && j.ok && j.aak) aak = j.aak; else if(j && (j.error === 'unauth' || j.error === 'gen')) banner(j);
+      }catch(_){}
+      return aak;
+    })();
+    try{ return await minting; } finally { minting = null; }
+  }
+  function build(url, init, k){
+    if(!k) return [url, init];
+    const method = String(init.method || 'GET').toUpperCase();
+    if(method === 'GET') return [url + (url.indexOf('?') >= 0 ? '&' : '?') + 'aak=' + k, init];
+    const b = init.body;
+    if(b instanceof URLSearchParams){
+      if(b.has('idToken') || b.has('aak') || b.has('_')) return [url, init];
+      const i2 = Object.assign({}, init); i2.headers = {'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'};
+      i2.body = '_=' + DOTS + '&aak=' + k + '&' + b.toString(); return [url, i2];
+    }
+    return [url, init];
+  }
+  async function peek(r){ try{ const t = await r.clone().text(); if(t.length > 800 || t.indexOf('"error"') < 0) return null; return JSON.parse(t); }catch(_){ return null; } }
+  window.fetch = async function(input, init){
+    const url = (typeof input === 'string') ? input : '';
+    if(!url || url.indexOf(MAIN) !== 0) return rawFetch(input, init);
+    const base = init || {};
+    let k = await mint(false), [u, i] = build(url, base, k), r = await rawFetch(u, i);
+    const j = await peek(r);
+    if(j && j.error === 'unauth' && j.why === 'session'){
+      k = await mint(true);
+      if(k){ [u, i] = build(url, base, k); r = await rawFetch(u, i); const j2 = await peek(r); if(j2 && j2.error) banner(j2); } else banner(j);
+    } else if(j && ['unauth','envelope','conflict','gen'].indexOf(j.error) >= 0) banner(j);
+    return r;
+  };
+})();
 
-// ── 啟動：從 GAS 讀取系統設定 ────────────────────────────
+// ── 方案（伺服器以 planId 定價；畫面只顯示）──
+let PLANS = [], PLAN = null, selectedPay = '', pad = null, started = false;
+// 交易狀態：同一筆重試一律帶同一 recordId（D-39 §5.3.2）
+let TX = null;   // { recordId, stage:'new'|'uploaded'|'registered', upload, publicId, secureUrl, uploadedAt, planId }
+
+window.csOnLogin = function(email){
+  if (started) return; started = true;
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('mainWrap').style.display = 'block';
+  document.getElementById('loginWho').textContent = email;
+  document.getElementById('custName').value = NAME;
+  document.getElementById('custPhone').value = PHONE;
+  initPad(); loadCreditSettings();
+};
+
+function parsePlans(raw){
+  const out = [];
+  String(raw || '').split(/\r?\n/).forEach(l => {
+    const m = /^\s*([A-Za-z0-9_-]{1,32})=(\d+):(\d+)\s*$/.exec(l);
+    if (m) out.push({ id: m[1], amount: Number(m[2]), bonus: Number(m[3]) });
+  });
+  return out;
+}
+function showPlan(p){
+  PLAN = p;
+  document.getElementById('planAmount').textContent   = '$' + p.amount.toLocaleString();
+  document.getElementById('planBonusTag').textContent = '🎁 贈送 $' + p.bonus.toLocaleString();
+  document.getElementById('planTotal').textContent    = '合計可用 $' + (p.amount + p.bonus).toLocaleString();
+  document.querySelectorAll('#planPick .pay-btn').forEach(b => b.classList.toggle('selected', b.dataset.plan === p.id));
+  checkReady();
+}
 async function loadCreditSettings() {
+  let map = {};
   try {
     const res  = await fetch(GAS_URL + '?action=getSettings&t=' + Date.now());
     const data = await res.json();
-    const map  = {};
     (data.settings || []).forEach(s => { map[s.key] = s.value; });
-
-    // 方案金額
-    PLAN_AMOUNT = Number(map['credit_plan_amount'] || 3000);
-    PLAN_BONUS  = Number(map['credit_plan_bonus']  || 300);
-    const total = PLAN_AMOUNT + PLAN_BONUS;
-    document.getElementById('planAmount').textContent   = '$' + PLAN_AMOUNT.toLocaleString();
-    document.getElementById('planBonusTag').textContent = '🎁 贈送 $' + PLAN_BONUS.toLocaleString();
-    document.getElementById('planTotal').textContent    = '合計可用 $' + total.toLocaleString();
-
-    // 支付方式（只顯示 TRUE 的）
-    const payMap = [
-      { key: 'credit_pay_jko',      label: '街口支付' },
-      { key: 'credit_pay_ipass',    label: 'iPASS' },
-      { key: 'credit_pay_cash',     label: '現金' },
-      { key: 'credit_pay_transfer', label: '轉帳' },
-    ];
-    const container = document.getElementById('payMethods');
-    container.innerHTML = '';
-    payMap.forEach(p => {
-      if (String(map[p.key] || 'TRUE').toUpperCase() !== 'TRUE') return;
-      const btn = document.createElement('button');
-      btn.className = 'pay-btn';
-      btn.dataset.method = p.label;
-      btn.textContent = p.label;
-      container.appendChild(btn);
-    });
-    // 重新綁定點擊事件
-    container.addEventListener('click', e => {
-      const btn = e.target.closest('.pay-btn');
-      if (!btn) return;
-      container.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedPay = btn.dataset.method;
-      checkReady();
-    });
-  } catch(e) {
-    // 讀取失敗用預設值
-    document.getElementById('planAmount').textContent   = '$3,000';
-    document.getElementById('planBonusTag').textContent = '🎁 贈送 $300';
-    document.getElementById('planTotal').textContent    = '合計可用 $3,300';
-    document.getElementById('payMethods').innerHTML =
-      ['街口支付','iPASS','現金','轉帳'].map(m =>
-        `<button class="pay-btn" data-method="${m}">${m}</button>`
-      ).join('');
+  } catch(e) {}
+  PLANS = parsePlans(map['credit_plan_list']);
+  if (!PLANS.length) {
+    document.getElementById('planAmount').textContent = '方案讀取失敗';
+    showErr('儲值方案讀取失敗，請重新整理頁面');
+  } else {
+    const pick = document.getElementById('planPick');
+    if (PLANS.length > 1) {
+      pick.style.display = 'flex';
+      pick.innerHTML = PLANS.map(p => `<button class="pay-btn" data-plan="${escHtml(p.id)}">$${p.amount.toLocaleString()} 送 $${p.bonus.toLocaleString()}</button>`).join('');
+      pick.addEventListener('click', e => { const b = e.target.closest('.pay-btn'); if (b && !TX) showPlan(PLANS.find(x => x.id === b.dataset.plan)); });
+    }
+    showPlan(PLANS[0]);
   }
+  const payMap = [
+    { key: 'credit_pay_jko',      label: '街口支付' },
+    { key: 'credit_pay_ipass',    label: 'iPASS' },
+    { key: 'credit_pay_cash',     label: '現金' },
+    { key: 'credit_pay_transfer', label: '轉帳' },
+  ];
+  const container = document.getElementById('payMethods');
+  container.innerHTML = '';
+  payMap.forEach(p => {
+    if (String(map[p.key] || 'TRUE').toUpperCase() !== 'TRUE') return;
+    const btn = document.createElement('button');
+    btn.className = 'pay-btn'; btn.dataset.method = p.label; btn.textContent = p.label;
+    container.appendChild(btn);
+  });
 }
+document.getElementById('payMethods').addEventListener('click', e => {
+  const btn = e.target.closest('.pay-btn');
+  if (!btn || TX) return;
+  document.querySelectorAll('#payMethods .pay-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedPay = btn.dataset.method;
+  checkReady();
+});
 
-// ── SignaturePad 初始化 ──────────────────────────────────
+// ── SignaturePad ──
 const canvas = document.getElementById('signCanvas');
-let pad;
-
 function initPad() {
   const rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = Math.floor(rect.width - 36) * window.devicePixelRatio;
@@ -629,99 +740,87 @@ function initPad() {
   canvas.style.width  = (Math.floor(rect.width - 36)) + 'px';
   canvas.style.height = '160px';
   canvas.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
-  pad = new SignaturePad(canvas, {
-    minWidth: 1.5, maxWidth: 3,
-    penColor: '#1a1209',
-    backgroundColor: 'rgba(255,255,255,0)'
-  });
-  pad.addEventListener('beginStroke', () => {
-    canvas.classList.add('active');
-    checkReady();
-  });
+  pad = new SignaturePad(canvas, { minWidth: 1.5, maxWidth: 3, penColor: '#1a1209', backgroundColor: 'rgba(255,255,255,0)' });
+  pad.addEventListener('beginStroke', () => { canvas.classList.add('active'); checkReady(); });
   pad.addEventListener('endStroke', checkReady);
+  if (TX) pad.off();
 }
-window.addEventListener('load', () => { initPad(); loadCreditSettings(); });
 window.addEventListener('resize', () => {
-  const data = pad ? pad.toData() : [];
+  if (!pad) return;
+  const data = pad.toData();
   initPad();
   if (data.length) pad.fromData(data);
 });
-
 function clearSign() {
+  if (TX || !pad) return;
   pad.clear();
   canvas.classList.remove('active');
   checkReady();
 }
-
-// ── 支付方式選擇 ─────────────────────────────────────────
-let selectedPay = '';
-document.getElementById('payMethods').addEventListener('click', e => {
-  const btn = e.target.closest('.pay-btn');
-  if (!btn) return;
-  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  selectedPay = btn.dataset.method;
-  checkReady();
-});
-
-// ── 同意勾選 ────────────────────────────────────────────
 document.getElementById('agreeCheck').addEventListener('change', checkReady);
-
+['custName','custPhone'].forEach(id => document.getElementById(id).addEventListener('input', checkReady));
+function phoneOk(){ return /^0?9\d{8}$/.test(document.getElementById('custPhone').value.replace(/\D/g,'')); }
 function checkReady() {
-  const ok = !pad.isEmpty() && selectedPay && document.getElementById('agreeCheck').checked;
+  const ok = pad && !pad.isEmpty() && selectedPay && PLAN && phoneOk() && document.getElementById('agreeCheck').checked;
   document.getElementById('submitBtn').disabled = !ok;
 }
-
-// ── 簽名上傳 + 儲值送出 ─────────────────────────────────
-async function submitSign() {
-  const btn = document.getElementById('submitBtn');
-  const errEl = document.getElementById('errorMsg');
-  errEl.style.display = 'none';
-
-  if (pad.isEmpty()) { showErr('請先完成簽名'); return; }
-  if (!selectedPay)  { showErr('請選擇支付方式'); return; }
-
-  btn.classList.add('loading');
-  btn.disabled = true;
-
-  try {
-    // 1. 取得簽名圖 base64
-    const signDataUrl = pad.toDataURL('image/png');
-
-    // 2. 呼叫 GAS 儲值 API（簽名圖以 base64 傳送，GAS 存至 Drive 或直接存 URL）
-    const formData = new URLSearchParams({
-      action:    'addCredit',
-      uid:       UID,
-      name:      NAME,
-      phone:     PHONE,
-      amount:    PLAN_AMOUNT,
-      bonus:     PLAN_BONUS,
-      payMethod: selectedPay,
-      signUrl:   signDataUrl.substring(0, 500), // 截斷，完整版可改存 Firebase Storage
-   note:      document.getElementById('noteInput').value,
-      source:    '線上儲值'
-    });
-
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData.toString()
-    });
-    const data = await res.json();
-
-    if (!data.ok) throw new Error(data.msg || '儲值失敗');
-
-    // 3. 顯示成功
-    document.getElementById('balanceNum').textContent = Number(data.balance).toLocaleString();
-    document.getElementById('successScreen').classList.add('show');
-
-  } catch(e) {
-    showErr('送出失敗：' + e.message);
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  }
+function lockForm(){
+  if (pad) pad.off();
+  ['custName','custPhone','agreeCheck','noteInput'].forEach(id => document.getElementById(id).disabled = true);
+  document.querySelector('.btn-clear').disabled = true;
 }
 
+async function post(params){
+  const body = new URLSearchParams();
+  Object.keys(params).forEach(k => body.append(k, params[k] == null ? '' : String(params[k])));
+  try { const t = await window.drrIdToken(); if (t) body.append('idt', t); } catch(_) {}
+  const r = await fetch(GAS_URL, { method: 'POST', body, redirect: 'follow' });
+  return await r.json();
+}
+
+// ── 四步：建立交易 → 上傳簽名 → 登錄簽名 → 入帳（只有第四步成功才顯示成功）──
+async function submitSign() {
+  const btn = document.getElementById('submitBtn');
+  document.getElementById('errorMsg').style.display = 'none';
+  if (!TX) {
+    if (!pad || pad.isEmpty()) { showErr('請先完成簽名'); return; }
+    if (!selectedPay) { showErr('請選擇支付方式'); return; }
+    if (!phoneOk()) { showErr('請填寫正確的手機號碼'); return; }
+  }
+  btn.classList.add('loading'); btn.disabled = true;
+  try {
+    if (!TX) {
+      const d = await post({ action: 'creditRecordNew', mode: 'plan', planId: PLAN.id, uid: UID,
+        name: document.getElementById('custName').value.trim(), phone: document.getElementById('custPhone').value.trim(),
+        payMethod: selectedPay, note: document.getElementById('noteInput').value });
+      if (!d.ok) throw new Error(d.msg || '建立交易失敗');
+      TX = { recordId: d.recordId, stage: 'new', upload: d.upload, publicId: d.publicId, planId: PLAN.id, png: pad.toDataURL('image/png') };
+      lockForm();
+    }
+    if (TX.stage === 'new') {
+      const u = TX.upload, fd = new FormData();
+      fd.append('file', TX.png); fd.append('api_key', u.api_key); fd.append('timestamp', u.timestamp);
+      fd.append('public_id', u.public_id); fd.append('signature', u.signature);
+      const r = await fetch(u.url, { method: 'POST', body: fd });
+      const j = await r.json();
+      if (!r.ok || !j.secure_url) throw new Error('簽名上傳失敗' + (j.error && j.error.message ? '：' + j.error.message : ''));
+      TX.secureUrl = j.secure_url; TX.uploadedAt = j.created_at || new Date().toISOString(); TX.stage = 'uploaded';
+    }
+    if (TX.stage === 'uploaded') {
+      const d = await post({ action: 'creditSignReg', recordId: TX.recordId, public_id: TX.publicId, secure_url: TX.secureUrl, uploadedAt: TX.uploadedAt });
+      if (!d.ok) throw new Error(d.msg || '簽名登錄失敗');
+      TX.stage = 'registered';
+    }
+    const d = await post({ action: 'addCredit', recordId: TX.recordId, planId: TX.planId });
+    if (!d.ok) throw new Error(d.msg || '儲值失敗');
+    document.getElementById('balanceNum').textContent = Number(d.balance).toLocaleString();
+    document.getElementById('successScreen').classList.add('show');
+  } catch(e) {
+    showErr('未完成：' + e.message + (TX ? '（交易 ' + TX.recordId + '，請按「重新送出」，同一筆不會重複入帳）' : ''));
+    btn.classList.remove('loading'); btn.disabled = false;
+    if (TX) btn.querySelector('.btn-text').textContent = '重新送出 ✦ 同一筆交易';
+  }
+}
 function showErr(msg) {
   const el = document.getElementById('errorMsg');
   el.textContent = msg;

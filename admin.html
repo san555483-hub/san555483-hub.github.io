@@ -982,7 +982,8 @@ tr:hover td{background:rgba(61,43,31,.03);}
             <div class="form-group"><label class="form-label">支付方式</label><select class="form-select" id="cr-paymethod"><option>街口支付</option><option>iPASS</option><option>現金</option><option>轉帳</option></select></div>
             <div class="form-group"><label class="form-label">備註</label><input class="form-input" type="text" id="cr-note"></div>
           </div>
-          <button class="btn btn-dark" onclick="addCredit()">💳 新增儲值</button>
+          <button class="btn btn-dark" id="cr-add-btn" onclick="addCredit()">💳 新增儲值</button>
+          <p style="font-size:.7rem;color:#c0392b;font-family:'Noto Sans TC',sans-serif;margin-top:8px;">本筆無顧客簽名；需要簽署存證請改用簽署頁。</p>
           <div id="cr-add-msg" class="msg-box"></div>
         </div>
       </div>
@@ -1009,6 +1010,15 @@ tr:hover td{background:rgba(61,43,31,.03);}
             <button class="btn btn-dark" onclick="queryCredit()">查詢</button>
           </div>
           <div id="cr-query-result"></div>
+        </div>
+      </div>
+
+      <!-- ═══ 🧾 D-39 待核對儲值（2026-09-24）回滾：刪除本 card ＋ JS 的 loadCreditOrphans ═══ -->
+      <div class="card">
+        <div class="card-head"><h3>🧾 待核對儲值（超過 30 分鐘未完成）</h3><button class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);" onclick="loadCreditOrphans()">🔄 查詢</button></div>
+        <div class="card-body">
+          <p style="font-size:.7rem;color:var(--mid);font-family:'Noto Sans TC',sans-serif;margin-bottom:8px;">只列出，不會自動補登入帳。「ISSUED 逾時」可用預期 public_id 到 Cloudinary 媒體庫查是否已有簽名圖。</p>
+          <div id="cr-orphan"></div>
         </div>
       </div>
 
@@ -3262,16 +3272,44 @@ async function clearScheduleType(row){
 }
 
 // ════ 儲值紀錄 ════
+// ═══ D-39 F2（2026-09-24）manual 兩段式：creditRecordNew → addCredit(recordId)；重試帶同一 recordId，不會重複入帳 ═══
+let _crTx = null;   // { recordId, key }
+function _crKey(){ return ['cr-phone','cr-name','cr-amount','cr-bonus','cr-paymethod','cr-note'].map(i=>document.getElementById(i).value.trim()).join('\u0001'); }
+async function _crPost(params){
+  const body=new URLSearchParams(); Object.keys(params).forEach(k=>body.append(k,params[k]==null?'':String(params[k])));
+  const r=await fetch(GAS,{method:'POST',body,redirect:'follow'}); return await r.json();
+}
 async function addCredit(){
-  const phone=document.getElementById('cr-phone').value.trim(),amount=document.getElementById('cr-amount').value.trim();
+  const phone=document.getElementById('cr-phone').value.trim(),amount=document.getElementById('cr-amount').value.trim(),bonus=document.getElementById('cr-bonus').value.trim()||'0';
   if(!phone||!amount){showMsg('cr-add-msg','請填寫電話和金額','err');return;}
-  showMsg('cr-add-msg','儲值中…','loading');
+  if(!/^\d+$/.test(amount)||!/^\d+$/.test(bonus)){showMsg('cr-add-msg','金額與贈送只能填整數','err');return;}
+  const key=_crKey(), btn=document.getElementById('cr-add-btn');
+  if(_crTx && _crTx.key!==key) _crTx=null;   // 內容改了＝新的一筆
+  btn.disabled=true; showMsg('cr-add-msg','儲值中…','loading');
   try{
-    const p=new URLSearchParams({action:'addCredit',phone,name:document.getElementById('cr-name').value.trim(),amount,bonus:document.getElementById('cr-bonus').value||0,payMethod:document.getElementById('cr-paymethod').value,note:document.getElementById('cr-note').value.trim()});
-    const r=await fetch(GAS+'?'+p.toString());const d=await r.json();
-    if(d.ok){showMsg('cr-add-msg',`✓ 儲值成功！餘額：NT$${d.balance}`,'ok');loadCredits();['cr-phone','cr-name','cr-amount','cr-bonus','cr-note'].forEach(i=>document.getElementById(i).value='');}
-    else showMsg('cr-add-msg','❌ '+(d.msg||'失敗'),'err');
-  }catch(e){showMsg('cr-add-msg','❌ 網路錯誤','err');}
+    if(!_crTx){
+      const d=await _crPost({action:'creditRecordNew',mode:'manual',phone,name:document.getElementById('cr-name').value.trim(),amount,bonus,payMethod:document.getElementById('cr-paymethod').value,note:document.getElementById('cr-note').value.trim()});
+      if(!d.ok) throw new Error(d.msg||'建立交易失敗');
+      _crTx={recordId:d.recordId,key};
+    }
+    const d2=await _crPost({action:'addCredit',recordId:_crTx.recordId,mode:'manual'});
+    if(!d2.ok) throw new Error(d2.msg||'儲值失敗');
+    showMsg('cr-add-msg',`✓ 儲值成功！本筆：NT$${d2.balance}（交易 ${_crTx.recordId}）`,'ok');
+    _crTx=null; loadCredits();
+    ['cr-phone','cr-name','cr-amount','cr-bonus','cr-note'].forEach(i=>document.getElementById(i).value='');
+  }catch(e){
+    showMsg('cr-add-msg','❌ '+e.message+(_crTx?'｜內容不動再按一次「新增儲值」即可（同一筆 '+_crTx.recordId+'，不會重複入帳）':''),'err');
+  }finally{ btn.disabled=false; }
+}
+async function loadCreditOrphans(){
+  const el=document.getElementById('cr-orphan'); el.innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div>查詢中…</div>';
+  try{
+    const d=await _crPost({action:'creditOrphanList'});
+    if(!d.ok){el.innerHTML='<p style="color:#c0392b;font-size:.75rem;">❌ '+escHtml(d.msg||'查詢失敗')+'</p>';return;}
+    if(!d.list.length){el.innerHTML='<p style="color:#2d7a4f;font-size:.75rem;">✅ 沒有待核對的儲值</p>';return;}
+    el.innerHTML='<div class="table-wrap"><table><thead><tr><th>類別</th><th>交易</th><th>建立</th><th>顧客</th><th>方案／金額</th><th>預期 public_id</th><th>紀錄</th></tr></thead><tbody>'+
+      d.list.map(o=>`<tr><td>${escHtml(o.kind)}</td><td style="font-size:.62rem;">${escHtml(o.recordId)}</td><td style="font-size:.65rem;">${escHtml(o.created)}</td><td>${escHtml(o.name)} ${escHtml(o.customer)}</td><td>${o.mode==='plan'?escHtml(o.planId):'$'+escHtml(o.amount)+'＋'+escHtml(o.bonus)}</td><td style="font-size:.6rem;">${escHtml(o.publicId||'—')}</td><td style="font-size:.62rem;white-space:pre-wrap;">${escHtml(o.note||'')}</td></tr>`).join('')+'</tbody></table></div>';
+  }catch(e){el.innerHTML='<p style="color:#c0392b;font-size:.75rem;">❌ 網路錯誤</p>';}
 }
 async function queryCredit(){
   const phone=document.getElementById('cr-query-phone').value.trim();
