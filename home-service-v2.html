@@ -7,6 +7,7 @@
      ・「服務與價格」第 4 張卡 #washCard，與表單洗髮選項共用 WASH_SHOW；隱藏時不綁事件
      ・點卡：鎖定狀態只捲動；未選服務才勾洗髮（走既有 change 事件）；已選其他服務只顯示提示、不覆寫
      ・WASH_SHOW=false 時，草稿回填若含洗髮 → 取消勾選（草稿記錄不改寫）
+     ・勾選洗髮時，服務下方「可複選」改為「洗髮方案需單獨預約，無法與剪髮、造型同時選擇」（Elsa 定稿）
      ・後端、payload、U-α 讀寫邏輯一字未動
      🔴 回滾：GitHub 傳回 v2.3（home-service-v2.html 前一版）或 home-service-v2_W0_ok.html，免部署
 
@@ -493,7 +494,7 @@ a.foot-link:hover{color:#EDE7D6}
             <label class="chip"><input type="checkbox" value="造型服務"><span>💇 造型服務</span></label>
             <label class="chip" id="washChip" style="display:none"><input type="checkbox" value="到府洗髮・自備設備方案"><span>🚿 到府洗髮・自備設備方案　NT$500／人</span></label>
           </div>
-          <div class="hint">可複選</div>
+          <div class="hint" id="svcHint">可複選</div>
         </div>
         <!-- ══ W1 到府洗髮・自備設備方案（規格 v1.0 §2；僅選本方案時顯示）══ -->
         <div class="fld" id="washBox" style="display:none">
@@ -818,6 +819,8 @@ a.foot-link:hover{color:#EDE7D6}
   }
   function washUI(){
     var on=isWash();
+    var sh=document.getElementById('svcHint');   /* v2.4 提示（Elsa 2026-11-16 定稿） */
+    if(sh) sh.textContent = on ? '洗髮方案需單獨預約，無法與剪髮、造型同時選擇' : '可複選';
     if(washBox) washBox.style.display = on ? 'block' : 'none';
     if(!on){ ['fWc1','fWc2','fWc3'].forEach(function(id){ var c=document.getElementById(id); if(c) c.checked=false; }); }
     if(on && washPriceEl) washPriceEl.innerHTML = washPriceHtml();
