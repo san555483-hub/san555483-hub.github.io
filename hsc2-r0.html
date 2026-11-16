@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>UNI｜R0-B 登入測試（Elsa 專用）</title>
+<style>
+body{margin:0;font-family:"PingFang TC","Noto Sans TC",sans-serif;background:#f6f2ea;color:#2d2a24;font-size:17px;line-height:1.7}
+.wrap{max-width:560px;margin:0 auto;padding:24px 18px 60px}
+h1{font-size:20px;margin:0 0 6px}
+.sub{color:#6b6255;font-size:15px;margin-bottom:18px}
+button{width:100%;padding:16px;border:0;border-radius:12px;font-size:18px;font-weight:700;background:#06C755;color:#fff;margin:8px 0}
+button.gray{background:#5a5a4a}
+#out{white-space:pre-wrap;background:#fff;border:1px solid #d8cfc2;border-radius:12px;padding:14px;font-size:16px;margin-top:14px;display:none}
+.note{font-size:14px;color:#6b6255;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>R0-B 登入測試</h1>
+  <div class="sub">到府確認提醒的事前檢查。只有 Elsa 本人使用，不寫入任何資料、不推播。</div>
+  <button id="go">用 LINE 登入測試</button>
+  <div id="out"></div>
+  <button id="copy" class="gray" style="display:none">複製結果</button>
+  <div class="note">結果出現後按「複製結果」，整段貼給 Claude。登入資訊不會被保存。</div>
+</div>
+<script>
+(function(){
+  var CHANNEL='2009635359';
+  var GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+  var OWNER6='edc7f0';
+  var REDIRECT=location.origin+location.pathname;
+  var K='uni_hsc2_r0';
+  var out=document.getElementById('out'), copyBtn=document.getElementById('copy');
+  var lines=[];
+  function log(s){ lines.push(s); out.style.display='block'; out.textContent=lines.join('\n'); }
+  function rnd(n){ var a=new Uint8Array(n); crypto.getRandomValues(a); return b64u(a); }
+  function b64u(buf){ var s='',a=new Uint8Array(buf); for(var i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function dec(seg){ seg=seg.replace(/-/g,'+').replace(/_/g,'/'); while(seg.length%4) seg+='='; return JSON.parse(decodeURIComponent(escape(atob(seg)))); }
+  function clear(){ try{ sessionStorage.removeItem(K); }catch(_){} }
+
+  document.getElementById('go').onclick=function(){
+    var st={ state:rnd(16), verifier:rnd(48), nonce:rnd(16) };
+    try{ sessionStorage.setItem(K, JSON.stringify(st)); }catch(e){ log('⛔ 無法使用 sessionStorage：'+e.message); return; }
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(st.verifier)).then(function(h){
+      var u='https://access.line.me/oauth2/v2.1/authorize?response_type=code'
+        +'&client_id='+CHANNEL+'&redirect_uri='+encodeURIComponent(REDIRECT)
+        +'&state='+st.state+'&scope='+encodeURIComponent('openid profile')+'&nonce='+st.nonce
+        +'&code_challenge='+b64u(h)+'&code_challenge_method=S256&bot_prompt=aggressive';
+      location.href=u;
+    });
+  };
+
+  copyBtn.onclick=function(){
+    var t=lines.join('\n');
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ copyBtn.textContent='已複製 ✅'; })
+      .catch(function(){ var r=document.createRange(); r.selectNodeContents(out); var s=getSelection(); s.removeAllRanges(); s.addRange(r); copyBtn.textContent='已選取，請長按複製'; });
+  };
+
+  var q=new URLSearchParams(location.search);
+  if(!q.get('code') && !q.get('error')) return;
+  document.getElementById('go').style.display='none';
+  history.replaceState(null,'',REDIRECT);
+  var st=null; try{ st=JSON.parse(sessionStorage.getItem(K)||'null'); }catch(_){}
+  clear();
+  log('═══ R0-B｜'+new Date().toLocaleString('zh-TW',{hour12:false})+' ═══');
+  log('B0 redirect_uri＝'+REDIRECT);
+  if(q.get('error')){ log('⛔ B1 LINE 授權回傳錯誤：'+q.get('error')+'｜'+(q.get('error_description')||'')); copyBtn.style.display='block'; return; }
+  log('🟢 B1 LINE 授權成功（redirect_uri 已登記）');
+  if(!st || q.get('state')!==st.state){ log('⛔ B2 state 不符或遺失（應中止）'); copyBtn.style.display='block'; return; }
+  log('🟢 B2 state 單次比對通過');
+  var fsc=q.get('friendship_status_changed');
+  log('▫️ B3 加好友提示 friendship_status_changed＝'+(fsc===null?'（未回傳）':fsc));
+
+  fetch(GAS+'?action=lineToken',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({code:q.get('code'),verifier:st.verifier,redirect:REDIRECT,channelId:CHANNEL})})
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+    if(!j || !j.id_token){ log('⛔ B4 換 token 失敗（PKCE／channel）：'+JSON.stringify(j).slice(0,200)); throw 0; }
+    log('🟢 B4 以 PKCE（S256）換得 id_token（既有 🔴 lineToken 路由）');
+    var p=dec(j.id_token.split('.')[1]);
+    log((String(p.aud)===CHANNEL?'🟢':'⛔')+' B5 aud＝'+p.aud);
+    log((p.nonce===st.nonce?'🟢':'⛔')+' B6 id_token 內含 nonce'+(p.nonce===st.nonce?' 且與本次相同':'：'+(p.nonce?'不同':'沒有')));
+    var s6=String(p.sub||'').slice(-6);
+    log((s6===OWNER6?'🟢':'⛔')+' B7 LINE 登入 sub 末 6＝'+s6+'｜OWNER_UID 末 6＝'+OWNER6+(s6===OWNER6?'（同一 Provider，UID 一致）':'（不一致）'));
+    log('▫️ B8 exp 剩 '+Math.round((p.exp*1000-Date.now())/60000)+' 分鐘｜amr＝'+JSON.stringify(p.amr||[]));
+    function verify(nonce){
+      var body='id_token='+encodeURIComponent(j.id_token)+'&client_id='+CHANNEL+(nonce?'&nonce='+encodeURIComponent(nonce):'');
+      return fetch('https://api.line.me/oauth2/v2.1/verify',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+        .then(function(r){ return r.json().then(function(b){ return {code:r.status,b:b}; }); });
+    }
+    return verify(st.nonce).then(function(a){
+      log((a.code===200?'🟢':'⛔')+' B9 verify（正確 nonce）HTTP '+a.code+(a.b&&a.b.nonce?'｜回傳 nonce 一致：'+(a.b.nonce===st.nonce):''));
+      return verify('wrong-'+st.nonce);
+    }).then(function(b){
+      log((b.code===400?'🟢':'⛔')+' B10 verify（錯誤 nonce）HTTP '+b.code+'｜'+((b.b&&b.b.error_description)||''));
+    }).catch(function(e){
+      log('▫️ B9／B10 瀏覽器無法直接呼叫 verify（'+(e&&e.message||e)+'）；伺服器端已於 R0-A R8 證明可呼叫，nonce 比對改由正式程式在伺服器端驗收');
+    });
+  })
+  .catch(function(e){ if(e!==0) log('⛔ 流程例外：'+(e&&e.message||e)); })
+  .then(function(){ log('───────────────\n（id_token、access_token 未顯示、未保存）'); copyBtn.style.display='block'; });
+})();
+</script>
+</body>
+</html>
