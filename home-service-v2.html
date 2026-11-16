@@ -3,6 +3,13 @@
   ═══════════════════════════════════════════════════════════
   UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁 ＋ U-α 身分續存
 
+  ★ 2026-11-16 v2.4 洗髮宣傳卡（規格 v1.0.2 宣傳卡差異，三方定稿）：
+     ・「服務與價格」第 4 張卡 #washCard，與表單洗髮選項共用 WASH_SHOW；隱藏時不綁事件
+     ・點卡：鎖定狀態只捲動；未選服務才勾洗髮（走既有 change 事件）；已選其他服務只顯示提示、不覆寫
+     ・WASH_SHOW=false 時，草稿回填若含洗髮 → 取消勾選（草稿記錄不改寫）
+     ・後端、payload、U-α 讀寫邏輯一字未動
+     🔴 回滾：GitHub 傳回 v2.3（home-service-v2.html 前一版）或 home-service-v2_W0_ok.html，免部署
+
   ★ 2026-11-15 v2.3 到府洗髮・自備設備方案（規格 v1.0 正式整合版 §2、§3、§5、§7）：
      ・洗髮 chip 預設隱藏；網址帶 ?wash=preview 或 HS_WASH_PUBLIC=true 才顯示
      ・?wash=preview 時送出附 dry=1：後端只試算、不建單（收到 wash_dry_ok 只顯示試算結果）
@@ -126,7 +133,14 @@ h2{font-size:clamp(22px,5.6vw,28px);font-weight:700;letter-spacing:1px;line-heig
 .svc-card .desc{font-family:"PingFang TC",sans-serif;font-size:14px;color:#CFC9B5;line-height:1.6;margin-top:0}
 .svc-disclaimer{font-family:"PingFang TC",sans-serif;text-align:center;font-size:12.5px;
   color:#B8BC93;margin-top:18px;letter-spacing:.3px}
-@media(min-width:520px){.svc-cards{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:520px){.svc-cards{grid-template-columns:repeat(3,1fr)}.svc-cards.has4{grid-template-columns:repeat(2,1fr)}}
+/* v2.4 洗髮宣傳卡 */
+#washCard{cursor:pointer}
+#washCard:focus{outline:2px solid var(--gold);outline-offset:2px}
+#washCard .desc{font-size:15px;color:#E6E0CC}
+#washCard .nw{white-space:nowrap}
+#washCard .note{font-family:"PingFang TC",sans-serif;font-size:14px;color:#E6E0CC;line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(237,231,214,.25)}
+#washCardHint{display:none;font-size:15px;color:#8a6a3f;background:#f6efe3;border:1px solid #e3d5bd;border-radius:8px;padding:6px 10px;margin:4px 0 8px;transition:opacity .6s}
 
 /* ── 摺疊資訊卡片（降層）── */
 .info-list{display:grid;gap:12px;margin-top:6px}
@@ -312,6 +326,13 @@ a.foot-link:hover{color:#EDE7D6}
         <div class="from svc-from-people">依人數規劃</div>
         <div class="desc">一次安排，全家整理完成</div>
       </div>
+      <div class="svc-card" id="washCard" style="display:none" role="button" tabindex="0" aria-label="到府洗髮・自備設備方案，前往預約">
+        <div class="ic">🚿</div>
+        <div class="name">到府洗髮・自備設備方案</div>
+        <div class="from">500<small> ／人</small></div>
+        <div class="desc"><span class="nw">專業洗髮及頭皮按摩</span>／<span class="nw">簡易肩頸舒緩按摩</span>／<span class="nw">吹乾與基礎髮型整理</span></div>
+        <div class="note">本方案由客戶準備適合的洗髮空間與設備，UNI 提供專業技術服務。</div>
+      </div>
     </div>
     <p class="svc-disclaimer">※ 實際價格依服務內容、地區及需求安排。</p>
   </div>
@@ -466,6 +487,7 @@ a.foot-link:hover{color:#EDE7D6}
         </div>
         <div class="fld">
           <label>需要的服務 <span class="req">＊</span></label>
+          <div id="washCardHint">如要改選洗髮方案，請在下方『需要的服務』點選</div>
           <div class="chips" id="fSvc">
             <label class="chip"><input type="checkbox" value="剪髮服務"><span>✂️ 剪髮服務</span></label>
             <label class="chip"><input type="checkbox" value="造型服務"><span>💇 造型服務</span></label>
@@ -888,6 +910,15 @@ a.foot-link:hover{color:#EDE7D6}
       document.getElementById('fWc2').checked = d.wc2==='1';
       document.getElementById('fWc3').checked = d.wc3==='1';
     }
+    /* v2.4（規格 v1.0.2 §3）：未公開時回填不得留下隱藏的洗髮勾選；草稿記錄本身不改寫 */
+    if(!WASH_SHOW){
+      var hw=washInput();
+      if(hw && hw.checked){
+        hw.checked=false;
+        svcBox.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('sel', c.querySelector('input').checked); });
+        washUI();
+      }
+    }
   }
 
   function validate(n){
@@ -1154,6 +1185,37 @@ a.foot-link:hover{color:#EDE7D6}
     if(a === btnFirst) return;
     a.addEventListener('click', function(){ setTimeout(start, 350); });
   });
+
+  /* ── v2.4 洗髮宣傳卡（規格 v1.0.2 §3、§4）── */
+  (function(){
+    var card=document.getElementById('washCard');
+    if(!card || !WASH_SHOW) return;                       /* 未公開：不顯示、不綁事件 */
+    card.style.display='';
+    var grid=card.parentNode; if(grid) grid.classList.add('has4');
+    var hint=document.getElementById('washCardHint'), hintT=null;
+    function showHint(){
+      if(!hint) return;
+      hint.style.display='block'; hint.style.opacity='1';
+      clearTimeout(hintT);
+      hintT=setTimeout(function(){ hint.style.opacity='0'; setTimeout(function(){ hint.style.display='none'; },600); },3000);
+    }
+    function go(){
+      var bookSec=document.getElementById('book');
+      if(locked){ start(); return; }                      /* 送出中／dead／done／B 類：只捲動 */
+      if(bookSec) bookSec.scrollIntoView({behavior:'smooth',block:'start'});
+      if(box.style.display==='none') start();             /* 以既有方式開到第 1 步 */
+      var wi=washInput(); if(!wi) return;
+      var other=false;
+      svcBox.querySelectorAll('input').forEach(function(i){ if(i!==wi && i.checked) other=true; });
+      if(other){ showHint(); return; }                    /* 已選其他服務：不覆寫 */
+      if(!wi.checked){
+        wi.checked=true;
+        wi.dispatchEvent(new Event('change',{bubbles:true}));   /* 走既有互斥＋試算 */
+      }
+    }
+    card.addEventListener('click', go);
+    card.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  })();
 
   restore();
 })();
