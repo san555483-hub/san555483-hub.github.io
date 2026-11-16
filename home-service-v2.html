@@ -2,6 +2,14 @@
 <!--
   ═══════════════════════════════════════════════════════════
   UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁 ＋ U-α 身分續存
+
+  ★ 2026-11-15 v2.3 到府洗髮・自備設備方案（規格 v1.0 正式整合版 §2、§3、§5、§7）：
+     ・洗髮 chip 預設隱藏；網址帶 ?wash=preview 或 HS_WASH_PUBLIC=true 才顯示
+     ・?wash=preview 時送出附 dry=1：後端只試算、不建單（收到 wash_dry_ok 只顯示試算結果）
+     ・洗髮與其他服務互斥；三項自備確認、人數上限 2 位（F-8）、價格版本 w500-1
+     ・剪髮／造型送單 payload 與 v2.2 逐欄相同（洗髮欄位只在選洗髮時加入）
+     🔴 回滾：GitHub 貼回 home-service-v2_W0_ok.html（施工前快照，≤2 分鐘）
+     ⛔ 上傳時機：規格 §12 部署閘門 PASS 之後；HS_WASH_PUBLIC 維持 false 直到 Elsa「可以發了」
   依據：UNI_規格_到府U-α_送出中身分續存_v1.3.md（第五關通過，放行產碼）
   後端：m_home_service.gs v1.4（已上線，17 字元發號，U-α 驗收 18/18 結案）
 
@@ -461,8 +469,24 @@ a.foot-link:hover{color:#EDE7D6}
           <div class="chips" id="fSvc">
             <label class="chip"><input type="checkbox" value="剪髮服務"><span>✂️ 剪髮服務</span></label>
             <label class="chip"><input type="checkbox" value="造型服務"><span>💇 造型服務</span></label>
+            <label class="chip" id="washChip" style="display:none"><input type="checkbox" value="到府洗髮・自備設備方案"><span>🚿 到府洗髮・自備設備方案　NT$500／人</span></label>
           </div>
           <div class="hint">可複選</div>
+        </div>
+        <!-- ══ W1 到府洗髮・自備設備方案（規格 v1.0 §2；僅選本方案時顯示）══ -->
+        <div class="fld" id="washBox" style="display:none">
+          <div style="border:1px solid #d8cfc2;border-radius:10px;padding:14px 14px 10px;background:#fbf8f3">
+            <div style="font-weight:700;margin-bottom:4px">🚿 到府洗髮・自備設備方案　<span style="white-space:nowrap">NT$500／人</span></div>
+            <div class="hint" style="margin-bottom:10px">不必出門，也能在熟悉的家中享受專業洗髮服務。<br>由 UNI 美髮設計師親自到府，提供洗髮、頭皮按摩、肩頸放鬆及吹風造型。<br>本方案由客戶準備適合的洗髮空間與設備，UNI 提供專業技術服務。</div>
+            <div style="font-weight:600;margin:6px 0 2px">服務內容</div>
+            <div class="hint" style="margin-bottom:10px">・專業洗髮及頭皮按摩<br>・簡易肩頸舒緩按摩<br>・吹乾與基礎髮型整理</div>
+            <div style="font-weight:600;margin:6px 0 4px">您需要準備（三項皆確認才能繼續）</div>
+            <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" id="fWc1" style="margin-top:4px"><span>已備妥適合洗髮的座椅或洗頭台</span></label>
+            <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" id="fWc2" style="margin-top:4px"><span>現場有可正常使用的熱水與排水設施</span></label>
+            <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" id="fWc3" style="margin-top:4px"><span>已備妥洗髮用品及吹風設備，或已事先與 UNI 確認</span></label>
+            <div class="hint" style="margin-top:8px">本方案不含醫療照護、臥床洗髮及特殊造型；UNI 會在出發前與您確認現場條件。</div>
+            <div id="washPrice" style="margin-top:10px;padding-top:10px;border-top:1px dashed #d8cfc2;font-size:14px;line-height:1.7"></div>
+          </div>
         </div>
         <div class="fld">
           <label>是否有停車位或社區可臨停</label>
@@ -592,7 +616,10 @@ a.foot-link:hover{color:#EDE7D6}
   var STATES    = ['pending','done','dead'];
 
   /* 規格 7.2 三分類 */
-  var A_CODES = ['missing_fields','bad_phone','bad_time','day_closed','slot_taken'];
+  var A_CODES = ['missing_fields','bad_phone','bad_time','day_closed','slot_taken',
+                 /* v2.3 洗髮（皆 A 類，明列僅供閱讀；未列於 B_CODES 者本就走 A 類） */
+                 'wash_unavailable','wash_mismatch','bad_service','wash_confirm',
+                 'wash_people','wash_people_manual','wash_price_ver'];
   var B_CODES = ['disabled','id_registry_unavailable','id_registry_not_ready',
                  'id_registry_stale','id_collision'];
   var STEP1_CODES = ['bad_time','day_closed','slot_taken'];
@@ -612,6 +639,15 @@ a.foot-link:hover{color:#EDE7D6}
 
   var LINE_BTN = '<div style="margin-top:10px"><a href="https://line.me/R/ti/p/@261bhcyh" '+
                  'class="btn btn-line" style="font-size:15px;padding:12px">💬 用 LINE 與 Elsa 聯繫</a></div>';
+
+  /* ═══ v2.3 到府洗髮・自備設備方案（規格 v1.0）═══
+     ⚠️ ID／名稱／單價／版本／上限必須與 m_hs_wash.gs 的 HSW_CFG 完全一致。
+        改價時兩邊與 PRICE_VER 一起改，否則後端以 wash_price_ver 拒收（不會默默改價）。 */
+  var HS_WASH_PUBLIC = false;          /* ⛔ Elsa「可以發了」且 HSW_modeOpen 前一刻才改 true */
+  var WASH = { id:'HS_WASH_BYO', name:'到府洗髮・自備設備方案', unit:500, ver:'w500-1', max:2, deposit:300 };
+  var WASH_PREVIEW = /[?&]wash=preview(&|$)/.test(location.search);
+  var WASH_SHOW = HS_WASH_PUBLIC || WASH_PREVIEW;
+  var WASH_MANUAL_TXT = '洗髮方案 3 位以上需先確認人數與時間，請透過 LINE 與 Elsa 安排 🙏';
 
   var box=document.getElementById('flowBox');
   var eBox=document.getElementById('fErr');
@@ -720,10 +756,52 @@ a.foot-link:hover{color:#EDE7D6}
   chips('fQ1',Q1,false); chips('fQ2',Q2,false); chips('fQ3',Q3,true); chips('fQ5',Q5,false);
 
   var svcBox=document.getElementById('fSvc');
-  svcBox.addEventListener('change', function(){
+  svcBox.addEventListener('change', function(ev){
+    washExclusive(ev && ev.target);
     svcBox.querySelectorAll('.chip').forEach(function(c){
       c.classList.toggle('sel', c.querySelector('input').checked);
     });
+    washUI();
+  });
+
+  /* ── v2.3 洗髮 UI ── */
+  var washChip=document.getElementById('washChip');
+  var washBox=document.getElementById('washBox');
+  var washPriceEl=document.getElementById('washPrice');
+  if(washChip) washChip.style.display = WASH_SHOW ? '' : 'none';
+  function washInput(){ return washChip ? washChip.querySelector('input') : null; }
+  function isWash(){ var i=washInput(); return !!(WASH_SHOW && i && i.checked); }
+  /* 互斥：選洗髮 → 取消其他；選其他 → 取消洗髮（規格 §4、F-5） */
+  function washExclusive(t){
+    var wi=washInput(); if(!wi || !t || t.tagName!=='INPUT') return;
+    if(t===wi && wi.checked){
+      svcBox.querySelectorAll('input').forEach(function(i){ if(i!==wi) i.checked=false; });
+    } else if(t!==wi && t.checked){
+      wi.checked=false;
+    }
+  }
+  function washPeople(){
+    var a=document.getElementById('fAdults').value||'0', k=document.getElementById('fKids').value||'0';
+    var na=+a, nk=+k;
+    return { a:a, k:k, n:na+nk, manual:(na===4||nk===4||(na+nk)>WASH.max) };
+  }
+  function washPriceHtml(){
+    var pp=washPeople();
+    if(pp.n<1) return '請先選擇服務人數';
+    if(pp.manual) return WASH_MANUAL_TXT;
+    var sub=WASH.unit*pp.n;
+    return 'NT$500／人 × '+pp.n+' 位＝<b>NT$'+sub.toLocaleString()+'</b><br>'+
+           '訂金 NT$300，服務當天全額折抵<br>'+
+           '八德・桃園區・龜山不另收交通費，其他區域請先用 LINE 詢問';
+  }
+  function washUI(){
+    var on=isWash();
+    if(washBox) washBox.style.display = on ? 'block' : 'none';
+    if(!on){ ['fWc1','fWc2','fWc3'].forEach(function(id){ var c=document.getElementById(id); if(c) c.checked=false; }); }
+    if(on && washPriceEl) washPriceEl.innerHTML = washPriceHtml();
+  }
+  ['fAdults','fKids'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.addEventListener('change', washUI);
   });
 
   var sel=document.getElementById('fTime');
@@ -747,7 +825,7 @@ a.foot-link:hover{color:#EDE7D6}
   function val(id){ return (document.getElementById(id).value||'').trim(); }
 
   function collect(){
-    return {
+    var d = {
       clientReqId: reqId,
       name: val('fName'), phone: val('fPhone'), address: val('fAddr'),
       date: document.getElementById('fDate').value||'',
@@ -760,6 +838,16 @@ a.foot-link:hover{color:#EDE7D6}
       q1: pick('fQ1'), q2: pick('fQ2'), q3: picks('fQ3'),
       q4: '', q5: pick('fQ5'), q6: val('fQ6')
     };
+    /* v2.3：洗髮欄位只在選洗髮時加入，剪髮／造型 payload 與 v2.2 逐欄相同 */
+    if(isWash()){
+      d.svcId = WASH.id;
+      d.wc1 = document.getElementById('fWc1').checked ? '1' : '';
+      d.wc2 = document.getElementById('fWc2').checked ? '1' : '';
+      d.wc3 = document.getElementById('fWc3').checked ? '1' : '';
+      d.washPriceVer = WASH.ver;
+      if(WASH_PREVIEW) d.dry = '1';
+    }
+    return d;
   }
 
   /* A 類落地時若表單尚未顯示（reload 續送後才收到 A 類），需回填 payload
@@ -793,6 +881,13 @@ a.foot-link:hover{color:#EDE7D6}
     setChip('fQ2',  d.q2, false);
     setChip('fQ3',  d.q3, true);
     setChip('fQ5',  d.q5, false);
+    /* v2.3：先依服務重繪洗髮區，再以 payload 還原勾選（payload 為唯一來源） */
+    washUI();
+    if(d.svcId===WASH.id){
+      document.getElementById('fWc1').checked = d.wc1==='1';
+      document.getElementById('fWc2').checked = d.wc2==='1';
+      document.getElementById('fWc3').checked = d.wc3==='1';
+    }
   }
 
   function validate(n){
@@ -812,6 +907,10 @@ a.foot-link:hover{color:#EDE7D6}
       if(!d.address) return '請填寫服務地址';
       if(!d.services) return '請至少選擇一項服務';
       if(d.adults==='0'&&d.kids==='0') return '請選擇服務人數';
+      if(d.svcId===WASH.id){
+        if(!(d.wc1==='1'&&d.wc2==='1'&&d.wc3==='1')) return '請先確認三項自備條件後再送出';
+        if(washPeople().manual) return WASH_MANUAL_TXT;
+      }
     }
     return '';
   }
@@ -822,6 +921,10 @@ a.foot-link:hover{color:#EDE7D6}
     add('日期', d.date);
     add('時段', d.time);
     add('服務', d.services);
+    if(d.svcId===WASH.id && !washPeople().manual){
+      var wn=washPeople().n, ws=WASH.unit*wn;
+      add('方案費用', 'NT$500 × '+wn+' 位＝NT$'+ws.toLocaleString()+'（訂金 NT$300 當天折抵，尾款 NT$'+(ws-WASH.deposit).toLocaleString()+'）');
+    }
     add('稱呼', d.name);
     add('電話', d.phone);
     add('地址', d.address);
@@ -894,7 +997,7 @@ a.foot-link:hover{color:#EDE7D6}
         /* U-21／U-37：保存成交結果，reload 可還原訂金頁 */
         recWrite({ reqId:reqId, payload:d, budget:bud, state:'done',
                    result:{ bookingId:j.bookingId, slotStart:j.slotStart,
-                            slotEnd:j.slotEnd, pay:j.pay||{} } });
+                            slotEnd:j.slotEnd, pay:j.pay||{}, washQuote:j.washQuote||null } });
         showDone(j, d);
         return;
       }
@@ -902,6 +1005,19 @@ a.foot-link:hover{color:#EDE7D6}
       var m=String(j.msg||'');
       var t=String(j.text||'送出失敗，請改用 LINE 與 Elsa 聯繫 🙏');
       cBox.style.display='none';
+
+      /* v2.3 預覽試算：後端未建單 → 清除本次記錄、只顯示試算結果、不進訂金頁 */
+      if(m==='wash_dry_ok'){
+        recClear();
+        var q=j.washQuote||{};
+        cBox.innerHTML='<b>試算完成（預覽模式，未建立預約）</b><br>'+
+          'NT$'+(q.unit||WASH.unit)+' × '+(q.n||'?')+' 位＝NT$'+(q.subtotal!=null?Number(q.subtotal).toLocaleString():'?')+
+          '｜訂金 NT$'+(q.deposit!=null?q.deposit:WASH.deposit)+'｜尾款 NT$'+(q.balance!=null?Number(q.balance).toLocaleString():'?');
+        cBox.style.display='block';
+        cBox.scrollIntoView({behavior:'smooth',block:'center'});
+        unlock();
+        return;
+      }
 
       if(B_CODES.indexOf(m)>-1){        /* B 類 fail closed：確定未成立 → 清除（U-36） */
         recClear();
@@ -938,7 +1054,10 @@ a.foot-link:hover{color:#EDE7D6}
     document.getElementById('fDoneSub').innerHTML=
       '預約編號 <b>'+j.bookingId+'</b><br>'+
       (d.date||'')+'　'+j.slotStart+'–'+j.slotEnd+'<br>'+
-      '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>';
+      '<span style="font-size:12.5px">（已為您保留含車程的完整時段）</span>'+
+      /* v2.3：洗髮金額一律顯示後端回傳值（不在前台重算） */
+      (j.washQuote ? '<br>🚿 到府洗髮：NT$'+Number(j.washQuote.subtotal).toLocaleString()+
+        '（訂金 NT$'+j.washQuote.deposit+' 當天折抵，尾款 NT$'+Number(j.washQuote.balance).toLocaleString()+'）' : '');
 
     var pay=j.pay||{}, box2=document.getElementById('fPayBtns'), html='';
     if(pay.jko)   html+='<a class="hs-pay" target="_blank" rel="noopener" href="'+pay.jko+'">💳 街口支付 →</a>';
