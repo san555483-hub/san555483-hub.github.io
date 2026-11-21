@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>UNI 到府服務確認</title>
+<!--
+  home-confirm.html ｜ 到府服務前一天確認提醒 v1.1（2026-11-21：GPT 審查 M5 request_id 生命週期、S3 統一清除）
+  規格：UNI_規格_到府前一天確認提醒_v0.2.2（三方定稿）§2A、§4、§6
+  ・兩種用途：① 綁定（完成頁按鈕或 Elsa 重發連結 #t=&o=）② 確認／申請（確認卡按鈕 ?o=&v=&a=ok|chg）
+  ・LINE Login：state（單次）＋PKCE S256＋伺服器發的 nonce；id_token 只留在記憶體，不寫任何儲存區
+  ・登入成功不寫入任何資料；客人按下按鈕才送出
+  ・暫存（uni_hsc2_flow、uni_hsc2_bind）在成功、失敗、OAuth 取消、state 不符、逾時時一律清除；
+    例外：開頁時伺服器連線失敗（尚未消耗任何東西）與 view 回「系統忙碌」時保留綁定憑證以便重開連結
+  ・request_id 只在記憶體：每次新的「送出申請」產生新 UUID；同一次因網路中斷重送沿用；收到伺服器任何回應即清除
+  🔴 回滾：GitHub 刪除本檔（確認卡按鈕會打不開，請同時 HSC2_modeOff）
+-->
+<style>
+:root{--olive:#4a4a3a;--gold:#8a5a2b;--bg:#f6f2ea;--line:#d8cfc2;--ink:#2d2a24;--soft:#6b6255}
+*{box-sizing:border-box}
+body{margin:0;font-family:"PingFang TC","Noto Sans TC",sans-serif;background:var(--bg);color:var(--ink);font-size:17px;line-height:1.75}
+.wrap{max-width:520px;margin:0 auto;padding:28px 18px 60px}
+.brand{font-size:14px;letter-spacing:3px;color:var(--soft);text-align:center;margin-bottom:6px}
+h1{font-size:22px;color:var(--olive);text-align:center;margin:0 0 18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+.when{background:#f6efe3;border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.when .d{font-size:18px;font-weight:700;color:var(--gold)}
+.when .t{font-size:26px;font-weight:700;color:var(--gold)}
+.row{display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #eee5d8}
+.row:last-child{border-bottom:0}
+.row .k{width:84px;color:var(--soft);flex:none}
+.row .v{font-weight:700}
+.msg{font-size:17px;text-align:center;padding:8px 4px}
+button{width:100%;padding:15px;border:0;border-radius:12px;font-size:18px;font-weight:700;margin-top:16px;cursor:pointer}
+.go{background:#2a7a8c;color:#fff}
+.chg{background:#8a5a2b;color:#fff}
+.line{background:#06C755;color:#fff}
+button[disabled]{opacity:.55;cursor:default}
+.note{font-size:14.5px;color:var(--soft);text-align:center;margin-top:14px}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid #ccc;border-top-color:var(--gold);border-radius:50%;animation:s 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">UNI 到府美學</div>
+  <h1 id="h">到府服務確認</h1>
+  <div class="card" id="card"><div class="msg"><span class="spin"></span>處理中…</div></div>
+  <div class="note" id="note"></div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var GAS='https://script.google.com/macros/s/AKfycbyG9T1UodoV3Zzag9OtC7SQDTiS3DfsqZFE1i7PrXSGxg_AW5C_GvOcmVgNOvlL3g6WQQ/exec';
+  var CHANNEL='2009635359';
+  var REDIRECT=location.origin+location.pathname;
+  var K_FLOW='uni_hsc2_flow', K_BIND='uni_hsc2_bind', K_REQ='uni_hsc2_req';   /* K_REQ 只用於清除舊版殘留 */
+  var TXT_FAIL='無法確認您的身分，請重新開啟連結，或直接 LINE 聯繫 Elsa。';
+  var TXT_BIND_FAIL='無法完成綁定，請直接與 Elsa 聯繫';
+  var card=document.getElementById('card'), note=document.getElementById('note'), h=document.getElementById('h');
+
+  function ss(k,v){ try{ if(v===undefined) return JSON.parse(sessionStorage.getItem(k)||'null'); if(v===null) sessionStorage.removeItem(k); else sessionStorage.setItem(k,JSON.stringify(v)); }catch(_){ return null; } }
+  function clearAll(){ ss(K_FLOW,null); ss(K_BIND,null); ss(K_REQ,null); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function msg(t,keep){ card.innerHTML='<div class="msg">'+esc(t)+'</div>'; if(!keep) clearAll(); }
+  function b64u(buf){ var s='',a=new Uint8Array(buf); for(var i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function rnd(n){ var a=new Uint8Array(n); crypto.getRandomValues(a); return b64u(a); }
+  function uuid(){ if(crypto.randomUUID) return crypto.randomUUID(); var a=new Uint8Array(16); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(x){return ('0'+x.toString(16)).slice(-2);}).join(''); }
+  function post(action, body){
+    return fetch(GAS+'?action='+action,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body||{})})
+      .then(function(r){ return r.json(); });
+  }
+
+  // ── 1. 判斷入口 ──
+  var q=new URLSearchParams(location.search);
+  if(q.get('code') || q.get('error')) return callback();
+
+  if(location.hash && /[#&]t=/.test(location.hash)){                       // Elsa 重發連結
+    var hp=new URLSearchParams(location.hash.slice(1));
+    var t0=hp.get('t')||'', o0=hp.get('o')||'';
+    history.replaceState(null,'',REDIRECT);                                   // 立即從網址移除憑證
+    if(/^[0-9a-f]{64}$/.test(t0) && /^HS\d{15}$/.test(o0)) ss(K_BIND,{o:o0,t:t0,ts:Date.now()});
+  }
+  var intent=null, o=q.get('o')||'', v=q.get('v')||'', a=q.get('a')||'';
+  if(/^HS\d{15}$/.test(o) && /^[0-9a-f]{12}$/.test(v) && (a==='ok'||a==='chg')) intent={mode:'act',o:o,v:v,a:a};
+  else { var b=ss(K_BIND); if(b && /^HS\d{15}$/.test(b.o) && /^[0-9a-f]{64}$/.test(b.t)) intent={mode:'bind',o:b.o}; }
+  if(!intent){ msg('這個連結無法使用，請直接 LINE 聯繫 Elsa。'); return; }
+  h.textContent = intent.mode==='bind' ? 'LINE 連結到府確認' : '明天的到府服務';
+
+  // ── 2. 取伺服器 nonce → 導向 LINE Login ──
+  post('hsConfirmStart',{}).then(function(j){
+    if(!j || !j.ok || !/^[0-9a-f]{32}$/.test(String(j.nonce||''))){ msg((j&&j.text)||TXT_FAIL); return; }
+    var flow={ mode:intent.mode, o:intent.o, v:intent.v||'', a:intent.a||'', state:rnd(16), verifier:rnd(48), nonce:j.nonce, ts:Date.now() };
+    ss(K_FLOW,flow);
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(flow.verifier)).then(function(dg){
+      location.replace('https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id='+CHANNEL
+        +'&redirect_uri='+encodeURIComponent(REDIRECT)+'&state='+flow.state+'&scope='+encodeURIComponent('openid profile')
+        +'&nonce='+flow.nonce+'&code_challenge='+b64u(dg)+'&code_challenge_method=S256&bot_prompt=aggressive');
+    });
+  }).catch(function(){ msg('系統忙碌，請稍後再開一次連結。',true); });
+
+  // ── 3. LINE 回呼 ──
+  function callback(){
+    var flow=ss(K_FLOW), code=q.get('code'), st=q.get('state'), err=q.get('error');
+    history.replaceState(null,'',REDIRECT);
+    if(err){ msg('已取消 LINE 登入。如需確認，請重新開啟連結。'); return; }
+    if(!flow || !st || st!==flow.state || (Date.now()-flow.ts)>15*60*1000){ msg(TXT_FAIL); return; }
+    var verifier=flow.verifier, nonce=flow.nonce;
+    flow.state=''; flow.verifier=''; ss(K_FLOW,flow);                         // state、verifier 單次使用
+    h.textContent = flow.mode==='bind' ? 'LINE 連結到府確認' : '明天的到府服務';
+    post('lineToken',{code:code, verifier:verifier, redirect:REDIRECT, channelId:CHANNEL}).then(function(tk){
+      var idToken=tk && tk.id_token;
+      if(!idToken){ msg(TXT_FAIL); return; }
+      var body={ idToken:idToken, nonce:nonce, mode:flow.mode, o:flow.o };
+      if(flow.mode==='bind'){ var b=ss(K_BIND); body.t=(b && b.o===flow.o) ? b.t : ''; }
+      else { body.v=flow.v; body.a=flow.a; }
+      idToken=null;
+      return post('hsConfirmView',body).then(function(j){ body=null; view(j,flow); });
+    }).catch(function(){ msg('系統忙碌，請稍後再開一次連結。'); });
+  }
+
+  // ── 4. 顯示摘要，客人按下才送出 ──
+  function view(j,flow){
+    if(!j || !j.ok){
+      var keep=(j && j.msg==='busy');
+      msg((j && j.text) || (flow.mode==='bind' ? TXT_BIND_FAIL : TXT_FAIL), keep);
+      return;
+    }
+    var s=j.summary||{};
+    var html='<div class="when"><div class="d">'+esc(s.date)+'</div><div class="t">'+esc(s.time)+'</div></div>'
+      +'<div class="row"><div class="k">稱呼</div><div class="v">'+esc(s.name)+'</div></div>'
+      +'<div class="row"><div class="k">服務項目</div><div class="v">'+esc(s.svc)+'</div></div>'
+      +'<div class="row"><div class="k">到府地區</div><div class="v">'+esc(s.area||'—')+'</div></div>';
+    if(j.already && flow.mode==='act'){ card.innerHTML=html+'<div class="msg" style="margin-top:12px">已收到您的確認，UNI 將依原預約時間到府服務。</div>'; clearAll(); return; }
+    var label = flow.mode==='bind' ? '送出綁定' : (flow.a==='chg' ? '送出申請' : '送出確認');
+    var cls = flow.mode==='bind' ? 'line' : (flow.a==='chg' ? 'chg' : 'go');
+    card.innerHTML=html+'<button id="sub" class="'+cls+'">'+label+'</button>';
+    note.textContent = flow.mode==='act' && flow.a==='chg' ? '送出後預約不會自動取消，Elsa 會與您聯繫確認。' : '';
+    var btn=document.getElementById('sub'), ticket=j.ticket, pendingReq=null;
+    btn.onclick=function(){
+      btn.disabled=true; btn.textContent='送出中…';
+      if(!pendingReq) pendingReq=uuid();                  // 新的一次送出 → 新 request_id；網路中斷重送沿用
+      post('hsConfirmSubmit',{ ticket:ticket, requestId:pendingReq }).then(function(r){
+        pendingReq=null;                                  // 收到伺服器回應（含忙碌）即清除
+        if(r && r.msg==='busy'){ btn.disabled=false; btn.textContent=label; note.textContent=r.text; return; }
+        card.innerHTML=html+'<div class="msg" style="margin-top:12px">'+esc((r && r.text) || TXT_FAIL)+'</div>';
+        note.textContent=''; clearAll();
+      }).catch(function(){ btn.disabled=false; btn.textContent=label; note.textContent='網路不穩，請再按一次。'; });
+    };
+  }
+})();
+</script>
+</body>
+</html>

@@ -3,6 +3,12 @@
   ═══════════════════════════════════════════════════════════
   UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁 ＋ U-α 身分續存
 
+  ★ 2026-11-17 v2.5 到府確認提醒（規格 v0.2.2 §4.2、§10，三方定稿）：
+     ・送出完成頁：後端回傳 hsc2.t 時顯示「用 LINE 接收到府確認」鈕＋告知句（Elsa 定稿文字）
+     ・憑證只在記憶體；按鈕時寫入 sessionStorage「uni_hsc2_bind」後同分頁前往 home-confirm.html；
+       不放網址、不寫入 U-α done 記錄（重整後按鈕不再出現，改由 Elsa 重發）
+     🔴 回滾：GitHub 傳回 v2.4，免部署
+
   ★ 2026-11-16 v2.4 洗髮宣傳卡（規格 v1.0.2 宣傳卡差異，三方定稿）：
      ・「服務與價格」第 4 張卡 #washCard，與表單洗髮選項共用 WASH_SHOW；隱藏時不綁事件
      ・點卡：鎖定狀態只捲動；未選服務才勾洗髮（走既有 change 事件）；已選其他服務只顯示提示、不覆寫
@@ -575,6 +581,10 @@ a.foot-link:hover{color:#EDE7D6}
       <div class="hs-done-icon">✅</div>
       <div class="hs-done-h">預約已送出</div>
       <div class="hs-done-sub" id="fDoneSub"></div>
+      <div id="fHsc2" style="display:none;margin:12px 0 14px;text-align:center">
+        <button type="button" id="fHsc2Btn" style="width:100%;padding:13px;border:0;border-radius:10px;background:#06C755;color:#fff;font-size:16px;font-weight:700;cursor:pointer">用 LINE 接收到府確認</button>
+        <div style="font-size:13.5px;color:#6b6255;line-height:1.7;margin-top:8px">完成 LINE 連結後，UNI 會於服務前一天晚上傳送一次到府確認提醒。若未收到提醒，原預約仍然有效。</div>
+      </div>
       <div class="hs-deposit">
         <div class="hs-dep-title">💰 請完成 300 元訂金</div>
         <div class="hs-dep-body">
@@ -1099,6 +1109,18 @@ a.foot-link:hover{color:#EDE7D6}
     if(pay.bank)  html+='<div class="hs-pay" style="cursor:default">🏦 轉帳：'+pay.bank+'</div>';
     if(!html)     html='<div class="hs-pay" style="cursor:default">請透過 LINE 向 Elsa 索取付款方式</div>';
     box2.innerHTML=html;
+
+    /* v2.5 到府確認提醒：憑證只在本次回應的記憶體中；重整（U-α 還原）時不會有 hsc2 */
+    var hb=document.getElementById('fHsc2'), hbt=document.getElementById('fHsc2Btn');
+    var hsc2t=(j.hsc2 && /^[0-9a-f]{64}$/.test(String(j.hsc2.t||''))) ? String(j.hsc2.t) : '';
+    if(hb && hbt && hsc2t){
+      hb.style.display='block';
+      hbt.onclick=function(){
+        try{ sessionStorage.setItem('uni_hsc2_bind', JSON.stringify({ o:String(j.bookingId), t:hsc2t, ts:Date.now() })); }catch(_){ }
+        hsc2t=''; hb.style.display='none';
+        location.href='home-confirm.html';
+      };
+    } else if(hb){ hb.style.display='none'; }
 
     doneBox.style.display='block';
     doneBox.scrollIntoView({behavior:'smooth',block:'start'});
