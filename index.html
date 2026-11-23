@@ -1263,11 +1263,11 @@ body{ background:linear-gradient(180deg,#faf6f1 0%,#f6efe6 100%); }
         <div class="form-group">
           <label class="form-label">配送方式 *</label>
           <div class="shipping-grid" id="shipping-options">
-            <label class="ship-label"><input type="radio" name="shipping" value="到店取貨"> <span>🏪 到店取貨</span></label>
+            <!-- 2026-11-23 轉型純到府：移除「到店取貨」（回滾：還原本行） -->
             <label class="ship-label"><input type="radio" name="shipping" value="居家宅配"> <span>🏠 居家宅配</span></label>
             <label class="ship-label"><input type="radio" name="shipping" value="超商取貨（依重量）"> <span>🏪 超商取貨</span></label>
             <label class="ship-label"><input type="radio" name="shipping" value="黑貓宅配（依重量）"> <span>🐱 黑貓宅配</span></label>
-            <label class="ship-label" style="grid-column:1/-1"><input type="radio" name="shipping" value="外送到府（附近居民）"> <span>🛵 外送到府</span></label>
+            <label class="ship-label"><input type="radio" name="shipping" value="外送到府（附近居民）"> <span>🛵 外送到府</span></label>
           </div>
         </div>
         <div class="form-group" id="address-wrap" style="display:none">

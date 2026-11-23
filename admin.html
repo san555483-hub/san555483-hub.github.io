@@ -1070,7 +1070,7 @@ tr:hover td{background:rgba(61,43,31,.03);}
             <div class="form-group"><label class="form-label">付款方式</label><select class="form-select" id="mo-pay"><option>現金</option><option>街口支付</option><option>iPASS</option><option>轉帳</option><option>LINE Pay</option></select></div>
           </div>
           <div class="form-grid">
-            <div class="form-group"><label class="form-label">配送方式</label><select class="form-select" id="mo-ship"><option>到店取貨</option><option>居家宅配</option><option>超商取貨</option><option>黑貓宅配</option></select></div>
+            <div class="form-group"><label class="form-label">配送方式</label><select class="form-select" id="mo-ship"><option value="" selected disabled>請選擇配送方式</option><option>居家宅配</option><option>超商取貨</option><option>黑貓宅配</option></select></div>
             <div class="form-group"><label class="form-label">備註</label><input class="form-input" type="text" id="mo-note" placeholder="選填"></div>
           </div>
           <button class="btn btn-dark" onclick="addManualOrder()">➕ 新增訂單</button>
@@ -3862,6 +3862,7 @@ async function addManualOrder(){
   if(!name||!phone){showMsg('mo-msg','請填寫姓名和電話','err');return;}
   if(!items){showMsg('mo-msg','請至少新增一項商品','err');return;}
   if(!total){showMsg('mo-msg','請填寫金額','err');return;}
+  if(!document.getElementById('mo-ship').value){showMsg('mo-msg','請選擇配送方式','err');return;}   // 2026-11-23 移除到店取貨後不預設任何配送方式
   showMsg('mo-msg','新增中…','loading');
   const now=new Date();
   const twTime=now.toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
@@ -3883,6 +3884,7 @@ async function addManualOrder(){
     if(d.ok){
       showMsg('mo-msg','✅ 訂單 '+(d.orderNum||orderNum)+' 已儲存','ok');
       ['mo-name','mo-phone','mo-total','mo-note'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mo-ship').value='';   // 2026-11-23 v1.0.1：成功建單後重設配送方式，避免下一張沿用
       document.getElementById('mo-item-list').innerHTML='';
       loadOrders();
     } else {
