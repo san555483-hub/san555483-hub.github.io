@@ -3,6 +3,10 @@
   ═══════════════════════════════════════════════════════════
   UNI 到府服務 新前台 v2 ｜ B4-5 送出 ＋ 訂金頁 ＋ U-α 身分續存
 
+  ★ 2026-11-23 v2.6 到府確認提醒 開放前修正（規格 v1.3 r5 §3，Elsa 定稿文案逐字照抄）：
+     ・完成頁告知句改為「前一晚確認提醒＋當天約 1 小時前再提醒一次」；其餘一字未動
+     🔴 回滾：GitHub 傳回 v2.5，免部署
+
   ★ 2026-11-17 v2.5 到府確認提醒（規格 v0.2.2 §4.2、§10，三方定稿）：
      ・送出完成頁：後端回傳 hsc2.t 時顯示「用 LINE 接收到府確認」鈕＋告知句（Elsa 定稿文字）
      ・憑證只在記憶體；按鈕時寫入 sessionStorage「uni_hsc2_bind」後同分頁前往 home-confirm.html；
@@ -583,7 +587,7 @@ a.foot-link:hover{color:#EDE7D6}
       <div class="hs-done-sub" id="fDoneSub"></div>
       <div id="fHsc2" style="display:none;margin:12px 0 14px;text-align:center">
         <button type="button" id="fHsc2Btn" style="width:100%;padding:13px;border:0;border-radius:10px;background:#06C755;color:#fff;font-size:16px;font-weight:700;cursor:pointer">用 LINE 接收到府確認</button>
-        <div style="font-size:13.5px;color:#6b6255;line-height:1.7;margin-top:8px">完成 LINE 連結後，UNI 會於服務前一天晚上傳送一次到府確認提醒。若未收到提醒，原預約仍然有效。</div>
+        <div style="font-size:13.5px;color:#6b6255;line-height:1.7;margin-top:8px">完成 LINE 連結後，UNI 會於服務前一天晚上傳送到府確認提醒，服務當天約 1 小時前也會再提醒一次。若未收到提醒，原預約仍然有效。</div>
       </div>
       <div class="hs-deposit">
         <div class="hs-dep-title">💰 請完成 300 元訂金</div>
