@@ -344,7 +344,7 @@ a.deposit-more:hover{color:var(--olive)}
     <p class="punch sans">門市不再開放現場預約，所有服務改由 Elsa 親自到府進行。<br>爸爸媽媽孩子，在熟悉的家裡一次整理好。<br>不用塞車、不用等待，也不用配合孩子情緒，一次安排，全家輕鬆整理完成。</p>
     <div class="hero-pills">
       <span class="hero-pill">🏠 全面到府</span>
-      <span class="hero-pill">🕘 10:00–19:30</span>
+      <span class="hero-pill">🕘 <span data-hhr="label">10:00–19:30</span></span>
       <span class="hero-pill">👨‍👩‍👧 親子友善</span>
     </div>
     <a href="#booking" class="btn">📅 我要預約到府服務</a>
@@ -521,7 +521,7 @@ a.deposit-more:hover{color:var(--olive)}
   <div class="wrap">
     <div class="sec-label">線上預約</div>
     <h2>把預約交給我，<br>您安心安排今天就好。</h2>
-    <p class="sans hs-lead">8/16 起開放預約，服務時間 <b>10:00–19:30</b>，目前提供<b>剪髮服務</b>與<b>造型服務</b>。<br>收到資料後我會盡快與您聯繫確認時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。<br><span class="hs-hint">※ 19:30 時段需提前一天預約。</span></p>
+    <p class="sans hs-lead">8/16 起開放預約，服務時間 <b data-hhr="label">10:00–19:30</b>，目前提供<b>剪髮服務</b>與<b>造型服務</b>。<br>收到資料後我會盡快與您聯繫確認時段。到府服務採 <b>300 元訂金</b>預約，完成服務後全額折抵消費。<span data-hhr-late-block><br><span class="hs-hint">※ <span data-hhr="late">19:30</span> 時段需提前一天預約。</span></span></p>
 
     <div class="hs-card" id="hsCard">
       <div class="hs-grid">
@@ -620,7 +620,7 @@ a.deposit-more:hover{color:var(--olive)}
   <div class="foot-grid sans">
     <a href="https://line.me/R/ti/p/@261bhcyh" class="foot-link">💬 LINE：@261bhcyh</a>
     <a href="https://www.google.com/maps/search/UNI髮型訂製設計+八德" class="foot-link" target="_blank" rel="noopener">📍 Google Map</a>
-    <span class="foot-link">🕘 服務時間：10:00–19:30（8/16 起）</span>
+    <span class="foot-link">🕘 服務時間：<span data-hhr="label">10:00–19:30</span>（8/16 起）</span>
     <span class="foot-link">🏠 服務範圍：八德・桃園區・龜山</span>
   </div>
   <div class="foot-belief">希望每個家庭，<br>都能在最熟悉的地方，<br>安心整理自己。</div>
@@ -826,6 +826,8 @@ a.deposit-more:hover{color:var(--olive)}
        ⚠️ 這是把可約範圍收窄，落在後端原接受區間內，故不動任何 .gs、不需重新部署。
        回滾＝把下行 MAIN 的開頭改回 '09:00','09:30', 即可。 */
   var HS_FIRST_DAY = '2026-08-16';
+  /* ★ HHR 緊急停收版開關：true＝隱藏表單、只顯示 LINE（規格 §9.3 人工應急；正式版必須為 false） */
+  var HS_PAUSE = false;
   var HS_LATE = ['19:30'];
   var MAIN=['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
   var sel=document.getElementById('hsTime');
@@ -839,6 +841,158 @@ a.deposit-more:hover{color:var(--olive)}
     var minStr=f(min); if(minStr < HS_FIRST_DAY) minStr = HS_FIRST_DAY;
     dEl.min=minStr; dEl.max=f(max);
   }
+
+  /* ═══ HHR v1.0 營業時間（規格 HHR v0.1.7 §7）═══════════════════════════
+     ⚠️ 本區只操作「日期欄、時段下拉」兩元素與 data-hhr 文字；
+        不讀寫送出鈕、locked／busy、續存、reqId、payload、budget，不呼叫 U-α 函式。
+     ⚠️ 後端為唯一裁判；這裡顯示的時段不是可約承諾。 */
+  var HHR_DEF = { label:'10:00–19:30', step:30, minDays:2, maxDays:90, late:HS_LATE.slice(), today:null,
+                  week:{'0':MAIN,'1':MAIN,'2':MAIN,'3':MAIN,'4':MAIN,'5':MAIN,'6':MAIN} };
+  var HHR_CLOSED_TXT = '這一天是店休日，暫時無法安排到府服務 🙏';
+  var hhr = { reqGen:0, settled:{}, pending:null, appliedGen:0, table:null, timer:null };
+  var hhrDateEl = document.getElementById('hsDate'), hhrTimeEl = document.getElementById('hsTime');
+  function hhrCanApply(){ return !busy && !locked; }
+  function hhrDayMs(s){
+    var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||'')); if(!m) return NaN;
+    var y=+m[1], mo=+m[2], d=+m[3], t=Date.UTC(y,mo-1,d), dt=new Date(t);
+    return (dt.getUTCFullYear()===y && dt.getUTCMonth()===mo-1 && dt.getUTCDate()===d) ? t : NaN;
+  }
+  function hhrFmtUTC(ms){ var d=new Date(ms); return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2); }
+  function hhrMin(t){ var m=/^(\d{2}):(\d{2})$/.exec(t); return m ? (+m[1])*60+(+m[2]) : -1; }
+  function hhrHalf(t){ return /^([01]\d|2[0-3]):(00|30)$/.test(t); }
+  function hhrLocalToday(){ var n=new Date(); return n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2); }
+  /* §7.1 語意驗證：後端合法 cfg 產生的 A 回應必被接受 */
+  function hhrValid(j){
+    try{
+      if(!j || j.ok!==true || j.v!=='hhr1' || (j.state!=='A' && j.state!=='C')) return false;
+      if(!/^[0-9a-f]{8}$/.test(String(j.hash))) return false;
+      if(isNaN(hhrDayMs(j.today))) return false;
+      if(j.step!==30 && j.step!==60) return false;
+      if(!(Number.isInteger(j.minDays) && j.minDays>=1 && j.minDays<=14)) return false;
+      if(!(Number.isInteger(j.maxDays) && j.maxDays>=j.minDays+1 && j.maxDays<=180)) return false;
+      var lm=/^(([01]\d|2[0-3]):(00|30))–(([01]\d|2[0-3]):(00|30))$/.exec(String(j.label)); if(!lm) return false;
+      var F=lm[1], L=lm[4];
+      if(F<'06:00' || L>'22:00' || L<F || (hhrMin(L)-hhrMin(F))%j.step!==0) return false;
+      var inG=function(t){ return hhrHalf(t) && t>=F && t<=L && (hhrMin(t)-hhrMin(F))%j.step===0; };
+      if(!j.week || typeof j.week!=='object' || Array.isArray(j.week)) return false;
+      var ks=Object.keys(j.week).sort(); if(ks.join(',')!=='0,1,2,3,4,5,6') return false;
+      var open=0;
+      for(var i=0;i<7;i++){
+        var w=j.week[String(i)];
+        if(w===null) continue;
+        if(!Array.isArray(w) || !w.length) return false;
+        for(var k=0;k<w.length;k++){
+          if(!inG(w[k])) return false;
+          if(k>0 && hhrMin(w[k])-hhrMin(w[k-1])!==j.step) return false;
+        }
+        open++;
+      }
+      if(!open) return false;
+      if(!Array.isArray(j.late)) return false;
+      for(var q=0;q<j.late.length;q++){ if(!inG(j.late[q]) || j.late.indexOf(j.late[q])!==q) return false; }
+      return true;
+    }catch(e){ return false; }
+  }
+  function hhrFromApi(j){ return { label:j.label, step:j.step, minDays:j.minDays, maxDays:j.maxDays, late:j.late.slice(), today:j.today, week:j.week }; }
+  /* 送出前／下一步驗證：回傳錯誤訊息或空字串 */
+  function hhrCheck(date, time){
+    var t=hhr.table || HHR_DEF;
+    var ms=hhrDayMs(date); if(isNaN(ms)) return '';
+    var wd=new Date(ms).getUTCDay(), day=t.week[String(wd)];
+    if(day===null) return HHR_CLOSED_TXT;
+    if(day.indexOf(time)<0) return '請選擇想預約的時段';
+    if(t.late.indexOf(time)>-1){
+      var d=(ms - hhrDayMs(t.today || hhrLocalToday()))/86400000;
+      if(d<1) return time+' 的時段需提前一天預約，請改選其他時段或其他日期 🙏';
+    }
+    return '';
+  }
+  function hhrTexts(t){
+    var set=function(k,v){ document.querySelectorAll('[data-hhr="'+k+'"]').forEach(function(el){ el.textContent=v; }); };
+    set('label', t.label); set('step', String(t.step)); set('min', String(t.minDays)); set('max', String(t.maxDays));
+    set('late', t.late.join('、'));
+    document.querySelectorAll('[data-hhr-late-block]').forEach(function(el){ el.style.display = t.late.length ? '' : 'none'; });
+  }
+  function hhrRebuild(){
+    var t=hhr.table; if(!t || !hhrTimeEl) return;
+    var keep=hhrTimeEl.value, list;
+    var ms=hhrDayMs(hhrDateEl ? hhrDateEl.value : '');
+    if(isNaN(ms)){
+      var all={}; for(var i=0;i<7;i++){ (t.week[String(i)]||[]).forEach(function(x){ all[x]=1; }); }
+      list=Object.keys(all).sort();
+    } else list=t.week[String(new Date(ms).getUTCDay())];
+    while(hhrTimeEl.options.length>1) hhrTimeEl.remove(1);
+    if(list===null){
+      var o=document.createElement('option'); o.value=''; o.textContent=HHR_CLOSED_TXT; o.disabled=true; hhrTimeEl.appendChild(o);
+      hhrTimeEl.value='';
+      return;
+    }
+    list.forEach(function(x){ var o=document.createElement('option'); o.value=x; o.textContent=x; hhrTimeEl.appendChild(o); });
+    hhrTimeEl.value = list.indexOf(keep)>-1 ? keep : '';
+  }
+  function hhrApply(t){
+    hhr.table=t;
+    if(hhrDateEl){
+      if(t.today){
+        var base=hhrDayMs(t.today);
+        var mn=hhrFmtUTC(base+t.minDays*86400000); if(mn<HS_FIRST_DAY) mn=HS_FIRST_DAY;
+        hhrDateEl.min=mn; hhrDateEl.max=hhrFmtUTC(base+t.maxDays*86400000);
+      } else {
+        var a=new Date(); a.setDate(a.getDate()+t.minDays);
+        var b=new Date(); b.setDate(b.getDate()+t.maxDays);
+        var f=function(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);};
+        var mn2=f(a); if(mn2<HS_FIRST_DAY) mn2=HS_FIRST_DAY;
+        hhrDateEl.min=mn2; hhrDateEl.max=f(b);
+      }
+      hhrDateEl.disabled=false;
+    }
+    if(hhrTimeEl) hhrTimeEl.disabled=false;
+    hhrTexts(t);
+    hhrRebuild();
+  }
+  function hhrPoll(){
+    if(hhr.timer) return;
+    hhr.timer=setInterval(function(){
+      var p=hhr.pending;
+      if(p===null){ clearInterval(hhr.timer); hhr.timer=null; return; }
+      if(p.g<hhr.reqGen){ hhr.pending=null; return; }      /* 已有更新請求在途 → 丟棄，等新世代 */
+      if(!hhrCanApply()) return;
+      hhrApply(p.t); hhr.appliedGen=p.g; hhr.pending=null;
+    }, 300);
+  }
+  function hhrFetch(){
+    var g=++hhr.reqGen, done=false;
+    var settle=function(table){
+      if(done) return; done=true; hhr.settled[g]=1;       /* 每請求只結算一次 */
+      if(g!==hhr.reqGen) return;
+      var cand = table || (hhr.appliedGen===0 ? HHR_DEF : null);
+      if(!cand) return;                                   /* 已有套用表 → 失敗不產生新表 */
+      var pg = (hhr.pending===null) ? -1 : hhr.pending.g;
+      if(g>pg && g>hhr.appliedGen){ hhr.pending={ g:g, t:cand }; hhrPoll(); }
+    };
+    setTimeout(function(){ settle(null); }, 4000);
+    try{
+      fetch(HS_GAS+'?action=homeBooking&op=hours', { method:'GET', cache:'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if(j && j.ok===true && j.v==='hhr1' && j.state==='B') return settle(HHR_DEF);
+          settle(hhrValid(j) ? hhrFromApi(j) : null);
+        })
+        .catch(function(){ settle(null); });
+    }catch(e){ settle(null); }
+  }
+  if(hhrDateEl){
+    hhrDateEl.disabled=true;
+    hhrDateEl.addEventListener('change', function(){ if(hhr.table && hhrCanApply()) hhrRebuild(); });
+  }
+  if(hhrTimeEl) hhrTimeEl.disabled=true;
+  var hhrLastFetch=0;
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && Date.now()-hhrLastFetch>=600000){ hhrLastFetch=Date.now(); hhrFetch(); }
+  });
+  hhrLastFetch=Date.now(); hhrFetch();
+  /* ═══ HHR 區結束 ═══════════════════════════════════════════════════ */
+
 
   var busy=false, locked=false;
   var btn=document.getElementById('hsSubmit');
@@ -903,10 +1057,17 @@ a.deposit-more:hover{color:var(--olive)}
     var m = String(j.msg||'');
     var t = String(j.text||'送出失敗，請改用 LINE 與 Elsa 聯繫 🙏');
 
-    if(A_CODES.indexOf(m)>-1){ err(t); unlock(); return; }
+    if(A_CODES.indexOf(m)>-1){ err(t); unlock(); if(m==='bad_time'||m==='day_closed') hhrFetch(); return; }
 
     /* B 類，以及任何未列舉的錯誤碼 → fail closed */
     lockOut(t);
+  }
+
+  if(HS_PAUSE){
+    /* hsErr 位於 hsCard 內：只收起不含 hsErr 的區塊，保留訊息與 LINE 按鈕 */
+    var _card=document.getElementById('hsCard');
+    if(_card) Array.prototype.forEach.call(_card.children, function(c){ if(!c.contains(eBox)) c.style.display='none'; });
+    lockOut('線上到府預約暫時關閉，請透過 LINE 與 Elsa 聯繫 🙏');
   }
 
   btn.addEventListener('click', function(){
@@ -935,11 +1096,7 @@ a.deposit-more:hover{color:var(--olive)}
     if(!d.date)    return err('請選擇想預約的日期');
     if(!d.time)    return err('請選擇想預約的時段');
     if(!svc.length)return err('請至少選擇一項服務');
-    if(HS_LATE.indexOf(d.time)>-1){
-      var _t=new Date(); _t.setHours(0,0,0,0);
-      var _p=d.date.split('-'); var _sel=new Date(+_p[0], +_p[1]-1, +_p[2]);
-      if((_sel-_t)/86400000 < 1) return err('19:30 的時段需提前一天預約，請改選其他時段或其他日期 🙏');
-    }
+    var _hv=hhrCheck(d.date, d.time); if(_hv) return err(_hv);   /* HHR：取代原 19:30 寫死判定 */
     if(d.adults==='0'&&d.kids==='0') return err('請選擇服務人數');
 
     busy=true; btn.disabled=true; btn.textContent='送出中…';
